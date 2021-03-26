@@ -3459,16 +3459,35 @@ CrateFile::_BuildDecompressedPathsImpl(
         if (parentPath.IsEmpty()) {
             parentPath = SdfPath::AbsoluteRootPath();
             _paths[pathIndexes[thisIndex]] = parentPath;
-        } else {
+            //} else if (!parentPath.IsPrimPath()) {
+            //    continue;
+        }
+        else {
             int32_t tokenIndex = elementTokenIndexes[thisIndex];
             bool isPrimPropertyPath = tokenIndex < 0;
             tokenIndex = std::abs(tokenIndex);
             auto const &elemToken = _tokens[tokenIndex];
-            _paths[pathIndexes[thisIndex]] =
+            isPrimPropertyPath = isPrimPropertyPath || (!TfIsValidIdentifier(elemToken));
+            if (isPrimPropertyPath && !parentPath.IsPrimPath()) {
+                hasChild = (jumps[thisIndex] > 0) || (jumps[thisIndex] == -1);
+                hasSibling = (jumps[thisIndex] >= 0);
+                continue;
+            }
+            auto candidate = //_paths[pathIndexes[thisIndex]] =
                 isPrimPropertyPath ?
                 parentPath.AppendProperty(elemToken) :
                 parentPath.AppendElementToken(elemToken);
+            if (candidate != parentPath) {
+                _paths[pathIndexes[thisIndex]] = candidate;
+            }
+            else {
+                hasChild = (jumps[thisIndex] > 0) || (jumps[thisIndex] == -1);
+                hasSibling = (jumps[thisIndex] >= 0);
+                continue;
+            }
         }
+
+        fprintf(stderr, "!!! %s\n", _paths[pathIndexes[thisIndex]].GetText());
 
         // If we have either a child or a sibling but not both, then just
         // continue to the neighbor.  If we have both then spawn a task for the
