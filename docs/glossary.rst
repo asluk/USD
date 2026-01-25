@@ -1124,6 +1124,53 @@ Photoshop. :usdcpp:`UsdEditTarget` provides specific methods for selecting any
 `inherited classes <#usdglossary-inherits>`_, `reference targets
 <#usdglossary-references>`_, etc.
 
+.. _usdglossary-encapsulation:
+
+Encapsulation
+*************
+
+*Encapsulation* is a composition behavior that restricts the editability of
+`composition arcs <#usdglossary-compositionarcs>`_ once a `layer stack
+<#usdglossary-layerstack>`_ has been loaded via `Reference
+<#usdglossary-references>`_ or `Payload <#usdglossary-payload>`_ arcs. When
+content is referenced or payloaded into a stage, its internal composition
+structure becomes immutable from the perspective of the consuming stage.
+
+Encapsulation means that `list-editable operations
+<#usdglossary-listeditableops>`_ that define composition arcs can only be
+modified within the *active* `layer stack <#usdglossary-layerstack>`_ where they
+are authored. Once a layer stack is brought in through a reference or payload,
+its composition arc specifications are sealed and cannot be added to, removed,
+or reordered by the consuming stage.
+
+For example, if an asset file internally references geometry via a reference
+arc, a downstream shot that references that asset cannot remove or modify that
+internal reference. The composition structure inside the referenced asset is
+encapsulated.
+
+This behavior has important implications for pipeline design:
+
+    * **Sublayering avoids encapsulation.** Because `sublayers
+      <#usdglossary-sublayers>`_ merge into a single layer stack, shot pipelines
+      typically sublayer department contributions rather than referencing them.
+      This keeps all composition arcs editable from the shot's `root layer stack
+      <#usdglossary-rootlayerstack>`_.
+
+    * **Inherits and Specializes remain "live."** Unlike references, the
+      `Inherit <#usdglossary-inherits>`_ and `Specialize
+      <#usdglossary-specializes>`_ arcs continue to target the composed stage,
+      so they still reflect overrides applied on top of encapsulated content.
+
+    * **Variants provide flexibility.** A common pattern is to author `variants
+      <#usdglossary-variantset>`_ within assets to provide switchable
+      alternatives (including an "empty" variant to effectively remove content),
+      since variant *selections* can be overridden from outside encapsulated
+      content.
+
+    * **Deactivation as a workaround.** Setting a prim's `active
+      <#usdglossary-active-inactive>`_ metadata to *false* can effectively
+      prune content that cannot be removed via composition arc editing.
+
 .. _usdglossary-fallback:
 
 Fallback
