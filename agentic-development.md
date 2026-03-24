@@ -34,6 +34,90 @@ I did not specify function names, signatures, or which overloads to expose.
 My role: goal-setting, acceptance testing, code review, and the domain
 judgment calls described below.
 
+### Iteration: Pixar review feedback
+
+Pixar's review noted that `RegisterPluginValidator` bindings were missing.
+This is the registration path where metadata comes from `plugInfo.json`
+rather than being constructed at call time; it is how most shipped validators
+are actually discovered and loaded.
+
+The reviewer also suggested a notice handler for runtime dynamic
+registration.  I scoped those as separate concerns: plugin bindings are
+required for the PR; the notice handler is a registry-level feature that
+belongs in a follow-up.
+
+From that direction, the agent (Opus):
+- Explored the full C++ `UsdValidationRegistry` API, identified the
+  distinction between `RegisterValidator` (explicit metadata) and
+  `RegisterPluginValidator` (name-only; metadata from `plugInfo.json`)
+- Added four `RegisterPlugin*Validator` methods plus
+  `RegisterPluginValidatorSuite` to the Python bindings
+- Noted that `UsdValidationFixer` has no Python constructor (`no_init`), so
+  exposing the optional fixers parameter would be useless; skipped it
+- Added four plugin registration tests, including metadata verification
+  (confirming the doc string and keywords come from `plugInfo.json`, not
+  from the caller)
+- Updated the README with a decision guide: when to use explicit vs. plugin
+  registration
+- Added the `LayerStackMetadataConsistencyChecker` declaration to the
+  `usdGeomValidators` `plugInfo.json` -- the same plugin that ships
+  `StageMetadataChecker` and `EncapsulationChecker` -- and tested
+  end-to-end on Kitchen_set using the plugin registration path
+
+The end-to-end test verified the full plugin lifecycle:
+1. Metadata was discoverable from `plugInfo.json` before registration
+   (`GetValidatorMetadata` returned the name, doc, and inherited
+   `UsdGeomValidators` keyword)
+2. Registration used `RegisterPluginStageValidator(name, callable)`;
+   no `ValidatorMetadata` struct needed
+3. The Python validator appeared alongside C++ validators in keyword
+   queries (`GetValidatorMetadataForKeyword("UsdGeomValidators")`) --
+   from the outside, indistinguishable from a C++ implementation
+4. Kitchen_set: 230 layers, all agree on upAxis=Z, no conflicts
+5. A deliberately mismatched stage (Z-vs-Y sublayers) correctly
+   produced the `UpAxisMismatch` warning
+
+The practical significance: a team can declare validators in
+`plugInfo.json` for discoverability and keyword grouping, then
+implement the logic in Python.  Tools that query the registry by
+keyword or schema type find the Python validator the same way they
+find C++ ones.  The implementation language is an invisible detail.
+
+### How plugin registration is triggered
+
+For C++ plugins, `TF_REGISTRY_FUNCTION(UsdValidationRegistry)` runs
+automatically when the shared library is loaded.  For Python, the
+equivalent is top-level code in the plugin module's `__init__.py`.
+
+USD's Plug system already supports `"Type": "python"` plugins.  When
+`plugin->Load()` is called for a Python plugin, it runs
+`import <module_name>` via `TfPyRunSimpleString`.  All module-level
+code executes at that point, including `RegisterPluginValidator`
+calls.  This is the same mechanism used for `Tf.Type.Define()`, kind
+registry extensions, and usdview plugins throughout USD.
+
+The intended lazy-load flow for a Python validator plugin:
+
+1. `plugInfo.json` declares `"Type": "python"`, `"Name":
+   "myPyValidators"`, with validator metadata in `Info.Validators`
+2. Registry parses metadata at startup; validators are discoverable
+   by keyword and schema type before any code loads
+3. Client calls `GetOrLoadValidatorByName("myPyValidators:CheckX")`
+4. Registry sees `metadata.pluginPtr`; calls `pluginPtr->Load()`
+5. Plug system does `import myPyValidators`
+6. `myPyValidators/__init__.py` calls
+   `registry.RegisterPluginStageValidator("myPyValidators:CheckX", fn)`
+7. Validator is registered and returned to the caller
+
+**What has been tested vs. what has not.**  The POC tested steps 1-3
+and 6-7 by manually registering the plugin path and calling
+`RegisterPluginStageValidator` from a script.  The full lazy-load
+chain (steps 3-6 triggered by a single `GetOrLoadValidatorByName`
+call on a `"Type": "python"` plugin) has not yet been tested
+end-to-end.  That test requires building a Python-type test plugin
+with its own `plugInfo.json` and `__init__.py`, which is the natural
+next step.
+
 ---
 
 ## Where Human Judgment Mattered
@@ -163,17 +247,60 @@ code.**
 **For any validator, schema change, or tool, run it against a non-trivial
 real asset before submitting the PR.**
 
-### 10. The build-and-test loop is not automatic
+### 10. Scoping reviewer feedback into separable pieces
 
-- Agent did not independently build or run tests after writing code
-- I had to ask explicitly; when it ran a subset, I had to clarify: "I mean
-  all tests available in the repository"
-- Build phase consumed significant session time: Windows DLL loading, stale
-  `.pyd` files, `os.add_dll_directory` on Python 3.8+
-- "Run tests early and often" was aspirational, not automatic
+- Pixar's review asked for two things: `RegisterPluginValidator` bindings
+  and a notice handler for dynamic registration
+- The notice handler is a valid enhancement, but it is a C++ framework
+  change to the registry itself; it affects all registration paths (C++ and
+  Python), not just the Python bindings
+- No notice infrastructure exists in usdValidation today; adding one is a
+  design discussion, not a mechanical addition
+- I scoped the PR to plugin bindings only and noted the notice handler as a
+  follow-up
+- The agent, when asked whether Python validators are usable without the
+  notice handler, correctly analyzed the gap: the notice is about
+  *discovery* (a UI caching a validator list would not learn about a new
+  one), not *functionality* (register, query, validate all work)
 
-**Explicitly request builds and full test runs at checkpoints.  Budget time
-for platform-specific issues the agent will need to debug.**
+**When a reviewer asks for multiple things, evaluate whether they are
+separable.  Bundling a framework-level design change into an API-surface PR
+risks delaying both.  Separate what can ship now from what needs its own
+design discussion.**
+
+### 11. Writing for the next developer, not just the next reviewer
+
+- Pixar's feedback implicitly raised a question: how should someone else
+  reason about which registration path to use?
+- The agent added a decision guide to the README: a table comparing explicit
+  vs. plugin registration on metadata source, discoverability, lazy loading,
+  and use case
+- This was not requested in the review; it was the natural response to "how
+  would another developer reason about this"
+- The guide makes the two paths self-documenting rather than requiring
+  someone to read the C++ headers to understand when each applies
+
+**Documentation that only describes *how* is incomplete.  The harder
+question is *when* and *why*.  A decision guide at the point of use saves
+every future reader from rediscovering the reasoning.**
+
+### 12. The build-and-test loop is improving but still directed
+
+- In the initial sessions, the agent did not independently build or run
+  tests after writing code; I had to ask explicitly
+- In the plugin-bindings session, the agent built, copied artifacts, ran all
+  tests, caught a metadata accessor bug (`GetDoc()` vs. `doc` attribute),
+  fixed it, re-ran to green, and ran the existing test suite for regression;
+  all without prompting beyond "let's build and test"
+- The remaining manual step: I still had to say "let's build and test"
+  rather than the agent proposing it after completing the implementation
+- Platform-specific mechanics (copying `.pyd` and `.dll` to `_install/`,
+  updating the installed `plugInfo.json`) were handled correctly from
+  persistent memory of the build environment
+
+**The build-and-test loop has shifted from "agent needs step-by-step
+instructions" to "agent needs a prompt to start but handles the mechanics."
+The next step is the agent proposing the build at natural checkpoints.**
 
 ---
 
@@ -202,10 +329,20 @@ the human role would undermine the point.
 ## Practical Limitations
 
 **Context does not survive model switches.**
-- Sessions used Sonnet (implementation) and Opus (review/iteration)
+- Early sessions used Sonnet (implementation) and Opus (review/iteration)
 - Sonnet tracked a test failure backlog in working memory but never persisted
   it; Opus had no knowledge of those results
 - Recovery required searching through Sonnet's raw transcript
+
+**Persistent memory narrows the gap across sessions.**
+- The plugin-bindings session (Opus) picked up the full build environment,
+  test invocation patterns, and coding conventions from persistent memory
+  files written during earlier sessions
+- It did not need to rediscover the `_install/` directory layout, the
+  DLL-loading subprocess trick, or the `metadata.doc` vs. `GetDoc()` API
+  style; it read memory, verified against current state, and proceeded
+- The initial investment in writing those memories (one-time, earlier
+  sessions) paid off in zero ramp-up time
 
 **Any workflow that spans sessions or models must persist state to files, not
 rely on in-context memory.**
