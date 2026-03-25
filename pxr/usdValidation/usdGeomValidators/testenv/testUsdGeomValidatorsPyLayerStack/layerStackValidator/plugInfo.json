@@ -1,0 +1,16 @@
+{
+    "Plugins": [
+        {
+            "Type": "python",
+            "Name": "layerStackValidator",
+            "Info": {
+                "Validators": {
+                    "LayerStackMetadataConsistencyChecker": {
+                        "doc": "Checks all layers for conflicting metersPerUnit or upAxis values.",
+                        "keywords": ["UsdGeomValidators"]
+                    }
+                }
+            }
+        }
+    ]
+}

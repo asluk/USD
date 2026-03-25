@@ -46,6 +46,7 @@ pxr_test_scripts(
 pxr_register_test(testUsdGeomValidatorsPyLayerStack
     PYTHON
     COMMAND "${CMAKE_INSTALL_PREFIX}/tests/testUsdGeomValidatorsPyLayerStack"
+    TESTENV testenv/testUsdGeomValidatorsPyLayerStack
     EXPECTED_RETURN_CODE 0
 )
 

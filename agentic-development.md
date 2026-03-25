@@ -59,29 +59,34 @@ From that direction, the agent (Opus):
   from the caller)
 - Updated the README with a decision guide: when to use explicit vs. plugin
   registration
-- Added the `LayerStackMetadataConsistencyChecker` declaration to the
-  `usdGeomValidators` `plugInfo.json` -- the same plugin that ships
-  `StageMetadataChecker` and `EncapsulationChecker` -- and tested
-  end-to-end on Kitchen_set using the plugin registration path
+- Built `testUsdValidationPyPlugin`, an end-to-end test plugin with
+  `"Type": "python"` plugInfo.json and `__init__.py` registration,
+  proving the full lazy-load chain works for Python validators
+- Updated the README with a "How Python plugin validators are
+  triggered" section covering the lazy-load flow, directory structure,
+  and example `plugInfo.json` + `__init__.py`
+- Converted the POC layer-stack validator from explicit registration
+  to a proper Python-type plugin (`layerStackValidator/` package with
+  its own `plugInfo.json` and `__init__.py` calling
+  `RegisterPluginStageValidator`)
 
-The end-to-end test verified the full plugin lifecycle:
-1. Metadata was discoverable from `plugInfo.json` before registration
-   (`GetValidatorMetadata` returned the name, doc, and inherited
-   `UsdGeomValidators` keyword)
-2. Registration used `RegisterPluginStageValidator(name, callable)`;
-   no `ValidatorMetadata` struct needed
-3. The Python validator appeared alongside C++ validators in keyword
-   queries (`GetValidatorMetadataForKeyword("UsdGeomValidators")`) --
-   from the outside, indistinguishable from a C++ implementation
-4. Kitchen_set: 230 layers, all agree on upAxis=Z, no conflicts
-5. A deliberately mismatched stage (Z-vs-Y sublayers) correctly
-   produced the `UpAxisMismatch` warning
+The end-to-end tests verified the full plugin lifecycle:
+1. Metadata discoverable from `plugInfo.json` before any code loads
+   (`GetValidatorMetadata` returned name, doc, keywords)
+2. `GetOrLoadValidatorByName` triggers `plugin->Load()`, which does
+   `import <module_name>`, running `__init__.py` registration code
+3. The Python validator appears alongside C++ validators in keyword
+   queries -- from the outside, indistinguishable from a C++
+   implementation
+4. Kitchen_set (230 layers): all agree on upAxis=Z, no conflicts
+5. Deliberately mismatched stages correctly produce warnings
 
-The practical significance: a team can declare validators in
-`plugInfo.json` for discoverability and keyword grouping, then
-implement the logic in Python.  Tools that query the registry by
-keyword or schema type find the Python validator the same way they
-find C++ ones.  The implementation language is an invisible detail.
+The progression from explicit to plugin registration on the POC
+branch demonstrates both paths working and illustrates the
+practical difference: explicit registration is simpler for scripts
+and prototyping; plugin registration gives discoverability and lazy
+loading for shipped validators.  The implementation language is an
+invisible detail.
 
 ### How plugin registration is triggered
 
@@ -109,14 +114,20 @@ The intended lazy-load flow for a Python validator plugin:
    `registry.RegisterPluginStageValidator("myPyValidators:CheckX", fn)`
 7. Validator is registered and returned to the caller
 
-**What has been tested vs. what has not.**  The POC tested steps 1-3
-and 6-7 by manually registering the plugin path and calling
-`RegisterPluginStageValidator` from a script.  The full lazy-load
-chain (steps 3-6 triggered by a single `GetOrLoadValidatorByName`
-call on a `"Type": "python"` plugin) has not yet been tested
-end-to-end.  That test requires building a Python-type test plugin
-with its own `plugInfo.json` and `__init__.py`, which is the natural
-next step.
+**This flow has been tested end-to-end.**  The PR branch includes
+`testUsdValidationPyPlugin`, a test plugin with `"Type": "python"` in
+its `plugInfo.json` and registration code in `__init__.py`.  The test
+verifies: metadata is discoverable before any code loads (step 2);
+`GetOrLoadValidatorByName` triggers `plugin->Load()` which imports
+the module and runs the registration (steps 3-7); the validator
+executes correctly; and keyword queries find the plugin validators.
+
+The POC layer-stack validator was then converted from explicit
+registration (`RegisterStageValidator` with caller-provided metadata)
+to a proper Python-type plugin: a `layerStackValidator/` package with
+its own `plugInfo.json` and `__init__.py` calling
+`RegisterPluginStageValidator`.  All 9 tests pass, including two new
+ones for metadata discoverability and keyword query.
 
 ---
 

@@ -5,128 +5,58 @@
 # Licensed under the terms set forth in the LICENSE.txt file available at
 # https://openusd.org/license.
 
-"""Tests for a Python-implemented layer-stack metadata consistency validator.
+"""Tests for a Python-plugin layer-stack metadata consistency validator.
 
-The validator registered here supplements the C++ StageMetadataChecker: where
-StageMetadataChecker flags a stage that is missing metersPerUnit or upAxis
-entirely, this validator flags a stage whose layers *disagree* on those values.
+This test exercises the full plugin lazy-load path:
+
+1. plugInfo.json ("Type": "python") declares validator metadata.
+2. Plug.Registry().RegisterPlugins() discovers the plugin; the
+   ValidationRegistry parses its Validators metadata.
+3. GetOrLoadValidatorByName() triggers plugin->Load(), which does
+   ``import layerStackValidator``.
+4. The module's top-level code calls RegisterPluginStageValidator.
+5. The validator is returned and can be invoked.
+
+The validator itself supplements the C++ StageMetadataChecker: where that
+validator flags a stage missing metersPerUnit or upAxis entirely, this one
+flags a stage whose layers *disagree* on those values.
 """
 
+import os
+import sys
 import unittest
 
-from pxr import Sdf, Usd, UsdGeom, UsdValidation
+from pxr import Plug, Sdf, Usd, UsdGeom, UsdValidation
 
 
-# ---------------------------------------------------------------------------
-# Validator implementation
-#
-# Python validators cannot be declared in plugInfo.json, so they must be
-# registered explicitly.  This module registers the validator once, at import
-# time.  Because the registry is a process-wide singleton, any test process
-# that imports this module will have the validator available immediately.
+_PLUGIN_NAME = "layerStackValidator"
+_VALIDATOR_NAME = _PLUGIN_NAME + ":LayerStackMetadataConsistencyChecker"
 
-_VALIDATOR_NAME = "usdGeomValidators:LayerStackMetadataConsistencyChecker"
-
-
-def _check_layer_stack_metadata(stage, timeRange):
-    """Report metersPerUnit and upAxis disagreements across the layer stack.
-
-    USD resolves stage-level metadata by "strongest opinion wins" (the root
-    layer's value takes effect), so a mismatch does not cause a hard failure
-    at runtime.  It is nonetheless a common authoring mistake: a sublayer may
-    have been created under different unit or orientation assumptions, and the
-    disagreement can silently affect content that relies on those defaults.
-    This validator surfaces the conflict as a warning.
-
-    Note: this checks all layers returned by GetUsedLayers(), not just the
-    root stage's direct sublayer stack.  A referenced or payloaded asset can
-    author its own metersPerUnit or upAxis, and that disagreement is just as
-    dangerous as a sublayer conflict — the root stage's value silently wins.
-    """
-    # GetUsedLayers covers every layer that contributes to the stage,
-    # including referenced and payloaded asset files.  GetLayerStack would
-    # only see direct sublayers of the root, missing the case where a newly
-    # added referenced asset was authored under different units or orientation.
-    used_layers = stage.GetUsedLayers()
-
-    # Collect the value authored in each layer, preserving stack order so
-    # the diagnostic message lists layers from strongest to weakest.
-    mpu_by_layer = {}   # {identifier: float}
-    axis_by_layer = {}  # {identifier: str}
-
-    for layer in used_layers:
-        pseudo_root = layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
-        if pseudo_root is None:
-            continue
-        if pseudo_root.HasInfo(UsdGeom.Tokens.metersPerUnit):
-            mpu_by_layer[layer.identifier] = pseudo_root.GetInfo(
-                UsdGeom.Tokens.metersPerUnit
-            )
-        if pseudo_root.HasInfo(UsdGeom.Tokens.upAxis):
-            # upAxis is a token; convert to str for set comparison.
-            axis_by_layer[layer.identifier] = str(
-                pseudo_root.GetInfo(UsdGeom.Tokens.upAxis)
-            )
-
-    errors = []
-    site = UsdValidation.ValidationErrorSite(stage, Sdf.Path.absoluteRootPath)
-
-    if len(set(mpu_by_layer.values())) > 1:
-        detail = "; ".join(
-            f"{lid}={v}" for lid, v in mpu_by_layer.items()
-        )
-        errors.append(
-            UsdValidation.ValidationError(
-                "MetersPerUnitMismatch",
-                UsdValidation.ValidationErrorType.Warn,
-                [site],
-                f"Layer stack has conflicting metersPerUnit values: {detail}",
-            )
-        )
-
-    if len(set(axis_by_layer.values())) > 1:
-        detail = "; ".join(
-            f"{lid}={v}" for lid, v in axis_by_layer.items()
-        )
-        errors.append(
-            UsdValidation.ValidationError(
-                "UpAxisMismatch",
-                UsdValidation.ValidationErrorType.Warn,
-                [site],
-                f"Layer stack has conflicting upAxis values: {detail}",
-            )
-        )
-
-    return errors
-
-
-def _register_validator():
-    registry = UsdValidation.ValidationRegistry()
-    # Guard against re-registration if this module is imported more than once
-    # in a process (the registry is a singleton and does not allow duplicate
-    # names).
-    if registry.HasValidator(_VALIDATOR_NAME):
-        return
-    metadata = UsdValidation.ValidatorMetadata(
-        name=_VALIDATOR_NAME,
-        doc=(
-            "Checks all layers in the composed layer stack for conflicting "
-            "metersPerUnit or upAxis values.  USD silently resolves these by "
-            "taking the strongest opinion, so a mismatch can mask authoring "
-            "errors in sublayers."
-        ),
-        keywords=["UsdGeomValidators"],
-    )
-    registry.RegisterStageValidator(metadata, _check_layer_stack_metadata)
-
-
-_register_validator()
-
-
-# ---------------------------------------------------------------------------
-# Tests
 
 class TestLayerStackMetadataConsistencyChecker(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        # The plugin directory must be discoverable by PlugRegistry
+        # BEFORE the ValidationRegistry singleton is created, so that
+        # plugInfo.json metadata is parsed during registry initialization.
+        pluginDir = os.path.join(os.getcwd(), _PLUGIN_NAME)
+        if not os.path.isdir(pluginDir):
+            # Fallback for manual invocation outside ctest.
+            pluginDir = os.path.join(os.path.dirname(__file__),
+                                     "testUsdGeomValidatorsPyLayerStack",
+                                     _PLUGIN_NAME)
+        # Add the parent of the plugin package to sys.path so that
+        # ``import layerStackValidator`` resolves correctly when the
+        # Plug system does TfPyRunSimpleString("import ...").
+        parentDir = os.path.dirname(pluginDir)
+        if parentDir not in sys.path:
+            sys.path.insert(0, parentDir)
+        plugins = Plug.Registry().RegisterPlugins(pluginDir + "/")
+        assert plugins, (
+            f"Failed to register plugin from {pluginDir}")
+        assert any(p.name == _PLUGIN_NAME for p in plugins), (
+            f"Plugin {_PLUGIN_NAME} not found in {plugins}")
 
     def _get_validator(self):
         registry = UsdValidation.ValidationRegistry()
@@ -166,7 +96,27 @@ class TestLayerStackMetadataConsistencyChecker(unittest.TestCase):
         root_layer.subLayerPaths.append(sub_layer.identifier)
         return Usd.Stage.Open(root_layer)
 
+    def test_MetadataDiscoverableBeforeLoad(self):
+        """Validator metadata from plugInfo.json is available before the
+        plugin module is imported."""
+        registry = UsdValidation.ValidationRegistry()
+        meta = registry.GetValidatorMetadata(_VALIDATOR_NAME)
+        self.assertIsNotNone(meta)
+        self.assertEqual(
+            meta.doc,
+            "Checks all layers for conflicting metersPerUnit or upAxis values.")
+        self.assertIn("UsdGeomValidators", meta.GetKeywords())
+
+    def test_DiscoverableByKeyword(self):
+        """Plugin validator appears in keyword queries."""
+        registry = UsdValidation.ValidationRegistry()
+        metadatas = registry.GetValidatorMetadataForKeyword(
+            "UsdGeomValidators")
+        names = [m.name for m in metadatas]
+        self.assertIn(_VALIDATOR_NAME, names)
+
     def test_ValidatorIsRegistered(self):
+        """GetOrLoadValidatorByName triggers plugin load and registration."""
         registry = UsdValidation.ValidationRegistry()
         self.assertTrue(registry.HasValidator(_VALIDATOR_NAME))
 
