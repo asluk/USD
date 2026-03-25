@@ -15,9 +15,12 @@ registers the Python task function with the ValidationRegistry.
 This supplements the C++ StageMetadataChecker: where that validator
 flags a stage missing metersPerUnit or upAxis entirely, this one flags
 a stage whose layers *disagree* on those values.
+
+The validator also provides fixers that resolve mismatches by
+propagating the root layer's value to all disagreeing layers.
 """
 
-from pxr import Sdf, UsdGeom, UsdValidation
+from pxr import Sdf, Usd, UsdGeom, UsdValidation
 
 _PLUGIN_NAME = "layerStackValidator"
 _VALIDATOR_NAME = _PLUGIN_NAME + ":LayerStackMetadataConsistencyChecker"
@@ -87,7 +90,110 @@ def _check_layer_stack_metadata(stage, timeRange):
     return errors
 
 
+# ---------------------------------------------------------------------------
+# Fixers
+# ---------------------------------------------------------------------------
+
+def _can_apply_mpu_fix(error, editTarget, timeCode):
+    """Return True if the edit target's layer has a metersPerUnit value
+    that differs from the root layer's value.  The error's sites list
+    contains the stage; we use it to find the root layer's authoritative
+    value."""
+    sites = error.GetSites()
+    if not sites:
+        return False
+    stage = sites[0].GetStage()
+    if stage is None:
+        return False
+    root_pseudo = stage.GetRootLayer().GetPrimAtPath(
+        Sdf.Path.absoluteRootPath)
+    if root_pseudo is None or not root_pseudo.HasInfo(
+            UsdGeom.Tokens.metersPerUnit):
+        return False
+    target_layer = editTarget.GetLayer()
+    target_pseudo = target_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
+    if target_pseudo is None or not target_pseudo.HasInfo(
+            UsdGeom.Tokens.metersPerUnit):
+        return False
+    return (target_pseudo.GetInfo(UsdGeom.Tokens.metersPerUnit)
+            != root_pseudo.GetInfo(UsdGeom.Tokens.metersPerUnit))
+
+
+def _apply_mpu_fix(error, editTarget, timeCode):
+    """Set metersPerUnit on the edit target's layer to match the root layer."""
+    sites = error.GetSites()
+    if not sites:
+        return False
+    stage = sites[0].GetStage()
+    if stage is None:
+        return False
+    root_pseudo = stage.GetRootLayer().GetPrimAtPath(
+        Sdf.Path.absoluteRootPath)
+    root_mpu = root_pseudo.GetInfo(UsdGeom.Tokens.metersPerUnit)
+    target_layer = editTarget.GetLayer()
+    target_pseudo = target_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
+    target_pseudo.SetInfo(UsdGeom.Tokens.metersPerUnit, root_mpu)
+    return True
+
+
+def _can_apply_axis_fix(error, editTarget, timeCode):
+    """Return True if the edit target's layer has an upAxis value that
+    differs from the root layer's value."""
+    sites = error.GetSites()
+    if not sites:
+        return False
+    stage = sites[0].GetStage()
+    if stage is None:
+        return False
+    root_pseudo = stage.GetRootLayer().GetPrimAtPath(
+        Sdf.Path.absoluteRootPath)
+    if root_pseudo is None or not root_pseudo.HasInfo(
+            UsdGeom.Tokens.upAxis):
+        return False
+    target_layer = editTarget.GetLayer()
+    target_pseudo = target_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
+    if target_pseudo is None or not target_pseudo.HasInfo(
+            UsdGeom.Tokens.upAxis):
+        return False
+    return (str(target_pseudo.GetInfo(UsdGeom.Tokens.upAxis))
+            != str(root_pseudo.GetInfo(UsdGeom.Tokens.upAxis)))
+
+
+def _apply_axis_fix(error, editTarget, timeCode):
+    """Set upAxis on the edit target's layer to match the root layer."""
+    sites = error.GetSites()
+    if not sites:
+        return False
+    stage = sites[0].GetStage()
+    if stage is None:
+        return False
+    root_pseudo = stage.GetRootLayer().GetPrimAtPath(
+        Sdf.Path.absoluteRootPath)
+    root_axis = root_pseudo.GetInfo(UsdGeom.Tokens.upAxis)
+    target_layer = editTarget.GetLayer()
+    target_pseudo = target_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
+    target_pseudo.SetInfo(UsdGeom.Tokens.upAxis, root_axis)
+    return True
+
+
+_mpu_fixer = UsdValidation.ValidationFixer(
+    name="MetersPerUnitFixer",
+    description="Set metersPerUnit to match the root layer's value.",
+    fixerImplFn=_apply_mpu_fix,
+    canApplyFn=_can_apply_mpu_fix,
+    errorName="MetersPerUnitMismatch",
+)
+
+_axis_fixer = UsdValidation.ValidationFixer(
+    name="UpAxisFixer",
+    description="Set upAxis to match the root layer's value.",
+    fixerImplFn=_apply_axis_fix,
+    canApplyFn=_can_apply_axis_fix,
+    errorName="UpAxisMismatch",
+)
+
 # --- Registration at import time (equivalent to TF_REGISTRY_FUNCTION) ---
 _registry = UsdValidation.ValidationRegistry()
 _registry.RegisterPluginStageValidator(
-    _VALIDATOR_NAME, _check_layer_stack_metadata)
+    _VALIDATOR_NAME, _check_layer_stack_metadata,
+    fixers=[_mpu_fixer, _axis_fixer])

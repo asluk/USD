@@ -178,6 +178,102 @@ class TestLayerStackMetadataConsistencyChecker(unittest.TestCase):
         self.assertIn("MetersPerUnitMismatch", error_names)
         self.assertIn("UpAxisMismatch", error_names)
 
+    # ------------------------------------------------------------------
+    # Fixer tests
+    # ------------------------------------------------------------------
+
+    def test_FixersAreRegistered(self):
+        """The validator should have two fixers (MPU and upAxis)."""
+        validator = self._get_validator()
+        fixers = validator.GetFixers()
+        self.assertEqual(len(fixers), 2)
+        fixer_names = {f.name for f in fixers}
+        self.assertIn("MetersPerUnitFixer", fixer_names)
+        self.assertIn("UpAxisFixer", fixer_names)
+
+    def test_FixersByErrorName(self):
+        """Each fixer should be associated with the correct error name."""
+        validator = self._get_validator()
+        mpu_fixers = validator.GetFixersByErrorName("MetersPerUnitMismatch")
+        self.assertTrue(
+            any(f.name == "MetersPerUnitFixer" for f in mpu_fixers))
+        axis_fixers = validator.GetFixersByErrorName("UpAxisMismatch")
+        self.assertTrue(
+            any(f.name == "UpAxisFixer" for f in axis_fixers))
+
+    def test_MetersPerUnitFixer_CanApplyAndApply(self):
+        """The MPU fixer should resolve a metersPerUnit mismatch."""
+        stage = self._make_two_layer_stage(
+            root_mpu=1.0, root_axis="Y", sub_mpu=0.01, sub_axis="Y"
+        )
+        validator = self._get_validator()
+        errors = validator.Validate(stage)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].GetName(), "MetersPerUnitMismatch")
+
+        fixer = validator.GetFixerByName("MetersPerUnitFixer")
+        self.assertIsNotNone(fixer)
+
+        # The sublayer has the wrong value; target the fix there.
+        sub_layer = stage.GetUsedLayers()[-1]
+        editTarget = Usd.EditTarget(sub_layer)
+
+        self.assertTrue(fixer.CanApplyFix(errors[0], editTarget))
+        self.assertTrue(fixer.ApplyFix(errors[0], editTarget))
+
+        # After the fix, the sublayer should have the root's value.
+        sub_pseudo = sub_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
+        self.assertEqual(
+            sub_pseudo.GetInfo(UsdGeom.Tokens.metersPerUnit), 1.0)
+
+        # Re-validate: no more errors.
+        errors_after = validator.Validate(stage)
+        self.assertEqual(len(errors_after), 0)
+
+    def test_UpAxisFixer_CanApplyAndApply(self):
+        """The upAxis fixer should resolve an upAxis mismatch."""
+        stage = self._make_two_layer_stage(
+            root_mpu=1.0, root_axis="Y", sub_mpu=1.0, sub_axis="Z"
+        )
+        validator = self._get_validator()
+        errors = validator.Validate(stage)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].GetName(), "UpAxisMismatch")
+
+        fixer = validator.GetFixerByName("UpAxisFixer")
+        self.assertIsNotNone(fixer)
+
+        sub_layer = stage.GetUsedLayers()[-1]
+        editTarget = Usd.EditTarget(sub_layer)
+
+        self.assertTrue(fixer.CanApplyFix(errors[0], editTarget))
+        self.assertTrue(fixer.ApplyFix(errors[0], editTarget))
+
+        # After the fix, the sublayer should have the root's value.
+        sub_pseudo = sub_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
+        self.assertEqual(
+            str(sub_pseudo.GetInfo(UsdGeom.Tokens.upAxis)), "Y")
+
+        # Re-validate: no more errors.
+        errors_after = validator.Validate(stage)
+        self.assertEqual(len(errors_after), 0)
+
+    def test_FixerCanApply_ReturnsFalse_WhenNoMismatch(self):
+        """CanApplyFix should return False when the target layer agrees
+        with the root layer."""
+        stage = self._make_two_layer_stage(
+            root_mpu=1.0, root_axis="Y", sub_mpu=0.01, sub_axis="Y"
+        )
+        validator = self._get_validator()
+        errors = validator.Validate(stage)
+        self.assertEqual(len(errors), 1)
+
+        # The root layer already has the correct value; CanApplyFix
+        # should return False when targeting the root layer.
+        fixer = validator.GetFixerByName("MetersPerUnitFixer")
+        root_target = Usd.EditTarget(stage.GetRootLayer())
+        self.assertFalse(fixer.CanApplyFix(errors[0], root_target))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -52,8 +52,8 @@ From that direction, the agent (Opus):
   `RegisterPluginValidator` (name-only; metadata from `plugInfo.json`)
 - Added four `RegisterPlugin*Validator` methods plus
   `RegisterPluginValidatorSuite` to the Python bindings
-- Noted that `UsdValidationFixer` has no Python constructor (`no_init`), so
-  exposing the optional fixers parameter would be useless; skipped it
+- Noted that `UsdValidationFixer` had no Python constructor (`no_init`), so
+  deferred the optional fixers parameter to a follow-up (see below)
 - Added four plugin registration tests, including metadata verification
   (confirming the doc string and keywords come from `plugInfo.json`, not
   from the caller)
@@ -128,6 +128,46 @@ to a proper Python-type plugin: a `layerStackValidator/` package with
 its own `plugInfo.json` and `__init__.py` calling
 `RegisterPluginStageValidator`.  All 9 tests pass, including two new
 ones for metadata discoverability and keyword query.
+
+### Iteration: Python fixer support
+
+The previous plugin-bindings pass had explicitly noted that
+`UsdValidationFixer` was not constructible from Python (`no_init`) and
+deferred the work.  With the validator and plugin-registration paths
+proven, the natural next step was enabling Python fixers so that a
+validator plugin can ship both the check and the fix in one package.
+
+The direction was again one sentence: "How much work would it be to
+implement Python support for usdValidation fixers?"  After an
+architecture assessment (~30 minutes of autonomous exploration), the
+agent confirmed the work was mechanical: the same `TfPyObjWrapper` +
+`TfPyLock` + `PyErr_Clear()` GIL-safety pattern used for validators
+applies identically to fixer callables.
+
+From that assessment, the agent (Opus):
+- Added `_WrapFixerImplFn` and `_WrapFixerCanApplyFn` in
+  `wrapFixer.cpp`, following the validator wrapper pattern exactly
+- Exposed `ValidationFixer.__init__` via `make_constructor`, accepting
+  Python callables for `fixerImplFn` and `canApplyFn` with optional
+  `keywords` and `errorName`
+- Added `_ExtractFixers` helper in `wrapRegistry.cpp` to convert a
+  Python list to `std::vector<UsdValidationFixer>`
+- Added an optional `fixers` parameter (default `None`) to all six
+  `Register*Validator` methods; fully backward-compatible
+- Wrote a comprehensive test suite (`testUsdValidationFixerPyRegister.py`)
+  covering construction, registration, retrieval by name/keyword/error,
+  `CanApplyFix`/`ApplyFix` round-trips, and backward compatibility
+- Added real fixers to the POC layer-stack validator: `MetersPerUnitFixer`
+  propagates the root layer's `metersPerUnit` to disagreeing layers;
+  `UpAxisFixer` does the same for `upAxis`
+- Extended the POC test suite with fixer tests: verify fixers are
+  registered, apply correctly, and re-validation produces zero errors
+
+The fixer implementation is a good example of the pattern this document
+describes: the agent handled the mechanical extension (wrappers, bindings,
+tests) while the human decision was about *when* to do the work (after
+plugin registration was proven) and *what fixers to build* for the POC
+(propagate root value vs. other strategies like removing the opinion).
 
 ---
 
