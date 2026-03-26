@@ -163,11 +163,19 @@ From that assessment, the agent (Opus):
 - Extended the POC test suite with fixer tests: verify fixers are
   registered, apply correctly, and re-validation produces zero errors
 
+The agent also added an "Adding fixers in Python" section to the
+README with code examples covering construction, registration,
+retrieval, and the `CanApplyFix`/`ApplyFix` workflow.  Every Python
+code snippet in the README (both the existing validator examples and
+the new fixer examples) was extracted and run against the built
+binaries to verify correctness before committing.
+
 The fixer implementation is a good example of the pattern this document
 describes: the agent handled the mechanical extension (wrappers, bindings,
-tests) while the human decision was about *when* to do the work (after
-plugin registration was proven) and *what fixers to build* for the POC
-(propagate root value vs. other strategies like removing the opinion).
+tests, documentation) while the human decision was about *when* to do
+the work (after plugin registration was proven) and *what fixers to
+build* for the POC (propagate root value vs. other strategies like
+removing the opinion).
 
 ---
 
