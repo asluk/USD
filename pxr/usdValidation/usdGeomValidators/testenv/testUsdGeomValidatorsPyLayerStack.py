@@ -24,6 +24,7 @@ flags a stage whose layers *disagree* on those values.
 
 import os
 import sys
+import tempfile
 import unittest
 
 from pxr import Plug, Sdf, Usd, UsdGeom, UsdValidation
@@ -95,6 +96,48 @@ class TestLayerStackMetadataConsistencyChecker(unittest.TestCase):
         # proxy and appending to it does not disturb the rest of the spec.
         root_layer.subLayerPaths.append(sub_layer.identifier)
         return Usd.Stage.Open(root_layer)
+
+    @staticmethod
+    def _make_two_layer_stage_on_disk(
+        root_mpu=None, root_axis=None, sub_mpu=None, sub_axis=None
+    ):
+        """Like _make_two_layer_stage but with file-backed layers.
+
+        ApplyFix calls layer.Save() internally, so tests that exercise
+        ApplyFix need layers backed by real files.  Returns (stage, [paths])
+        where paths is a list of temp file paths for cleanup.
+        """
+        sub_file = tempfile.NamedTemporaryFile(
+            suffix=".usda", delete=False, dir=tempfile.gettempdir())
+        sub_file.close()
+        root_file = tempfile.NamedTemporaryFile(
+            suffix=".usda", delete=False, dir=tempfile.gettempdir())
+        root_file.close()
+
+        sub_layer = Sdf.Layer.CreateNew(sub_file.name)
+        root_layer = Sdf.Layer.CreateNew(root_file.name)
+
+        if sub_mpu is not None or sub_axis is not None:
+            lines = ["#usda 1.0", "("]
+            if sub_mpu is not None:
+                lines.append(f"    metersPerUnit = {sub_mpu}")
+            if sub_axis is not None:
+                lines.append(f'    upAxis = "{sub_axis}"')
+            lines.append(")")
+            sub_layer.ImportFromString("\n".join(lines))
+
+        root_lines = ["#usda 1.0", "("]
+        if root_mpu is not None:
+            root_lines.append(f"    metersPerUnit = {root_mpu}")
+        if root_axis is not None:
+            root_lines.append(f'    upAxis = "{root_axis}"')
+        root_lines.append(")")
+        root_layer.ImportFromString("\n".join(root_lines))
+
+        root_layer.subLayerPaths.append(sub_layer.identifier)
+        root_layer.Save()
+        sub_layer.Save()
+        return Usd.Stage.Open(root_layer), [root_file.name, sub_file.name]
 
     def test_MetadataDiscoverableBeforeLoad(self):
         """Validator metadata from plugInfo.json is available before the
@@ -201,62 +244,83 @@ class TestLayerStackMetadataConsistencyChecker(unittest.TestCase):
         self.assertTrue(
             any(f.name == "UpAxisFixer" for f in axis_fixers))
 
+    @staticmethod
+    def _find_sublayer(stage):
+        """Return the first non-root, non-session used layer."""
+        root_id = stage.GetRootLayer().identifier
+        session_id = stage.GetSessionLayer().identifier
+        for layer in stage.GetUsedLayers():
+            if (layer.identifier != root_id
+                    and layer.identifier != session_id):
+                return layer
+        return None
+
     def test_MetersPerUnitFixer_CanApplyAndApply(self):
         """The MPU fixer should resolve a metersPerUnit mismatch."""
-        stage = self._make_two_layer_stage(
+        stage, tmp_paths = self._make_two_layer_stage_on_disk(
             root_mpu=1.0, root_axis="Y", sub_mpu=0.01, sub_axis="Y"
         )
-        validator = self._get_validator()
-        errors = validator.Validate(stage)
-        self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].GetName(), "MetersPerUnitMismatch")
+        try:
+            validator = self._get_validator()
+            errors = validator.Validate(stage)
+            self.assertEqual(len(errors), 1)
+            self.assertEqual(errors[0].GetName(), "MetersPerUnitMismatch")
 
-        fixer = validator.GetFixerByName("MetersPerUnitFixer")
-        self.assertIsNotNone(fixer)
+            fixer = validator.GetFixerByName("MetersPerUnitFixer")
+            self.assertIsNotNone(fixer)
 
-        # The sublayer has the wrong value; target the fix there.
-        sub_layer = stage.GetUsedLayers()[-1]
-        editTarget = Usd.EditTarget(sub_layer)
+            # The sublayer has the wrong value; target the fix there.
+            sub_layer = self._find_sublayer(stage)
+            self.assertIsNotNone(sub_layer)
+            editTarget = Usd.EditTarget(sub_layer)
 
-        self.assertTrue(fixer.CanApplyFix(errors[0], editTarget))
-        self.assertTrue(fixer.ApplyFix(errors[0], editTarget))
+            self.assertTrue(fixer.CanApplyFix(errors[0], editTarget))
+            self.assertTrue(fixer.ApplyFix(errors[0], editTarget))
 
-        # After the fix, the sublayer should have the root's value.
-        sub_pseudo = sub_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
-        self.assertEqual(
-            sub_pseudo.GetInfo(UsdGeom.Tokens.metersPerUnit), 1.0)
+            # After the fix, the sublayer should have the root's value.
+            sub_pseudo = sub_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
+            self.assertEqual(
+                sub_pseudo.GetInfo(UsdGeom.Tokens.metersPerUnit), 1.0)
 
-        # Re-validate: no more errors.
-        errors_after = validator.Validate(stage)
-        self.assertEqual(len(errors_after), 0)
+            # Re-validate: no more errors.
+            errors_after = validator.Validate(stage)
+            self.assertEqual(len(errors_after), 0)
+        finally:
+            for p in tmp_paths:
+                os.unlink(p)
 
     def test_UpAxisFixer_CanApplyAndApply(self):
         """The upAxis fixer should resolve an upAxis mismatch."""
-        stage = self._make_two_layer_stage(
+        stage, tmp_paths = self._make_two_layer_stage_on_disk(
             root_mpu=1.0, root_axis="Y", sub_mpu=1.0, sub_axis="Z"
         )
-        validator = self._get_validator()
-        errors = validator.Validate(stage)
-        self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].GetName(), "UpAxisMismatch")
+        try:
+            validator = self._get_validator()
+            errors = validator.Validate(stage)
+            self.assertEqual(len(errors), 1)
+            self.assertEqual(errors[0].GetName(), "UpAxisMismatch")
 
-        fixer = validator.GetFixerByName("UpAxisFixer")
-        self.assertIsNotNone(fixer)
+            fixer = validator.GetFixerByName("UpAxisFixer")
+            self.assertIsNotNone(fixer)
 
-        sub_layer = stage.GetUsedLayers()[-1]
-        editTarget = Usd.EditTarget(sub_layer)
+            sub_layer = self._find_sublayer(stage)
+            self.assertIsNotNone(sub_layer)
+            editTarget = Usd.EditTarget(sub_layer)
 
-        self.assertTrue(fixer.CanApplyFix(errors[0], editTarget))
-        self.assertTrue(fixer.ApplyFix(errors[0], editTarget))
+            self.assertTrue(fixer.CanApplyFix(errors[0], editTarget))
+            self.assertTrue(fixer.ApplyFix(errors[0], editTarget))
 
-        # After the fix, the sublayer should have the root's value.
-        sub_pseudo = sub_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
-        self.assertEqual(
-            str(sub_pseudo.GetInfo(UsdGeom.Tokens.upAxis)), "Y")
+            # After the fix, the sublayer should have the root's value.
+            sub_pseudo = sub_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
+            self.assertEqual(
+                str(sub_pseudo.GetInfo(UsdGeom.Tokens.upAxis)), "Y")
 
-        # Re-validate: no more errors.
-        errors_after = validator.Validate(stage)
-        self.assertEqual(len(errors_after), 0)
+            # Re-validate: no more errors.
+            errors_after = validator.Validate(stage)
+            self.assertEqual(len(errors_after), 0)
+        finally:
+            for p in tmp_paths:
+                os.unlink(p)
 
     def test_FixerCanApply_ReturnsFalse_WhenNoMismatch(self):
         """CanApplyFix should return False when the target layer agrees

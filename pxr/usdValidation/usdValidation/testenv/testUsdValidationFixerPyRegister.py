@@ -149,6 +149,8 @@ class TestFixerWithExplicitRegistration(unittest.TestCase):
 
         os.unlink(tmp.name)
 
+        os.unlink(tmp.name)
+
     def test_StageValidatorWithFixer(self):
         """Register a stage validator with a Python fixer."""
         registry = UsdValidation.ValidationRegistry()
