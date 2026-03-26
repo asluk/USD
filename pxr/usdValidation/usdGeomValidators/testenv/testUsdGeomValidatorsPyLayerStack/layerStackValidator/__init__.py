@@ -5,25 +5,31 @@
 # https://openusd.org/license.
 #
 
-"""Python plugin that checks layer-stack metadata consistency.
+"""Python plugin validators for layer-stack metadata.
 
-When the Plug registry loads this module (triggered by
-GetOrLoadValidatorByName for the validator declared in this plugin's
-plugInfo.json), the top-level registration code below runs and
-registers the Python task function with the ValidationRegistry.
+Registers two validators:
 
-This supplements the C++ StageMetadataChecker: where that validator
-flags a stage missing metersPerUnit or upAxis entirely, this one flags
-a stage whose layers *disagree* on those values.
+1. **LayerStackMetadataConsistencyChecker** (detect-only) -- flags layers
+   that *disagree* on metersPerUnit or upAxis.  No fixer is provided
+   because silently rewriting metadata without rescaling geometry or
+   adjusting orientation would make the metadata lie about the data.
 
-The validator also provides fixers that resolve mismatches by
-propagating the root layer's value to all disagreeing layers.
+2. **LayerMetadataFallbackChecker** -- flags layers that do not explicitly
+   author metersPerUnit or upAxis (relying on implicit fallback values).
+   Provides fixers that write the OpenUSD fallback values
+   (metersPerUnit = 0.01 / centimeters, upAxis = "Y") so the intent is
+   explicit rather than implied.
 """
 
-from pxr import Sdf, Usd, UsdGeom, UsdValidation
+from pxr import Sdf, UsdGeom, UsdValidation
 
 _PLUGIN_NAME = "layerStackValidator"
-_VALIDATOR_NAME = _PLUGIN_NAME + ":LayerStackMetadataConsistencyChecker"
+
+# ---------------------------------------------------------------------------
+# Validator 1: cross-layer mismatch detection (no fixers)
+# ---------------------------------------------------------------------------
+
+_CONSISTENCY_NAME = _PLUGIN_NAME + ":LayerStackMetadataConsistencyChecker"
 
 
 def _check_layer_stack_metadata(stage, timeRange):
@@ -38,7 +44,7 @@ def _check_layer_stack_metadata(stage, timeRange):
     Note: this checks all layers returned by GetUsedLayers(), not just the
     root stage's direct sublayer stack.  A referenced or payloaded asset can
     author its own metersPerUnit or upAxis, and that disagreement is just as
-    dangerous as a sublayer conflict — the root stage's value silently wins.
+    dangerous as a sublayer conflict; the root stage's value silently wins.
     """
     used_layers = stage.GetUsedLayers()
 
@@ -91,109 +97,132 @@ def _check_layer_stack_metadata(stage, timeRange):
 
 
 # ---------------------------------------------------------------------------
-# Fixers
+# Validator 2: missing metadata with safe fixers
 # ---------------------------------------------------------------------------
 
-def _can_apply_mpu_fix(error, editTarget, timeCode):
-    """Return True if the edit target's layer has a metersPerUnit value
-    that differs from the root layer's value.  The error's sites list
-    contains the stage; we use it to find the root layer's authoritative
-    value."""
-    sites = error.GetSites()
-    if not sites:
-        return False
-    stage = sites[0].GetStage()
-    if stage is None:
-        return False
-    root_pseudo = stage.GetRootLayer().GetPrimAtPath(
-        Sdf.Path.absoluteRootPath)
-    if root_pseudo is None or not root_pseudo.HasInfo(
-            UsdGeom.Tokens.metersPerUnit):
-        return False
-    target_layer = editTarget.GetLayer()
-    target_pseudo = target_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
-    if target_pseudo is None or not target_pseudo.HasInfo(
-            UsdGeom.Tokens.metersPerUnit):
-        return False
-    return (target_pseudo.GetInfo(UsdGeom.Tokens.metersPerUnit)
-            != root_pseudo.GetInfo(UsdGeom.Tokens.metersPerUnit))
+_FALLBACK_NAME = _PLUGIN_NAME + ":LayerMetadataFallbackChecker"
+
+# OpenUSD fallback values (what the runtime assumes when nothing is authored)
+_FALLBACK_MPU = 0.01           # centimeters
+_FALLBACK_AXIS = "Y"
 
 
-def _apply_mpu_fix(error, editTarget, timeCode):
-    """Set metersPerUnit on the edit target's layer to match the root layer."""
-    sites = error.GetSites()
-    if not sites:
+def _check_missing_metadata(stage, timeRange):
+    """Flag layers that rely on implicit fallback values for metersPerUnit
+    or upAxis instead of authoring them explicitly.
+
+    Explicit metadata makes the layer's intent clear to every tool and
+    human reader; relying on fallback defaults is a common source of
+    silent unit or orientation bugs when layers move between pipelines.
+    """
+    used_layers = stage.GetUsedLayers()
+    errors = []
+
+    for layer in used_layers:
+        # Skip session layers; they are transient and should not carry
+        # persistent stage metadata.
+        if layer.anonymous and "-session" in layer.identifier:
+            continue
+
+        pseudo_root = layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
+        if pseudo_root is None:
+            continue
+
+        site = UsdValidation.ValidationErrorSite(layer,
+                                                  Sdf.Path.absoluteRootPath)
+
+        if not pseudo_root.HasInfo(UsdGeom.Tokens.metersPerUnit):
+            errors.append(
+                UsdValidation.ValidationError(
+                    "MissingMetersPerUnit",
+                    UsdValidation.ValidationErrorType.Warn,
+                    [site],
+                    f"Layer '{layer.identifier}' does not author "
+                    f"metersPerUnit (fallback: {_FALLBACK_MPU}).",
+                )
+            )
+
+        if not pseudo_root.HasInfo(UsdGeom.Tokens.upAxis):
+            errors.append(
+                UsdValidation.ValidationError(
+                    "MissingUpAxis",
+                    UsdValidation.ValidationErrorType.Warn,
+                    [site],
+                    f"Layer '{layer.identifier}' does not author "
+                    f"upAxis (fallback: \"{_FALLBACK_AXIS}\").",
+                )
+            )
+
+    return errors
+
+
+# ---------------------------------------------------------------------------
+# Fixers: write the fallback values explicitly
+#
+# These are safe because they make explicit what the runtime already assumes.
+# No geometry is rescaled, no orientation is changed; only the metadata
+# is written so the layer's intent is self-documenting.
+# ---------------------------------------------------------------------------
+
+def _can_set_mpu_fallback(error, editTarget, timeCode):
+    layer = editTarget.GetLayer()
+    pseudo_root = layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
+    return (pseudo_root is not None
+            and not pseudo_root.HasInfo(UsdGeom.Tokens.metersPerUnit))
+
+
+def _set_mpu_fallback(error, editTarget, timeCode):
+    layer = editTarget.GetLayer()
+    pseudo_root = layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
+    if pseudo_root is None:
         return False
-    stage = sites[0].GetStage()
-    if stage is None:
-        return False
-    root_pseudo = stage.GetRootLayer().GetPrimAtPath(
-        Sdf.Path.absoluteRootPath)
-    root_mpu = root_pseudo.GetInfo(UsdGeom.Tokens.metersPerUnit)
-    target_layer = editTarget.GetLayer()
-    target_pseudo = target_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
-    target_pseudo.SetInfo(UsdGeom.Tokens.metersPerUnit, root_mpu)
+    pseudo_root.SetInfo(UsdGeom.Tokens.metersPerUnit, _FALLBACK_MPU)
     return True
 
 
-def _can_apply_axis_fix(error, editTarget, timeCode):
-    """Return True if the edit target's layer has an upAxis value that
-    differs from the root layer's value."""
-    sites = error.GetSites()
-    if not sites:
-        return False
-    stage = sites[0].GetStage()
-    if stage is None:
-        return False
-    root_pseudo = stage.GetRootLayer().GetPrimAtPath(
-        Sdf.Path.absoluteRootPath)
-    if root_pseudo is None or not root_pseudo.HasInfo(
-            UsdGeom.Tokens.upAxis):
-        return False
-    target_layer = editTarget.GetLayer()
-    target_pseudo = target_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
-    if target_pseudo is None or not target_pseudo.HasInfo(
-            UsdGeom.Tokens.upAxis):
-        return False
-    return (str(target_pseudo.GetInfo(UsdGeom.Tokens.upAxis))
-            != str(root_pseudo.GetInfo(UsdGeom.Tokens.upAxis)))
+def _can_set_axis_fallback(error, editTarget, timeCode):
+    layer = editTarget.GetLayer()
+    pseudo_root = layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
+    return (pseudo_root is not None
+            and not pseudo_root.HasInfo(UsdGeom.Tokens.upAxis))
 
 
-def _apply_axis_fix(error, editTarget, timeCode):
-    """Set upAxis on the edit target's layer to match the root layer."""
-    sites = error.GetSites()
-    if not sites:
+def _set_axis_fallback(error, editTarget, timeCode):
+    layer = editTarget.GetLayer()
+    pseudo_root = layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
+    if pseudo_root is None:
         return False
-    stage = sites[0].GetStage()
-    if stage is None:
-        return False
-    root_pseudo = stage.GetRootLayer().GetPrimAtPath(
-        Sdf.Path.absoluteRootPath)
-    root_axis = root_pseudo.GetInfo(UsdGeom.Tokens.upAxis)
-    target_layer = editTarget.GetLayer()
-    target_pseudo = target_layer.GetPrimAtPath(Sdf.Path.absoluteRootPath)
-    target_pseudo.SetInfo(UsdGeom.Tokens.upAxis, root_axis)
+    pseudo_root.SetInfo(UsdGeom.Tokens.upAxis, _FALLBACK_AXIS)
     return True
 
 
 _mpu_fixer = UsdValidation.ValidationFixer(
-    name="MetersPerUnitFixer",
-    description="Set metersPerUnit to match the root layer's value.",
-    fixerImplFn=_apply_mpu_fix,
-    canApplyFn=_can_apply_mpu_fix,
-    errorName="MetersPerUnitMismatch",
+    name="SetMetersPerUnitFallback",
+    description=(
+        f"Explicitly author metersPerUnit = {_FALLBACK_MPU} (centimeters), "
+        f"the OpenUSD fallback value."),
+    fixerImplFn=_set_mpu_fallback,
+    canApplyFn=_can_set_mpu_fallback,
+    errorName="MissingMetersPerUnit",
 )
 
 _axis_fixer = UsdValidation.ValidationFixer(
-    name="UpAxisFixer",
-    description="Set upAxis to match the root layer's value.",
-    fixerImplFn=_apply_axis_fix,
-    canApplyFn=_can_apply_axis_fix,
-    errorName="UpAxisMismatch",
+    name="SetUpAxisFallback",
+    description=(
+        f"Explicitly author upAxis = \"{_FALLBACK_AXIS}\", "
+        f"the OpenUSD fallback value."),
+    fixerImplFn=_set_axis_fallback,
+    canApplyFn=_can_set_axis_fallback,
+    errorName="MissingUpAxis",
 )
+
 
 # --- Registration at import time (equivalent to TF_REGISTRY_FUNCTION) ---
 _registry = UsdValidation.ValidationRegistry()
+
 _registry.RegisterPluginStageValidator(
-    _VALIDATOR_NAME, _check_layer_stack_metadata,
+    _CONSISTENCY_NAME, _check_layer_stack_metadata)
+
+_registry.RegisterPluginStageValidator(
+    _FALLBACK_NAME, _check_missing_metadata,
     fixers=[_mpu_fixer, _axis_fixer])

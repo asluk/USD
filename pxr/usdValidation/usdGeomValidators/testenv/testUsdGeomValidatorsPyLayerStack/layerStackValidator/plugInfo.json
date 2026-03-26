@@ -8,6 +8,10 @@
                     "LayerStackMetadataConsistencyChecker": {
                         "doc": "Checks all layers for conflicting metersPerUnit or upAxis values.",
                         "keywords": ["UsdGeomValidators"]
+                    },
+                    "LayerMetadataFallbackChecker": {
+                        "doc": "Checks that layers explicitly author metersPerUnit and upAxis rather than relying on fallback values.",
+                        "keywords": ["UsdGeomValidators"]
                     }
                 }
             }

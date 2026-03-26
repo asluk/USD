@@ -78,7 +78,8 @@ The end-to-end tests verified the full plugin lifecycle:
 3. The Python validator appears alongside C++ validators in keyword
    queries -- from the outside, indistinguishable from a C++
    implementation
-4. Kitchen_set (230 layers): all agree on upAxis=Z, no conflicts
+4. Kitchen_set (230 layers): no inter-layer conflicts; 229 layers
+   missing explicit `metersPerUnit` (all author `upAxis`)
 5. Deliberately mismatched stages correctly produce warnings
 
 The progression from explicit to plugin registration on the POC
@@ -157,9 +158,8 @@ From that assessment, the agent (Opus):
 - Wrote a comprehensive test suite (`testUsdValidationFixerPyRegister.py`)
   covering construction, registration, retrieval by name/keyword/error,
   `CanApplyFix`/`ApplyFix` round-trips, and backward compatibility
-- Added real fixers to the POC layer-stack validator: `MetersPerUnitFixer`
-  propagates the root layer's `metersPerUnit` to disagreeing layers;
-  `UpAxisFixer` does the same for `upAxis`
+- Added real fixers to the POC layer-stack validator (see "Iteration:
+  fixer safety" below for the evolution of what those fixers do)
 - Extended the POC test suite with fixer tests: verify fixers are
   registered, apply correctly, and re-validation produces zero errors
 
@@ -187,8 +187,49 @@ The fixer implementation is a good example of the pattern this document
 describes: the agent handled the mechanical extension (wrappers, bindings,
 tests, documentation) while the human decision was about *when* to do
 the work (after plugin registration was proven) and *what fixers to
-build* for the POC (propagate root value vs. other strategies like
-removing the opinion).
+build* for the POC.
+
+### Iteration: fixer safety
+
+The agent's first-pass fixers for the mismatch validator propagated the
+root layer's `metersPerUnit` and `upAxis` to disagreeing sublayers.
+This is mechanically correct -- it eliminates the mismatch -- but
+domain-wrong.  `metersPerUnit` and `upAxis` are advisory metadata;
+OpenUSD does not automatically rescale geometry or reorient when these
+values change.  Overwriting a sublayer's `metersPerUnit` from 0.01 to
+1.0 without rescaling every coordinate in that layer makes the metadata
+lie about the data.
+
+I caught this during review by asking the agent: "think about the asset
+maintainer -- is it always the right fix to change the stage metrics of
+child layers?"  The agent immediately understood the problem and agreed
+the fixers were dangerous.
+
+The resolution split the validator into two:
+
+1. **LayerStackMetadataConsistencyChecker** (detect-only): flags layers
+   that disagree on `metersPerUnit` or `upAxis`.  No fixers -- there is
+   no safe automated fix for a unit or orientation mismatch without
+   geometry rescaling.
+
+2. **LayerMetadataFallbackChecker** (with fixers): flags layers that do
+   not explicitly author `metersPerUnit` or `upAxis`, relying on
+   implicit fallback values.  Its fixers write the OpenUSD fallback
+   values (`metersPerUnit = 0.01` / centimeters, `upAxis = "Y"`).  This
+   is safe because it makes explicit what the runtime already assumes;
+   no geometry changes, no behavioral change.
+
+Running both validators on Kitchen_set (230 layers) produced:
+- **Consistency checker**: 0 errors (all layers agree on `upAxis`)
+- **Fallback checker**: 229 warnings for `MissingMetersPerUnit` (none of
+  the 230 layers author `metersPerUnit`; all author `upAxis`)
+- Fixers were shown but **not applied** (dry run)
+
+This is the kind of domain judgment that matters most in a standards
+codebase.  The agent wrote correct code for a wrong fix, and it took a
+human understanding the real-world implications of advisory metadata to
+redirect the design.  The agent then executed the redesign autonomously:
+new validator, new fixers, updated tests, updated plugInfo.json.
 
 ---
 
@@ -356,7 +397,24 @@ design discussion.**
 question is *when* and *why*.  A decision guide at the point of use saves
 every future reader from rediscovering the reasoning.**
 
-### 12. The build-and-test loop is improving but still directed
+### 12. Correct code for the wrong fix
+
+- Agent wrote fixer code that propagated root-layer metadata to
+  disagreeing sublayers; mechanically correct, all tests passed
+- But `metersPerUnit` and `upAxis` are advisory: OpenUSD does not
+  rescale geometry or reorient when these values change
+- Overwriting a sublayer's `metersPerUnit` from 0.01 to 1.0 without
+  rescaling coordinates makes the metadata lie about the data
+- One question ("think about the asset maintainer") triggered the
+  redesign: detect-only for mismatches, safe fallback-writers for
+  missing metadata
+
+**An agent can write flawless code for a design that is harmful.  Domain
+review must evaluate not just whether the code works, but whether the
+*intent* behind the fix is correct.  "Does it pass tests" and "is it
+the right thing to do" are different questions.**
+
+### 13. The build-and-test loop is improving but still directed
 
 - In the initial sessions, the agent did not independently build or run
   tests after writing code; I had to ask explicitly
