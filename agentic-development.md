@@ -173,13 +173,15 @@ binaries to verify correctness before committing.
 Worth noting: during the plugin-bindings pass, the agent had flagged
 that `UsdValidationFixer` lacked a Python constructor and that
 exposing the optional fixers parameter on the registration methods
-would be premature.  I (the human) read that note but did not act on
-it; the fixer work only happened because I circled back weeks later
-and asked how much effort it would be.  The agent's judgment was
-correct at the time -- fixers were not blocking the validator PR --
-but I missed the opportunity to scope it as a planned follow-up
-rather than rediscovering it later.  This is an honest example of
-the human not keeping up with the agent's observations.
+would be premature.  I (the human) read that note but did not
+internalize it.  It took a Pixar reviewer asking "is there a reason
+you did not implement fixers?" for me to realize the gap had already
+been identified -- by my own agent -- and I had simply missed it.
+The agent's judgment was correct at the time (fixers were not
+blocking the validator PR), but I failed to scope it as a planned
+follow-up.  This is an honest example of the human not keeping up
+with the agent's observations; the reviewer caught what I should
+have tracked.
 
 The fixer implementation is a good example of the pattern this document
 describes: the agent handled the mechanical extension (wrappers, bindings,
