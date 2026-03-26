@@ -170,6 +170,17 @@ code snippet in the README (both the existing validator examples and
 the new fixer examples) was extracted and run against the built
 binaries to verify correctness before committing.
 
+Worth noting: during the plugin-bindings pass, the agent had flagged
+that `UsdValidationFixer` lacked a Python constructor and that
+exposing the optional fixers parameter on the registration methods
+would be premature.  I (the human) read that note but did not act on
+it; the fixer work only happened because I circled back weeks later
+and asked how much effort it would be.  The agent's judgment was
+correct at the time -- fixers were not blocking the validator PR --
+but I missed the opportunity to scope it as a planned follow-up
+rather than rediscovering it later.  This is an honest example of
+the human not keeping up with the agent's observations.
+
 The fixer implementation is a good example of the pattern this document
 describes: the agent handled the mechanical extension (wrappers, bindings,
 tests, documentation) while the human decision was about *when* to do
