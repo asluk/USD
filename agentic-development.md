@@ -231,6 +231,40 @@ human understanding the real-world implications of advisory metadata to
 redirect the design.  The agent then executed the redesign autonomously:
 new validator, new fixers, updated tests, updated plugInfo.json.
 
+### Aside: ApplyFix saves to disk
+
+While writing fixer tests, we discovered that `UsdValidationFixer::ApplyFix`
+internally calls `editTarget.GetLayer()->Save()`.  This meant anonymous
+layers could not be used in tests; we had to switch to file-backed
+`tempfile` layers.
+
+The deeper question is whether `ApplyFix` should save at all.  It
+couples two concerns -- mutating a layer in memory and persisting it to
+disk -- in a way that is unusual for OpenUSD.  Everywhere else in the
+`Sdf.Layer` editing model, the caller decides when to save.  Bundling
+`Save()` inside `ApplyFix` means:
+
+- No dry-run path: you cannot apply a fix, inspect the result, and
+  discard it
+- No batching: multiple fixes each trigger a separate disk write instead
+  of one save at the end
+- Partial-save risk: if a sequence of fixes fails midway, some layers
+  are persisted and some are not
+- Anonymous layers are excluded entirely, even though they are a common
+  in-memory editing pattern
+
+The method name itself reads as an in-memory operation; implicit disk
+I/O is a side effect callers would not expect without reading the C++
+implementation.
+
+This is not an agent observation.  The agent treated `Save()` as a
+constraint and worked around it (file-backed layers in tests).  The
+human noticed the constraint was surprising and asked whether the
+framework API itself was making the right choice.  usdValidation is
+early enough in its lifecycle that the API surface is not widely
+depended on; flagging this to Pixar now, while the cost of change is
+low, is worth doing.
+
 ---
 
 ## Where Human Judgment Mattered
