@@ -43,6 +43,9 @@ _FALLBACK_NAME = _PLUGIN_NAME + ":LayerMetadataFallbackChecker"
 
 def _register_plugin():
     """Register the plugin once for the whole module."""
+    # If already registered from a previous test class, nothing to do.
+    if Plug.Registry().GetPluginWithName(_PLUGIN_NAME):
+        return
     pluginDir = os.path.join(os.getcwd(), _PLUGIN_NAME)
     if not os.path.isdir(pluginDir):
         pluginDir = os.path.join(os.path.dirname(__file__),
