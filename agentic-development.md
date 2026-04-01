@@ -265,6 +265,65 @@ early enough in its lifecycle that the API surface is not widely
 depended on; flagging this to Pixar now, while the cost of change is
 low, is worth doing.
 
+### Post-merge: reviewer cleanups
+
+The PR was merged into OpenUSD with reviewer cleanups applied on top
+of the submitted code.  Comparing the merged commit against the
+submitted branch reveals the kinds of adjustments a domain expert
+makes that an agent (and its human collaborator) missed.
+
+**Template refactoring in `wrapRegistry.cpp`.**  The submitted code
+had three near-identical wrapper lambdas (`_WrapLayerTaskFn`,
+`_WrapStageTaskFn`, `_WrapPrimTaskFn`), each acquiring the GIL,
+calling the Python callable, extracting errors, and handling
+`error_already_set`.  The reviewer collapsed these into a single
+variadic template `_WrapTaskFnHelper<TaskFn>` that deduces argument
+types from the `std::function` signature.  The three `_Wrap*TaskFn`
+functions became one-line delegations.  The agent wrote correct,
+well-commented code; the reviewer recognized it was the same code
+three times and applied the abstraction.  This is a case where the
+"don't abstract prematurely" heuristic the agent followed was
+reasonable during development, but the reviewer correctly judged
+that three identical 15-line lambdas crossed the threshold.
+
+**Python naming conventions.**  All example functions in the README
+and test code used `_snake_case` (`_check_default_prim`,
+`_stage_task`).  The reviewer renamed them to `_PascalCase`
+(`_CheckDefaultPrim`, `_StageTask`).  USD's Python layer follows a
+`_PascalCase` convention for private module-level functions and
+callbacks; this is not documented in the contributing guide but is
+visible throughout the codebase.  The agent pattern-matched well
+against C++ conventions but did not pick up this Python-specific
+style, and neither did I during review.
+
+**Test organization.**  Module-level `_PLUGIN_NAME` constants became
+`PLUGIN_NAME` class attributes on the test classes, with
+`cls.PLUGIN_NAME` in `setUpClass` and `self.PLUGIN_NAME` in test
+methods.  This matches the pattern in other `usdValidation` test
+files and keeps test configuration co-located with the test class
+rather than floating at module scope.
+
+**Documentation structure.**  The reviewer moved the "Choosing a
+Registration Path" comparison table from the Python-specific section
+up into the general "Creating Custom Validators" section, making it
+applicable to both C++ and Python.  A new "Performance
+Considerations" subsection was added explaining GIL/TBB contention:
+Python validators cannot benefit from parallelism among themselves,
+and can starve C++ validators when occupying TBB worker threads.
+This is the kind of architectural context that a reviewer who
+maintains the framework knows from experience; it would not surface
+from reading the code alone.
+
+**Removed placeholder.**  The test `plugInfo.json` had a
+`PlaceholderValidator` entry left over from the initial test
+scaffolding.  The reviewer removed it, replacing it with the four
+properly named test validators.
+
+None of these changes affected correctness.  All tests passed before
+and after.  The value was in consistency (naming, test patterns),
+concision (template deduplication), and completeness (performance
+documentation that only a framework maintainer would think to add).
+
 ---
 
 ## Where Human Judgment Mattered
@@ -465,6 +524,33 @@ the right thing to do" are different questions.**
 **The build-and-test loop has shifted from "agent needs step-by-step
 instructions" to "agent needs a prompt to start but handles the mechanics."
 The next step is the agent proposing the build at natural checkpoints.**
+
+### 14. Reviewer cleanups reveal convention gaps
+
+- The reviewer applied a variadic template to collapse three identical
+  wrapper functions; renamed all Python examples from `_snake_case` to
+  `_PascalCase`; moved test constants into class attributes; relocated
+  the registration decision guide to apply to both languages; and added
+  a GIL/TBB performance section
+- None of these changes affected correctness; all tests passed before
+  and after
+- The naming convention (`_PascalCase` for private Python functions) is
+  not in the contributing guide but is visible throughout USD's Python
+  layer; neither the agent nor I caught it
+- The template refactoring is a judgment call: three identical lambdas
+  during development is reasonable; three identical lambdas in a merged
+  commit is not
+- The performance documentation (GIL contention starving C++ validators)
+  is framework-maintainer knowledge that would not surface from reading
+  the code
+
+**Post-merge cleanups are a signal, not a failure.  They reveal the
+conventions and domain knowledge that are not written down anywhere the
+agent (or its human) could have found them.  The right response is to
+internalize those patterns for the next contribution: `_PascalCase` for
+Python callbacks, class attributes for test constants, and "would a
+framework maintainer add context here?" as a documentation review
+question.**
 
 ---
 
