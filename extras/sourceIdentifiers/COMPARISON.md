@@ -708,3 +708,192 @@ care about most (ease of adoption, metadata flexibility). This is not
 a contradiction — it reflects the fundamental trade-off between
 governance and flexibility, and it’s why the hybrid recommendation
 exists.
+
+---
+
+## 6. Governance, Validation & Deployment
+
+### 6.1 How other standards bodies govern vendor extensions
+
+Source identifier domain registration is a **data-format governance**
+problem, not a runtime mechanism. Unlike USD’s plugin system (which
+registers schemas at application startup), identifier domains are
+declared in USD content and must be governed outside the runtime.
+
+Six precedents from other standards bodies inform this design:
+
+| Body | Mechanism | Tiers | Registration | Collision Prevention |
+|------|-----------|-------|-------------|---------------------|
+| **Khronos glTF** | `Prefixes.md` on GitHub | `VENDOR_` → `EXT_` → `KHR_` | GitHub issue to reserve prefix | Prefix uniqueness in registry |
+| **Khronos OpenGL/Vulkan** | Extension registry | `GL_NV_` → `GL_EXT_` → `GL_ARB_` → core | Formal registry at registry.khronos.org | Registered prefixes |
+| **IETF/IANA** | RFC 8126 registration policies | Private Use → First Come First Served → Expert Review → Standards Action | IANA registry with designated expert | Unique registration per entry |
+| **W3C** | WICG incubation | Community Group → Working Group → Recommendation | Community Group proposal | `data-*` for freeform; standard attrs governed |
+| **buildingSMART** | bSDD data dictionary | Organization-published → reviewed → standard | Online portal + REST API | Centralized namespace |
+| **Java/XML** | Reverse-DNS convention | Single tier (by convention) | None (self-service) | Domain name ownership |
+
+**Key insight:** The glTF model is the closest analog to what AOUSD would
+need for source identifiers. It is:
+
+- **Low barrier:** Any vendor can request a prefix by filing a GitHub
+  issue. No membership required.
+- **Three-tier:** Vendor-specific (ship independently) → multi-vendor
+  (`EXT_`, proven interop) → ratified (`KHR_`, Khronos IP framework).
+- **Declarative:** Each glTF file lists `extensionsUsed` and
+  `extensionsRequired` — consumers know what to expect without parsing
+  the full file. This is analogous to Approach B’s `apiSchemas` list.
+- **Not a runtime mechanism:** The registry is a Markdown file in a
+  GitHub repo. Enforcement is by convention and community review.
+
+### 6.2 What a governance model would look like for source identifiers
+
+Regardless of which approach is chosen, AOUSD would maintain a registry
+of identifier domain prefixes. The proposed model:
+
+1. **AOUSD maintains a Domains Registry** (analogous to glTF’s
+   `Prefixes.md`) — a list mapping domain keys/prefixes to
+   organizations, with contact information and status.
+
+2. **Three tiers:**
+   - **Vendor domains** (`com.ptc.windchill`, `com.nvidia.omniverse`):
+     self-service registration, First Come First Served.
+   - **Multi-vendor domains** (`ext.simready`, `ext.digitaltwins`):
+     requires demonstrated multi-vendor implementation.
+   - **AOUSD standard domains** (`aousd.ifc`, `aousd.plm`):
+     ratified by AOUSD TAC, covered by AOUSD IP framework.
+
+3. **Registration requires:** domain key, organization name, contact,
+   URL, brief description of the identifier scheme. No code, no schema
+   plugin, no membership fee.
+
+4. **Promotion path:** Vendor → multi-vendor (demonstrated adoption by
+   2+ organizations) → standard (TAC ratification).
+
+### 6.3 How each approach interacts with governance
+
+**Approach A:**
+- Domain keys are freeform strings in `assetInfo` dictionaries.
+- There is **no structural mechanism** to declare which domains a file
+  uses. A consumer must parse all `assetInfo["sourceIds"]` dictionaries
+  across all prims to discover the domain set.
+- Governance violations (unregistered domain key, collision) are
+  **silent** — detectable only by external validators.
+- The glTF `extensionsUsed` analog is **absent**.
+
+**Approach B:**
+- Domain instances are declared in the `apiSchemas` list.
+- A consumer can inspect `apiSchemas` on any prim (or stage metadata)
+  to discover which identifier domains are present **without parsing
+  property values**.
+- This is structurally analogous to glTF’s `extensionsUsed` array.
+- Governance violations are **detectable** — an unregistered instance
+  name can be flagged by schema-aware tools; the `domain` property
+  provides a secondary, unambiguous resolution.
+
+### 6.4 Validator designs
+
+Both approaches can be validated, but the implementation difficulty
+differs significantly.
+
+**Approach A validator (pseudocode):**
+
+```python
+def validate_source_ids_a(stage, registry):
+    """Validate Approach A source identifiers against a domain registry."""
+    errors = []
+    for prim in stage.Traverse():
+        source_ids = prim.GetAssetInfoByKey("sourceIds")
+        if not source_ids:
+            continue
+        if not isinstance(source_ids, dict):
+            errors.append(f"{prim.GetPath()}: sourceIds is not a dictionary")
+            continue
+        for domain_key, domain_data in source_ids.items():
+            # Check domain is registered
+            if domain_key not in registry:
+                errors.append(
+                    f"{prim.GetPath()}: unregistered domain '{domain_key}'")
+            # Check required fields
+            if not isinstance(domain_data, dict):
+                errors.append(
+                    f"{prim.GetPath()}: domain '{domain_key}' is not a dict")
+                continue
+            if "primaryId" not in domain_data:
+                errors.append(
+                    f"{prim.GetPath()}: domain '{domain_key}' missing primaryId")
+            # Type checking is manual — no schema enforcement
+            primary = domain_data.get("primaryId")
+            if primary is not None and not isinstance(primary, str):
+                errors.append(
+                    f"{prim.GetPath()}: primaryId in '{domain_key}' is not a string")
+    return errors
+```
+
+**Approach B validator (pseudocode):**
+
+```python
+def validate_source_ids_b(stage, registry):
+    """Validate Approach B source identifiers against a domain registry."""
+    errors = []
+    for prim in stage.Traverse():
+        instances = UsdSourceIdentifierAPI.GetAll(prim)
+        for instance_name in instances:
+            api = UsdSourceIdentifierAPI.Get(prim, instance_name)
+            # Check domain is registered
+            domain = api.GetDomainAttr().Get()
+            if domain and domain not in registry:
+                errors.append(
+                    f"{prim.GetPath()}: unregistered domain '{domain}'")
+            # Check primaryId is authored (not just fallback)
+            if not api.GetPrimaryIdAttr().HasAuthoredValue():
+                errors.append(
+                    f"{prim.GetPath()}: instance '{instance_name}' "
+                    f"has no authored primaryId")
+            # Type checking is automatic — schema enforces types
+            # Fallback detection is built in
+            # No manual isinstance() checks needed
+    return errors
+```
+
+**Comparison:**
+
+| Validator Aspect | Approach A | Approach B |
+|-----------------|-----------|------------|
+| Discovery | Must parse all assetInfo dicts on all prims | `GetAll()` returns instances directly |
+| Type safety | Manual `isinstance()` checks | Schema-enforced |
+| Missing fields | Manual key-existence check | `HasAuthoredValue()` |
+| Domain resolution | Dict key only (may be ambiguous) | `domain` property (reverse-DNS, unambiguous) |
+| Lines of validation code | ~30 | ~15 |
+| Can run without USD API | Yes (dict parsing) | Requires USD schema system |
+
+### 6.5 Deployment friction for identifier stakeholders
+
+An "identifier stakeholder" is an organization that wants their
+identifier scheme to be expressible in USD content: a PLM vendor
+(PTC, Siemens), a standards body (buildingSMART, ISO), a DCC vendor
+(Autodesk, SideFX), or an end-user enterprise.
+
+**What a stakeholder must do under each approach:**
+
+| Step | Approach A | Approach B |
+|------|-----------|------------|
+| 1. Register domain | Register key in AOUSD Domains Registry | Register instance name in AOUSD Domains Registry |
+| 2. Document scheme | Write specification for their sub-dictionary structure | Write specification for which properties they use |
+| 3. Start authoring | Write `assetInfo["sourceIds"]["<key>"]` in any tool that can author `assetInfo` | Apply schema instance + author 4 properties in any USD-aware tool |
+| 4. Add domain-specific metadata | Just add keys to their dictionary — no coordination | Must register companion schema OR use custom attributes |
+| 5. Validate content | Run external validator against their spec | Schema validation covers base fields; domain-specific fields need external validator |
+| 6. Ship to consumers | Consumers parse their dict structure per their spec | Consumers use standard schema API; domain-specific metadata needs their spec |
+
+**Net assessment:**
+
+- **Steps 1–3** are equivalent in both approaches. Initial adoption
+  friction is near-zero for both.
+
+- **Step 4** is where the approaches diverge sharply. Approach A lets
+  stakeholders evolve their metadata independently and immediately.
+  Approach B forces a choice: live with the 4 common properties
+  (insufficient for most industrial use cases), or invest in companion
+  schema work.
+
+- **Steps 5–6** favor Approach B for the common fields (schema-driven)
+  but still require Approach A–style work for domain-specific metadata
+  regardless.
