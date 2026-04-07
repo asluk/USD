@@ -109,4 +109,11 @@ Research completed on how standards bodies handle vendor extension registration:
 
 ## Timeline
 - Started: 2026-04-07 04:25 UTC
-- Last update: 2026-04-07 08:40 UTC
+- Comparison doc complete: 2026-04-07 14:35 UTC
+
+## Deliverable
+**COMPARISON.md** (1,102 lines) — the main deliverable — is complete.
+See `extras/sourceIdentifiers/COMPARISON.md`.
+
+**Recommendation:** Hybrid approach — multi-apply schema (Approach B)
+with a freeform `metadata` dictionary property as the 5th field.
