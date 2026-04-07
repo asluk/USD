@@ -1056,6 +1056,35 @@ element-wise semantics. This matches the precedent set by
 `UsdMediaAssetPreviewsAPI`, which stores data in `assetInfo` alongside
 its schema declaration.
 
+### 7.5 File size cost of the hybrid
+
+The hybrid carries both schema properties and `assetInfo` metadata,
+so it is the largest of the three approaches:
+
+| Metric | A | B | C (Hybrid) |
+|--------|---|---|------------|
+| File size (100K prims) | 106.3 MB | 91.6 MB | 144.0 MB |
+| Line count | 3.09M | 2.02M | 3.58M |
+| Namespace footprint | 10 dict keys | 30 properties | 30 properties + 9 dict keys |
+
+The 36% size increase over A (and 57% over B) is the cost of the
+dual-mechanism approach. In practice, this overstates the penalty
+because:
+
+1. **Not all domains need metadata overflow.** Simple identifier
+   schemes (IFC GlobalId, Revit ElementId) may only use the schema
+   properties, with no `assetInfo` entry. The stress test assigns
+   metadata to all domains; real-world stages would be sparser.
+
+2. **Binary formats (usdc/usdz) compress dictionaries efficiently.**
+   The text-format overhead of nested `dictionary` syntax is significant;
+   binary encoding would reduce the gap.
+
+3. **The alternative is companion schemas.** If domain-specific metadata
+   were expressed as companion schemas (Approach B’s workaround), the
+   property count would be even higher than the hybrid’s `assetInfo`
+   overhead.
+
 ### 7.5 Governance model for the hybrid
 
 The three-tier AOUSD Domains Registry (Section 6.2) applies directly:
