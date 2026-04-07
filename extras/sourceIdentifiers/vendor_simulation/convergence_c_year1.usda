@@ -1,0 +1,71 @@
+#usda 1.0
+(
+    """
+    Approach C (Hybrid) — Convergence Year 1: Independent vendor authoring.
+    
+    Both vendors use the multi-apply schema for common fields and
+    assetInfo sub-dictionaries for their domain-specific metadata.
+    All metadata is preserved. Both coexist on the same prim.
+    """
+    defaultPrim = "ChillerPlant"
+)
+
+def Xform "ChillerPlant" (
+    kind = "assembly"
+)
+{
+    def Xform "Chiller_01" (
+        prepend apiSchemas = [
+            "SourceIdentifierAPI:contoso_iot",
+            "SourceIdentifierAPI:fabrikam_dt"
+        ]
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary contoso_iot = {
+                    string telemetryEndpoint = "mqtts://iot.contoso.com:8883/bldg-42/chiller-01"
+                    string dataFormatVersion = "contoso-telemetry-v3"
+                    string deviceClass = "HVAC.Chiller"
+                    string pollIntervalSec = "30"
+                }
+                dictionary fabrikam_dt = {
+                    string connectionString = "HostName=fabrikam-hub.azure-devices.net;DeviceId=chiller-01"
+                    string modelId = "dtmi:fabrikam:hvac:chiller;1"
+                    string twinVersion = "47"
+                    string componentPath = "$/thermostat"
+                }
+            }
+        }
+    )
+    {
+        # Contoso: schema properties
+        string sourceIdentifier:contoso_iot:primaryId = "device://contoso.com/bldg-42/chiller-01"
+        string sourceIdentifier:contoso_iot:revision = "v2"
+        token sourceIdentifier:contoso_iot:domain = "com.contoso.iot"
+        string sourceIdentifier:contoso_iot:label = "Contoso IoT Device ID"
+
+        # Fabrikam: schema properties
+        string sourceIdentifier:fabrikam_dt:primaryId = "dtmi:fabrikam:hvac:chiller;1"
+        string sourceIdentifier:fabrikam_dt:revision = "1.0"
+        token sourceIdentifier:fabrikam_dt:domain = "com.fabrikam.digitaltwin"
+        string sourceIdentifier:fabrikam_dt:label = "Fabrikam Digital Twin ID"
+    }
+
+    def Xform "Chiller_02" (
+        prepend apiSchemas = ["SourceIdentifierAPI:contoso_iot"]
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary contoso_iot = {
+                    string telemetryEndpoint = "mqtts://iot.contoso.com:8883/bldg-42/chiller-02"
+                    string dataFormatVersion = "contoso-telemetry-v3"
+                    string deviceClass = "HVAC.Chiller"
+                }
+            }
+        }
+    )
+    {
+        string sourceIdentifier:contoso_iot:primaryId = "device://contoso.com/bldg-42/chiller-02"
+        string sourceIdentifier:contoso_iot:revision = "v2"
+        token sourceIdentifier:contoso_iot:domain = "com.contoso.iot"
+        string sourceIdentifier:contoso_iot:label = "Contoso IoT Device ID"
+    }
+}

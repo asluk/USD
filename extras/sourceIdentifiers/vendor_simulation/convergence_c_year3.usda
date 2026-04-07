@@ -1,0 +1,171 @@
+#usda 1.0
+(
+    """
+    Approach C (Hybrid) — Convergence Year 3: Migration to standard.
+    
+    AOUSD standardizes "aousd_opbinding" with a defined set of
+    standard metadata fields (endpoint, protocol, dataFormat, deviceClass).
+    
+    MIGRATION PATH (3 options, can be mixed):
+    
+    Option 1 — SOFT MIGRATION (domain update only):
+      Keep vendor instance name, update domain to "org.aousd.opbinding".
+      Tools query by domain. Zero content churn on properties.
+      Metadata keys may still use vendor-specific names until
+      the metadata dict is also migrated.
+    
+    Option 2 — FULL MIGRATION (new instance):
+      Add "SourceIdentifierAPI:aousd_opbinding" with standard schema
+      properties + standard metadata field names. Remove old instance.
+      Clean but requires touching all layers.
+    
+    Option 3 — PARALLEL (coexistence during transition):
+      Keep old vendor instance + add new standard instance.
+      Both point to the same device. Tools prefer the standard
+      instance when present. Old instances decay naturally.
+    
+    The hybrid enables all three options because:
+    - Schema properties compose per-property (safe partial migration)
+    - assetInfo metadata composes element-wise (can add standard keys
+      alongside vendor keys in the same dict)
+    - apiSchemas list supports additive application (parallel instances)
+    """
+    defaultPrim = "ChillerPlant"
+)
+
+def Xform "ChillerPlant" (
+    kind = "assembly"
+)
+{
+    # ===== Option 1: Soft migration (Chiller_01) =====
+    # Keep instance name "contoso_iot", update domain only.
+    # Migrate metadata field names to standard where possible.
+    def Xform "Chiller_01_SoftMigrated" (
+        prepend apiSchemas = ["SourceIdentifierAPI:contoso_iot"]
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary contoso_iot = {
+                    # Standard field names (from AOUSD spec)
+                    string endpoint = "mqtts://iot.contoso.com:8883/bldg-42/chiller-01"
+                    string protocol = "mqtt"
+                    string dataFormat = "contoso-telemetry-v3"
+                    string deviceClass = "HVAC.Chiller"
+                    string pollIntervalSec = "30"
+                    # Vendor-specific fields can stay alongside standard fields
+                    string telemetryEndpoint = "mqtts://iot.contoso.com:8883/bldg-42/chiller-01"
+                }
+            }
+        }
+    )
+    {
+        string sourceIdentifier:contoso_iot:primaryId = "device://contoso.com/bldg-42/chiller-01"
+        string sourceIdentifier:contoso_iot:revision = "v2"
+        # Domain updated to standard
+        token sourceIdentifier:contoso_iot:domain = "org.aousd.opbinding"
+        string sourceIdentifier:contoso_iot:label = "AOUSD Operational Binding"
+    }
+
+    # ===== Option 2: Full migration (Chiller_02) =====
+    # New standard instance replaces old vendor instance entirely.
+    def Xform "Chiller_02_FullyMigrated" (
+        prepend apiSchemas = ["SourceIdentifierAPI:aousd_opbinding"]
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary aousd_opbinding = {
+                    # All standard field names
+                    string endpoint = "HostName=fabrikam-hub.azure-devices.net;DeviceId=chiller-02"
+                    string protocol = "azure-iot"
+                    string dataFormat = "dtdl-v2"
+                    string deviceClass = "HVAC.Chiller"
+                    # Provenance metadata
+                    string _migratedFrom = "fabrikam_dt"
+                    string _originalModelId = "dtmi:fabrikam:hvac:chiller;1"
+                }
+            }
+        }
+    )
+    {
+        string sourceIdentifier:aousd_opbinding:primaryId = "dtmi:fabrikam:hvac:chiller;1"
+        string sourceIdentifier:aousd_opbinding:revision = "1.0"
+        token sourceIdentifier:aousd_opbinding:domain = "org.aousd.opbinding"
+        string sourceIdentifier:aousd_opbinding:label = "AOUSD Operational Binding"
+    }
+
+    # ===== Option 3: Parallel coexistence (Chiller_03) =====
+    # Both old and new instances exist during transition.
+    def Xform "Chiller_03_ParallelTransition" (
+        prepend apiSchemas = [
+            "SourceIdentifierAPI:aousd_opbinding",
+            "SourceIdentifierAPI:contoso_iot"
+        ]
+        assetInfo = {
+            dictionary sourceIds = {
+                # New standard metadata
+                dictionary aousd_opbinding = {
+                    string endpoint = "mqtts://iot.contoso.com:8883/bldg-42/chiller-03"
+                    string protocol = "mqtt"
+                    string dataFormat = "contoso-telemetry-v3"
+                    string deviceClass = "HVAC.Chiller"
+                }
+                # Old vendor metadata (deprecated but preserved for tools
+                # that haven't migrated yet)
+                dictionary contoso_iot = {
+                    string telemetryEndpoint = "mqtts://iot.contoso.com:8883/bldg-42/chiller-03"
+                    string dataFormatVersion = "contoso-telemetry-v3"
+                    string _deprecated = "true"
+                    string _successor = "aousd_opbinding"
+                }
+            }
+        }
+    )
+    {
+        # Standard binding
+        string sourceIdentifier:aousd_opbinding:primaryId = "device://contoso.com/bldg-42/chiller-03"
+        string sourceIdentifier:aousd_opbinding:revision = "v2"
+        token sourceIdentifier:aousd_opbinding:domain = "org.aousd.opbinding"
+        string sourceIdentifier:aousd_opbinding:label = "AOUSD Operational Binding"
+
+        # Legacy binding (same device, different schema instance)
+        string sourceIdentifier:contoso_iot:primaryId = "device://contoso.com/bldg-42/chiller-03"
+        string sourceIdentifier:contoso_iot:revision = "v2"
+        token sourceIdentifier:contoso_iot:domain = "com.contoso.iot"
+        string sourceIdentifier:contoso_iot:label = "Contoso IoT Device ID (deprecated)"
+    }
+}
+
+# =========================================================================
+# DISCOVERY (APPROACH C):
+#
+# A tool wanting "all operational bindings" can:
+#
+# 1. Query by domain (schema property — typed, queryable):
+#    for instance in SourceIdentifierAPI.GetAll(prim):
+#        domain = api.GetDomainAttr().Get()
+#        if domain == "org.aousd.opbinding":
+#            # found standard binding
+#        elif domain in supersedes_map["org.aousd.opbinding"]:
+#            # found legacy binding
+#
+# 2. Inspect assetInfo metadata for rich context:
+#    api.GetDomainMetadata(&metadata)
+#    endpoint = metadata["endpoint"]  # standard field
+#    protocol = metadata["protocol"]  # standard field
+#
+# 3. Handle transition gracefully:
+#    - Standard bindings (domain = "org.aousd.opbinding") are preferred
+#    - Legacy bindings carry _deprecated/_successor metadata
+#    - Parallel instances allow gradual migration
+#
+# ADVANTAGES OVER A AND B:
+#
+# vs A: Domain-based discovery works (typed token query, not string
+#        matching on dictionary keys). apiSchemas list declares presence.
+#
+# vs B: All domain-specific metadata (endpoint, protocol, connectionString,
+#        deviceClass, pollIntervalSec) is preserved through the convergence.
+#        Approach B would lose this metadata entirely.
+#
+# vs Both: Parallel coexistence (Option 3) is natural because the schema
+#          supports multiple instances and the assetInfo supports multiple
+#          dict keys. No hack needed.
+# =========================================================================

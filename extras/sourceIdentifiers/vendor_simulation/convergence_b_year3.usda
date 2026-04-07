@@ -1,0 +1,86 @@
+#usda 1.0
+(
+    """
+    Approach B — Convergence Year 3: Migration to standard.
+    
+    AOUSD standardizes "aousd_opbinding" as instance name with
+    domain "org.aousd.opbinding".
+    
+    MIGRATION APPROACH: The domain property enables a softer migration path.
+    Tools querying by domain pattern (e.g., "contains 'iot' or 'twin' or
+    'opbinding'") can find related bindings across eras. But the primary
+    migration still requires renaming instance names in apiSchemas lists
+    and property names across all layers.
+    
+    PROBLEM: Property name migration is HARDER than Approach A's dict key
+    rename. Changing instance name from "contoso_iot" to "aousd_opbinding"
+    means renaming ALL properties:
+      sourceIdentifier:contoso_iot:primaryId → sourceIdentifier:aousd_opbinding:primaryId
+      sourceIdentifier:contoso_iot:revision  → sourceIdentifier:aousd_opbinding:revision
+      sourceIdentifier:contoso_iot:domain    → sourceIdentifier:aousd_opbinding:domain
+      sourceIdentifier:contoso_iot:label     → sourceIdentifier:aousd_opbinding:label
+    
+    That's 4N renames (4 properties × N layers) vs. Approach A's N renames
+    (1 dict key × N layers).
+    
+    ALTERNATIVE: Don't rename the instance — just update the domain token
+    from "com.contoso.iot" to "org.aousd.opbinding". Tools query by domain
+    instead of instance name. This avoids property renaming entirely but
+    means the instance name is a misleading legacy artifact.
+    """
+    defaultPrim = "ChillerPlant"
+)
+
+def Xform "ChillerPlant" (
+    kind = "assembly"
+)
+{
+    # Approach 1: Full migration (renamed instance + domain)
+    def Xform "Chiller_01" (
+        prepend apiSchemas = ["SourceIdentifierAPI:aousd_opbinding"]
+    )
+    {
+        string sourceIdentifier:aousd_opbinding:primaryId = "device://contoso.com/bldg-42/chiller-01"
+        string sourceIdentifier:aousd_opbinding:revision = "v2"
+        token sourceIdentifier:aousd_opbinding:domain = "org.aousd.opbinding"
+        string sourceIdentifier:aousd_opbinding:label = "AOUSD Operational Binding"
+        # All Contoso-specific metadata (telemetryEndpoint, etc.) is LOST
+        # because Approach B has no mechanism to carry it
+    }
+
+    # Approach 2: Soft migration (keep instance name, update domain only)
+    def Xform "Chiller_02" (
+        prepend apiSchemas = ["SourceIdentifierAPI:contoso_iot"]
+    )
+    {
+        string sourceIdentifier:contoso_iot:primaryId = "device://contoso.com/bldg-42/chiller-02"
+        string sourceIdentifier:contoso_iot:revision = "v2"
+        # Domain updated to standard — tools query by domain
+        token sourceIdentifier:contoso_iot:domain = "org.aousd.opbinding"
+        string sourceIdentifier:contoso_iot:label = "AOUSD Operational Binding"
+        # Instance name "contoso_iot" is a legacy artifact but doesn't
+        # cause functional problems. Just cosmetically confusing.
+    }
+}
+
+# =========================================================================
+# DISCOVERY (APPROACH B):
+#
+# A tool wanting "all operational bindings" can query by domain:
+#   for prim in stage.Traverse():
+#       for instance in SourceIdentifierAPI.GetAll(prim):
+#           api = SourceIdentifierAPI.Get(prim, instance)
+#           domain = api.GetDomainAttr().Get()
+#           if domain in ["com.contoso.iot", "com.fabrikam.digitaltwin",
+#                         "org.aousd.opbinding"]:
+#               # found an operational binding
+#
+# The domain token provides semantic categorization that instance names
+# don't. If the AOUSD Domains Registry publishes a "supersedes" mapping
+# (org.aousd.opbinding supersedes com.contoso.iot and com.fabrikam.dt),
+# tools can resolve the full lineage.
+#
+# However, the metadata loss problem remains: Contoso's telemetryEndpoint,
+# Fabrikam's connectionString, etc. are lost in Approach B because there's
+# no place to carry domain-specific metadata.
+# =========================================================================

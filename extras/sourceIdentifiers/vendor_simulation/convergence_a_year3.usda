@@ -1,0 +1,104 @@
+#usda 1.0
+(
+    """
+    Approach A — Convergence Year 3: Migration to standard.
+    
+    AOUSD has standardized "aousd_opbinding" as the operational binding
+    scheme. Both Contoso and Fabrikam migrate.
+    
+    PROBLEM: How does a tool discover "all operational bindings" across
+    content from different eras?
+    
+    - Old content has "contoso_iot" and "fabrikam_dt"
+    - New content has "aousd_opbinding"
+    - Transition content may have both old and new
+    
+    With Approach A, there is NO structural way to discover that
+    "contoso_iot", "fabrikam_dt", and "aousd_opbinding" are all
+    solving the same problem. A tool must KNOW about all three key
+    names — the relationship between them is implicit, not encoded
+    in the data.
+    
+    MIGRATION COST:
+    - Rename dictionary keys in all existing content (or maintain aliases)
+    - Map vendor-specific metadata fields to standard fields
+    - No schema versioning tracks the migration
+    - Discovery requires a hardcoded list of legacy aliases
+    """
+    defaultPrim = "ChillerPlant"
+)
+
+def Xform "ChillerPlant" (
+    kind = "assembly"
+)
+{
+    # Fully migrated chiller — new standard scheme
+    def Xform "Chiller_01" (
+        assetInfo = {
+            dictionary sourceIds = {
+                # New AOUSD standard scheme
+                dictionary aousd_opbinding = {
+                    string primaryId = "device://contoso.com/bldg-42/chiller-01"
+                    string revision = "v2"
+                    dictionary metadata = {
+                        # Standardized field names (agreed by working group)
+                        string endpoint = "mqtts://iot.contoso.com:8883/bldg-42/chiller-01"
+                        string protocol = "mqtt"
+                        string dataFormat = "contoso-telemetry-v3"
+                        string deviceClass = "HVAC.Chiller"
+                        string pollIntervalSec = "30"
+                        # Provenance: which vendor scheme this migrated from
+                        string _migratedFrom = "contoso_iot"
+                    }
+                }
+                # Some deployments keep the old key as a compatibility alias
+                # This is ADDITIONAL content — not enforced by any mechanism
+                dictionary contoso_iot = {
+                    string primaryId = "device://contoso.com/bldg-42/chiller-01"
+                    string revision = "v2"
+                    dictionary metadata = {
+                        string _deprecated = "true"
+                        string _successor = "aousd_opbinding"
+                    }
+                }
+            }
+        }
+    )
+    {
+    }
+
+    # Partially migrated — Fabrikam's twin binding migrated, but the old
+    # Fabrikam key still exists in a weaker layer
+    def Xform "Chiller_02" (
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary aousd_opbinding = {
+                    string primaryId = "dtmi:fabrikam:hvac:chiller;1"
+                    string revision = "1.0"
+                    dictionary metadata = {
+                        string endpoint = "HostName=fabrikam-hub.azure-devices.net;DeviceId=chiller-02"
+                        string protocol = "azure-iot"
+                        string dataFormat = "dtdl-v2"
+                        string deviceClass = "HVAC.Chiller"
+                    }
+                }
+            }
+        }
+    )
+    {
+    }
+}
+
+# =========================================================================
+# DISCOVERY PROBLEM (APPROACH A):
+#
+# A tool wanting to find "all prims with operational bindings" must know:
+#   - "contoso_iot" (old Contoso key)
+#   - "fabrikam_dt" (old Fabrikam key)
+#   - "aousd_opbinding" (new standard key)
+#
+# This list is implicit — not encoded in the data. The tool must be
+# updated every time a new vendor's legacy key is discovered.
+# There is no mechanism in the USD file itself to declare
+# "these three keys are semantically equivalent."
+# =========================================================================

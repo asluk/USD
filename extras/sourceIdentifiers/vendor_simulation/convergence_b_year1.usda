@@ -1,0 +1,52 @@
+#usda 1.0
+(
+    """
+    Approach B — Convergence Year 1: Independent vendor authoring.
+    
+    Both vendors use the same SourceIdentifierAPI multi-apply schema
+    with different instance names. They coexist on the same prim.
+    
+    KEY DIFFERENCE from Approach A: the 'domain' property provides a
+    typed, queryable field that categorizes the PURPOSE of the identifier.
+    Both Contoso and Fabrikam set their domain to values that indicate
+    "operational binding" — tools can discover this semantically.
+    """
+    defaultPrim = "ChillerPlant"
+)
+
+def Xform "ChillerPlant" (
+    kind = "assembly"
+)
+{
+    def Xform "Chiller_01" (
+        prepend apiSchemas = [
+            "SourceIdentifierAPI:contoso_iot",
+            "SourceIdentifierAPI:fabrikam_dt"
+        ]
+    )
+    {
+        # Contoso's IoT binding
+        string sourceIdentifier:contoso_iot:primaryId = "device://contoso.com/bldg-42/chiller-01"
+        string sourceIdentifier:contoso_iot:revision = "v2"
+        token sourceIdentifier:contoso_iot:domain = "com.contoso.iot"
+        string sourceIdentifier:contoso_iot:label = "Contoso IoT Device ID"
+        # CANNOT carry: telemetryEndpoint, dataFormatVersion, deviceClass, pollIntervalSec
+
+        # Fabrikam's Digital Twin binding
+        string sourceIdentifier:fabrikam_dt:primaryId = "dtmi:fabrikam:hvac:chiller;1"
+        string sourceIdentifier:fabrikam_dt:revision = "1.0"
+        token sourceIdentifier:fabrikam_dt:domain = "com.fabrikam.digitaltwin"
+        string sourceIdentifier:fabrikam_dt:label = "Fabrikam Digital Twin ID"
+        # CANNOT carry: connectionString, modelId, twinVersion, componentPath
+    }
+
+    def Xform "Chiller_02" (
+        prepend apiSchemas = ["SourceIdentifierAPI:contoso_iot"]
+    )
+    {
+        string sourceIdentifier:contoso_iot:primaryId = "device://contoso.com/bldg-42/chiller-02"
+        string sourceIdentifier:contoso_iot:revision = "v2"
+        token sourceIdentifier:contoso_iot:domain = "com.contoso.iot"
+        string sourceIdentifier:contoso_iot:label = "Contoso IoT Device ID"
+    }
+}

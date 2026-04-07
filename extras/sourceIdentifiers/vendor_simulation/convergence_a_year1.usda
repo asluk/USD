@@ -1,0 +1,65 @@
+#usda 1.0
+(
+    """
+    Approach A — Convergence Year 1: Independent vendor authoring.
+    
+    Contoso and Fabrikam each use their own assetInfo sub-dictionaries.
+    They coexist without conflict on the same prim.
+    """
+    defaultPrim = "ChillerPlant"
+)
+
+def Xform "ChillerPlant" (
+    kind = "assembly"
+)
+{
+    def Xform "Chiller_01" (
+        assetInfo = {
+            dictionary sourceIds = {
+                # Contoso's IoT binding scheme
+                dictionary contoso_iot = {
+                    string primaryId = "device://contoso.com/bldg-42/chiller-01"
+                    string revision = "v2"
+                    dictionary metadata = {
+                        string telemetryEndpoint = "mqtts://iot.contoso.com:8883/bldg-42/chiller-01"
+                        string dataFormatVersion = "contoso-telemetry-v3"
+                        string deviceClass = "HVAC.Chiller"
+                        string pollIntervalSec = "30"
+                    }
+                }
+                # Fabrikam's Digital Twin scheme (independent, different structure)
+                dictionary fabrikam_dt = {
+                    string primaryId = "dtmi:fabrikam:hvac:chiller;1"
+                    string revision = "1.0"
+                    dictionary metadata = {
+                        string connectionString = "HostName=fabrikam-hub.azure-devices.net;DeviceId=chiller-01"
+                        string modelId = "dtmi:fabrikam:hvac:chiller;1"
+                        string twinVersion = "47"
+                        string componentPath = "$/thermostat"
+                    }
+                }
+            }
+        }
+    )
+    {
+    }
+
+    # Second chiller — only Contoso has instrumented this one
+    def Xform "Chiller_02" (
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary contoso_iot = {
+                    string primaryId = "device://contoso.com/bldg-42/chiller-02"
+                    string revision = "v2"
+                    dictionary metadata = {
+                        string telemetryEndpoint = "mqtts://iot.contoso.com:8883/bldg-42/chiller-02"
+                        string dataFormatVersion = "contoso-telemetry-v3"
+                        string deviceClass = "HVAC.Chiller"
+                    }
+                }
+            }
+        }
+    )
+    {
+    }
+}
