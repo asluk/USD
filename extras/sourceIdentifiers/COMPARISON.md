@@ -926,9 +926,15 @@ with Approach A’s metadata flexibility:
 
 **Use the multi-apply schema (Approach B) as the base**, providing
 typed, schema-backed common fields that all tools can discover and
-validate. **Add a fifth property — `metadata` (dictionary)** — to
-each schema instance, providing a freeform escape hatch for
-domain-specific data.
+validate. **Use Approach A’s `assetInfo["sourceIds"]` sub-dictionaries
+as the overflow mechanism** for domain-specific metadata.
+
+This works because USD schemas cannot define dictionary-typed properties
+— `dictionary` is not in `SdfValueTypeNames`. It is only available as
+metadata (`assetInfo`, `customData`). Rather than fight this constraint,
+the hybrid embraces it: **the schema carries the governed common fields;
+`assetInfo` carries the freeform domain-specific data.** The two
+mechanisms coexist on the same prim, linked by the domain key.
 
 ```usda
 class "SourceIdentifierAPI" (
@@ -945,8 +951,10 @@ class "SourceIdentifierAPI" (
     token __INSTANCE_NAME__:domain = ""
     string __INSTANCE_NAME__:label = ""
 
-    # Freeform metadata overflow (domain-specific, not validated by schema)
-    dictionary __INSTANCE_NAME__:metadata = {}
+    # Domain-specific metadata lives in assetInfo["sourceIds"][<domain>],
+    # NOT as a schema property (dictionary is not a valid attribute type).
+    # The convenience API bridges between the schema properties and the
+    # assetInfo sub-dictionary using the instance name as the linking key.
 }
 ```
 
@@ -958,41 +966,51 @@ def Xform "Chiller_01" (
         "SourceIdentifierAPI:windchill",
         "SourceIdentifierAPI:opcua"
     ]
+    # Domain-specific metadata in assetInfo (element-wise composed)
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary windchill = {
+                string displayNumber = "CH-7500-A"
+                string navigationType = "OR:wt.filter.NavigationCriteria:7608531"
+                string state = "Released"
+                string organization = "com.carrier.hvac"
+            }
+            dictionary opcua = {
+                string nodeClass = "Object"
+                string browseName = "Chiller01"
+                string serverUri = "opc.tcp://bms.example.com:4840"
+            }
+        }
+    }
 )
 {
-    # Windchill: typed common fields + domain-specific metadata
+    # Typed common fields as schema properties
     string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639563"
     string sourceIdentifier:windchill:revision = "Rev.C"
     token sourceIdentifier:windchill:domain = "com.ptc.windchill"
     string sourceIdentifier:windchill:label = "Windchill Part OID"
-    dictionary sourceIdentifier:windchill:metadata = {
-        string displayNumber = "CH-7500-A"
-        string navigationType = "OR:wt.filter.NavigationCriteria:7608531"
-        string state = "Released"
-        string organization = "com.carrier.hvac"
-    }
 
-    # OPC UA: typed common fields + domain-specific metadata
     string sourceIdentifier:opcua:primaryId = "ns=4;s=Building.HVAC.Chiller01"
     token sourceIdentifier:opcua:domain = "org.opcfoundation.ua"
     string sourceIdentifier:opcua:label = "OPC UA NodeId"
-    dictionary sourceIdentifier:opcua:metadata = {
-        string nodeClass = "Object"
-        string browseName = "Chiller01"
-        string serverUri = "opc.tcp://bms.example.com:4840"
-    }
 }
 ```
+
+The convention is that the `assetInfo["sourceIds"]` dictionary key
+**matches the schema instance name** (e.g., both are `"windchill"`).
+The convenience API bridges the two mechanisms: `GetDomainMetadata()`
+reads from `assetInfo`, while `GetPrimaryIdAttr()` reads the schema
+property.
 
 ### 7.3 Why this works
 
 | Property | Provided by | Benefit |
 |----------|------------|----------|
-| `primaryId` | Schema (typed) | Universal linkage key; schema-validated; GUI-visible |
-| `revision` | Schema (typed) | Standard versioning field |
-| `domain` | Schema (typed) | Collision-resistant reverse-DNS; queryable by token |
-| `label` | Schema (typed) | Human-readable; GUI display name |
-| `metadata` | Dictionary (freeform) | Domain-specific overflow; no schema changes needed |
+| `primaryId` | Schema property (typed) | Universal linkage key; schema-validated; GUI-visible |
+| `revision` | Schema property (typed) | Standard versioning field |
+| `domain` | Schema property (typed) | Collision-resistant reverse-DNS; queryable by token |
+| `label` | Schema property (typed) | Human-readable; GUI display name |
+| domain-specific fields | `assetInfo["sourceIds"]` (freeform dict) | Domain-specific overflow; no schema changes needed |
 
 **Benefits retained from Approach B:**
 - `apiSchemas` list declares which domains are present (like glTF `extensionsUsed`)
@@ -1008,27 +1026,35 @@ def Xform "Chiller_01" (
 - Rich, heterogeneous metadata packages (manufacturing, AECO, robotics)
 
 **Trade-off accepted:**
-- The `metadata` dictionary is not schema-validated (like `customData`)
+- Domain-specific metadata in `assetInfo` is not schema-validated
 - Domain-specific metadata is not GUI-visible without custom code
+- Authors must maintain consistency between the schema instance name
+  and the `assetInfo["sourceIds"]` dictionary key
 - But this is the *right* trade-off: common fields should be governed;
-  domain-specific metadata should be flexible. The boundary is explicit.
+  domain-specific metadata should be flexible. The boundary between
+  the two mechanisms is explicit and follows established USD patterns
+  (cf. `UsdMediaAssetPreviewsAPI` storing data in `assetInfo`).
 
 ### 7.4 Composition behavior of the hybrid
 
 The hybrid composes as follows:
 
-- `primaryId`, `revision`, `domain`, `label`: per-property composition
-  (strongest opinion wins per attribute). Safe and predictable.
-- `metadata`: dictionary-valued attribute. If authored in multiple layers,
-  **the strongest opinion wins for the entire dictionary** (standard USD
-  attribute composition — NOT element-wise like `assetInfo`). This is
-  a coarser granularity than Approach A’s element-wise metadata merge,
-  but it’s simpler and avoids the round-trip serialization hazard.
+- **Schema properties** (`primaryId`, `revision`, `domain`, `label`):
+  per-property composition (strongest opinion wins per attribute).
+  Safe and predictable.
 
-Alternatively, the `metadata` property could be declared as
-metadata (dictionary-type metadata on the prim) rather than an
-attribute, which would get element-wise composition. This is a
-design choice for the follow-up solution proposal.
+- **`assetInfo["sourceIds"]` dictionaries:** element-wise composition
+  at each nesting level (standard `assetInfo` behavior). An override
+  layer can add new keys to a domain’s metadata dictionary without
+  disturbing existing keys. This gives finer-grained composition for
+  domain metadata than a single dictionary-valued attribute would.
+
+The result is that the common fields (the ones tools need for
+interoperability) compose with the safest semantics (per-property),
+while domain-specific metadata composes with the more flexible
+element-wise semantics. This matches the precedent set by
+`UsdMediaAssetPreviewsAPI`, which stores data in `assetInfo` alongside
+its schema declaration.
 
 ### 7.5 Governance model for the hybrid
 
