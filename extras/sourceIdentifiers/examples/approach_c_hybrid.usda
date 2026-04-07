@@ -1,0 +1,249 @@
+#usda 1.0
+(
+    """
+    Approach C (Hybrid): Source identifiers via multi-apply schema
+    properties for common fields + assetInfo sub-dictionaries for
+    domain-specific metadata.
+    
+    Same building scenario as approach_a and approach_b examples.
+    
+    The pattern: schema properties carry the governed, typed, GUI-visible
+    common fields (primaryId, revision, domain, label). The assetInfo
+    sub-dictionary carries freeform domain-specific metadata. The instance
+    name links the two mechanisms.
+    """
+    defaultPrim = "Building"
+    metersPerUnit = 1.0
+    upAxis = "Y"
+)
+
+def Xform "Building" (
+    kind = "assembly"
+    prepend apiSchemas = [
+        "SourceIdentifierAPI:revit",
+        "SourceIdentifierAPI:ifc"
+    ]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary revit = {
+                string projectNumber = "2026-NYC-Tower"
+                string discipline = "Architecture"
+            }
+            dictionary ifc = {
+                string ifcType = "IfcProject"
+                string schema = "IFC4x3"
+            }
+        }
+    }
+)
+{
+    # Schema properties: typed, validated, GUI-visible
+    string sourceIdentifier:revit:primaryId = "PRJ-2026-0001"
+    string sourceIdentifier:revit:revision = "Design Development v3"
+    token sourceIdentifier:revit:domain = "com.autodesk.revit"
+    string sourceIdentifier:revit:label = "Revit Project ID"
+
+    string sourceIdentifier:ifc:primaryId = "1hqHFRz5T3$x0zRMKX30p7"
+    token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+    string sourceIdentifier:ifc:label = "IFC Project GlobalId"
+
+    def Xform "Structure" (
+        kind = "group"
+    )
+    {
+        # Structural column with 4 systems — full hybrid treatment
+        def Mesh "Column_C14" (
+            prepend apiSchemas = [
+                "SourceIdentifierAPI:ifc",
+                "SourceIdentifierAPI:revit",
+                "SourceIdentifierAPI:uniclass",
+                "SourceIdentifierAPI:omniclass"
+            ]
+            # Domain-specific metadata in assetInfo (freeform)
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary ifc = {
+                        string ifcType = "IfcColumn"
+                        string globalId = "2O2Fr$t4X7Zf8NOew3FNr2"
+                        string objectType = "W14x90"
+                    }
+                    dictionary revit = {
+                        string category = "Structural Columns"
+                        string familyType = "W14x90"
+                        string mark = "C-14"
+                        string level = "Level 3"
+                    }
+                    dictionary uniclass = {
+                        string system = "Uniclass 2015"
+                        string title = "Column systems"
+                    }
+                    dictionary omniclass = {
+                        string system = "OmniClass"
+                        string title = "Structural Steel Columns"
+                    }
+                }
+            }
+        )
+        {
+            # Schema properties: typed common fields
+            string sourceIdentifier:ifc:primaryId = "2O2Fr$t4X7Zf8NOew3FNr2"
+            token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+            string sourceIdentifier:ifc:label = "IFC GlobalId"
+
+            string sourceIdentifier:revit:primaryId = "847562"
+            string sourceIdentifier:revit:revision = "2026.1"
+            token sourceIdentifier:revit:domain = "com.autodesk.revit"
+            string sourceIdentifier:revit:label = "Revit ElementId"
+
+            string sourceIdentifier:uniclass:primaryId = "Ss_25_10_30"
+            token sourceIdentifier:uniclass:domain = "uk.thenbs.uniclass2015"
+            string sourceIdentifier:uniclass:label = "Uniclass 2015 Classification"
+
+            string sourceIdentifier:omniclass:primaryId = "23-13 11 00"
+            token sourceIdentifier:omniclass:domain = "org.csi.omniclass"
+            string sourceIdentifier:omniclass:label = "OmniClass Number"
+        }
+    }
+
+    def Xform "Mechanical" (
+        kind = "group"
+    )
+    {
+        # HVAC chiller — the richest use case for the hybrid
+        def Xform "Chiller_01" (
+            kind = "component"
+            prepend apiSchemas = [
+                "SourceIdentifierAPI:windchill",
+                "SourceIdentifierAPI:sap",
+                "SourceIdentifierAPI:opcua",
+                "SourceIdentifierAPI:ifc"
+            ]
+            # Domain-specific metadata that B alone cannot carry
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary windchill = {
+                        string displayNumber = "CH-7500-A"
+                        string navigationType = "OR:wt.filter.NavigationCriteria:7608531"
+                        string organization = "com.carrier.hvac"
+                    }
+                    dictionary sap = {
+                        string materialType = "HAWA"
+                        string plant = "NYC1"
+                    }
+                    dictionary opcua = {
+                        string nodeClass = "Object"
+                        string browseName = "Chiller01"
+                        string serverUri = "opc.tcp://bms.example.com:4840"
+                    }
+                    dictionary ifc = {
+                        string ifcType = "IfcChiller"
+                    }
+                }
+            }
+        )
+        {
+            # Schema properties: the governed common fields
+            string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639563"
+            string sourceIdentifier:windchill:revision = "Rev.C"
+            token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+            string sourceIdentifier:windchill:label = "Windchill Part OID"
+
+            string sourceIdentifier:sap:primaryId = "000000000040012345"
+            string sourceIdentifier:sap:revision = "01"
+            token sourceIdentifier:sap:domain = "com.sap.s4hana"
+            string sourceIdentifier:sap:label = "SAP Material Number"
+
+            string sourceIdentifier:opcua:primaryId = "ns=4;s=Building.HVAC.Chiller01"
+            token sourceIdentifier:opcua:domain = "org.opcfoundation.ua"
+            string sourceIdentifier:opcua:label = "OPC UA NodeId"
+
+            string sourceIdentifier:ifc:primaryId = "0VNpA$O4H5ywLJGHUdbGxK"
+            token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+            string sourceIdentifier:ifc:label = "IFC GlobalId"
+
+            # Sub-component with its own hybrid identifiers
+            def Xform "Compressor" (
+                prepend apiSchemas = ["SourceIdentifierAPI:windchill"]
+                assetInfo = {
+                    dictionary sourceIds = {
+                        dictionary windchill = {
+                            string displayNumber = "COMP-R410A-75T"
+                        }
+                    }
+                }
+            )
+            {
+                string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639601"
+                string sourceIdentifier:windchill:revision = "Rev.A"
+                token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+                string sourceIdentifier:windchill:label = "Windchill Part OID"
+            }
+
+            # Sensor with operational telemetry metadata
+            def Xform "SupplyTempSensor" (
+                prepend apiSchemas = [
+                    "SourceIdentifierAPI:opcua",
+                    "SourceIdentifierAPI:bacnet"
+                ]
+                assetInfo = {
+                    dictionary sourceIds = {
+                        dictionary opcua = {
+                            string nodeClass = "Variable"
+                            string dataType = "Double"
+                            string engineeringUnits = "degC"
+                        }
+                        dictionary bacnet = {
+                            string objectName = "CHW Supply Temp"
+                            string units = "degrees-celsius"
+                        }
+                    }
+                }
+            )
+            {
+                string sourceIdentifier:opcua:primaryId = "ns=4;s=Building.HVAC.Chiller01.SupplyTemp"
+                token sourceIdentifier:opcua:domain = "org.opcfoundation.ua"
+                string sourceIdentifier:opcua:label = "OPC UA Variable NodeId"
+
+                string sourceIdentifier:bacnet:primaryId = "device:100,analog-input:1"
+                token sourceIdentifier:bacnet:domain = "org.ashrae.bacnet"
+                string sourceIdentifier:bacnet:label = "BACnet Object ID"
+            }
+        }
+    }
+
+    def Xform "Rooms" (
+        kind = "group"
+    )
+    {
+        def Xform "Room_1001" (
+            prepend apiSchemas = [
+                "SourceIdentifierAPI:revit",
+                "SourceIdentifierAPI:ifc"
+            ]
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary revit = {
+                        string category = "Rooms"
+                        string name = "Executive Boardroom"
+                        string level = "Level 10"
+                        string area = "85.5"
+                        string areaUnit = "sqm"
+                    }
+                    dictionary ifc = {
+                        string ifcType = "IfcSpace"
+                        string longName = "Executive Boardroom"
+                    }
+                }
+            }
+        )
+        {
+            string sourceIdentifier:revit:primaryId = "1001"
+            token sourceIdentifier:revit:domain = "com.autodesk.revit"
+            string sourceIdentifier:revit:label = "Revit Room Number"
+
+            string sourceIdentifier:ifc:primaryId = "1kN_qgFpP9$wGTpoQHJkR8"
+            token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+            string sourceIdentifier:ifc:label = "IFC Space GlobalId"
+        }
+    }
+}

@@ -1,0 +1,192 @@
+#usda 1.0
+(
+    """
+    Approach C (Hybrid): Multi-vendor ecosystem simulation.
+    
+    Same 8 vendors/standards bodies scenario. The hybrid uses schema
+    properties for common fields and assetInfo for domain-specific metadata.
+    
+    This demonstrates that the hybrid approach:
+    - Maintains Approach B's discoverability (apiSchemas list)
+    - Maintains Approach A's metadata flexibility (freeform dicts)
+    - Eliminates the need for per-domain companion schemas
+    - Collision on instance names is detectable (apiSchemas)
+    - Collision on assetInfo keys is silent (same as A) but mitigated
+      by the instance name being governed by the schema
+    """
+    defaultPrim = "Assembly"
+    metersPerUnit = 1.0
+)
+
+def Xform "Assembly" (
+    kind = "assembly"
+)
+{
+    def Mesh "TurbineBlade_001" (
+        prepend apiSchemas = [
+            "SourceIdentifierAPI:nvidia",
+            "SourceIdentifierAPI:adobe",
+            "SourceIdentifierAPI:apple",
+            "SourceIdentifierAPI:sidefx",
+            "SourceIdentifierAPI:autodesk",
+            "SourceIdentifierAPI:ifc",
+            "SourceIdentifierAPI:materialx",
+            "SourceIdentifierAPI:step"
+        ]
+        # ALL domain-specific metadata lives here — no companion schemas needed
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary nvidia = {
+                    string omniHost = "nucleus.nvidia.com"
+                    string checkpoint = "cp_20260315_final"
+                    string creator = "NVIDIA SimReady"
+                }
+                dictionary adobe = {
+                    string substanceId = "sbs://turbine_blade_material"
+                    string collection = "Aerospace Materials"
+                }
+                dictionary apple = {
+                    string bundleId = "com.example.turbinesim"
+                    string spatialId = "anchor:blade001"
+                }
+                dictionary sidefx = {
+                    string hdaPath = "/obj/turbine_blade1"
+                    string nodeType = "SideFX::turbine_blade::3.0"
+                    string hipFile = "turbine_assembly_v12.hip"
+                }
+                dictionary autodesk = {
+                    string fusionProjectId = "a.YnVzaW5lc3M6bnZpZGlh"
+                    string componentName = "Turbine Blade Assembly"
+                    string material = "Inconel 718"
+                }
+                dictionary ifc = {
+                    string ifcType = "IfcMechanicalFastener"
+                    string schema = "IFC4x3"
+                    string classification = "MasterFormat:23 07 00"
+                }
+                dictionary materialx = {
+                    string nodeGraph = "NG_turbine_blade_surface"
+                    string materialxDoc = "turbine_materials.mtlx"
+                    string colorSpace = "ACEScg"
+                }
+                dictionary step = {
+                    string entityType = "PRODUCT_DEFINITION"
+                    string productId = "TB-INC718-001"
+                    string standard = "ISO 10303-242:2022"
+                }
+            }
+        }
+    )
+    {
+        # Schema properties: typed common fields for all 8 domains
+        string sourceIdentifier:nvidia:primaryId = "omni://nucleus.nvidia.com/assets/turbine/blade_v3"
+        string sourceIdentifier:nvidia:revision = "3.2.1"
+        token sourceIdentifier:nvidia:domain = "com.nvidia.omniverse"
+        string sourceIdentifier:nvidia:label = "Omniverse Nucleus Asset"
+
+        string sourceIdentifier:adobe:primaryId = "adb:sub3d:asset:a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        string sourceIdentifier:adobe:revision = "v2"
+        token sourceIdentifier:adobe:domain = "com.adobe.substance3d"
+        string sourceIdentifier:adobe:label = "Substance 3D Asset ID"
+
+        string sourceIdentifier:apple:primaryId = "com.apple.realitykit.asset.turbine-blade-001"
+        string sourceIdentifier:apple:revision = "1.0"
+        token sourceIdentifier:apple:domain = "com.apple.realitykit"
+        string sourceIdentifier:apple:label = "Reality Composer Pro Asset"
+
+        string sourceIdentifier:sidefx:primaryId = "hda://SideFX::turbine_blade::3.0"
+        string sourceIdentifier:sidefx:revision = "3.0"
+        token sourceIdentifier:sidefx:domain = "com.sidefx.houdini"
+        string sourceIdentifier:sidefx:label = "Houdini Digital Asset"
+
+        string sourceIdentifier:autodesk:primaryId = "urn:adsk.wipprod:dm.lineage:7Rf2wvPxSEeHmBq-XqFD_g"
+        string sourceIdentifier:autodesk:revision = "v47"
+        token sourceIdentifier:autodesk:domain = "com.autodesk.fusion"
+        string sourceIdentifier:autodesk:label = "Fusion 360 URN"
+
+        string sourceIdentifier:ifc:primaryId = "2O2Fr$t4X7Zf8NOew3FL02"
+        token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+        string sourceIdentifier:ifc:label = "IFC GlobalId"
+
+        string sourceIdentifier:materialx:primaryId = "NG_turbine_blade_surface"
+        string sourceIdentifier:materialx:revision = "1.39.0"
+        token sourceIdentifier:materialx:domain = "org.khronos.materialx"
+        string sourceIdentifier:materialx:label = "MaterialX Node Graph"
+
+        string sourceIdentifier:step:primaryId = "STEP-FILE-ID:#4782"
+        string sourceIdentifier:step:revision = "AP242-ED3"
+        token sourceIdentifier:step:domain = "org.iso.step"
+        string sourceIdentifier:step:label = "STEP Product Definition"
+    }
+
+    # Collision scenario — hybrid behavior
+    def Mesh "CollisionDemo" (
+        prepend apiSchemas = ["SourceIdentifierAPI:tracker"]
+        # assetInfo key matches instance name — collision detectable
+        # via apiSchemas (structural) even if assetInfo key collision
+        # is silent (behavioral)
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary tracker = {
+                    string system = "Vendor1 Internal Asset Tracker"
+                }
+            }
+        }
+    )
+    {
+        string sourceIdentifier:tracker:primaryId = "TRACK-001-V1"
+        token sourceIdentifier:tracker:domain = "com.vendor1.tracker"
+        string sourceIdentifier:tracker:label = "Vendor1 Asset Tracker"
+        # A second vendor using "tracker" would need a different instance
+        # name. The schema system makes this visible — you can't apply
+        # the same multi-apply instance twice.
+    }
+
+    # Promotion lifecycle — hybrid advantage
+    def Mesh "PromotionDemo" (
+        prepend apiSchemas = ["SourceIdentifierAPI:nvidia_simready"]
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary nvidia_simready = {
+                    string certification = "SimReady 2.0"
+                }
+            }
+        }
+    )
+    {
+        string sourceIdentifier:nvidia_simready:primaryId = "simready://turbine_blade_v3"
+        string sourceIdentifier:nvidia_simready:revision = "3.0"
+        token sourceIdentifier:nvidia_simready:domain = "com.nvidia.simready"
+        string sourceIdentifier:nvidia_simready:label = "NVIDIA SimReady Certification"
+        # Promotion: just update the domain token to "org.aousd.simready"
+        # Tools querying by domain get the migrated value automatically.
+        # Instance name can stay the same or be migrated separately.
+    }
+
+    # Heterogeneous metadata — hybrid handles it naturally
+    def Mesh "HeterogeneousDemo" (
+        prepend apiSchemas = ["SourceIdentifierAPI:windchill"]
+        # All domain-specific metadata fits in assetInfo — no companion schema
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary windchill = {
+                    string displayNumber = "CH-7500-A"
+                    string navigationType = "OR:wt.filter.NavigationCriteria:7608531"
+                    string organization = "com.carrier.hvac"
+                    string state = "Released"
+                    string lifecyclePhase = "Production"
+                    string serialNumber = "SN-2025-00847"
+                }
+            }
+        }
+    )
+    {
+        string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639563"
+        string sourceIdentifier:windchill:revision = "Rev.C"
+        token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+        string sourceIdentifier:windchill:label = "Windchill Part OID"
+        # Unlike Approach B, ALL metadata is expressible without extension.
+        # Unlike Approach A, the common fields are schema-validated and
+        # discoverable via apiSchemas.
+    }
+}

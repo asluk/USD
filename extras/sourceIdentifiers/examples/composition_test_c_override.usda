@@ -1,0 +1,62 @@
+#usda 1.0
+(
+    """
+    Approach C (Hybrid): Composition behavior test — OVERRIDE LAYER.
+    
+    References base layer. Makes two changes:
+    1. Updates windchill revision (schema property) and state (assetInfo)
+    2. Adds OPC UA domain (new schema instance + assetInfo metadata)
+    
+    EXPECTED COMPOSED RESULT:
+    
+    Schema properties (per-property composition — safe):
+    - windchill:primaryId = "VR:wt.part.WTPart:23639563" (from base)
+    - windchill:revision = "Rev.C" (OVERRIDDEN by this layer)
+    - windchill:domain = "com.ptc.windchill" (from base)
+    - windchill:label = "Windchill Part OID" (from base)
+    - sap:* = all from base (untouched)
+    - ifc:* = all from base (untouched)
+    - opcua:* = NEW (added by this layer)
+    
+    assetInfo metadata (element-wise dict composition):
+    - windchill.displayNumber = "CH-7500-A" (from base — preserved)
+    - windchill.state = "Released" (OVERRIDDEN by this layer)
+    - sap.* = all from base (untouched)
+    - opcua.* = NEW (added by this layer)
+    
+    THE HYBRID ADVANTAGE:
+    - Schema property override is surgical — changing revision doesn't
+      affect primaryId, domain, or label.
+    - assetInfo metadata override is element-wise — changing state
+      doesn't affect displayNumber.
+    - Both mechanisms work in parallel on the same prim.
+    """
+    defaultPrim = "Chiller"
+)
+
+def Xform "Chiller" (
+    prepend references = @./composition_test_c_base.usda@
+    # Add new OPC UA schema instance
+    prepend apiSchemas = ["SourceIdentifierAPI:opcua"]
+    # Override windchill state + add opcua metadata
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary windchill = {
+                string state = "Released"
+            }
+            dictionary opcua = {
+                string nodeClass = "Object"
+                string browseName = "Chiller01"
+            }
+        }
+    }
+)
+{
+    # Override ONLY the revision — other schema properties untouched
+    string sourceIdentifier:windchill:revision = "Rev.C"
+
+    # Add OPC UA schema properties
+    string sourceIdentifier:opcua:primaryId = "ns=4;s=Building.HVAC.Chiller01"
+    token sourceIdentifier:opcua:domain = "org.opcfoundation.ua"
+    string sourceIdentifier:opcua:label = "OPC UA NodeId"
+}

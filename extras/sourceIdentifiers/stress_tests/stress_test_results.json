@@ -20,10 +20,19 @@
   "line_count": {
     "approach_a": 3085417,
     "approach_b": 2020995,
-    "ratio_b_over_a": 0.655
+    "ratio_b_over_a": 0.655,
+    "approach_c": 3583150
   },
   "namespace_footprint": {
     "approach_a_unique_keys": 10,
-    "approach_b_unique_properties": 30
+    "approach_b_unique_properties": 30,
+    "approach_c_unique_properties": 30,
+    "approach_c_unique_dict_keys": 9
+  },
+  "approach_c": {
+    "generation_time_sec": 5.706,
+    "file_size_bytes": 151032507,
+    "file_size_mb": 144.04,
+    "num_prims": 100000
   }
 }
