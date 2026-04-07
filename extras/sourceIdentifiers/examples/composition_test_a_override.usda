@@ -1,0 +1,54 @@
+#usda 1.0
+(
+    """
+    Approach A: Composition behavior test — OVERRIDE LAYER.
+    
+    References composition_test_a_base.usda and overrides specific
+    source identifier domains without affecting others.
+    
+    EXPECTED COMPOSED RESULT:
+    - windchill: revision updated to "Rev.C", state to "Released"
+      (but primaryId and displayNumber preserved from base)
+    - sap: completely unchanged from base
+    - ifc: completely unchanged from base
+    - opcua: NEW domain added by this override layer
+    
+    COMPOSITION BEHAVIOR ANALYSIS:
+    assetInfo composes element-wise at each dictionary nesting level.
+    When this layer provides assetInfo["sourceIds"]["windchill"], 
+    the composed result depends on how deeply the override is structured:
+    
+    - If the override provides the ENTIRE windchill dictionary,
+      it replaces the base windchill dictionary entirely.
+    - Element-wise composition means per-key at each level:
+      the override's "revision" replaces base "revision",
+      but base "primaryId" survives (if not re-specified).
+    
+    This is the KEY SUBTLETY of Approach A: authors must understand
+    assetInfo's element-wise composition to avoid unintentional data loss.
+    """
+    defaultPrim = "Chiller"
+)
+
+def Xform "Chiller" (
+    prepend references = @./composition_test_a_base.usda@
+    # Override: update windchill revision and add opcua binding
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary windchill = {
+                string revision = "Rev.C"
+                dictionary metadata = {
+                    string state = "Released"
+                }
+            }
+            dictionary opcua = {
+                string primaryId = "ns=4;s=Building.HVAC.Chiller01"
+                dictionary metadata = {
+                    string nodeClass = "Object"
+                }
+            }
+        }
+    }
+)
+{
+}

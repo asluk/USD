@@ -1,0 +1,149 @@
+#usda 1.0
+(
+    """
+    Approach A: Robotics simulation scenario.
+    
+    Multi-robot fleet composition with:
+    - Source format provenance (URDF/SDF round-trip)
+    - ROS package identity
+    - Shared design ID vs per-instance fleet assignment
+    - Sensor catalog identifiers
+    - Operational telemetry binding
+    """
+    defaultPrim = "WarehouseFloor"
+    metersPerUnit = 1.0
+    upAxis = "Z"
+)
+
+def Xform "WarehouseFloor" (
+    kind = "assembly"
+)
+{
+    # Robot 1 — instance of shared design
+    def Xform "Robot_1" (
+        kind = "component"
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary ros = {
+                    string primaryId = "package://amr_500_description/urdf/amr_500.urdf"
+                    string revision = "1.4.2"
+                    dictionary metadata = {
+                        string packageName = "amr_500_description"
+                        string modelName = "AMR-500"
+                        string sourceFormat = "URDF"
+                        string rosDistro = "jazzy"
+                    }
+                }
+                dictionary fleet = {
+                    string primaryId = "FLEET-NYC-WH3:AMR:001"
+                    dictionary metadata = {
+                        string fleetId = "NYC-WH3"
+                        string stationAssignment = "Aisle-4-Pick"
+                        string firmwareVersion = "2.8.1"
+                        string lastCalibration = "2026-03-15T08:30:00Z"
+                    }
+                }
+                dictionary manufacturer = {
+                    string primaryId = "MFR-FETCH-AMR500-SN20250001"
+                    dictionary metadata = {
+                        string manufacturer = "Fetch Robotics"
+                        string modelNumber = "AMR-500"
+                        string serialNumber = "SN-2025-0001"
+                        string warrantyExpiry = "2028-03-15"
+                    }
+                }
+            }
+        }
+    )
+    {
+        # LiDAR sensor with catalog and operational identifiers
+        def Xform "LiDAR_Front" (
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary manufacturer = {
+                        string primaryId = "MFR-VELODYNE-VLP16-SN30042"
+                        dictionary metadata = {
+                            string manufacturer = "Velodyne"
+                            string partNumber = "VLP-16"
+                            string datasheetRevision = "Rev.F"
+                        }
+                    }
+                    dictionary ros = {
+                        string primaryId = "package://velodyne_description/urdf/VLP-16.urdf.xacro"
+                        dictionary metadata = {
+                            string topicName = "/robot_1/lidar_front/points"
+                            string frameId = "robot_1_lidar_front_link"
+                        }
+                    }
+                    dictionary opcua = {
+                        string primaryId = "ns=2;s=Fleet.Robot1.LiDAR.Front"
+                        dictionary metadata = {
+                            string nodeClass = "Object"
+                        }
+                    }
+                }
+            }
+        )
+        {
+        }
+
+        # Camera with multiple identifiers
+        def Xform "Camera_RGB" (
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary manufacturer = {
+                        string primaryId = "MFR-FLIR-BFS-U3-16S2C-SN80001"
+                        dictionary metadata = {
+                            string manufacturer = "FLIR"
+                            string partNumber = "BFS-U3-16S2C-CS"
+                        }
+                    }
+                    dictionary ros = {
+                        string primaryId = "package://flir_camera_description/urdf/bfs_u3.urdf.xacro"
+                        dictionary metadata = {
+                            string topicName = "/robot_1/camera_rgb/image_raw"
+                            string frameId = "robot_1_camera_rgb_optical_frame"
+                        }
+                    }
+                }
+            }
+        )
+        {
+        }
+    }
+
+    # Robot 2 — same design, different fleet instance
+    def Xform "Robot_2" (
+        kind = "component"
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary ros = {
+                    string primaryId = "package://amr_500_description/urdf/amr_500.urdf"
+                    string revision = "1.4.2"
+                    dictionary metadata = {
+                        string packageName = "amr_500_description"
+                        string modelName = "AMR-500"
+                        string sourceFormat = "URDF"
+                    }
+                }
+                dictionary fleet = {
+                    string primaryId = "FLEET-NYC-WH3:AMR:002"
+                    dictionary metadata = {
+                        string fleetId = "NYC-WH3"
+                        string stationAssignment = "Aisle-7-Pack"
+                        string firmwareVersion = "2.8.0"
+                    }
+                }
+                dictionary manufacturer = {
+                    string primaryId = "MFR-FETCH-AMR500-SN20250002"
+                    dictionary metadata = {
+                        string manufacturer = "Fetch Robotics"
+                        string serialNumber = "SN-2025-0002"
+                    }
+                }
+            }
+        }
+    )
+    {
+    }
+}

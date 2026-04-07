@@ -1,0 +1,53 @@
+#usda 1.0
+(
+    """
+    Approach B: Composition behavior test — BASE LAYER.
+    
+    Same scenario as Approach A base, using multi-apply schema properties.
+    
+    Key composition behavior:
+    - Each property composes independently (strongest opinion per property)
+    - apiSchemas list uses list-editing (prepend/append/delete)
+    - Overriding one property of one instance does NOT affect other
+      properties of the same instance or other instances
+    """
+    defaultPrim = "Chiller"
+)
+
+def Xform "Chiller" (
+    kind = "component"
+    assetInfo = {
+        string name = "Carrier 30XA Chiller"
+        string identifier = @assets/hvac/chiller_30xa.usd@
+        string version = "2.1"
+    }
+    prepend apiSchemas = [
+        "SourceIdentifierAPI:windchill",
+        "SourceIdentifierAPI:sap",
+        "SourceIdentifierAPI:ifc"
+    ]
+)
+{
+    string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639563"
+    string sourceIdentifier:windchill:revision = "Rev.B"
+    token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+    string sourceIdentifier:windchill:label = "Windchill Part OID"
+
+    string sourceIdentifier:sap:primaryId = "000000000040012345"
+    string sourceIdentifier:sap:revision = "01"
+    token sourceIdentifier:sap:domain = "com.sap.s4hana"
+    string sourceIdentifier:sap:label = "SAP Material Number"
+
+    string sourceIdentifier:ifc:primaryId = "0VNpA$O4H5ywLJGHUdbGxK"
+    token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+    string sourceIdentifier:ifc:label = "IFC GlobalId"
+
+    def Xform "Compressor" (
+        prepend apiSchemas = ["SourceIdentifierAPI:windchill"]
+    )
+    {
+        string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639601"
+        string sourceIdentifier:windchill:revision = "Rev.A"
+        token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+    }
+}

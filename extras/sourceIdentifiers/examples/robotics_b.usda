@@ -1,0 +1,108 @@
+#usda 1.0
+(
+    """
+    Approach B: Robotics simulation scenario.
+    
+    Same fleet composition, using multi-apply schema instances.
+    
+    Note how the base schema's 4 properties capture the linkage keys
+    but cannot express ROS-specific metadata (topicName, frameId,
+    packageName) or fleet-specific metadata (stationAssignment,
+    firmwareVersion) without extension.
+    """
+    defaultPrim = "WarehouseFloor"
+    metersPerUnit = 1.0
+    upAxis = "Z"
+)
+
+def Xform "WarehouseFloor" (
+    kind = "assembly"
+)
+{
+    def Xform "Robot_1" (
+        kind = "component"
+        prepend apiSchemas = [
+            "SourceIdentifierAPI:ros",
+            "SourceIdentifierAPI:fleet",
+            "SourceIdentifierAPI:manufacturer"
+        ]
+    )
+    {
+        string sourceIdentifier:ros:primaryId = "package://amr_500_description/urdf/amr_500.urdf"
+        string sourceIdentifier:ros:revision = "1.4.2"
+        token sourceIdentifier:ros:domain = "org.ros"
+        string sourceIdentifier:ros:label = "ROS Package URI"
+        # Cannot express: packageName, modelName, sourceFormat, rosDistro
+
+        string sourceIdentifier:fleet:primaryId = "FLEET-NYC-WH3:AMR:001"
+        token sourceIdentifier:fleet:domain = "com.example.fleet"
+        string sourceIdentifier:fleet:label = "Fleet Assignment ID"
+        # Cannot express: fleetId, stationAssignment, firmwareVersion
+
+        string sourceIdentifier:manufacturer:primaryId = "MFR-FETCH-AMR500-SN20250001"
+        token sourceIdentifier:manufacturer:domain = "com.fetchrobotics"
+        string sourceIdentifier:manufacturer:label = "Manufacturer Serial"
+        # Cannot express: serialNumber, warrantyExpiry, modelNumber as typed
+
+        def Xform "LiDAR_Front" (
+            prepend apiSchemas = [
+                "SourceIdentifierAPI:manufacturer",
+                "SourceIdentifierAPI:ros",
+                "SourceIdentifierAPI:opcua"
+            ]
+        )
+        {
+            string sourceIdentifier:manufacturer:primaryId = "MFR-VELODYNE-VLP16-SN30042"
+            token sourceIdentifier:manufacturer:domain = "com.velodyne"
+            string sourceIdentifier:manufacturer:label = "Velodyne Sensor ID"
+
+            string sourceIdentifier:ros:primaryId = "package://velodyne_description/urdf/VLP-16.urdf.xacro"
+            token sourceIdentifier:ros:domain = "org.ros"
+            string sourceIdentifier:ros:label = "ROS Sensor Description"
+            # Cannot express: topicName, frameId
+
+            string sourceIdentifier:opcua:primaryId = "ns=2;s=Fleet.Robot1.LiDAR.Front"
+            token sourceIdentifier:opcua:domain = "org.opcfoundation.ua"
+            string sourceIdentifier:opcua:label = "OPC UA NodeId"
+        }
+
+        def Xform "Camera_RGB" (
+            prepend apiSchemas = [
+                "SourceIdentifierAPI:manufacturer",
+                "SourceIdentifierAPI:ros"
+            ]
+        )
+        {
+            string sourceIdentifier:manufacturer:primaryId = "MFR-FLIR-BFS-U3-16S2C-SN80001"
+            token sourceIdentifier:manufacturer:domain = "com.flir"
+            string sourceIdentifier:manufacturer:label = "FLIR Camera ID"
+
+            string sourceIdentifier:ros:primaryId = "package://flir_camera_description/urdf/bfs_u3.urdf.xacro"
+            token sourceIdentifier:ros:domain = "org.ros"
+            string sourceIdentifier:ros:label = "ROS Camera Description"
+        }
+    }
+
+    def Xform "Robot_2" (
+        kind = "component"
+        prepend apiSchemas = [
+            "SourceIdentifierAPI:ros",
+            "SourceIdentifierAPI:fleet",
+            "SourceIdentifierAPI:manufacturer"
+        ]
+    )
+    {
+        string sourceIdentifier:ros:primaryId = "package://amr_500_description/urdf/amr_500.urdf"
+        string sourceIdentifier:ros:revision = "1.4.2"
+        token sourceIdentifier:ros:domain = "org.ros"
+        string sourceIdentifier:ros:label = "ROS Package URI"
+
+        string sourceIdentifier:fleet:primaryId = "FLEET-NYC-WH3:AMR:002"
+        token sourceIdentifier:fleet:domain = "com.example.fleet"
+        string sourceIdentifier:fleet:label = "Fleet Assignment ID"
+
+        string sourceIdentifier:manufacturer:primaryId = "MFR-FETCH-AMR500-SN20250002"
+        token sourceIdentifier:manufacturer:domain = "com.fetchrobotics"
+        string sourceIdentifier:manufacturer:label = "Manufacturer Serial"
+    }
+}

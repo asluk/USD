@@ -1,0 +1,187 @@
+#usda 1.0
+(
+    """
+    Approach A: Manufacturing scenario — Identity continuity across lifecycle.
+    
+    Demonstrates a tractor assembly (inspired by PTC/Windchill demo) with:
+    - Configurable product (navigation criteria)
+    - Alternative/equivalent identifiers
+    - Feature-level identifiers (holes, datum faces)
+    - Identity through manufacturing state transitions
+    - Mercedes-Benz style part numbering with extension codes
+    """
+    defaultPrim = "TractorAssembly"
+    metersPerUnit = 1.0
+)
+
+def Xform "TractorAssembly" (
+    kind = "assembly"
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary windchill = {
+                string primaryId = "VR:wt.part.WTPart:30001001"
+                string revision = "Rev.D"
+                dictionary metadata = {
+                    string displayNumber = "TRACTOR-6000-SERIES"
+                    string navigationType = "OR:wt.filter.NavigationCriteria:7608531"
+                    string state = "Released"
+                    string organization = "com.deere.engineering"
+                    string configContext = "North America, Tier 4 Final"
+                }
+            }
+            dictionary creo = {
+                string primaryId = "urn:adsk.creo:model:tractor_6000_asm"
+                string revision = "47"
+                dictionary metadata = {
+                    string modelType = "Assembly"
+                    string units = "mmNs"
+                }
+            }
+        }
+    }
+)
+{
+    # Engine block — carries identifiers through destructive manufacturing
+    def Xform "EngineBlock" (
+        kind = "component"
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary windchill = {
+                    string primaryId = "VR:wt.part.WTPart:30002001"
+                    string revision = "Rev.B"
+                    dictionary metadata = {
+                        string displayNumber = "ENG-BLK-6068"
+                        string serialNumber = "SN-2025-00847"
+                        string state = "Released"
+                        string lifecyclePhase = "Production"
+                    }
+                }
+                # Alternative identifiers for same part
+                dictionary supplier_oem = {
+                    string primaryId = "SUP-CUM-6068HF-485"
+                    dictionary metadata = {
+                        string supplier = "Cummins"
+                        string identifierType = "OEM Part Number"
+                        string equivalence = "form-fit-function"
+                    }
+                }
+                dictionary supplier_service = {
+                    string primaryId = "SVC-RE-6068HF-485-REMAN"
+                    dictionary metadata = {
+                        string identifierType = "Service/Replacement Part Number"
+                        string note = "Remanufactured equivalent"
+                    }
+                }
+                dictionary step = {
+                    string primaryId = "STEP-FILE-ID:#12001"
+                    string revision = "AP242-ED3"
+                    dictionary metadata = {
+                        string entityType = "PRODUCT_DEFINITION"
+                        string standard = "ISO 10303-242:2022"
+                    }
+                }
+            }
+        }
+    )
+    {
+        # Feature-level identifier: cylinder bore
+        def Xform "CylinderBore_1" (
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary amt = {
+                        string primaryId = "FID:ENG-BLK-6068:BORE:CYL1"
+                        dictionary metadata = {
+                            string featureType = "CylindricalBore"
+                            string diameter_mm = "106.5"
+                            string tolerance = "H7"
+                            string manufacturingOp = "Finish Boring"
+                            string machineId = "CNC-MAZAK-5X-042"
+                        }
+                    }
+                }
+            }
+        )
+        {
+        }
+
+        # Feature-level: datum face
+        def Xform "DatumFace_A" (
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary amt = {
+                        string primaryId = "FID:ENG-BLK-6068:DATUM:A"
+                        dictionary metadata = {
+                            string featureType = "DatumPlane"
+                            string flatness_mm = "0.025"
+                            string surfaceFinish_Ra = "0.8"
+                        }
+                    }
+                }
+            }
+        )
+        {
+        }
+    }
+
+    # Mercedes-Benz style part numbering
+    def Xform "Headlight_Assembly" (
+        kind = "component"
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary mercedes = {
+                    string primaryId = "A 213 906 76 01"
+                    string revision = "ES1"
+                    dictionary metadata = {
+                        string basePartNumber = "A 213 906 76 01"
+                        string extensionCode = "ES1"
+                        string extensionMeaning = "Color variant: Obsidian Black (197)"
+                        string colorCode = "0197"
+                        string identifierSystem = "Mercedes-Benz Part Numbering"
+                        string note = "ES2 variant: A 213 906 76 01 ES2 = Selenite Grey (992)"
+                    }
+                }
+            }
+        }
+    )
+    {
+    }
+
+    # 30 identical bolts — shared source identity, unique serial numbers
+    def Xform "Fasteners" (
+        kind = "group"
+    )
+    {
+        def Mesh "Bolt_001" (
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary windchill = {
+                        string primaryId = "VR:wt.part.WTPart:55012001"
+                        string revision = "Rev.A"
+                        dictionary metadata = {
+                            string displayNumber = "BLT-M12x35-GR8.8"
+                            string serialNumber = "SN-2025-00001"
+                        }
+                    }
+                }
+            }
+        )
+        {
+        }
+        def Mesh "Bolt_002" (
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary windchill = {
+                        string primaryId = "VR:wt.part.WTPart:55012001"
+                        string revision = "Rev.A"
+                        dictionary metadata = {
+                            string displayNumber = "BLT-M12x35-GR8.8"
+                            string serialNumber = "SN-2025-00002"
+                        }
+                    }
+                }
+            }
+        )
+        {
+        }
+    }
+}

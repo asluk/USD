@@ -1,0 +1,49 @@
+#usda 1.0
+(
+    """
+    Approach B: Composition behavior test — OVERRIDE LAYER.
+    
+    References composition_test_b_base.usda and overrides specific
+    source identifier properties without affecting others.
+    
+    EXPECTED COMPOSED RESULT:
+    - windchill:primaryId = "VR:wt.part.WTPart:23639563" (from base)
+    - windchill:revision = "Rev.C" (OVERRIDDEN by this layer)
+    - windchill:domain = "com.ptc.windchill" (from base)
+    - windchill:label = "Windchill Part OID" (from base)
+    - sap:* = all from base (untouched)
+    - ifc:* = all from base (untouched)
+    - opcua:* = NEW (added by this layer)
+    
+    COMPOSITION BEHAVIOR ANALYSIS:
+    Each property composes independently. Overriding
+    sourceIdentifier:windchill:revision does NOT affect
+    sourceIdentifier:windchill:primaryId — they are separate
+    attributes with separate opinion stacks.
+    
+    This is the KEY ADVANTAGE of Approach B: per-property composition
+    means an override layer can surgically update a single field
+    without any risk of unintentional side effects on other fields
+    in the same instance or other instances.
+    
+    Adding a new instance (opcua) uses list-editing on apiSchemas:
+    `prepend apiSchemas = ["SourceIdentifierAPI:opcua"]` adds the
+    schema without disturbing existing entries.
+    """
+    defaultPrim = "Chiller"
+)
+
+def Xform "Chiller" (
+    prepend references = @./composition_test_b_base.usda@
+    # Add new system binding, override windchill revision only
+    prepend apiSchemas = ["SourceIdentifierAPI:opcua"]
+)
+{
+    # Override ONLY the revision — primaryId, domain, label are untouched
+    string sourceIdentifier:windchill:revision = "Rev.C"
+    
+    # Add new OPC UA binding
+    string sourceIdentifier:opcua:primaryId = "ns=4;s=Building.HVAC.Chiller01"
+    token sourceIdentifier:opcua:domain = "org.opcfoundation.ua"
+    string sourceIdentifier:opcua:label = "OPC UA NodeId"
+}

@@ -1,0 +1,138 @@
+#usda 1.0
+(
+    """
+    Approach B: Manufacturing scenario — Identity continuity across lifecycle.
+    
+    Same tractor assembly scenario, using multi-apply schema properties.
+    
+    KEY OBSERVATIONS for this use case:
+    - The fixed 4-property schema (primaryId, revision, domain, label) is
+      INSUFFICIENT for manufacturing metadata like serialNumber, configContext,
+      machineId, tolerance, etc.
+    - Every domain needs a companion schema or custom attributes for their
+      domain-specific fields.
+    - This is the scenario where Approach A's freeform dictionaries shine
+      and Approach B's rigid property set creates friction.
+    """
+    defaultPrim = "TractorAssembly"
+    metersPerUnit = 1.0
+)
+
+def Xform "TractorAssembly" (
+    kind = "assembly"
+    prepend apiSchemas = [
+        "SourceIdentifierAPI:windchill",
+        "SourceIdentifierAPI:creo"
+    ]
+)
+{
+    string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:30001001"
+    string sourceIdentifier:windchill:revision = "Rev.D"
+    token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+    string sourceIdentifier:windchill:label = "Windchill Assembly OID"
+    # CANNOT express: displayNumber, navigationType, state, organization,
+    # configContext without extending the schema or using custom attributes.
+    # custom string windchill:displayNumber = "TRACTOR-6000-SERIES"
+    # custom string windchill:navigationType = "OR:wt.filter.NavigationCriteria:7608531"
+
+    string sourceIdentifier:creo:primaryId = "urn:adsk.creo:model:tractor_6000_asm"
+    string sourceIdentifier:creo:revision = "47"
+    token sourceIdentifier:creo:domain = "com.ptc.creo"
+    string sourceIdentifier:creo:label = "Creo Model URN"
+
+    def Xform "EngineBlock" (
+        kind = "component"
+        prepend apiSchemas = [
+            "SourceIdentifierAPI:windchill",
+            "SourceIdentifierAPI:supplier_oem",
+            "SourceIdentifierAPI:supplier_service",
+            "SourceIdentifierAPI:step"
+        ]
+    )
+    {
+        string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:30002001"
+        string sourceIdentifier:windchill:revision = "Rev.B"
+        token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+        string sourceIdentifier:windchill:label = "Windchill Part OID"
+        # Cannot express serialNumber, state, lifecyclePhase in base schema
+
+        string sourceIdentifier:supplier_oem:primaryId = "SUP-CUM-6068HF-485"
+        token sourceIdentifier:supplier_oem:domain = "com.cummins"
+        string sourceIdentifier:supplier_oem:label = "OEM Part Number"
+        # Cannot express: equivalence type, supplier name as typed fields
+
+        string sourceIdentifier:supplier_service:primaryId = "SVC-RE-6068HF-485-REMAN"
+        token sourceIdentifier:supplier_service:domain = "com.deere.service"
+        string sourceIdentifier:supplier_service:label = "Service/Replacement Part Number"
+
+        string sourceIdentifier:step:primaryId = "STEP-FILE-ID:#12001"
+        string sourceIdentifier:step:revision = "AP242-ED3"
+        token sourceIdentifier:step:domain = "org.iso.step"
+        string sourceIdentifier:step:label = "STEP Product Definition"
+
+        def Xform "CylinderBore_1" (
+            prepend apiSchemas = ["SourceIdentifierAPI:amt"]
+        )
+        {
+            string sourceIdentifier:amt:primaryId = "FID:ENG-BLK-6068:BORE:CYL1"
+            token sourceIdentifier:amt:domain = "org.amtonline"
+            string sourceIdentifier:amt:label = "AMT Feature ID"
+            # Cannot express: featureType, diameter_mm, tolerance,
+            # manufacturingOp, machineId in base schema.
+            # These are CRITICAL for manufacturing traceability.
+            # Options:
+            #   (a) AMT registers AmtFeatureIdentifierAPI with these fields
+            #   (b) Use custom attributes: custom string amt:diameter_mm = "106.5"
+            #   (c) Encode in primaryId: "FID:ENG-BLK-6068:BORE:CYL1:D106.5:H7"
+        }
+
+        def Xform "DatumFace_A" (
+            prepend apiSchemas = ["SourceIdentifierAPI:amt"]
+        )
+        {
+            string sourceIdentifier:amt:primaryId = "FID:ENG-BLK-6068:DATUM:A"
+            token sourceIdentifier:amt:domain = "org.amtonline"
+            string sourceIdentifier:amt:label = "AMT Feature ID"
+            # Same limitation: flatness, surface finish are domain-specific
+        }
+    }
+
+    def Xform "Headlight_Assembly" (
+        kind = "component"
+        prepend apiSchemas = ["SourceIdentifierAPI:mercedes"]
+    )
+    {
+        string sourceIdentifier:mercedes:primaryId = "A 213 906 76 01"
+        string sourceIdentifier:mercedes:revision = "ES1"
+        token sourceIdentifier:mercedes:domain = "com.mercedes-benz"
+        string sourceIdentifier:mercedes:label = "Mercedes-Benz Part Number"
+        # Cannot express: basePartNumber, extensionCode, extensionMeaning,
+        # colorCode in base schema. These are structural rules of the
+        # Mercedes-Benz numbering system.
+    }
+
+    def Xform "Fasteners" (
+        kind = "group"
+    )
+    {
+        def Mesh "Bolt_001" (
+            prepend apiSchemas = ["SourceIdentifierAPI:windchill"]
+        )
+        {
+            string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:55012001"
+            string sourceIdentifier:windchill:revision = "Rev.A"
+            token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+            string sourceIdentifier:windchill:label = "Windchill Part OID"
+            # Cannot express serialNumber in base schema
+        }
+        def Mesh "Bolt_002" (
+            prepend apiSchemas = ["SourceIdentifierAPI:windchill"]
+        )
+        {
+            string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:55012001"
+            string sourceIdentifier:windchill:revision = "Rev.A"
+            token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+            string sourceIdentifier:windchill:label = "Windchill Part OID"
+        }
+    }
+}

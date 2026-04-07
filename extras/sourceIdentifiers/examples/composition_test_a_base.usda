@@ -1,0 +1,58 @@
+#usda 1.0
+(
+    """
+    Approach A: Composition behavior test — BASE LAYER.
+    
+    This file is referenced by composition_test_a_override.usda to demonstrate
+    how assetInfo source identifiers compose across layers.
+    
+    Key composition behavior of assetInfo:
+    - assetInfo is composed element-wise (dictionary merge)
+    - Strongest opinion wins per KEY at each nesting level
+    - This means overriding ONE domain leaves other domains untouched
+    """
+    defaultPrim = "Chiller"
+)
+
+def Xform "Chiller" (
+    kind = "component"
+    assetInfo = {
+        string name = "Carrier 30XA Chiller"
+        string identifier = @assets/hvac/chiller_30xa.usd@
+        string version = "2.1"
+        dictionary sourceIds = {
+            dictionary windchill = {
+                string primaryId = "VR:wt.part.WTPart:23639563"
+                string revision = "Rev.B"
+                dictionary metadata = {
+                    string displayNumber = "CH-7500-A"
+                    string state = "In Work"
+                }
+            }
+            dictionary sap = {
+                string primaryId = "000000000040012345"
+                string revision = "01"
+            }
+            dictionary ifc = {
+                string primaryId = "0VNpA$O4H5ywLJGHUdbGxK"
+                dictionary metadata = {
+                    string ifcType = "IfcChiller"
+                }
+            }
+        }
+    }
+)
+{
+    def Xform "Compressor" (
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary windchill = {
+                    string primaryId = "VR:wt.part.WTPart:23639601"
+                    string revision = "Rev.A"
+                }
+            }
+        }
+    )
+    {
+    }
+}
