@@ -70,6 +70,15 @@ identifiers, and Mercedes-Benz-style part numbering with extension codes.
   But the *relationship* between alternatives (form-fit-function
   equivalence) is metadata that only Approach A can express in-line.
 
+- **AAS `specificAssetIds` pattern.** The AAS practice of attaching a
+  typed list of instance-level identifiers (serial number, batch ID,
+  deployed unit ID) per asset directly parallels the multi-identifier-per-prim
+  requirement analyzed above: each entry needs a type label and a scope
+  (type-level vs. instance-level). Michael Wagner's AAS Digital Battery
+  Passport ↔ OpenUSD proof-of-concept (asluk/OpenUSD-proposals#2) confirms
+  that Approach C's `assetInfo` overflow handles this list pattern without
+  requiring additional schemas.
+
 - **Feature-level identifiers** (cylinder bores, datum faces) carry
   manufacturing-critical metadata: diameter, tolerance, surface finish,
   machine ID. Approach B cannot express any of this without a companion

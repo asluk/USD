@@ -220,6 +220,59 @@ Pipelines currently using `customData`, `displayName`, or ad-hoc
 This can be done per-layer, per-domain, without disrupting existing
 composition. No big-bang migration required.
 
+### 7.6a AAS Digital Battery Passport mapping
+
+**How the hybrid maps to AAS concepts:**
+
+| AAS concept | Approach C mapping |
+|-------------|-------------------|
+| Submodel `semanticId` | Schema `domain` token (e.g., `org.idta.dpp`) |
+| `globalAssetId` vs `specificAssetIds` | `scope` convention in overflow dict (or optional schema token — open question) |
+| Submodel elements (custom fields) | `assetInfo` overflow dictionary |
+| Asset Administration Shell identity | `primaryId` string |
+
+AAS's type-level / instance-level distinction (`globalAssetId` vs `specificAssetIds`)
+could map to a `scope` value in the overflow dict or an optional schema token —
+whether this belongs in the base schema or is domain-specific is an open question
+(see COMPARISON.md §3.5). The overflow dictionary carries DPP-specific fields
+without requiring a new compiled schema.
+
+**USDA snippet — AAS Digital Battery Passport (Approach C):**
+
+```usda
+def "BatteryPack_SN42" (
+    prepend apiSchemas = ["SourceIdHybridAPI:dpp"]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary dpp = {
+                string batteryModel = "LFP-280Ah-48V"
+                string chemistry = "LFP"
+                string manufacturingDate = "2025-03-15"
+                string manufacturingPlant = "DE-RWE-02"
+            }
+        }
+    }
+)
+{
+    string sourceIdentifier:dpp:primaryId = "urn:idta:dpp:battery:SN42:2025"
+    token  sourceIdentifier:dpp:domain    = "org.idta.dpp"
+    # NOTE: scope could alternatively live in the assetInfo overflow dict
+    # rather than as a schema property — see COMPARISON.md §3.5 open question
+    token  sourceIdentifier:dpp:scope     = "instance"
+    string sourceIdentifier:dpp:label     = "IEC 62474 Digital Battery Passport"
+}
+```
+
+The `scope = "instance"` value flags this as a serial-number-level identifier
+(vs. `"type"` for a product family / part designation). Whether `scope` belongs in
+the schema or the overflow dict is an open question (see COMPARISON.md §3.5).
+DPP-specific fields land in the `assetInfo` overflow with no schema changes required.
+
+**Validation.** Michael Wagner (SyncTwin) built a bidirectional AAS DPP ↔ OpenUSD
+mapping (asluk/OpenUSD-proposals#2) exercising both Approach A and B. The hybrid
+pattern absorbed all DPP-specific fields in the overflow dictionary, confirming that
+no companion schema is needed for this use case.
+
 ### 7.7 Final recommendation
 
 > **Adopt a multi-apply schema (Approach B) with a freeform `metadata`

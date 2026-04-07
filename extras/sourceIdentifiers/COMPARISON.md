@@ -233,6 +233,59 @@ stakeholders who need typed extension properties in B/C.
 
 ---
 
+### 3.5 Type-vs-Instance Scoping & Identifier Typing
+
+**Verdict: The `domain` token already provides explicit identifier typing. Whether
+a `scope` property belongs in the base schema or in domain-specific overflow is an
+open question — see discussion below.**
+
+**The requirement.** AAS distinguishes `globalAssetId` (type-level: part family,
+product designation) from `specificAssetIds` (instance-level: serial number, deployed
+unit ID), each with a mandatory type label naming its source system (PLM, IFC, ERP,
+ECLASS). Some domains need this type-vs-instance distinction for deterministic
+round-tripping, filtering, and collision prevention across systems.
+
+| Aspect | Approach A | Approach B | Approach C |
+|--------|-----------|------------|------------|
+| Type-vs-instance scope | Freeform dict key (any structure works, no discoverability) | Could add optional `scope` token, or leave to overflow | Same as B + overflow for AAS-style lists |
+| Identifier type label | Dict key name serves as informal label | `domain` token is authoritative type label; instance name adds context | Same as B for schema fields |
+| AAS `specificAssetIds` list | Natural fit — nested list in dict | Cannot express open-ended list without companion schema | Schema for common fields + `assetInfo` overflow for full list |
+| Backwards compatibility | N/A | No schema change needed if `scope` stays in overflow | Same |
+
+**How each approach handles it:**
+
+- **Approach A:** Freeform dictionary keys can encode any structure, including
+  `{scope: "instance", …}`. Works, but no tool can discover or validate the scope
+  convention without out-of-band knowledge.
+
+- **Approach B:** The `domain` token already serves as the authoritative identifier
+  type label. A `scope` token could be added to the schema, but many domains (IFC,
+  glTF, MaterialX) have no type-vs-instance distinction — making it arguably
+  domain-specific rather than universal. The open-ended `specificAssetIds` list
+  structure cannot be expressed without a companion schema or falling back to
+  `customData`.
+
+- **Approach C:** The overflow dictionary naturally carries domain-specific
+  conventions like `scope` for AAS without polluting the base schema. The
+  `assetInfo` overflow handles the full AAS-style `specificAssetIds` list when
+  needed, without schema proliferation.
+
+**Open question: where does `scope` live?** The type-vs-instance distinction is
+central to AAS/Industry 4.0 but arguably irrelevant for many other domains (IFC
+GlobalId is always instance-level; ECLASS is always type-level; glTF/MaterialX have
+no such concept). If `scope` is domain-specific rather than universal, it may belong
+in the `assetInfo` overflow dict — which is precisely the escape hatch Approach C
+provides. This is literal "scope creep" and merits TAC discussion.
+
+**DPP proof-of-concept.** Michael Wagner (SyncTwin) built a bidirectional AAS Digital
+Battery Passport ↔ OpenUSD mapping (PR asluk/OpenUSD-proposals#2) that exercises both
+Approach A and B, validating that the hybrid overflow pattern handles DPP-specific
+fields (`batteryModel`, `manufacturingDate`, `chemistry`) without schema changes.
+
+→ Deep dive: [details/hybrid_analysis.md](details/hybrid_analysis.md)
+
+---
+
 ## Hybrid Recommendation
 
 ### The case against either approach alone
