@@ -82,14 +82,14 @@ def Xform "Assembly" (
                         string classification = "MasterFormat:23 07 00"
                     }
                 }
-                # --- STANDARDS: AOUSD (MaterialX) ---
-                dictionary materialx = {
-                    string primaryId = "NG_turbine_blade_surface"
-                    string revision = "1.39.0"
+                # --- STANDARDS: ASHRAE (Equipment Classification) ---
+                dictionary ashrae = {
+                    string primaryId = "ASHRAE205:RS0004:CompressorSystem"
+                    string revision = "2023"
                     dictionary metadata = {
-                        string nodeGraph = "NG_turbine_blade_surface"
-                        string materialxDoc = "turbine_materials.mtlx"
-                        string colorSpace = "ACEScg"
+                        string nodeGraph = "ASHRAE205:RS0004:CompressorSystem"
+                        string standard = "ASHRAE Standard 205"
+                        string ratingCondition = "AHRI 550/590"
                     }
                 }
                 # --- STANDARDS: STEP/ISO ---

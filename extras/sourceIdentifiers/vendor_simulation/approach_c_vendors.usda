@@ -30,7 +30,7 @@ def Xform "Assembly" (
             "SourceIdentifierAPI:sidefx",
             "SourceIdentifierAPI:autodesk",
             "SourceIdentifierAPI:ifc",
-            "SourceIdentifierAPI:materialx",
+            "SourceIdentifierAPI:ashrae",
             "SourceIdentifierAPI:step"
         ]
         # ALL domain-specific metadata lives here — no companion schemas needed
@@ -64,10 +64,10 @@ def Xform "Assembly" (
                     string schema = "IFC4x3"
                     string classification = "MasterFormat:23 07 00"
                 }
-                dictionary materialx = {
-                    string nodeGraph = "NG_turbine_blade_surface"
-                    string materialxDoc = "turbine_materials.mtlx"
-                    string colorSpace = "ACEScg"
+                dictionary ashrae = {
+                    string nodeGraph = "ASHRAE205:RS0004:CompressorSystem"
+                    string standard = "ASHRAE Standard 205"
+                    string ratingCondition = "AHRI 550/590"
                 }
                 dictionary step = {
                     string entityType = "PRODUCT_DEFINITION"
@@ -108,10 +108,10 @@ def Xform "Assembly" (
         token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
         string sourceIdentifier:ifc:label = "IFC GlobalId"
 
-        string sourceIdentifier:materialx:primaryId = "NG_turbine_blade_surface"
-        string sourceIdentifier:materialx:revision = "1.39.0"
-        token sourceIdentifier:materialx:domain = "org.aousd.materialx"
-        string sourceIdentifier:materialx:label = "MaterialX Node Graph"
+        string sourceIdentifier:ashrae:primaryId = "ASHRAE205:RS0004:CompressorSystem"
+        string sourceIdentifier:ashrae:revision = "1.39.0"
+        token sourceIdentifier:ashrae:domain = "org.ashrae.std205"
+        string sourceIdentifier:ashrae:label = "ASHRAE Equipment Classification"
 
         string sourceIdentifier:step:primaryId = "STEP-FILE-ID:#4782"
         string sourceIdentifier:step:revision = "AP242-ED3"
