@@ -865,6 +865,83 @@ def validate_source_ids_b(stage, registry):
 | Lines of validation code | ~30 | ~15 |
 | Can run without USD API | Yes (dict parsing) | Requires USD schema system |
 
+### 6.5 Validator development and deployment per identifier extension
+
+OpenUSD’s `UsdValidation` framework (introduced 2024) provides a
+plugin-based system for registering validators that run against stages.
+Validators are registered via `plugInfo.json` with metadata including
+`doc`, `keywords`, and critically `schemaTypes` — which lets a
+validator declare which schema types it targets.
+
+Each identifier "extension" (domain) has two layers of validation:
+
+1. **Structural validation:** Are the common fields present and
+   well-formed? (primaryId is a non-empty string, domain is a
+   registered token, revision is present if required by the domain.)
+
+2. **Domain-specific validation:** Are the domain’s values semantically
+   correct? (Is this a valid IFC GlobalId? Is this Windchill OID
+   resolvable? Does this STEP entity ID conform to AP242?)
+
+**Approach A validator deployment:**
+
+```
+# What a domain stakeholder must produce:
+
+1. plugInfo.json declaring the validator
+2. Validator implementation (C++ or Python)
+   - Must manually parse assetInfo["sourceIds"] dictionaries
+   - Cannot target a specific schemaType (no schema to target)
+   - Must iterate all prims and inspect assetInfo on each
+   - Domain-specific field validation is manual dict key checking
+```
+
+Because Approach A has no schema, validators cannot use the
+`schemaTypes` targeting mechanism. A validator wanting to check
+IFC identifiers must register as a generic stage validator and
+filter prims manually by inspecting their `assetInfo["sourceIds"]`
+dictionaries for the `"ifc"` key. There is no way to declare
+“run this validator only on prims that carry IFC identifiers.”
+
+**Approach B/C validator deployment:**
+
+```
+# What a domain stakeholder must produce:
+
+1. plugInfo.json declaring the validator with:
+   - schemaTypes: ["SourceIdentifierAPI"]
+   - keywords: ["sourceIdentifier", "ifc"]
+2. Validator implementation (C++ or Python)
+   - Can target SourceIdentifierAPI schema type directly
+   - Uses typed API: GetPrimaryIdAttr(), GetDomainAttr()
+   - Domain filtering via GetDomainAttr().Get() == "org.buildingsmart.ifc"
+   - Domain-specific validation is still custom but benefits from
+     typed property access
+```
+
+**With the hybrid (Approach C)**, domain-specific metadata in
+`assetInfo` requires the same manual dict parsing as Approach A for
+the overflow fields. But the common fields (primaryId, revision,
+domain, label) are schema-validated automatically, and the validator
+can use `schemaTypes` targeting to run only on prims with the schema
+applied.
+
+**Comparison of validator development cost per domain extension:**
+
+| Dimension | Approach A | Approach B | Approach C (Hybrid) |
+|-----------|-----------|-----------|--------------------|
+| Schema targeting | ❌ None | ✅ schemaTypes | ✅ schemaTypes |
+| Common field validation | Manual dict parsing | Built-in (schema types) | Built-in (schema types) |
+| Domain-specific validation | Manual dict parsing | Manual (custom attrs or companion schema) | Manual dict parsing (assetInfo) |
+| Prim filtering | Full stage traverse + dict inspect | Schema-targeted (efficient) | Schema-targeted (efficient) |
+| Validator registration | plugInfo.json | plugInfo.json | plugInfo.json |
+| Total validator code (domain) | ~50–100 lines | ~30–50 lines | ~40–70 lines |
+
+The validation framework advantage of B/C is real but moderate —
+the main win is schema-targeted prim filtering (skip prims without
+the schema applied) and typed common field access. Domain-specific
+validation is equally custom across all approaches.
+
 ### 6.5 Deployment friction for identifier stakeholders
 
 An "identifier stakeholder" is an organization that wants their
@@ -948,19 +1025,43 @@ Option 3 is why the hybrid (Approach C) exists: it eliminates the
 schema registration burden for domain-specific metadata while
 preserving schema-backed validation for the common fields.
 
+**Important correction: codeless schemas change the calculus.**
+OpenUSD supports `skipCodeGeneration = true` in `usdGenSchema`,
+producing **codeless schemas** that require only:
+
+1. `schema.usda` (the schema definition — ~30–100 lines)
+2. Run `usdGenSchema` → produces `generatedSchema.usda` + `plugInfo.json`
+3. Drop these files into a USD plugin path
+
+No C++, no Python wrappers, no `CMakeLists.txt`, no compilation.
+The schema is available at runtime for property creation, introspection,
+and validation — but without convenience C++/Python API methods.
+Access is through the generic `UsdPrim::GetAttribute()` and
+`UsdPrim::ApplyAPI()` interfaces.
+
+This dramatically lowers the barrier for domain-specific schemas in
+Approach B/C. A domain stakeholder (e.g., buildingSMART) could produce
+a codeless `IfcSourceIdentifierAPI` schema with typed properties for
+ifcType, schema, and classification in ~50 lines of `schema.usda` +
+a single `usdGenSchema` run. No C++ expertise required.
+
+The full 1,533-line / 17-file cost applies only when the stakeholder
+wants **compiled C++/Python convenience APIs** (typed getters/setters
+like `GetPrimaryIdAttr()`). For many stakeholders, codeless schemas
+are sufficient.
+
+| Deployment tier | Files | Lines | C++ needed? | Approach |
+|----------------|-------|-------|-------------|----------|
+| Codeless schema | 3 | ~80 | No | B/C domain extension |
+| Compiled schema | 17+ | ~1,500+ | Yes | B/C with convenience API |
+| assetInfo only | 0 | 0 | No | A, or C metadata overflow |
+
 **Note on prototype fidelity:** The schema implementations in this
-comparison (Approaches B and C) were hand-written without running
-`usdGenSchema`. They are structurally faithful to the patterns in
-`UsdSemanticsLabelsAPI` and `UsdCollectionAPI`, but are missing the
-generated artifacts (`generatedSchema.usda`, `plugInfo.json`,
-`generatedSchema.classes.txt`, `generatedSchema.module.h`, Python
-wrapper files, `CMakeLists.txt`) that would be required for runtime
-loading. A production implementation would run `usdGenSchema` against
-the `schema.usda` definitions to produce these files. The absence of
-these generated files in the prototype is itself an illustration of
-the codegen barrier: the hand-written schema definitions total ~100
-lines each, but the full generated output would be ~1,000+ lines of
-boilerplate per approach.
+comparison were hand-written without running `usdGenSchema`.
+A production implementation would use `usdGenSchema` (codeless or
+compiled) to produce the generated artifacts. The prototypes are
+structurally faithful to the patterns in `UsdSemanticsLabelsAPI` and
+`UsdCollectionAPI`.
 
 **The usdGenSchema barrier is especially significant for non-M&E
 stakeholders.** AECO firms, PLM vendors, and standards bodies like
