@@ -1,0 +1,4 @@
+# Generated stress test stages (100K+ prims, >90MB each)
+# Regenerate with: python3 generate_large_stage.py
+stress_approach_a.usda
+stress_approach_b.usda
