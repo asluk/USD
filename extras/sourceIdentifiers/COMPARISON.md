@@ -948,6 +948,20 @@ Option 3 is why the hybrid (Approach C) exists: it eliminates the
 schema registration burden for domain-specific metadata while
 preserving schema-backed validation for the common fields.
 
+**Note on prototype fidelity:** The schema implementations in this
+comparison (Approaches B and C) were hand-written without running
+`usdGenSchema`. They are structurally faithful to the patterns in
+`UsdSemanticsLabelsAPI` and `UsdCollectionAPI`, but are missing the
+generated artifacts (`generatedSchema.usda`, `plugInfo.json`,
+`generatedSchema.classes.txt`, `generatedSchema.module.h`, Python
+wrapper files, `CMakeLists.txt`) that would be required for runtime
+loading. A production implementation would run `usdGenSchema` against
+the `schema.usda` definitions to produce these files. The absence of
+these generated files in the prototype is itself an illustration of
+the codegen barrier: the hand-written schema definitions total ~100
+lines each, but the full generated output would be ~1,000+ lines of
+boilerplate per approach.
+
 **The usdGenSchema barrier is especially significant for non-M&E
 stakeholders.** AECO firms, PLM vendors, and standards bodies like
 buildingSMART or ASHRAE do not typically have C++ USD expertise on
