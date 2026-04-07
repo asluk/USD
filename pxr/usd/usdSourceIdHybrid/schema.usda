@@ -1,0 +1,127 @@
+#usda 1.0
+(
+    "Schema for source identifiers using hybrid approach (Approach C)."
+    "Multi-apply schema with typed common properties + assetInfo sub-dicts"
+    "for domain-specific metadata overflow. Combines Approach B's structural"
+    "advantages with Approach A's metadata flexibility."
+    subLayers = [
+        @usd/schema.usda@
+    ]
+)
+
+over "GLOBAL" (
+    customData = {
+        string libraryName      = "usdSourceIdHybrid"
+        string libraryPath      = "pxr/usd/usdSourceIdHybrid"
+    }
+)
+{
+}
+
+class "SourceIdentifierAPI" (
+    inherits = </APISchemaBase>
+    doc = """UsdSourceIdentifierAPI is a multi-apply API schema for expressing
+    external source identifiers as typed properties on a prim, with
+    domain-specific metadata stored in assetInfo sub-dictionaries.
+
+    This schema implements the hybrid approach (Approach C) from the
+    'Separation of Concerns for Identifiers' comparison: each external
+    system gets a schema instance with typed common properties, plus
+    an assetInfo["sourceIds"][<instance_name>] dictionary for freeform
+    domain-specific metadata.
+
+    ## Schema properties (typed, validated, GUI-visible)
+
+    - **primaryId** (string): Main linkage key in the external system.
+    - **revision** (string): Version/revision designator.
+    - **domain** (token): Formal reverse-DNS domain identifier.
+    - **label** (string): Human-readable description.
+
+    ## Domain-specific metadata (freeform, in assetInfo)
+
+    Additional domain-specific fields are stored in
+    assetInfo["sourceIds"][<instance_name>] as a freeform dictionary.
+    The instance name links the schema properties to the metadata dict.
+
+    This follows the UsdMediaAssetPreviewsAPI precedent: the schema
+    provides a described spec and convenience API, while structured
+    data lives in composed assetInfo metadata.
+
+    ## Example USD
+
+    ```usda
+    def Xform "Chiller_01" (
+        prepend apiSchemas = [
+            "SourceIdentifierAPI:windchill",
+            "SourceIdentifierAPI:opcua"
+        ]
+        assetInfo = {
+            dictionary sourceIds = {
+                dictionary windchill = {
+                    string displayNumber = "CH-7500-A"
+                    string navigationType = "OR:wt.filter.NavigationCriteria:7608531"
+                    string state = "Released"
+                }
+                dictionary opcua = {
+                    string nodeClass = "Object"
+                    string serverUri = "opc.tcp://bms.example.com:4840"
+                }
+            }
+        }
+    )
+    {
+        string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639563"
+        string sourceIdentifier:windchill:revision = "Rev.C"
+        token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+        string sourceIdentifier:windchill:label = "Windchill Part OID"
+
+        string sourceIdentifier:opcua:primaryId = "ns=4;s=Building.HVAC.Chiller01"
+        token sourceIdentifier:opcua:domain = "org.opcfoundation.ua"
+        string sourceIdentifier:opcua:label = "OPC UA NodeId"
+    }
+    ```
+
+    ## Key Characteristics
+
+    - Common fields are schema-backed: typed, validated, GUI-visible,
+      per-property composition.
+    - Domain-specific metadata is freeform: no schema changes needed,
+      element-wise composition via assetInfo.
+    - apiSchemas list declares which domains are present (discoverability).
+    - Instance name links schema properties to assetInfo sub-dictionary.
+    """
+    customData = {
+        string className = "SourceIdentifierAPI"
+        token apiSchemaType = "multipleApply"
+        token propertyNamespacePrefix = "sourceIdentifier"
+    }
+)
+{
+    string __INSTANCE_NAME__:primaryId = "" (
+        customData = {
+            string apiName = "PrimaryId"
+        }
+        doc = """The primary identifier for this entity in the external system."""
+    )
+
+    string __INSTANCE_NAME__:revision = "" (
+        customData = {
+            string apiName = "Revision"
+        }
+        doc = """Version or revision designator in the external system."""
+    )
+
+    token __INSTANCE_NAME__:domain = "" (
+        customData = {
+            string apiName = "Domain"
+        }
+        doc = """Formal domain identifier using reverse-DNS convention."""
+    )
+
+    string __INSTANCE_NAME__:label = "" (
+        customData = {
+            string apiName = "Label"
+        }
+        doc = """Human-readable label for this identifier."""
+    )
+}
