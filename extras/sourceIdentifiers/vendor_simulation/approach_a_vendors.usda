@@ -26,7 +26,7 @@ def Xform "Assembly" (
             dictionary sourceIds = {
                 # --- VENDOR: NVIDIA (Omniverse asset tracking) ---
                 dictionary nvidia = {
-                    string primaryId = "omni://nucleus.nvidia.com/assets/turbine/blade_v3"
+                    string primaryId = "omniverse://nucleus.nvidia.com/assets/turbine/blade_v3"
                     string revision = "3.2.1"
                     dictionary metadata = {
                         string omniHost = "nucleus.nvidia.com"
@@ -37,7 +37,7 @@ def Xform "Assembly" (
                 }
                 # --- VENDOR: Adobe (Substance 3D) ---
                 dictionary adobe = {
-                    string primaryId = "adb:sub3d:asset:a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    string primaryId = "urn:adobe:sub3d:a1b2c3d4-e5f6-7890-abcd-ef1234567890"
                     string revision = "v2"
                     dictionary metadata = {
                         string substanceId = "sbs://turbine_blade_material"
@@ -46,7 +46,7 @@ def Xform "Assembly" (
                 }
                 # --- VENDOR: Apple (Reality Composer Pro) ---
                 dictionary apple = {
-                    string primaryId = "com.apple.realitykit.asset.turbine-blade-001"
+                    string primaryId = "com.apple.realitykit.asset.TB-001"
                     string revision = "1.0"
                     dictionary metadata = {
                         string bundleId = "com.example.turbinesim"
@@ -55,7 +55,7 @@ def Xform "Assembly" (
                 }
                 # --- VENDOR: SideFX (Houdini) ---
                 dictionary sidefx = {
-                    string primaryId = "hda://SideFX::turbine_blade::3.0"
+                    string primaryId = "SideFX::turbine_blade::3.0"
                     string revision = "3.0"
                     dictionary metadata = {
                         string hdaPath = "/obj/turbine_blade1"
@@ -82,7 +82,7 @@ def Xform "Assembly" (
                         string classification = "MasterFormat:23 07 00"
                     }
                 }
-                # --- STANDARDS: ASHRAE (Equipment Classification) ---
+                # --- STANDARDS: ASHRAE (Standard 205 (HVAC performance data)) ---
                 dictionary ashrae = {
                     string primaryId = "ASHRAE205:RS0004:CompressorSystem"
                     string revision = "2023"

@@ -79,22 +79,22 @@ def Xform "Assembly" (
     )
     {
         # Schema properties: typed common fields for all 8 domains
-        string sourceIdentifier:nvidia:primaryId = "omni://nucleus.nvidia.com/assets/turbine/blade_v3"
+        string sourceIdentifier:nvidia:primaryId = "omniverse://nucleus.nvidia.com/assets/turbine/blade_v3"
         string sourceIdentifier:nvidia:revision = "3.2.1"
         token sourceIdentifier:nvidia:domain = "com.nvidia.omniverse"
         string sourceIdentifier:nvidia:label = "Omniverse Nucleus Asset"
 
-        string sourceIdentifier:adobe:primaryId = "adb:sub3d:asset:a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        string sourceIdentifier:adobe:primaryId = "urn:adobe:sub3d:a1b2c3d4-e5f6-7890-abcd-ef1234567890"
         string sourceIdentifier:adobe:revision = "v2"
         token sourceIdentifier:adobe:domain = "com.adobe.substance3d"
         string sourceIdentifier:adobe:label = "Substance 3D Asset ID"
 
-        string sourceIdentifier:apple:primaryId = "com.apple.realitykit.asset.turbine-blade-001"
+        string sourceIdentifier:apple:primaryId = "com.apple.realitykit.asset.TB-001"
         string sourceIdentifier:apple:revision = "1.0"
         token sourceIdentifier:apple:domain = "com.apple.realitykit"
         string sourceIdentifier:apple:label = "Reality Composer Pro Asset"
 
-        string sourceIdentifier:sidefx:primaryId = "hda://SideFX::turbine_blade::3.0"
+        string sourceIdentifier:sidefx:primaryId = "SideFX::turbine_blade::3.0"
         string sourceIdentifier:sidefx:revision = "3.0"
         token sourceIdentifier:sidefx:domain = "com.sidefx.houdini"
         string sourceIdentifier:sidefx:label = "Houdini Digital Asset"
@@ -111,7 +111,7 @@ def Xform "Assembly" (
         string sourceIdentifier:ashrae:primaryId = "ASHRAE205:RS0004:CompressorSystem"
         string sourceIdentifier:ashrae:revision = "1.39.0"
         token sourceIdentifier:ashrae:domain = "org.ashrae.std205"
-        string sourceIdentifier:ashrae:label = "ASHRAE Equipment Classification"
+        string sourceIdentifier:ashrae:label = "ASHRAE 205 Representation Spec"
 
         string sourceIdentifier:step:primaryId = "STEP-FILE-ID:#4782"
         string sourceIdentifier:step:revision = "AP242-ED3"

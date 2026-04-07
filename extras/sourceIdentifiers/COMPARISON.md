@@ -1,8 +1,8 @@
 # Source Identifiers in OpenUSD: Empirical Comparison of Two Candidate Approaches
 
-**Authors:** Aaron Luk (NVIDIA), with implementation and analysis by automated evaluation  
-**Date:** April 2026  
-**Branch:** [`aluk/source-identifiers-comparison`](https://github.com/asluk/USD/tree/aluk/source-identifiers-comparison)  
+**Authors:** Aaron Luk (NVIDIA), with implementation and analysis by automated evaluation
+**Date:** April 2026
+**Branch:** [`aluk/source-identifiers-comparison`](https://github.com/asluk/USD/tree/aluk/source-identifiers-comparison)
 **Proposal:** [Separation of Concerns for Identifiers in USD](../../OpenUSD-proposals/proposals/identifier_separation_of_concerns/README.md)
 
 ## Contents
@@ -48,7 +48,7 @@ a schema instance (e.g., `SourceIdSchemaAPI:windchill`,
 
 | Dimension | Approach A | Approach B | Assessment |
 |-----------|-----------|-----------|------------|
-| File size (100K prims, 1–5 IDs each) | 106.3 MB | 91.6 MB | B is 14% smaller |
+| File size (100K prims, 1-5 IDs each) | 106.3 MB | 91.6 MB | B is 14% smaller |
 | Authoring verbosity | 3.09M lines | 2.02M lines | B is 35% fewer lines |
 | Unique namespace entries per stage | 10 dict keys | 30 property names | A has 3× fewer unique names |
 | Ease of initial vendor adoption | ★★★★★ | ★★★★☆ | A: zero friction; B: near-zero |
@@ -60,11 +60,11 @@ a schema instance (e.g., `SourceIdSchemaAPI:windchill`,
 | Promotion lifecycle | Medium effort | Low-medium | B: schema versioning helps |
 | Governance enforceability | Convention only | Convention + schema | B: structurally detectable |
 
-**Overall scores** (1–5 across 8 dimensions): **A = 23/40, B = 33/40.**
+**Overall scores** (1-5 across 8 dimensions): **A = 23/40, B = 33/40.**
 
 Approach B scores higher on the dimensions that matter most for a
 multi-stakeholder standard (safety, discoverability, validation, governance),
-while Approach A wins decisively on metadata flexibility — a critical
+while Approach A wins decisively on metadata flexibility - a critical
 requirement for heterogeneous industrial use cases.
 
 **Recommendation:** Neither approach alone is sufficient. The recommended
@@ -107,7 +107,12 @@ pxr/usd/
 │   ├── sourceIdAPI.h/.cpp
 │   ├── tokens.h/.cpp
 │   └── api.h
-└── usdSourceIdSchema/    # Approach B implementation
+├── usdSourceIdSchema/    # Approach B implementation
+│   ├── schema.usda
+│   ├── sourceIdentifierAPI.h/.cpp
+│   ├── tokens.h/.cpp
+│   └── api.h
+└── usdSourceIdHybrid/    # Approach C (hybrid) implementation
     ├── schema.usda
     ├── sourceIdentifierAPI.h/.cpp
     ├── tokens.h/.cpp
@@ -120,9 +125,9 @@ pxr/usd/
 
 ### Approach A: `assetInfo` stratified sub-dictionaries
 
-**Module:** `pxr/usd/usdSourceId/`  
-**Schema type:** Single-apply API schema (`UsdSourceIdAPI`)  
-**Precedent:** `UsdMediaAssetPreviewsAPI`  
+**Module:** `pxr/usd/usdSourceId/`
+**Schema type:** Single-apply API schema (`UsdSourceIdAPI`)
+**Precedent:** `UsdMediaAssetPreviewsAPI`
 
 **Mechanism.** Source identifiers are stored as nested dictionaries within the
 composed `assetInfo` metadata on any prim:
@@ -198,9 +203,9 @@ std::vector<TfToken> domains = api.GetDomains();
 
 ### Approach B: Multi-apply schema with typed properties
 
-**Module:** `pxr/usd/usdSourceIdSchema/`  
-**Schema type:** Multi-apply API schema (`UsdSourceIdSchemaAPI`)  
-**Precedent:** `UsdSemanticsLabelsAPI`, `UsdCollectionAPI`, `UsdPhysicsLimitAPI`  
+**Module:** `pxr/usd/usdSourceIdSchema/`
+**Schema type:** Multi-apply API schema (`UsdSourceIdSchemaAPI`)
+**Precedent:** `UsdSemanticsLabelsAPI`, `UsdCollectionAPI`, `UsdPhysicsLimitAPI`
 
 **Mechanism.** Each external system is represented as an instance of a
 multi-apply schema, with typed properties under a namespaced prefix:
@@ -227,10 +232,10 @@ def Mesh "Column_C14" (
 **Key characteristics:**
 
 - **Four typed properties per instance:**
-  - `primaryId` (string) — the main linkage key
-  - `revision` (string) — version/revision designator
-  - `domain` (token) — formal reverse-DNS domain identifier
-  - `label` (string) — human-readable description
+  - `primaryId` (string) - the main linkage key
+  - `revision` (string) - version/revision designator
+  - `domain` (token) - formal reverse-DNS domain identifier
+  - `label` (string) - human-readable description
 
 - **Contributes to `UsdPrimDefinition`.** Properties appear in schema-aware
   GUIs automatically. Fallback values (empty strings) mean unauthored
@@ -238,7 +243,7 @@ def Mesh "Column_C14" (
 
 - **Per-property composition.** Each property composes independently.
   Overriding `sourceIdentifier:windchill:revision` does NOT affect
-  `sourceIdentifier:windchill:primaryId` — they are separate attributes
+  `sourceIdentifier:windchill:primaryId` - they are separate attributes
   with separate opinion stacks.
 
 - **Fixed property set limits domain-specific metadata.** The four
@@ -289,7 +294,7 @@ std::vector<TfToken> instances = UsdSourceIdSchemaAPI::GetAll(prim);
 
 Composition behavior is one of the most consequential differences between the
 two approaches. It governs what happens when source identifiers are authored
-across multiple layers — a common scenario when a base asset (authored by a
+across multiple layers - a common scenario when a base asset (authored by a
 design team) is overridden by a downstream consumer (e.g., a construction
 coordinator updating a revision, or an operational system adding telemetry
 bindings).
@@ -336,17 +341,17 @@ override provides `revision` and `metadata.state`; the base provides
 `primaryId` and `metadata.displayNumber`. Because composition merges per
 key at each level:
 
-- `primaryId` = `"VR:wt.part.WTPart:23639563"` ✅ (from base — preserved)
-- `revision` = `"Rev.C"` ✅ (from override — updated)
-- `metadata.displayNumber` = `"CH-7500-A"` ✅ (from base — preserved)
-- `metadata.state` = `"Released"` ✅ (from override — updated)
+- `primaryId` = `"VR:wt.part.WTPart:23639563"` ✅ (from base - preserved)
+- `revision` = `"Rev.C"` ✅ (from override - updated)
+- `metadata.displayNumber` = `"CH-7500-A"` ✅ (from base - preserved)
+- `metadata.state` = `"Released"` ✅ (from override - updated)
 
 This works correctly **in this case** because both layers structured their
 dictionaries at the same granularity. However, the behavior is subtle:
 
 **Risk scenario:** If the override layer had authored the entire `windchill`
 dictionary with only `revision` (omitting `primaryId`), the composed result
-would still contain `primaryId` from the base — because `assetInfo` merges
+would still contain `primaryId` from the base - because `assetInfo` merges
 per key. But if a tool *serializes* the override by first reading the
 composed value and writing it back (a common pattern), it would write the
 full dictionary including `primaryId`, which would then shadow the base
@@ -438,7 +443,7 @@ SAP + OPC UA + BACnet + IFC), and rooms with purely numeric identifiers.
   carrying identifiers from four external systems is expressible in both
   approaches without difficulty.
 
-- **Approach A handles AECO’s rich metadata naturally.** IFC metadata
+- **Approach A handles AECO's rich metadata naturally.** IFC metadata
   (ifcType, schema, objectType), Revit metadata (category, familyType,
   mark, level), and classification system metadata all fit naturally as
   key-value pairs in freeform dictionaries.
@@ -452,7 +457,7 @@ SAP + OPC UA + BACnet + IFC), and rooms with purely numeric identifiers.
 - **Operational telemetry bindings** (OPC UA NodeIds, BACnet object IDs)
   work equally well in both approaches for the primary identifier. But
   telemetry metadata (nodeClass, dataType, engineeringUnits) is again
-  natural in A and absent in B’s base schema.
+  natural in A and absent in B's base schema.
 
 ### 4.2 Manufacturing, Product Lifecycle & Digital Engineering
 
@@ -460,37 +465,37 @@ SAP + OPC UA + BACnet + IFC), and rooms with purely numeric identifiers.
 
 **Scenario:** A tractor assembly (inspired by PTC/Windchill workflows) with
 configurable products, alternative/equivalent identifiers, feature-level
-identifiers, and Mercedes-Benz–style part numbering with extension codes.
+identifiers, and Mercedes-Benz-style part numbering with extension codes.
 
 **Findings:**
 
-- **Approach A excels at manufacturing’s heterogeneous metadata.**
-  Manufacturing identifiers are rarely just a string — they’re composite
+- **Approach A excels at manufacturing's heterogeneous metadata.**
+  Manufacturing identifiers are rarely just a string - they're composite
   packages. A Windchill part carries displayNumber, navigationType
   (an opaque filter object), organization, state, lifecyclePhase, and
   serialNumber. These fit naturally as dictionary entries.
 
-- **Approach B’s fixed schema is most strained here.** The four properties
+- **Approach B's fixed schema is most strained here.** The four properties
   (primaryId, revision, domain, label) capture the linkage key and
   version, but manufacturing workflows *require* the surrounding metadata:
   - `navigationType` determines which configuration of a product is
-    resolved — without it, the identifier is ambiguous for configurable
+    resolved - without it, the identifier is ambiguous for configurable
     products
   - `serialNumber` distinguishes instances of the same part design
   - `displayNumber` is the human-readable part number vs. the opaque
     system OID in `primaryId`
   - Mercedes-Benz extension codes (ES1, ES2) encode color and variant
-    information as structured suffixes — they’re not just strings
+    information as structured suffixes - they're not just strings
 
 - **Alternative identifiers** (OEM part number, service/replacement part
-  number) work in both approaches — each gets its own domain/instance.
+  number) work in both approaches - each gets its own domain/instance.
   But the *relationship* between alternatives (form-fit-function
   equivalence) is metadata that only Approach A can express in-line.
 
 - **Feature-level identifiers** (cylinder bores, datum faces) carry
   manufacturing-critical metadata: diameter, tolerance, surface finish,
   machine ID. Approach B cannot express any of this without a companion
-  `AmtFeatureIdentifierAPI` schema — exactly the kind of per-domain
+  `AmtFeatureIdentifierAPI` schema - exactly the kind of per-domain
   schema proliferation the proposal warns about.
 
 ### 4.3 Robotics & Simulation
@@ -513,16 +518,16 @@ operational telemetry binding.
   distinction.
 
 - **Sensor catalog identifiers** need manufacturer, part number, datasheet
-  revision — again, metadata that only fits in A’s freeform dicts without
+  revision - again, metadata that only fits in A's freeform dicts without
   a companion schema.
 
 - **ROS topic names and frame IDs** are critical operational metadata that
   bind a sensor prim to its ROS data stream. These are domain-specific
-  fields that B’s base schema cannot carry.
+  fields that B's base schema cannot carry.
 
 ### 4.4 Media & Entertainment
 
-While not separately implemented as a test file (USD’s existing `assetInfo`
+While not separately implemented as a test file (USD's existing `assetInfo`
 already covers the M&E model-level case), the analysis confirms:
 
 - **Model-level asset tracking** (asset management DB IDs, versions,
@@ -554,8 +559,8 @@ The pattern across all four verticals is consistent:
 
 **The critical finding:** For industries with simple identifier schemes
 (a string ID + optional version), both approaches are equivalent. For
-industries with rich, heterogeneous identifier metadata — which includes
-manufacturing, AECO, and robotics — Approach A’s freeform dictionaries
+industries with rich, heterogeneous identifier metadata - which includes
+manufacturing, AECO, and robotics - Approach A's freeform dictionaries
 are significantly more capable without requiring per-domain schema work.
 
 This is the central tension driving the hybrid recommendation in Section 7.
@@ -574,13 +579,13 @@ identifier schemes to a single turbine blade prim:
 
 | # | Organization | Domain | Identifier Example |
 |---|-------------|--------|-------------------|
-| 1 | NVIDIA | Omniverse Nucleus | `omni://nucleus.nvidia.com/assets/turbine/blade_v3` |
-| 2 | Adobe | Substance 3D | `adb:sub3d:asset:a1b2c3d4-e5f6-7890-abcd-ef1234567890` |
-| 3 | Apple | Reality Composer Pro | `com.apple.realitykit.asset.turbine-blade-001` |
-| 4 | SideFX | Houdini Digital Asset | `hda://SideFX::turbine_blade::3.0` |
+| 1 | NVIDIA | Omniverse Nucleus | `omniverse://nucleus.nvidia.com/assets/turbine/blade_v3` |
+| 2 | Adobe | Substance 3D | `urn:adobe:sub3d:a1b2c3d4-e5f6-7890-abcd-ef1234567890` (illustrative) |
+| 3 | Apple | Reality Composer Pro | `com.apple.realitykit.asset.TB-001` (illustrative) |
+| 4 | SideFX | Houdini Digital Asset | `SideFX::turbine_blade::3.0` |
 | 5 | Autodesk | Fusion 360 | `urn:adsk.wipprod:dm.lineage:7Rf2wvPxSEeHmBq-XqFD_g` |
 | 6 | buildingSMART | IFC | `2O2Fr$t4X7Zf8NOew3FL02` |
-| 7 | ASHRAE | Equipment Classification | `NG_turbine_blade_surface` |
+| 7 | ASHRAE | Standard 205 (HVAC performance data) | `ASHRAE205:RS0004:CompressorSystem` |
 | 8 | ISO | STEP | `STEP-FILE-ID:#4782` |
 
 **Vendor adoption friction:**
@@ -594,20 +599,20 @@ identifier schemes to a single turbine blade prim:
   authors four properties. Also zero files touched if the common
   properties suffice. But if the vendor needs domain-specific fields
   (6 of 8 simulated vendors do), they must either register a companion
-  schema or use custom attributes — adding friction.
+  schema or use custom attributes - adding friction.
 
 **Collision scenario:**
 
 - **Approach A:** If two vendors independently pick the key `"tracker"`,
   their data silently collides. The composed result contains only the
-  strongest opinion’s `tracker` dictionary. No warning is produced.
+  strongest opinion's `tracker` dictionary. No warning is produced.
   Mitigation: reverse-DNS keys (e.g., `"com.vendor1.tracker"`), but
   this is convention, not enforcement.
 
 - **Approach B:** If two vendors both use `SourceIdSchemaAPI:tracker`,
   the `apiSchemas` list cannot contain duplicate entries. The `domain`
   property provides secondary disambiguation. More importantly, schema
-  registration makes the collision *visible* — tools inspecting the
+  registration makes the collision *visible* - tools inspecting the
   prim will see the conflicting schema application.
 
 **Promotion lifecycle:**
@@ -626,8 +631,8 @@ identifier schemes to a single turbine blade prim:
 ### 5.2 Stress test: 100,000 prims
 
 **Generator:** `stress_tests/generate_large_stage.py` (deterministic,
-`random.seed(42)`; regenerate with `python3 generate_large_stage.py`)  
-**Configuration:** 100,000 prims, each with 1–5 randomly assigned
+`random.seed(42)`; regenerate with `python3 generate_large_stage.py`)
+**Configuration:** 100,000 prims, each with 1-5 randomly assigned
 domains from the 8-vendor pool, with metadata fields.
 
 #### File size and verbosity
@@ -643,11 +648,11 @@ This is because:
 
 1. **No nesting overhead.** Approach A requires `dictionary sourceIds = {`
    and `dictionary <domain> = {` wrapper lines at each nesting level.
-   Approach B’s flat property namespace has no nesting.
+   Approach B's flat property namespace has no nesting.
 
 2. **No metadata sub-dict.** Approach A carries domain-specific metadata
    as additional dictionary entries. The equivalent data would require
-   companion schemas in B, but since B’s base schema doesn’t carry it,
+   companion schemas in B, but since B's base schema doesn't carry it,
    the comparison is not apples-to-apples on content richness. **If both
    approaches carried identical metadata, A would be smaller** because
    dictionary keys are shorter than fully-qualified property names.
@@ -668,7 +673,7 @@ This is because:
 because each domain is a single dictionary key containing nested data.
 Approach B explodes each domain into 4 separately-named properties. At
 scale (20 vendors × 5 schemes = 100 domains), Approach B would add
-400 property names to each prim’s property namespace — a significant
+400 property names to each prim's property namespace - a significant
 crowding concern, though each property is individually addressable and
 typed.
 
@@ -680,13 +685,13 @@ typed.
 
 Both approaches require a full scan for reverse lookups ("which prims
 have this identifier?"). Performance is comparable. In production, both
-would benefit from external indexing — the mechanism must make building
+would benefit from external indexing - the mechanism must make building
 such indexes tractable, which both do (A via dictionary key iteration,
 B via property name pattern matching or `apiSchemas` list filtering).
 
 ### 5.3 Vendor adoption scoring
 
-**Methodology:** Eight dimensions scored 1–5 based on the multi-vendor
+**Methodology:** Eight dimensions scored 1-5 based on the multi-vendor
 simulation, stress test results, and composition analysis.
 
 | Dimension | A | B | Winner | Weight for TAC |
@@ -696,7 +701,7 @@ simulation, stress test results, and composition analysis.
 | Metadata flexibility | 5 | 3 | A | High |
 | GUI integration | 2 | 5 | B | Medium |
 | Promotion lifecycle | 3 | 4 | B | Medium |
-| Scale manageability | 3 | 3 | — | Low |
+| Scale manageability | 3 | 3 | - | Low |
 | Discoverability | 2 | 5 | B | High |
 | Schema validation | 1 | 5 | B | High |
 | **Total** | **23** | **33** | **B** | |
@@ -705,8 +710,8 @@ simulation, stress test results, and composition analysis.
 standards body cares about most (safety, discoverability, validation,
 governance). Approach A wins on the dimensions that individual vendors
 care about most (ease of adoption, metadata flexibility). This is not
-a contradiction — it reflects the fundamental trade-off between
-governance and flexibility, and it’s why the hybrid recommendation
+a contradiction - it reflects the fundamental trade-off between
+governance and flexibility, and it's why the hybrid recommendation
 exists.
 
 ---
@@ -716,7 +721,7 @@ exists.
 ### 6.1 How other standards bodies govern vendor extensions
 
 Source identifier domain registration is a **data-format governance**
-problem, not a runtime mechanism. Unlike USD’s plugin system (which
+problem, not a runtime mechanism. Unlike USD's plugin system (which
 registers schemas at application startup), identifier domains are
 declared in USD content and must be governed outside the runtime.
 
@@ -739,8 +744,8 @@ need for source identifiers. It is:
 - **Three-tier:** Vendor-specific (ship independently) → multi-vendor
   (`EXT_`, proven interop) → ratified (`KHR_`, Khronos IP framework).
 - **Declarative:** Each glTF file lists `extensionsUsed` and
-  `extensionsRequired` — consumers know what to expect without parsing
-  the full file. This is analogous to Approach B’s `apiSchemas` list.
+  `extensionsRequired` - consumers know what to expect without parsing
+  the full file. This is analogous to Approach B's `apiSchemas` list.
 - **Not a runtime mechanism:** The registry is a Markdown file in a
   GitHub repo. Enforcement is by convention and community review.
 
@@ -749,8 +754,8 @@ need for source identifiers. It is:
 Regardless of which approach is chosen, AOUSD would maintain a registry
 of identifier domain prefixes. The proposed model:
 
-1. **AOUSD maintains a Domains Registry** (analogous to glTF’s
-   `Prefixes.md`) — a list mapping domain keys/prefixes to
+1. **AOUSD maintains a Domains Registry** (analogous to glTF's
+   `Prefixes.md`) - a list mapping domain keys/prefixes to
    organizations, with contact information and status.
 
 2. **Three tiers:**
@@ -776,7 +781,7 @@ of identifier domain prefixes. The proposed model:
   uses. A consumer must parse all `assetInfo["sourceIds"]` dictionaries
   across all prims to discover the domain set.
 - Governance violations (unregistered domain key, collision) are
-  **silent** — detectable only by external validators.
+  **silent** - detectable only by external validators.
 - The glTF `extensionsUsed` analog is **absent**.
 
 **Approach B:**
@@ -784,8 +789,8 @@ of identifier domain prefixes. The proposed model:
 - A consumer can inspect `apiSchemas` on any prim (or stage metadata)
   to discover which identifier domains are present **without parsing
   property values**.
-- This is structurally analogous to glTF’s `extensionsUsed` array.
-- Governance violations are **detectable** — an unregistered instance
+- This is structurally analogous to glTF's `extensionsUsed` array.
+- Governance violations are **detectable** - an unregistered instance
   name can be flagged by schema-aware tools; the `domain` property
   provides a secondary, unambiguous resolution.
 
@@ -820,7 +825,7 @@ def validate_source_ids_a(stage, registry):
             if "primaryId" not in domain_data:
                 errors.append(
                     f"{prim.GetPath()}: domain '{domain_key}' missing primaryId")
-            # Type checking is manual — no schema enforcement
+            # Type checking is manual - no schema enforcement
             primary = domain_data.get("primaryId")
             if primary is not None and not isinstance(primary, str):
                 errors.append(
@@ -848,7 +853,7 @@ def validate_source_ids_b(stage, registry):
                 errors.append(
                     f"{prim.GetPath()}: instance '{instance_name}' "
                     f"has no authored primaryId")
-            # Type checking is automatic — schema enforces types
+            # Type checking is automatic - schema enforces types
             # Fallback detection is built in
             # No manual isinstance() checks needed
     return errors
@@ -867,10 +872,10 @@ def validate_source_ids_b(stage, registry):
 
 ### 6.5 Validator development and deployment per identifier extension
 
-OpenUSD’s `UsdValidation` framework (introduced 2024) provides a
+OpenUSD's `UsdValidation` framework (introduced 2024) provides a
 plugin-based system for registering validators that run against stages.
 Validators are registered via `plugInfo.json` with metadata including
-`doc`, `keywords`, and critically `schemaTypes` — which lets a
+`doc`, `keywords`, and critically `schemaTypes` - which lets a
 validator declare which schema types it targets.
 
 Each identifier "extension" (domain) has two layers of validation:
@@ -879,7 +884,7 @@ Each identifier "extension" (domain) has two layers of validation:
    well-formed? (primaryId is a non-empty string, domain is a
    registered token, revision is present if required by the domain.)
 
-2. **Domain-specific validation:** Are the domain’s values semantically
+2. **Domain-specific validation:** Are the domain's values semantically
    correct? (Is this a valid IFC GlobalId? Is this Windchill OID
    resolvable? Does this STEP entity ID conform to AP242?)
 
@@ -901,7 +906,7 @@ Because Approach A has no schema, validators cannot use the
 IFC identifiers must register as a generic stage validator and
 filter prims manually by inspecting their `assetInfo["sourceIds"]`
 dictionaries for the `"ifc"` key. There is no way to declare
-“run this validator only on prims that carry IFC identifiers.”
+"run this validator only on prims that carry IFC identifiers."
 
 **Approach B/C validator deployment:**
 
@@ -935,9 +940,9 @@ applied.
 | Domain-specific validation | Manual dict parsing | Manual (custom attrs or companion schema) | Manual dict parsing (assetInfo) |
 | Prim filtering | Full stage traverse + dict inspect | Schema-targeted (efficient) | Schema-targeted (efficient) |
 | Validator registration | plugInfo.json | plugInfo.json | plugInfo.json |
-| Total validator code (domain) | ~50–100 lines | ~30–50 lines | ~40–70 lines |
+| Total validator code (domain) | ~50-100 lines | ~30-50 lines | ~40-70 lines |
 
-The validation framework advantage of B/C is real but moderate —
+The validation framework advantage of B/C is real but moderate -
 the main win is schema-targeted prim filtering (skip prims without
 the schema applied) and typed common field access. Domain-specific
 validation is equally custom across all approaches.
@@ -956,13 +961,13 @@ identifier scheme to be expressible in USD content: a PLM vendor
 | 1. Register domain | Register key in AOUSD Domains Registry | Register instance name in AOUSD Domains Registry |
 | 2. Document scheme | Write specification for their sub-dictionary structure | Write specification for which properties they use |
 | 3. Start authoring | Write `assetInfo["sourceIds"]["<key>"]` in any tool that can author `assetInfo` | Apply schema instance + author 4 properties in any USD-aware tool |
-| 4. Add domain-specific metadata | Just add keys to their dictionary — no coordination | Must register companion schema OR use custom attributes |
+| 4. Add domain-specific metadata | Just add keys to their dictionary - no coordination | Must register companion schema OR use custom attributes |
 | 5. Validate content | Run external validator against their spec | Schema validation covers base fields; domain-specific fields need external validator |
 | 6. Ship to consumers | Consumers parse their dict structure per their spec | Consumers use standard schema API; domain-specific metadata needs their spec |
 
 **Net assessment:**
 
-- **Steps 1–3** are equivalent in both approaches. Initial adoption
+- **Steps 1-3** are equivalent in both approaches. Initial adoption
   friction is near-zero for both.
 
 - **Step 4** is where the approaches diverge sharply. Approach A lets
@@ -971,8 +976,8 @@ identifier scheme to be expressible in USD content: a PLM vendor
   (insufficient for most industrial use cases), or invest in companion
   schema work.
 
-- **Steps 5–6** favor Approach B for the common fields (schema-driven)
-  but still require Approach A–style work for domain-specific metadata
+- **Steps 5-6** favor Approach B for the common fields (schema-driven)
+  but still require Approach A-style work for domain-specific metadata
   regardless.
 
 ### 6.6 The real cost of schema registration
@@ -981,9 +986,10 @@ The friction of "just register a companion schema" is often
 underestimated. Consider what a domain stakeholder (e.g., PTC wanting
 a `WindchillIdentifierAPI`) must actually produce:
 
-For reference, `UsdSemanticsLabelsAPI` — one of the *simplest*
-multi-apply schemas in the OpenUSD codebase — requires **1,533 lines
-across 17 files:**
+For reference, `UsdSemanticsLabelsAPI` - one of the *simplest*
+multi-apply schemas in the OpenUSD codebase - requires **~1,150 lines
+across 16 files** (excluding tests and the optional `LabelsQuery`
+helper):
 
 | File category | Files | Lines | Notes |
 |--------------|-------|-------|-------|
@@ -991,18 +997,18 @@ across 17 files:**
 | `generatedSchema.usda` | 1 | 19 | Auto-generated by `usdGenSchema` |
 | `plugInfo.json` | 1 | 29 | Plugin registration |
 | `CMakeLists.txt` | 1 | 42 | Build system |
-| C++ implementation | 3 | 531 | `.cpp` files (schema, tokens, module) |
-| C++ headers | 5 | 604 | `.h` files (API, schema, tokens, pch, module) |
-| Python wrappers | 3 | 257 | `wrap*.cpp` files |
-| Module init | 1 | — | `__init__.py` |
+| C++ implementation | 3 | 327 | `labelsAPI.cpp` (285), `tokens.cpp` (25), `module.cpp` (17) |
+| C++ headers | 5 | 466 | `api.h`, `labelsAPI.h`, `tokens.h`, `pch.h`, `generatedSchema.module.h` |
+| Python wrappers | 2 | 204 | `wrapLabelsAPI.cpp` (181), `wrapTokens.cpp` (23) |
+| Module init | 1 | 8 | `__init__.py` |
 | Generated class list | 1 | 15 | `generatedSchema.classes.txt` |
-| **Total** | **17** | **1,533** | |
+| **Total** | **16** | **~1,146** | |
 
 A domain stakeholder who wants typed properties beyond the common
 4 (primaryId, revision, domain, label) must either:
 
-1. **Build a full schema plugin** (Approach B’s path): ~1,500+ lines,
-   17 files, familiarity with `usdGenSchema`, CMake, PXR build system,
+1. **Build a full schema plugin** (Approach B's path): ~1,150+ lines,
+   16 files, familiarity with `usdGenSchema`, CMake, PXR build system,
    Boost.Python wrapping, and the `plugInfo.json` registration mechanism.
    Must rebuild when OpenUSD updates. Must distribute the plugin to all
    consumers.
@@ -1011,14 +1017,14 @@ A domain stakeholder who wants typed properties beyond the common
    `custom string windchill:displayNumber = "CH-7500-A"` alongside the
    schema properties. No schema registration needed, but also no
    validation, no fallback values, no discoverability, and the `custom`
-   prefix marks them as untyped — exactly the `customData` fragmentation
+   prefix marks them as untyped - exactly the `customData` fragmentation
    the proposal aims to solve.
 
-3. **Use `assetInfo` sub-dictionaries** (Approach C’s path): Author
+3. **Use `assetInfo` sub-dictionaries** (Approach C's path): Author
    domain-specific metadata in `assetInfo["sourceIds"]["windchill"]`.
    Zero schema work. Zero files to touch. Element-wise composition.
    Not schema-validated, but this is the *domain-specific overflow*
-   case — the common fields that need validation are already covered
+   case - the common fields that need validation are already covered
    by the multi-apply schema.
 
 Option 3 is why the hybrid (Approach C) exists: it eliminates the
@@ -1029,13 +1035,13 @@ preserving schema-backed validation for the common fields.
 OpenUSD supports `skipCodeGeneration = true` in `usdGenSchema`,
 producing **codeless schemas** that require only:
 
-1. `schema.usda` (the schema definition — ~30–100 lines)
+1. `schema.usda` (the schema definition - ~30-100 lines)
 2. Run `usdGenSchema` → produces `generatedSchema.usda` + `plugInfo.json`
 3. Drop these files into a USD plugin path
 
 No C++, no Python wrappers, no `CMakeLists.txt`, no compilation.
 The schema is available at runtime for property creation, introspection,
-and validation — but without convenience C++/Python API methods.
+and validation - but without convenience C++/Python API methods.
 Access is through the generic `UsdPrim::GetAttribute()` and
 `UsdPrim::ApplyAPI()` interfaces.
 
@@ -1045,7 +1051,7 @@ a codeless `IfcSourceIdSchemaAPI` schema with typed properties for
 ifcType, schema, and classification in ~50 lines of `schema.usda` +
 a single `usdGenSchema` run. No C++ expertise required.
 
-The full 1,533-line / 17-file cost applies only when the stakeholder
+The full ~1,150-line / 16-file cost applies only when the stakeholder
 wants **compiled C++/Python convenience APIs** (typed getters/setters
 like `GetPrimaryIdAttr()`). For many stakeholders, codeless schemas
 are sufficient.
@@ -1053,21 +1059,22 @@ are sufficient.
 | Deployment tier | Files | Lines | C++ needed? | Approach |
 |----------------|-------|-------|-------------|----------|
 | Codeless schema | 3 | ~80 | No | B/C domain extension |
-| Compiled schema | 17+ | ~1,500+ | Yes | B/C with convenience API |
+| Compiled schema | 16+ | ~1,150+ | Yes | B/C with convenience API |
 | assetInfo only | 0 | 0 | No | A, or C metadata overflow |
 
-**Note on prototype fidelity:** The schema implementations in this
-comparison were hand-written without running `usdGenSchema`.
-A production implementation would use `usdGenSchema` (codeless or
-compiled) to produce the generated artifacts. The prototypes are
-structurally faithful to the patterns in `UsdSemanticsLabelsAPI` and
-`UsdCollectionAPI`.
+**Note on prototype fidelity:** All three schema implementations have
+been processed through `usdGenSchema`, producing full generated output
+in `pxr/usd/<module>/generated/` directories. Codeless (runtime-only)
+versions are installed in `extras/sourceIdentifiers/installed_schemas/`
+and verified to load at runtime. The hand-written C++ source files in
+each module directory show the convenience API patterns; the generated
+files are the authoritative output.
 
 **The usdGenSchema barrier is especially significant for non-M&E
 stakeholders.** AECO firms, PLM vendors, and standards bodies like
 buildingSMART or ASHRAE do not typically have C++ USD expertise on
 staff. Asking them to produce a schema plugin is a non-starter for
-initial adoption. The hybrid’s `assetInfo` overflow lets them ship
+initial adoption. The hybrid's `assetInfo` overflow lets them ship
 immediately; a schema plugin can come later if their metadata fields
 stabilize and warrant formal typing.
 
@@ -1079,31 +1086,31 @@ stabilize and warrant formal typing.
 
 **Approach A alone** provides maximum flexibility but sacrifices
 discoverability, validation, GUI integration, and governance
-enforceability — the properties that a multi-stakeholder standard
+enforceability - the properties that a multi-stakeholder standard
 needs most. It would repeat the `customData` pattern: technically
 capable, but practically un-interoperable because every consumer
-must know every vendor’s ad-hoc dictionary structure.
+must know every vendor's ad-hoc dictionary structure.
 
 **Approach B alone** provides excellent structural properties but
 cannot carry the domain-specific metadata that real-world industrial
 workflows require. Forcing every identifier stakeholder to register
 a companion schema for their domain-specific fields would either:
 (a) create schema sprawl (dozens of `*IdentifierAPI` schemas), or
-(b) push metadata into `customData` — recreating exactly the
+(b) push metadata into `customData` - recreating exactly the
 fragmentation problem the proposal aims to solve.
 
 ### 7.2 Recommended hybrid: Approach B + metadata overflow dictionary
 
-The recommended approach combines Approach B’s structural advantages
-with Approach A’s metadata flexibility:
+The recommended approach combines Approach B's structural advantages
+with Approach A's metadata flexibility:
 
 **Use the multi-apply schema (Approach B) as the base**, providing
 typed, schema-backed common fields that all tools can discover and
-validate. **Use Approach A’s `assetInfo["sourceIds"]` sub-dictionaries
+validate. **Use Approach A's `assetInfo["sourceIds"]` sub-dictionaries
 as the overflow mechanism** for domain-specific metadata.
 
 This works because USD schemas cannot define dictionary-typed properties
-— `dictionary` is not in `SdfValueTypeNames`. It is only available as
+- `dictionary` is not in `SdfValueTypeNames`. It is only available as
 metadata (`assetInfo`, `customData`). Rather than fight this constraint,
 the hybrid embraces it: **the schema carries the governed common fields;
 `assetInfo` carries the freeform domain-specific data.** The two
@@ -1119,10 +1126,12 @@ class "SourceIdHybridAPI" (
 )
 {
     # Typed common fields (schema-validated, GUI-visible)
-    string __INSTANCE_NAME__:primaryId = ""
-    string __INSTANCE_NAME__:revision = ""
-    token __INSTANCE_NAME__:domain = ""
-    string __INSTANCE_NAME__:label = ""
+    # usdGenSchema prepends "sourceIdentifier:<instance>:" automatically
+    # via propertyNamespacePrefix, so definitions use bare names:
+    string primaryId = ""
+    string revision = ""
+    token domain = ""
+    string label = ""
 
     # Domain-specific metadata lives in assetInfo["sourceIds"][<domain>],
     # NOT as a schema property (dictionary is not a valid attribute type).
@@ -1218,7 +1227,7 @@ The hybrid composes as follows:
 
 - **`assetInfo["sourceIds"]` dictionaries:** element-wise composition
   at each nesting level (standard `assetInfo` behavior). An override
-  layer can add new keys to a domain’s metadata dictionary without
+  layer can add new keys to a domain's metadata dictionary without
   disturbing existing keys. This gives finer-grained composition for
   domain metadata than a single dictionary-valued attribute would.
 
@@ -1254,8 +1263,8 @@ because:
    binary encoding would reduce the gap.
 
 3. **The alternative is companion schemas.** If domain-specific metadata
-   were expressed as companion schemas (Approach B’s workaround), the
-   property count would be even higher than the hybrid’s `assetInfo`
+   were expressed as companion schemas (Approach B's workaround), the
+   property count would be even higher than the hybrid's `assetInfo`
    overhead.
 
 ### 7.5 Governance model for the hybrid
@@ -1268,7 +1277,7 @@ The three-tier AOUSD Domains Registry (Section 6.2) applies directly:
 
 2. **Validation:** Common fields validated by the USD schema system.
    Domain-specific `metadata` validated by external validators per the
-   stakeholder’s specification (same as Approach A).
+   stakeholder's specification (same as Approach A).
 
 3. **Promotion:** When a domain-specific metadata field proves universally
    useful, it can be promoted to a typed property on the base schema
