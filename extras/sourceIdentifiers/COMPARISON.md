@@ -192,8 +192,11 @@ domains need overflow, binary formats compress dicts efficiently, and the altern
 
 **Verdict: B/C provides structural governance hooks A cannot offer.**
 
-**Governance model:** Modeled on Khronos glTF `Prefixes.md` — the closest analog
-to what AOUSD needs. Three tiers:
+**Governance model:** Informed by precedents across multiple standards bodies —
+Khronos glTF's `Prefixes.md`, W3C's WICG incubation path, and IETF/IANA
+registration policies. Three tiers (paralleling both glTF's
+`VENDOR_`→`EXT_`→`KHR_` and W3C's Community Group → Working Group →
+Recommendation):
 
 - **Vendor domains** (`com.ptc.windchill`, `com.nvidia.omniverse`): self-service,
   First Come First Served
@@ -201,8 +204,9 @@ to what AOUSD needs. Three tiers:
 - **AOUSD standard domains** (`aousd.ifc`): TAC ratification
 
 **Structural advantage of B/C:** The `apiSchemas` list functions like glTF's
-`extensionsUsed` — a consumer knows which identifier domains are present without
-parsing all `assetInfo` dictionaries across all prims. Approach A has no equivalent.
+`extensionsUsed` (or W3C's declared feature policies) — a consumer knows which
+identifier domains are present without parsing all `assetInfo` dictionaries
+across all prims. Approach A has no equivalent.
 
 **Validator complexity:**
 
@@ -306,9 +310,10 @@ reads from `assetInfo`; `GetPrimaryIdAttr()` reads the schema property.
 > interoperability and governance, plus a freeform escape hatch for the
 > domain-specific metadata that real-world industrial workflows require.
 >
-> Establish an AOUSD Domains Registry following the Khronos glTF `Prefixes.md`
-> model: low-barrier vendor registration, three-tier promotion path,
-> GitHub-based process.
+> Establish an AOUSD Domains Registry informed by Khronos glTF's `Prefixes.md`
+> and W3C's WICG incubation model: low-barrier vendor registration (à la
+> glTF prefix reservation or W3C Community Group creation), three-tier
+> promotion path, GitHub-based process.
 >
 > The resulting mechanism addresses all eight design principles from the
 > proposal: separation of concerns, industry agnosticism, vendor extensibility,

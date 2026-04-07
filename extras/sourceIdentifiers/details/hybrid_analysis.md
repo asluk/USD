@@ -115,7 +115,8 @@ property.
 | domain-specific fields | `assetInfo["sourceIds"]` (freeform dict) | Domain-specific overflow; no schema changes needed |
 
 **Benefits retained from Approach B:**
-- `apiSchemas` list declares which domains are present (like glTF `extensionsUsed`)
+- `apiSchemas` list declares which domains are present (like glTF `extensionsUsed`
+  or W3C declared feature policies)
 - Per-property composition for the common fields
 - Schema-driven discoverability and GUI presentation
 - Type validation on common fields
@@ -227,8 +228,8 @@ composition. No big-bang migration required.
 > escape hatch for the domain-specific metadata that real-world industrial
 > workflows require.
 >
-> Establish an AOUSD Domains Registry following the Khronos glTF
-> `Prefixes.md` model: low-barrier vendor registration, three-tier
+> Establish an AOUSD Domains Registry informed by Khronos glTF's `Prefixes.md`
+> and W3C's WICG incubation model: low-barrier vendor registration, three-tier
 > promotion path, GitHub-based process.
 >
 > The resulting mechanism addresses all eight design principles from the

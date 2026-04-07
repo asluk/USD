@@ -20,18 +20,37 @@ Six precedents from other standards bodies inform this design:
 | **buildingSMART** | bSDD data dictionary | Organization-published → reviewed → standard | Online portal + REST API | Centralized namespace |
 | **Java/XML** | Reverse-DNS convention | Single tier (by convention) | None (self-service) | Domain name ownership |
 
-**Key insight:** The glTF model is the closest analog to what AOUSD would
-need for source identifiers. It is:
+**Key insight:** Two models bracket the design space for what AOUSD would
+need for source identifiers:
+
+**Khronos glTF** is the closest structural analog:
 
 - **Low barrier:** Any vendor can request a prefix by filing a GitHub
   issue. No membership required.
 - **Three-tier:** Vendor-specific (ship independently) → multi-vendor
   (`EXT_`, proven interop) → ratified (`KHR_`, Khronos IP framework).
 - **Declarative:** Each glTF file lists `extensionsUsed` and
-  `extensionsRequired` - consumers know what to expect without parsing
+  `extensionsRequired` — consumers know what to expect without parsing
   the full file. This is analogous to Approach B's `apiSchemas` list.
 - **Not a runtime mechanism:** The registry is a Markdown file in a
   GitHub repo. Enforcement is by convention and community review.
+
+**W3C WICG** provides the closest *process* analog:
+
+- **Community-first:** Any group can propose an incubation via WICG
+  (Web Incubator Community Group) with no upfront membership barrier.
+- **Three-tier:** Community Group (experiment freely) → Working Group
+  (formal spec development) → W3C Recommendation (ratified standard).
+- **Freeform escape hatch:** HTML `data-*` attributes let any author
+  attach custom metadata without standardization — directly analogous
+  to `assetInfo`/`customData` in USD.
+- **Governed attrs replace vendor prefixes:** CSS vendor prefixes
+  (`-webkit-`, `-moz-`) are deprecated in favor of unprefixed standard
+  properties once ratified — analogous to vendor domain → AOUSD standard
+  domain promotion.
+
+The proposed AOUSD model draws from both: glTF's lightweight GitHub-based
+registry mechanism and W3C's community-driven incubation-to-standard path.
 
 ## 6.2 What a governance model would look like for source identifiers
 
@@ -39,8 +58,9 @@ Regardless of which approach is chosen, AOUSD would maintain a registry
 of identifier domain prefixes. The proposed model:
 
 1. **AOUSD maintains a Domains Registry** (analogous to glTF's
-   `Prefixes.md`) - a list mapping domain keys/prefixes to
-   organizations, with contact information and status.
+   `Prefixes.md` or W3C's Community Group registry) — a list mapping
+   domain keys/prefixes to organizations, with contact information
+   and status.
 
 2. **Three tiers:**
    - **Vendor domains** (`com.ptc.windchill`, `com.nvidia.omniverse`):
