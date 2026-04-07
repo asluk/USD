@@ -69,10 +69,10 @@ def Xform "Assembly" (
         token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
         string sourceIdentifier:ifc:label = "IFC GlobalId"
 
-        # --- STANDARDS: Khronos (MaterialX) ---
+        # --- STANDARDS: AOUSD (MaterialX) ---
         string sourceIdentifier:materialx:primaryId = "NG_turbine_blade_surface"
         string sourceIdentifier:materialx:revision = "1.39.0"
-        token sourceIdentifier:materialx:domain = "org.khronos.materialx"
+        token sourceIdentifier:materialx:domain = "org.aousd.materialx"
         string sourceIdentifier:materialx:label = "MaterialX Node Graph"
 
         # --- STANDARDS: STEP/ISO ---

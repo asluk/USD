@@ -82,7 +82,7 @@ def Xform "Assembly" (
                         string classification = "MasterFormat:23 07 00"
                     }
                 }
-                # --- STANDARDS: Khronos (MaterialX) ---
+                # --- STANDARDS: AOUSD (MaterialX) ---
                 dictionary materialx = {
                     string primaryId = "NG_turbine_blade_surface"
                     string revision = "1.39.0"

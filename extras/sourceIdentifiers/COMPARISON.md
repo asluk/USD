@@ -580,7 +580,7 @@ identifier schemes to a single turbine blade prim:
 | 4 | SideFX | Houdini Digital Asset | `hda://SideFX::turbine_blade::3.0` |
 | 5 | Autodesk | Fusion 360 | `urn:adsk.wipprod:dm.lineage:7Rf2wvPxSEeHmBq-XqFD_g` |
 | 6 | buildingSMART | IFC | `2O2Fr$t4X7Zf8NOew3FL02` |
-| 7 | Khronos | MaterialX | `NG_turbine_blade_surface` |
+| 7 | AOUSD | MaterialX | `NG_turbine_blade_surface` |
 | 8 | ISO | STEP | `STEP-FILE-ID:#4782` |
 
 **Vendor adoption friction:**

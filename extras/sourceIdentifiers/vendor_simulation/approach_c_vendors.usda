@@ -110,7 +110,7 @@ def Xform "Assembly" (
 
         string sourceIdentifier:materialx:primaryId = "NG_turbine_blade_surface"
         string sourceIdentifier:materialx:revision = "1.39.0"
-        token sourceIdentifier:materialx:domain = "org.khronos.materialx"
+        token sourceIdentifier:materialx:domain = "org.aousd.materialx"
         string sourceIdentifier:materialx:label = "MaterialX Node Graph"
 
         string sourceIdentifier:step:primaryId = "STEP-FILE-ID:#4782"
