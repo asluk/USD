@@ -27,8 +27,14 @@ class "SourceIdAPI" (
 
     This schema implements Approach A from the 'Separation of Concerns for
     Identifiers in USD' proposal: source identifiers are expressed as
-    stratified sub-dictionaries within assetInfo, with this applied API
+    stratified sub-dictionaries within assetInfo, with a non-applied API
     schema providing typed convenience access.
+
+    This is a non-applied API schema, following the precedent of
+    UsdModelAPI: it wraps assetInfo metadata without requiring explicit
+    application. Any prim that carries assetInfo["sourceIds"] data can
+    be queried through this API. There is no Apply() method and no
+    apiSchemas listing — the data's presence in assetInfo IS the signal.
 
     The data layout in assetInfo follows this structure:
 
@@ -51,14 +57,13 @@ class "SourceIdAPI" (
     sub-dictionary is composed element-wise following standard assetInfo
     composition semantics (strongest opinion wins per key).
 
-    This schema can be applied to any prim, not just model roots. While
-    assetInfo's convenience API on UsdModelAPI is scoped to model roots,
-    the underlying assetInfo metadata is registered in SdfSchema for all
-    prims and properties.
+    Like UsdModelAPI, this schema can be constructed on any prim. The
+    underlying assetInfo metadata is registered in SdfSchema for all
+    prims and properties, not just model roots.
 
     Example usage (Python):
     ```python
-    api = UsdSourceId.SourceIdAPI.Apply(prim)
+    api = UsdSourceId.SourceIdAPI(prim)
     api.SetSourceId("windchill", "VR:wt.part.WTPart:23639563", revision="Rev.C")
     api.SetSourceId("ifc", "2O2Fr$t4X7Zf8NOew3FNr2")
     
@@ -68,7 +73,7 @@ class "SourceIdAPI" (
     ```
     """
     customData = {
-        token apiSchemaType = "singleApply"
+        token apiSchemaType = "nonApplied"
         dictionary schemaTokens = {
             dictionary sourceIds = {
                 string doc = """Dictionary key in assetInfo for the

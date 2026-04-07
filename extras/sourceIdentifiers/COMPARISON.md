@@ -32,9 +32,11 @@ buildingSMART precedents.
 
 **Approach A: Extend `assetInfo` with stratified sub-dictionaries.**
 Source identifiers are stored as nested dictionaries within
-`assetInfo["sourceIds"]`, with an applied single-apply API schema
+`assetInfo["sourceIds"]`, with a **non-applied** API schema
 (`UsdSourceIdAPI`) providing convenience access. Data lives in composed
-metadata. Follows the `UsdMediaAssetPreviewsAPI` precedent.
+metadata. Follows the `UsdModelAPI` precedent: the schema wraps
+`assetInfo` metadata without requiring explicit application or an
+`apiSchemas` listing. The data's presence in `assetInfo` IS the signal.
 
 **Approach B: Multi-apply schema with typed properties.**
 Source identifiers are expressed as typed properties on a multi-apply API
@@ -126,8 +128,23 @@ pxr/usd/
 ### Approach A: `assetInfo` stratified sub-dictionaries
 
 **Module:** `pxr/usd/usdSourceId/`
-**Schema type:** Single-apply API schema (`UsdSourceIdAPI`)
-**Precedent:** `UsdMediaAssetPreviewsAPI`
+**Schema type:** Non-applied API schema (`UsdSourceIdAPI`)
+**Precedent:** `UsdModelAPI`
+
+> **Design note:** This schema is **non-applied**, following the precedent
+> set by `UsdModelAPI`. Like `UsdModelAPI`, it wraps `assetInfo` metadata
+> without requiring explicit application or an `apiSchemas` listing.
+> The schema provides a convenience API; the data's presence in
+> `assetInfo["sourceIds"]` is the signal. There is no `Apply()` method —
+> you construct the API object directly on any prim.
+>
+> This differs from `UsdMediaAssetPreviewsAPI`, which is single-apply despite
+> also wrapping `assetInfo`. The non-applied design is more honest: Approach A
+> defines no properties and adds no built-in behavior to the prim definition.
+> Making it applied would force an `apiSchemas` listing that carries no
+> structural information — the schema contributes nothing to
+> `UsdPrimDefinition`. `UsdModelAPI` faces the same situation (wrapping
+> `kind` and `assetInfo` metadata) and is non-applied for exactly this reason.
 
 **Mechanism.** Source identifiers are stored as nested dictionaries within the
 composed `assetInfo` metadata on any prim:
@@ -182,10 +199,29 @@ def Mesh "Column_C14" (
   GUI panels, cannot have fallback values, and cannot be validated by
   the schema system.
 
+**`UsdModelAPI` precedent.** The non-applied design follows `UsdModelAPI`,
+which is the closest existing analog in the USD codebase:
+
+| | `UsdModelAPI` | `UsdSourceIdAPI` (Approach A) |
+|---|---|---|
+| Schema type | Non-applied | Non-applied |
+| Data location | `assetInfo["identifier"]`, `assetInfo["name"]`, `assetInfo["version"]` | `assetInfo["sourceIds"][<domain>]` |
+| Properties | None | None |
+| `apiSchemas` listing | No | No |
+| Discovery | Check `assetInfo` directly | Check `assetInfo["sourceIds"]` directly |
+| Construction | `UsdModelAPI(prim)` | `UsdSourceIdAPI(prim)` |
+
+Both schemas are pure convenience wrappers around `assetInfo` metadata.
+Neither adds structural information to the prim definition, so neither
+benefits from being applied. `UsdMediaAssetPreviewsAPI` is single-apply
+despite wrapping `assetInfo["previews"]`, but this is arguably an anomaly
+— it was authored before the non-applied pattern was well-established.
+
 **C++ API usage:**
 
 ```cpp
-UsdSourceIdAPI api = UsdSourceIdAPI::Apply(prim);
+// Non-applied: construct directly, no Apply() needed
+UsdSourceIdAPI api(prim);
 
 // Set identifiers
 api.SetSourceId(TfToken("windchill"),
@@ -280,10 +316,10 @@ std::vector<TfToken> instances = UsdSourceIdSchemaAPI::GetAll(prim);
 | Aspect | Approach A | Approach B |
 |--------|-----------|------------|
 | Data location | `assetInfo` metadata | Prim properties |
-| Schema type | Single-apply | Multi-apply |
+| Schema type | Non-applied | Multi-apply |
 | Properties defined | None | 4 per instance |
 | Domain metadata | Freeform dictionary | Fixed set (extensible via companion schemas) |
-| Discoverability | Manual dict iteration | `apiSchemas` list + schema introspection |
+| Discoverability | Must check `assetInfo["sourceIds"]` exists | `apiSchemas` list + `HasAPI<>()` |
 | Fallback values | None | Empty strings |
 | GUI presentation | Requires custom code | Automatic |
 | Composition | Per dict key (element-wise) | Per property (independent) |

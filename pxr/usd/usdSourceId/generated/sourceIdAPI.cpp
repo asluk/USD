@@ -45,24 +45,6 @@ UsdSchemaKind UsdSourceIdSourceIdAPI::_GetSchemaKind() const
 }
 
 /* static */
-bool
-UsdSourceIdSourceIdAPI::CanApply(
-    const UsdPrim &prim, std::string *whyNot)
-{
-    return prim.CanApplyAPI<UsdSourceIdSourceIdAPI>(whyNot);
-}
-
-/* static */
-UsdSourceIdSourceIdAPI
-UsdSourceIdSourceIdAPI::Apply(const UsdPrim &prim)
-{
-    if (prim.ApplyAPI<UsdSourceIdSourceIdAPI>()) {
-        return UsdSourceIdSourceIdAPI(prim);
-    }
-    return UsdSourceIdSourceIdAPI();
-}
-
-/* static */
 const TfType &
 UsdSourceIdSourceIdAPI::_GetStaticTfType()
 {

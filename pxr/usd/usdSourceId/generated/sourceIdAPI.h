@@ -41,8 +41,14 @@ class SdfAssetPath;
 /// 
 /// This schema implements Approach A from the 'Separation of Concerns for
 /// Identifiers in USD' proposal: source identifiers are expressed as
-/// stratified sub-dictionaries within assetInfo, with this applied API
+/// stratified sub-dictionaries within assetInfo, with a non-applied API
 /// schema providing typed convenience access.
+/// 
+/// This is a non-applied API schema, following the precedent of
+/// UsdModelAPI: it wraps assetInfo metadata without requiring explicit
+/// application. Any prim that carries assetInfo["sourceIds"] data can
+/// be queried through this API. There is no Apply() method and no
+/// apiSchemas listing — the data's presence in assetInfo IS the signal.
 /// 
 /// The data layout in assetInfo follows this structure:
 /// 
@@ -65,14 +71,13 @@ class SdfAssetPath;
 /// sub-dictionary is composed element-wise following standard assetInfo
 /// composition semantics (strongest opinion wins per key).
 /// 
-/// This schema can be applied to any prim, not just model roots. While
-/// assetInfo's convenience API on UsdModelAPI is scoped to model roots,
-/// the underlying assetInfo metadata is registered in SdfSchema for all
-/// prims and properties.
+/// Like UsdModelAPI, this schema can be constructed on any prim. The
+/// underlying assetInfo metadata is registered in SdfSchema for all
+/// prims and properties, not just model roots.
 /// 
 /// Example usage (Python):
 /// ```python
-/// api = UsdSourceId.SourceIdAPI.Apply(prim)
+/// api = UsdSourceId.SourceIdAPI(prim)
 /// api.SetSourceId("windchill", "VR:wt.part.WTPart:23639563", revision="Rev.C")
 /// api.SetSourceId("ifc", "2O2Fr$t4X7Zf8NOew3FNr2")
 /// 
@@ -88,7 +93,7 @@ public:
     /// Compile time constant representing what kind of schema this class is.
     ///
     /// \sa UsdSchemaKind
-    static const UsdSchemaKind schemaKind = UsdSchemaKind::SingleApplyAPI;
+    static const UsdSchemaKind schemaKind = UsdSchemaKind::NonAppliedAPI;
 
     /// Construct a UsdSourceIdSourceIdAPI on UsdPrim \p prim .
     /// Equivalent to UsdSourceIdSourceIdAPI::Get(prim.GetStage(), prim.GetPath())
@@ -131,45 +136,6 @@ public:
     static UsdSourceIdSourceIdAPI
     Get(const UsdStagePtr &stage, const SdfPath &path);
 
-
-    /// Returns true if this <b>single-apply</b> API schema can be applied to 
-    /// the given \p prim. If this schema can not be a applied to the prim, 
-    /// this returns false and, if provided, populates \p whyNot with the 
-    /// reason it can not be applied.
-    /// 
-    /// Note that if CanApply returns false, that does not necessarily imply
-    /// that calling Apply will fail. Callers are expected to call CanApply
-    /// before calling Apply if they want to ensure that it is valid to 
-    /// apply a schema.
-    /// 
-    /// \sa UsdPrim::GetAppliedSchemas()
-    /// \sa UsdPrim::HasAPI()
-    /// \sa UsdPrim::CanApplyAPI()
-    /// \sa UsdPrim::ApplyAPI()
-    /// \sa UsdPrim::RemoveAPI()
-    ///
-    USDSOURCEID_API
-    static bool 
-    CanApply(const UsdPrim &prim, std::string *whyNot=nullptr);
-
-    /// Applies this <b>single-apply</b> API schema to the given \p prim.
-    /// This information is stored by adding "SourceIdAPI" to the 
-    /// token-valued, listOp metadata \em apiSchemas on the prim.
-    /// 
-    /// \return A valid UsdSourceIdSourceIdAPI object is returned upon success. 
-    /// An invalid (or empty) UsdSourceIdSourceIdAPI object is returned upon 
-    /// failure. See \ref UsdPrim::ApplyAPI() for conditions 
-    /// resulting in failure. 
-    /// 
-    /// \sa UsdPrim::GetAppliedSchemas()
-    /// \sa UsdPrim::HasAPI()
-    /// \sa UsdPrim::CanApplyAPI()
-    /// \sa UsdPrim::ApplyAPI()
-    /// \sa UsdPrim::RemoveAPI()
-    ///
-    USDSOURCEID_API
-    static UsdSourceIdSourceIdAPI 
-    Apply(const UsdPrim &prim);
 
 protected:
     /// Returns the kind of schema this class belongs to.

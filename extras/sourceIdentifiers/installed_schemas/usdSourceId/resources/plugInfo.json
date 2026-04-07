@@ -15,7 +15,7 @@
                             "UsdAPISchemaBase"
                         ], 
                         "schemaIdentifier": "SourceIdAPI", 
-                        "schemaKind": "singleApplyAPI"
+                        "schemaKind": "nonAppliedAPI"
                     }
                 }
             }, 

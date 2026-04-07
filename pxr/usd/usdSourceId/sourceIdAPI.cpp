@@ -52,22 +52,8 @@ UsdSchemaKind UsdSourceIdAPI::_GetSchemaKind() const
     return UsdSourceIdAPI::schemaKind;
 }
 
-/* static */
-bool
-UsdSourceIdAPI::CanApply(const UsdPrim &prim, std::string *whyNot)
-{
-    return prim.CanApplyAPI<UsdSourceIdAPI>(whyNot);
-}
-
-/* static */
-UsdSourceIdAPI
-UsdSourceIdAPI::Apply(const UsdPrim &prim)
-{
-    if (prim.ApplyAPI<UsdSourceIdAPI>()) {
-        return UsdSourceIdAPI(prim);
-    }
-    return UsdSourceIdAPI();
-}
+// Non-applied schema: no CanApply() or Apply() methods.
+// Construct directly on any prim, like UsdModelAPI.
 
 /* static */
 const TfType &

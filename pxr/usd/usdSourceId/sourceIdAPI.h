@@ -30,10 +30,14 @@ PXR_NAMESPACE_OPEN_SCOPE
 /// Approach A: Convenience API for source identifiers stored as
 /// sub-dictionaries within assetInfo["sourceIds"].
 ///
-/// This schema follows the UsdMediaAssetPreviewsAPI precedent: it is an
-/// applied single-apply API schema that provides typed convenience access
-/// to data stored in assetInfo metadata. The schema itself defines no
-/// properties; all data lives in the composed assetInfo dictionary.
+/// This is a **non-applied** API schema, following the precedent set by
+/// UsdModelAPI: it wraps assetInfo metadata without requiring explicit
+/// application. Any prim that carries assetInfo["sourceIds"] data can
+/// be queried through this API. There is no Apply() method and no
+/// apiSchemas listing — the data's presence in assetInfo IS the signal.
+///
+/// The schema itself defines no properties; all data lives in the
+/// composed assetInfo dictionary.
 ///
 /// ## Data Layout
 ///
@@ -65,7 +69,8 @@ PXR_NAMESPACE_OPEN_SCOPE
 /// ## Usage
 ///
 /// ```cpp
-/// UsdSourceIdAPI api = UsdSourceIdAPI::Apply(prim);
+/// // Non-applied: construct directly, no Apply() needed
+/// UsdSourceIdAPI api(prim);
 ///
 /// // Set identifiers
 /// api.SetSourceId("windchill", "VR:wt.part.WTPart:23639563", "Rev.C");
@@ -87,7 +92,7 @@ class UsdSourceIdAPI : public UsdAPISchemaBase
 {
 public:
     /// Compile time constant representing what kind of schema this class is.
-    static const UsdSchemaKind schemaKind = UsdSchemaKind::SingleApplyAPI;
+    static const UsdSchemaKind schemaKind = UsdSchemaKind::NonAppliedAPI;
 
     /// Construct a UsdSourceIdAPI on UsdPrim \p prim.
     explicit UsdSourceIdAPI(const UsdPrim& prim = UsdPrim())
@@ -111,15 +116,8 @@ public:
     static UsdSourceIdAPI
     Get(const UsdStagePtr &stage, const SdfPath &path);
 
-    /// Returns true if this schema can be applied to \p prim.
-    USDSOURCEID_API
-    static bool
-    CanApply(const UsdPrim &prim, std::string *whyNot = nullptr);
-
-    /// Applies this single-apply API schema to the given \p prim.
-    USDSOURCEID_API
-    static UsdSourceIdAPI
-    Apply(const UsdPrim &prim);
+    // Non-applied schemas have no Apply() or CanApply() methods.
+    // Construct directly on any prim, like UsdModelAPI.
 
     // --------------------------------------------------------------------- //
     // SOURCE IDENTIFIER ACCESSORS
