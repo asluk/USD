@@ -897,3 +897,206 @@ identifier scheme to be expressible in USD content: a PLM vendor
 - **Steps 5–6** favor Approach B for the common fields (schema-driven)
   but still require Approach A–style work for domain-specific metadata
   regardless.
+
+---
+
+## 7. Hybrid Analysis & Recommendation
+
+### 7.1 The case against either approach alone
+
+**Approach A alone** provides maximum flexibility but sacrifices
+discoverability, validation, GUI integration, and governance
+enforceability — the properties that a multi-stakeholder standard
+needs most. It would repeat the `customData` pattern: technically
+capable, but practically un-interoperable because every consumer
+must know every vendor’s ad-hoc dictionary structure.
+
+**Approach B alone** provides excellent structural properties but
+cannot carry the domain-specific metadata that real-world industrial
+workflows require. Forcing every identifier stakeholder to register
+a companion schema for their domain-specific fields would either:
+(a) create schema sprawl (dozens of `*IdentifierAPI` schemas), or
+(b) push metadata into `customData` — recreating exactly the
+fragmentation problem the proposal aims to solve.
+
+### 7.2 Recommended hybrid: Approach B + metadata overflow dictionary
+
+The recommended approach combines Approach B’s structural advantages
+with Approach A’s metadata flexibility:
+
+**Use the multi-apply schema (Approach B) as the base**, providing
+typed, schema-backed common fields that all tools can discover and
+validate. **Add a fifth property — `metadata` (dictionary)** — to
+each schema instance, providing a freeform escape hatch for
+domain-specific data.
+
+```usda
+class "SourceIdentifierAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        token propertyNamespacePrefix = "sourceIdentifier"
+    }
+)
+{
+    # Typed common fields (schema-validated, GUI-visible)
+    string __INSTANCE_NAME__:primaryId = ""
+    string __INSTANCE_NAME__:revision = ""
+    token __INSTANCE_NAME__:domain = ""
+    string __INSTANCE_NAME__:label = ""
+
+    # Freeform metadata overflow (domain-specific, not validated by schema)
+    dictionary __INSTANCE_NAME__:metadata = {}
+}
+```
+
+**Example USD:**
+
+```usda
+def Xform "Chiller_01" (
+    prepend apiSchemas = [
+        "SourceIdentifierAPI:windchill",
+        "SourceIdentifierAPI:opcua"
+    ]
+)
+{
+    # Windchill: typed common fields + domain-specific metadata
+    string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639563"
+    string sourceIdentifier:windchill:revision = "Rev.C"
+    token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+    string sourceIdentifier:windchill:label = "Windchill Part OID"
+    dictionary sourceIdentifier:windchill:metadata = {
+        string displayNumber = "CH-7500-A"
+        string navigationType = "OR:wt.filter.NavigationCriteria:7608531"
+        string state = "Released"
+        string organization = "com.carrier.hvac"
+    }
+
+    # OPC UA: typed common fields + domain-specific metadata
+    string sourceIdentifier:opcua:primaryId = "ns=4;s=Building.HVAC.Chiller01"
+    token sourceIdentifier:opcua:domain = "org.opcfoundation.ua"
+    string sourceIdentifier:opcua:label = "OPC UA NodeId"
+    dictionary sourceIdentifier:opcua:metadata = {
+        string nodeClass = "Object"
+        string browseName = "Chiller01"
+        string serverUri = "opc.tcp://bms.example.com:4840"
+    }
+}
+```
+
+### 7.3 Why this works
+
+| Property | Provided by | Benefit |
+|----------|------------|----------|
+| `primaryId` | Schema (typed) | Universal linkage key; schema-validated; GUI-visible |
+| `revision` | Schema (typed) | Standard versioning field |
+| `domain` | Schema (typed) | Collision-resistant reverse-DNS; queryable by token |
+| `label` | Schema (typed) | Human-readable; GUI display name |
+| `metadata` | Dictionary (freeform) | Domain-specific overflow; no schema changes needed |
+
+**Benefits retained from Approach B:**
+- `apiSchemas` list declares which domains are present (like glTF `extensionsUsed`)
+- Per-property composition for the common fields
+- Schema-driven discoverability and GUI presentation
+- Type validation on common fields
+- `domain` token enables governance enforcement
+
+**Benefits retained from Approach A:**
+- Domain-specific metadata lives in a freeform dictionary
+- Stakeholders can add fields without schema changes
+- No companion schema proliferation
+- Rich, heterogeneous metadata packages (manufacturing, AECO, robotics)
+
+**Trade-off accepted:**
+- The `metadata` dictionary is not schema-validated (like `customData`)
+- Domain-specific metadata is not GUI-visible without custom code
+- But this is the *right* trade-off: common fields should be governed;
+  domain-specific metadata should be flexible. The boundary is explicit.
+
+### 7.4 Composition behavior of the hybrid
+
+The hybrid composes as follows:
+
+- `primaryId`, `revision`, `domain`, `label`: per-property composition
+  (strongest opinion wins per attribute). Safe and predictable.
+- `metadata`: dictionary-valued attribute. If authored in multiple layers,
+  **the strongest opinion wins for the entire dictionary** (standard USD
+  attribute composition — NOT element-wise like `assetInfo`). This is
+  a coarser granularity than Approach A’s element-wise metadata merge,
+  but it’s simpler and avoids the round-trip serialization hazard.
+
+Alternatively, the `metadata` property could be declared as
+metadata (dictionary-type metadata on the prim) rather than an
+attribute, which would get element-wise composition. This is a
+design choice for the follow-up solution proposal.
+
+### 7.5 Governance model for the hybrid
+
+The three-tier AOUSD Domains Registry (Section 6.2) applies directly:
+
+1. **Registration:** Stakeholder registers a domain key and instance name
+   in the registry. Specifies their `metadata` dictionary schema in
+   their published specification.
+
+2. **Validation:** Common fields validated by the USD schema system.
+   Domain-specific `metadata` validated by external validators per the
+   stakeholder’s specification (same as Approach A).
+
+3. **Promotion:** When a domain-specific metadata field proves universally
+   useful, it can be promoted to a typed property on the base schema
+   (schema versioning tracks this). The `metadata` dictionary remains
+   as an overflow mechanism.
+
+### 7.6 Migration path from existing conventions
+
+Pipelines currently using `customData`, `displayName`, or ad-hoc
+`assetInfo` conventions can migrate incrementally:
+
+1. Apply `SourceIdentifierAPI:<domain>` to prims that carry identifiers.
+2. Move the primary identifier value to `primaryId`.
+3. Move revision/version to `revision`.
+4. Set `domain` to the registered reverse-DNS key.
+5. Move remaining metadata to the `metadata` dictionary.
+6. Remove old `customData`/`displayName` entries.
+
+This can be done per-layer, per-domain, without disrupting existing
+composition. No big-bang migration required.
+
+### 7.7 Final recommendation
+
+> **Adopt a multi-apply schema (Approach B) with a freeform `metadata`
+> dictionary property as the fifth field.** This provides schema-backed
+> common fields for interoperability and governance, plus a freeform
+> escape hatch for the domain-specific metadata that real-world industrial
+> workflows require.
+>
+> Establish an AOUSD Domains Registry following the Khronos glTF
+> `Prefixes.md` model: low-barrier vendor registration, three-tier
+> promotion path, GitHub-based process.
+>
+> The resulting mechanism addresses all eight design principles from the
+> proposal: separation of concerns, industry agnosticism, vendor
+> extensibility, composability, discoverability, external queryability,
+> round-trip fidelity, and minimal disruption.
+
+---
+
+## Appendix: Files in this comparison
+
+All source code, examples, stress tests, and analysis scripts are
+available on the
+[`aluk/source-identifiers-comparison`](https://github.com/asluk/USD/tree/aluk/source-identifiers-comparison)
+branch of `asluk/USD`.
+
+To regenerate the 100K-prim stress test data:
+
+```bash
+cd extras/sourceIdentifiers/stress_tests
+python3 generate_large_stage.py
+```
+
+To run the vendor adoption analysis:
+
+```bash
+python3 vendor_adoption_analysis.py
+```
