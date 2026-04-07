@@ -1,0 +1,134 @@
+#usda 1.0
+(
+    "Schema for source identifiers using multi-apply API schema (Approach B)."
+    "Source identifiers are expressed as typed properties on a multi-apply"
+    "schema, with each external system represented as a schema instance."
+    "Follows the UsdSemanticsLabelsAPI / UsdCollectionAPI precedent."
+    subLayers = [
+        @usd/schema.usda@
+    ]
+)
+
+over "GLOBAL" (
+    customData = {
+        string libraryName      = "usdSourceIdSchema"
+        string libraryPath      = "pxr/usd/usdSourceIdSchema"
+    }
+)
+{
+}
+
+class "SourceIdentifierAPI" (
+    inherits = </APISchemaBase>
+    doc = """UsdSourceIdentifierAPI is a multi-apply API schema for expressing
+    external source identifiers as typed properties on a prim.
+
+    This schema implements Approach B from the 'Separation of Concerns for
+    Identifiers in USD' proposal: each external system's identifiers are
+    represented as a schema instance with typed properties.
+
+    Each instance is named after a domain (vendor or standards body), e.g.:
+    - sourceIdentifier:windchill
+    - sourceIdentifier:ifc
+    - sourceIdentifier:revit
+    - sourceIdentifier:nvidia
+
+    ## Properties per instance
+
+    - **primaryId** (string): The primary identifier in the external system.
+      This is the main linkage key. Could be a part number, GUID, asset ID,
+      or opaque system handle.
+    - **revision** (string): Version or revision designator in the external
+      system (e.g., "Rev.C", "v2.1", "OR:wt.part.WTPart:4697800").
+    - **domain** (token): Formal domain identifier, useful when instance
+      names are abbreviated (e.g., instance "wc" with domain "com.ptc.windchill").
+    - **label** (string): Human-readable label for this identifier
+      (e.g., "Windchill Part Number", "IFC GlobalId").
+
+    ## Example USD
+
+    ```usda
+    def Mesh "Column_C14" (
+        prepend apiSchemas = [
+            "SourceIdentifierAPI:ifc",
+            "SourceIdentifierAPI:revit",
+            "SourceIdentifierAPI:uniclass"
+        ]
+    )
+    {
+        string sourceIdentifier:ifc:primaryId = "2O2Fr$t4X7Zf8NOew3FNr2"
+        token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+        string sourceIdentifier:ifc:label = "IFC GlobalId"
+
+        string sourceIdentifier:revit:primaryId = "847562"
+        string sourceIdentifier:revit:revision = "2026.1"
+        token sourceIdentifier:revit:domain = "com.autodesk.revit"
+        string sourceIdentifier:revit:label = "Revit ElementId"
+
+        string sourceIdentifier:uniclass:primaryId = "Ss_25_10_30"
+        token sourceIdentifier:uniclass:domain = "uk.thenbs.uniclass2015"
+        string sourceIdentifier:uniclass:label = "Uniclass 2015 Code"
+    }
+    ```
+
+    ## Key Characteristics
+
+    - Properties contribute to UsdPrimDefinition and are discoverable
+      through schema introspection.
+    - Fallback values enable GUI presentation of unauthored properties.
+    - Schema versioning and validation are built in.
+    - Each instance is independently authorable across layers.
+    - Multi-apply instances compose per-property (strongest opinion wins).
+    """
+    customData = {
+        string className = "SourceIdentifierAPI"
+        token apiSchemaType = "multipleApply"
+        token propertyNamespacePrefix = "sourceIdentifier"
+    }
+)
+{
+    string __INSTANCE_NAME__:primaryId = "" (
+        customData = {
+            string apiName = "PrimaryId"
+        }
+        doc = """The primary identifier for this entity in the external system.
+        This is the main linkage key used for cross-system resolution.
+        Examples: "VR:wt.part.WTPart:23639563", "2O2Fr\$t4X7Zf8NOew3FNr2",
+        "847562", "A-0000-12345".
+        """
+    )
+
+    string __INSTANCE_NAME__:revision = "" (
+        customData = {
+            string apiName = "Revision"
+        }
+        doc = """Version or revision designator in the external system.
+        Examples: "Rev.C", "v2.1", "OR:wt.part.WTPart:4697800".
+        This is the version/revision of the source entity, not the USD layer.
+        """
+    )
+
+    token __INSTANCE_NAME__:domain = "" (
+        customData = {
+            string apiName = "Domain"
+        }
+        doc = """Formal domain identifier using reverse-DNS or equivalent
+        convention. This provides an unambiguous, collision-resistant
+        identifier for the external system, separate from the instance name
+        which may be an abbreviation.
+        Examples: "com.ptc.windchill", "org.buildingsmart.ifc",
+        "com.autodesk.revit", "com.nvidia.omniverse".
+        """
+    )
+
+    string __INSTANCE_NAME__:label = "" (
+        customData = {
+            string apiName = "Label"
+        }
+        doc = """Human-readable label describing what this identifier
+        represents in the external system.
+        Examples: "Windchill Part Number", "IFC GlobalId",
+        "Revit ElementId", "Uniclass 2015 Classification Code".
+        """
+    )
+}

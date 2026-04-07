@@ -1,0 +1,196 @@
+#usda 1.0
+(
+    """
+    Approach B: Multi-vendor ecosystem simulation.
+    
+    Same 8 vendors/standards bodies scenario, implemented using
+    SourceIdentifierAPI multi-apply schema instances.
+    
+    Demonstrates:
+    - Schema-enforced property types
+    - Discoverability via apiSchemas list
+    - Instance name collision potential (and mitigation via domain attr)
+    - Property proliferation at scale
+    """
+    defaultPrim = "Assembly"
+    metersPerUnit = 1.0
+)
+
+def Xform "Assembly" (
+    kind = "assembly"
+)
+{
+    # Turbine blade with identifiers from 8 different systems
+    def Mesh "TurbineBlade_001" (
+        prepend apiSchemas = [
+            "SourceIdentifierAPI:nvidia",
+            "SourceIdentifierAPI:adobe",
+            "SourceIdentifierAPI:apple",
+            "SourceIdentifierAPI:sidefx",
+            "SourceIdentifierAPI:autodesk",
+            "SourceIdentifierAPI:ifc",
+            "SourceIdentifierAPI:materialx",
+            "SourceIdentifierAPI:step"
+        ]
+    )
+    {
+        # --- VENDOR: NVIDIA (Omniverse asset tracking) ---
+        string sourceIdentifier:nvidia:primaryId = "omni://nucleus.nvidia.com/assets/turbine/blade_v3"
+        string sourceIdentifier:nvidia:revision = "3.2.1"
+        token sourceIdentifier:nvidia:domain = "com.nvidia.omniverse"
+        string sourceIdentifier:nvidia:label = "Omniverse Nucleus Asset"
+
+        # --- VENDOR: Adobe (Substance 3D) ---
+        string sourceIdentifier:adobe:primaryId = "adb:sub3d:asset:a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        string sourceIdentifier:adobe:revision = "v2"
+        token sourceIdentifier:adobe:domain = "com.adobe.substance3d"
+        string sourceIdentifier:adobe:label = "Substance 3D Asset ID"
+
+        # --- VENDOR: Apple (Reality Composer Pro) ---
+        string sourceIdentifier:apple:primaryId = "com.apple.realitykit.asset.turbine-blade-001"
+        string sourceIdentifier:apple:revision = "1.0"
+        token sourceIdentifier:apple:domain = "com.apple.realitykit"
+        string sourceIdentifier:apple:label = "Reality Composer Pro Asset"
+
+        # --- VENDOR: SideFX (Houdini) ---
+        string sourceIdentifier:sidefx:primaryId = "hda://SideFX::turbine_blade::3.0"
+        string sourceIdentifier:sidefx:revision = "3.0"
+        token sourceIdentifier:sidefx:domain = "com.sidefx.houdini"
+        string sourceIdentifier:sidefx:label = "Houdini Digital Asset"
+
+        # --- VENDOR: Autodesk (Fusion) ---
+        string sourceIdentifier:autodesk:primaryId = "urn:adsk.wipprod:dm.lineage:7Rf2wvPxSEeHmBq-XqFD_g"
+        string sourceIdentifier:autodesk:revision = "v47"
+        token sourceIdentifier:autodesk:domain = "com.autodesk.fusion"
+        string sourceIdentifier:autodesk:label = "Fusion 360 URN"
+
+        # --- STANDARDS: IFC / buildingSMART ---
+        string sourceIdentifier:ifc:primaryId = "2O2Fr$t4X7Zf8NOew3FL02"
+        token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+        string sourceIdentifier:ifc:label = "IFC GlobalId"
+
+        # --- STANDARDS: Khronos (MaterialX) ---
+        string sourceIdentifier:materialx:primaryId = "NG_turbine_blade_surface"
+        string sourceIdentifier:materialx:revision = "1.39.0"
+        token sourceIdentifier:materialx:domain = "org.khronos.materialx"
+        string sourceIdentifier:materialx:label = "MaterialX Node Graph"
+
+        # --- STANDARDS: STEP/ISO ---
+        string sourceIdentifier:step:primaryId = "STEP-FILE-ID:#4782"
+        string sourceIdentifier:step:revision = "AP242-ED3"
+        token sourceIdentifier:step:domain = "org.iso.step"
+        string sourceIdentifier:step:label = "STEP Product Definition"
+    }
+
+    def Xform "Fasteners"
+    {
+        # 30 identical bolts — shared source identity, different instance paths
+        def Mesh "Bolt_001" (
+            prepend apiSchemas = ["SourceIdentifierAPI:windchill"]
+        )
+        {
+            string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:55012001"
+            string sourceIdentifier:windchill:revision = "Rev.A"
+            token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+            string sourceIdentifier:windchill:label = "Windchill Part OID"
+        }
+        def Mesh "Bolt_002" (
+            prepend apiSchemas = ["SourceIdentifierAPI:windchill"]
+        )
+        {
+            string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:55012001"
+            string sourceIdentifier:windchill:revision = "Rev.A"
+            token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+            string sourceIdentifier:windchill:label = "Windchill Part OID"
+        }
+        # ... (28 more bolts share the same part number)
+    }
+
+    # =========================================================================
+    # COLLISION SCENARIO: Two vendors accidentally pick the same instance name
+    # =========================================================================
+    #
+    # With Approach B, if two vendors both use "tracker" as their instance name,
+    # the apiSchemas list prevents duplicate entries — you can only have one
+    # "SourceIdentifierAPI:tracker". However, the *domain* attribute provides
+    # disambiguation: even if the instance name collides, the domain token
+    # (reverse-DNS) is unambiguous.
+    #
+    # More importantly: schema registration makes the collision *visible*.
+    # If two plugins both register "SourceIdentifierAPI:tracker" with different
+    # property definitions, the schema registry will warn about the conflict.
+    def Mesh "CollisionDemo" (
+        prepend apiSchemas = ["SourceIdentifierAPI:tracker"]
+    )
+    {
+        # The domain attribute resolves the ambiguity
+        string sourceIdentifier:tracker:primaryId = "TRACK-001-V1"
+        token sourceIdentifier:tracker:domain = "com.vendor1.tracker"
+        string sourceIdentifier:tracker:label = "Vendor1 Asset Tracker"
+        
+        # NOTE: A second vendor wanting "tracker" would need a different
+        # instance name (e.g., "tracker2") or coordinate on the shared name.
+        # The schema system makes this conflict *visible* rather than silent.
+    }
+
+    # =========================================================================
+    # PROMOTION LIFECYCLE: Vendor identifier promoted to standard
+    # =========================================================================
+    #
+    # In Approach B:
+    # - The *instance name* could be kept as "nvidia_simready" while the
+    #   domain migrates from "com.nvidia.simready" to "org.aousd.simready"
+    # - Or: register a new schema "SourceIdentifierAPI:simready" and deprecate
+    #   the vendor-prefixed one
+    # - Schema versioning tracks the migration
+    # - Tools can query by domain token for system-independent resolution
+    def Mesh "PromotionDemo" (
+        prepend apiSchemas = ["SourceIdentifierAPI:nvidia_simready"]
+    )
+    {
+        # Before promotion: vendor instance name + vendor domain
+        string sourceIdentifier:nvidia_simready:primaryId = "simready://turbine_blade_v3"
+        string sourceIdentifier:nvidia_simready:revision = "3.0"
+        token sourceIdentifier:nvidia_simready:domain = "com.nvidia.simready"
+        string sourceIdentifier:nvidia_simready:label = "NVIDIA SimReady Certification"
+        
+        # After promotion, domain migrates but instance name can stay:
+        # token sourceIdentifier:nvidia_simready:domain = "org.aousd.simready"
+        #
+        # Or new schema instance replaces old:
+        # "SourceIdentifierAPI:simready" with domain "org.aousd.simready"
+    }
+
+    # =========================================================================
+    # HETEROGENEOUS METADATA LIMITATION
+    # =========================================================================
+    #
+    # Approach B's fixed property set (primaryId, revision, domain, label)
+    # cannot carry domain-specific metadata without extension.
+    #
+    # Options for domain-specific metadata:
+    # 1. Additional domain-specific schemas (e.g., WindchillIdentifierAPI)
+    # 2. Custom properties alongside the schema properties
+    # 3. Encode metadata in primaryId as structured string (lossy)
+    #
+    # Approach A's freeform dictionary handles this naturally.
+    def Mesh "HeterogeneousDemo" (
+        prepend apiSchemas = ["SourceIdentifierAPI:windchill"]
+    )
+    {
+        string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639563"
+        string sourceIdentifier:windchill:revision = "Rev.C"
+        token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+        string sourceIdentifier:windchill:label = "Windchill Part OID"
+        
+        # Cannot express these without extending the schema:
+        # - displayNumber = "CH-7500-A"
+        # - navigationType = "OR:wt.filter.NavigationCriteria:7608531"
+        # - organization = "com.carrier.hvac"
+        #
+        # In a real implementation, Windchill would need to either:
+        # (a) Register a WindchillSourceIdentifierAPI with additional properties
+        # (b) Use custom attributes alongside the schema properties
+        # (c) Encode everything in the primaryId string
+    }
+}

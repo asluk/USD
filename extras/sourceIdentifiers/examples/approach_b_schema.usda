@@ -1,0 +1,173 @@
+#usda 1.0
+(
+    """
+    Approach B: Source identifiers via multi-apply schema with typed properties.
+    
+    Same building scenario as approach_a_assetinfo.usda, implemented using
+    SourceIdentifierAPI multi-apply schema instances. Each external system
+    is a schema instance with typed properties.
+    """
+    defaultPrim = "Building"
+    metersPerUnit = 1.0
+    upAxis = "Y"
+)
+
+def Xform "Building" (
+    kind = "assembly"
+    prepend apiSchemas = [
+        "SourceIdentifierAPI:revit",
+        "SourceIdentifierAPI:ifc"
+    ]
+)
+{
+    string sourceIdentifier:revit:primaryId = "PRJ-2026-0001"
+    string sourceIdentifier:revit:revision = "Design Development v3"
+    token sourceIdentifier:revit:domain = "com.autodesk.revit"
+    string sourceIdentifier:revit:label = "Revit Project ID"
+
+    string sourceIdentifier:ifc:primaryId = "1hqHFRz5T3$x0zRMKX30p7"
+    token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+    string sourceIdentifier:ifc:label = "IFC Project GlobalId"
+
+    def Xform "Structure" (
+        kind = "group"
+    )
+    {
+        # A structural column with identifiers from 4 external systems
+        def Mesh "Column_C14" (
+            prepend apiSchemas = [
+                "SourceIdentifierAPI:ifc",
+                "SourceIdentifierAPI:revit",
+                "SourceIdentifierAPI:uniclass",
+                "SourceIdentifierAPI:omniclass"
+            ]
+        )
+        {
+            string sourceIdentifier:ifc:primaryId = "2O2Fr$t4X7Zf8NOew3FNr2"
+            token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+            string sourceIdentifier:ifc:label = "IFC GlobalId"
+
+            string sourceIdentifier:revit:primaryId = "847562"
+            string sourceIdentifier:revit:revision = "2026.1"
+            token sourceIdentifier:revit:domain = "com.autodesk.revit"
+            string sourceIdentifier:revit:label = "Revit ElementId"
+
+            string sourceIdentifier:uniclass:primaryId = "Ss_25_10_30"
+            token sourceIdentifier:uniclass:domain = "uk.thenbs.uniclass2015"
+            string sourceIdentifier:uniclass:label = "Uniclass 2015 Classification"
+
+            string sourceIdentifier:omniclass:primaryId = "23-13 11 00"
+            token sourceIdentifier:omniclass:domain = "org.csi.omniclass"
+            string sourceIdentifier:omniclass:label = "OmniClass Number"
+        }
+
+        # Another instance of the same column type
+        def Mesh "Column_C15" (
+            prepend apiSchemas = [
+                "SourceIdentifierAPI:ifc",
+                "SourceIdentifierAPI:revit",
+                "SourceIdentifierAPI:uniclass"
+            ]
+        )
+        {
+            string sourceIdentifier:ifc:primaryId = "3Pw8xZGJD9Afv0YMQhn7_K"
+            token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+            string sourceIdentifier:ifc:label = "IFC GlobalId"
+
+            string sourceIdentifier:revit:primaryId = "847563"
+            string sourceIdentifier:revit:revision = "2026.1"
+            token sourceIdentifier:revit:domain = "com.autodesk.revit"
+            string sourceIdentifier:revit:label = "Revit ElementId"
+
+            string sourceIdentifier:uniclass:primaryId = "Ss_25_10_30"
+            token sourceIdentifier:uniclass:domain = "uk.thenbs.uniclass2015"
+        }
+    }
+
+    def Xform "Mechanical" (
+        kind = "group"
+    )
+    {
+        # HVAC chiller with PLM, operational telemetry, and standards identifiers
+        def Xform "Chiller_01" (
+            kind = "component"
+            prepend apiSchemas = [
+                "SourceIdentifierAPI:windchill",
+                "SourceIdentifierAPI:sap",
+                "SourceIdentifierAPI:opcua",
+                "SourceIdentifierAPI:ifc"
+            ]
+        )
+        {
+            string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639563"
+            string sourceIdentifier:windchill:revision = "Rev.C"
+            token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+            string sourceIdentifier:windchill:label = "Windchill Part OID"
+
+            string sourceIdentifier:sap:primaryId = "000000000040012345"
+            string sourceIdentifier:sap:revision = "01"
+            token sourceIdentifier:sap:domain = "com.sap.s4hana"
+            string sourceIdentifier:sap:label = "SAP Material Number"
+
+            string sourceIdentifier:opcua:primaryId = "ns=4;s=Building.HVAC.Chiller01"
+            token sourceIdentifier:opcua:domain = "org.opcfoundation.ua"
+            string sourceIdentifier:opcua:label = "OPC UA NodeId"
+
+            string sourceIdentifier:ifc:primaryId = "0VNpA$O4H5ywLJGHUdbGxK"
+            token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+            string sourceIdentifier:ifc:label = "IFC GlobalId"
+
+            # Sub-component: compressor module
+            def Xform "Compressor" (
+                prepend apiSchemas = [
+                    "SourceIdentifierAPI:windchill"
+                ]
+            )
+            {
+                string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639601"
+                string sourceIdentifier:windchill:revision = "Rev.A"
+                token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+                string sourceIdentifier:windchill:label = "Windchill Part OID"
+            }
+
+            # Sensor prim with operational telemetry binding
+            def Xform "SupplyTempSensor" (
+                prepend apiSchemas = [
+                    "SourceIdentifierAPI:opcua",
+                    "SourceIdentifierAPI:bacnet"
+                ]
+            )
+            {
+                string sourceIdentifier:opcua:primaryId = "ns=4;s=Building.HVAC.Chiller01.SupplyTemp"
+                token sourceIdentifier:opcua:domain = "org.opcfoundation.ua"
+                string sourceIdentifier:opcua:label = "OPC UA Variable NodeId"
+
+                string sourceIdentifier:bacnet:primaryId = "device:100,analog-input:1"
+                token sourceIdentifier:bacnet:domain = "org.ashrae.bacnet"
+                string sourceIdentifier:bacnet:label = "BACnet Object ID"
+            }
+        }
+    }
+
+    def Xform "Rooms" (
+        kind = "group"
+    )
+    {
+        # Room with purely numeric identifier in source system
+        def Xform "Room_1001" (
+            prepend apiSchemas = [
+                "SourceIdentifierAPI:revit",
+                "SourceIdentifierAPI:ifc"
+            ]
+        )
+        {
+            string sourceIdentifier:revit:primaryId = "1001"
+            token sourceIdentifier:revit:domain = "com.autodesk.revit"
+            string sourceIdentifier:revit:label = "Revit Room Number"
+
+            string sourceIdentifier:ifc:primaryId = "1kN_qgFpP9$wGTpoQHJkR8"
+            token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+            string sourceIdentifier:ifc:label = "IFC Space GlobalId"
+        }
+    }
+}

@@ -1,0 +1,237 @@
+#usda 1.0
+(
+    """
+    Approach A: Source identifiers via assetInfo sub-dictionaries.
+    
+    Demonstrates a realistic AECO building scenario with identifiers from
+    multiple external systems coexisting on the same prims.
+    
+    The data layout uses assetInfo["sourceIds"][<domain>] for each external
+    system, following the UsdMediaAssetPreviewsAPI precedent of storing
+    structured data in assetInfo with a convenience API.
+    """
+    defaultPrim = "Building"
+    metersPerUnit = 1.0
+    upAxis = "Y"
+)
+
+def Xform "Building" (
+    kind = "assembly"
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary revit = {
+                string primaryId = "PRJ-2026-0001"
+                string revision = "Design Development v3"
+                dictionary metadata = {
+                    string projectNumber = "2026-NYC-Tower"
+                    string discipline = "Architecture"
+                }
+            }
+            dictionary ifc = {
+                string primaryId = "1hqHFRz5T3$x0zRMKX30p7"
+                dictionary metadata = {
+                    string ifcType = "IfcProject"
+                    string schema = "IFC4x3"
+                }
+            }
+        }
+    }
+)
+{
+    def Xform "Structure" (
+        kind = "group"
+    )
+    {
+        # A structural column with identifiers from 4 external systems
+        def Mesh "Column_C14" (
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary ifc = {
+                        string primaryId = "2O2Fr$t4X7Zf8NOew3FNr2"
+                        dictionary metadata = {
+                            string ifcType = "IfcColumn"
+                            string globalId = "2O2Fr$t4X7Zf8NOew3FNr2"
+                            string objectType = "W14x90"
+                        }
+                    }
+                    dictionary revit = {
+                        string primaryId = "847562"
+                        string revision = "2026.1"
+                        dictionary metadata = {
+                            string category = "Structural Columns"
+                            string familyType = "W14x90"
+                            string mark = "C-14"
+                            string level = "Level 3"
+                        }
+                    }
+                    dictionary uniclass = {
+                        string primaryId = "Ss_25_10_30"
+                        dictionary metadata = {
+                            string system = "Uniclass 2015"
+                            string title = "Column systems"
+                        }
+                    }
+                    dictionary omniclass = {
+                        string primaryId = "23-13 11 00"
+                        dictionary metadata = {
+                            string system = "OmniClass"
+                            string title = "Structural Steel Columns"
+                        }
+                    }
+                }
+            }
+        )
+        {
+        }
+
+        # Another instance of the same column type — shared source identity
+        def Mesh "Column_C15" (
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary ifc = {
+                        string primaryId = "3Pw8xZGJD9Afv0YMQhn7_K"
+                        dictionary metadata = {
+                            string ifcType = "IfcColumn"
+                            string objectType = "W14x90"
+                        }
+                    }
+                    dictionary revit = {
+                        string primaryId = "847563"
+                        string revision = "2026.1"
+                        dictionary metadata = {
+                            string category = "Structural Columns"
+                            string familyType = "W14x90"
+                            string mark = "C-15"
+                            string level = "Level 3"
+                        }
+                    }
+                    dictionary uniclass = {
+                        string primaryId = "Ss_25_10_30"
+                    }
+                }
+            }
+        )
+        {
+        }
+    }
+
+    def Xform "Mechanical" (
+        kind = "group"
+    )
+    {
+        # HVAC chiller with PLM, operational telemetry, and standards identifiers
+        def Xform "Chiller_01" (
+            kind = "component"
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary windchill = {
+                        string primaryId = "VR:wt.part.WTPart:23639563"
+                        string revision = "Rev.C"
+                        dictionary metadata = {
+                            string displayNumber = "CH-7500-A"
+                            string navigationType = "OR:wt.filter.NavigationCriteria:7608531"
+                            string organization = "com.carrier.hvac"
+                        }
+                    }
+                    dictionary sap = {
+                        string primaryId = "000000000040012345"
+                        string revision = "01"
+                        dictionary metadata = {
+                            string materialType = "HAWA"
+                            string plant = "NYC1"
+                        }
+                    }
+                    dictionary opcua = {
+                        string primaryId = "ns=4;s=Building.HVAC.Chiller01"
+                        dictionary metadata = {
+                            string nodeClass = "Object"
+                            string browseName = "Chiller01"
+                            string serverUri = "opc.tcp://bms.example.com:4840"
+                        }
+                    }
+                    dictionary ifc = {
+                        string primaryId = "0VNpA$O4H5ywLJGHUdbGxK"
+                        dictionary metadata = {
+                            string ifcType = "IfcChiller"
+                        }
+                    }
+                }
+            }
+        )
+        {
+            # Sub-component: compressor module with its own source identity
+            def Xform "Compressor" (
+                assetInfo = {
+                    dictionary sourceIds = {
+                        dictionary windchill = {
+                            string primaryId = "VR:wt.part.WTPart:23639601"
+                            string revision = "Rev.A"
+                            dictionary metadata = {
+                                string displayNumber = "COMP-R410A-75T"
+                            }
+                        }
+                    }
+                }
+            )
+            {
+            }
+
+            # Sensor prim with operational telemetry binding
+            def Xform "SupplyTempSensor" (
+                assetInfo = {
+                    dictionary sourceIds = {
+                        dictionary opcua = {
+                            string primaryId = "ns=4;s=Building.HVAC.Chiller01.SupplyTemp"
+                            dictionary metadata = {
+                                string nodeClass = "Variable"
+                                string dataType = "Double"
+                                string engineeringUnits = "degC"
+                            }
+                        }
+                        dictionary bacnet = {
+                            string primaryId = "device:100,analog-input:1"
+                            dictionary metadata = {
+                                string objectName = "CHW Supply Temp"
+                                string units = "degrees-celsius"
+                            }
+                        }
+                    }
+                }
+            )
+            {
+            }
+        }
+    }
+
+    def Xform "Rooms" (
+        kind = "group"
+    )
+    {
+        # Room with purely numeric identifier in source system
+        def Xform "Room_1001" (
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary revit = {
+                        string primaryId = "1001"
+                        dictionary metadata = {
+                            string category = "Rooms"
+                            string name = "Executive Boardroom"
+                            string level = "Level 10"
+                            string area = "85.5"
+                            string areaUnit = "sqm"
+                        }
+                    }
+                    dictionary ifc = {
+                        string primaryId = "1kN_qgFpP9$wGTpoQHJkR8"
+                        dictionary metadata = {
+                            string ifcType = "IfcSpace"
+                            string longName = "Executive Boardroom"
+                        }
+                    }
+                }
+            }
+        )
+        {
+        }
+    }
+}

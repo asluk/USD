@@ -1,0 +1,121 @@
+{
+  "approach_a": {
+    "name": "Approach A: assetInfo sub-dictionaries",
+    "files_touched_by_new_vendor": {
+      "count": 0,
+      "description": "Zero OpenUSD source files need to be modified. A vendor simply writes assetInfo['sourceIds']['<domain>'] in their USD content. No schema registration, no plugin, no codegen."
+    },
+    "boilerplate_lines_new_vendor": {
+      "to_start_writing_identifiers": 0,
+      "for_convenience_api": "~50 lines Python wrapper (optional)",
+      "for_full_cpp_api": "~200 lines C++ schema + wrapper (optional, like UsdMediaAssetPreviewsAPI)",
+      "description": "Zero boilerplate to start. Any tool that can write assetInfo can add source identifiers immediately. A convenience API is optional and can come later."
+    },
+    "coordination_required": {
+      "level": "NONE for initial adoption, LOW for conventions",
+      "description": "Vendors can ship independently with zero coordination. Key naming is freeform \u2014 no registration required. Convention (e.g., reverse-DNS keys) is recommended but not enforced. Coordination becomes needed only when promoting to a standard."
+    },
+    "collision_risk": {
+      "level": "MEDIUM",
+      "description": "Collision happens when two vendors pick the same top-level key in sourceIds (e.g., both use 'tracker'). Collision is SILENT \u2014 strongest opinion wins per standard assetInfo composition. No schema system detects or warns about the conflict. Mitigation: reverse-DNS keys ('com.vendor.tracker'), but this is convention, not enforcement.",
+      "detection": "None (silent overwrite)",
+      "mitigation": "Naming convention (reverse-DNS recommended)"
+    },
+    "heterogeneous_metadata": {
+      "flexibility": "FULL",
+      "description": "Each domain's sub-dictionary is freeform. Windchill can store displayNumber, navigationType, organization; IFC can store ifcType, schema, classification. No common denominator needed. Domains evolve independently."
+    },
+    "promotion_lifecycle": {
+      "effort": "MEDIUM \u2014 data migration required",
+      "steps": [
+        "1. Agree on new standard key name",
+        "2. Migrate all existing content (rename dictionary key in assetInfo)",
+        "3. Update all querying tools to use new key",
+        "4. No schema versioning to help track the migration"
+      ],
+      "description": "Promotion requires renaming dictionary keys in all existing content. Since keys are strings with no schema backing, there is no versioning mechanism. Tools must be updated to query the new key. Migration tooling is straightforward (dictionary key rename) but must touch every layer that carries the old key."
+    },
+    "scale_at_20_vendors_5_schemes_each": {
+      "namespace_entries": "100 dictionary keys (20 \u00d7 5) per prim",
+      "description": "Each vendor adds 5 sub-dictionaries under sourceIds. 100 top-level keys in one dictionary. Dictionary nesting keeps each vendor's data isolated, but the sourceIds dict becomes large. Discovery requires iterating all keys \u2014 no typed query mechanism.",
+      "manageability": "MODERATE \u2014 large dicts but contained"
+    },
+    "gui_presentation": {
+      "level": "MANUAL",
+      "description": "assetInfo sub-dictionaries do not contribute to UsdPrimDefinition. GUI tools must explicitly know about the sourceIds convention to present identifier data. Unauthored identifiers are invisible \u2014 there are no fallback values to display."
+    }
+  },
+  "approach_b": {
+    "name": "Approach B: Multi-apply schema with typed properties",
+    "files_touched_by_new_vendor": {
+      "count": "0-1 (with a common base schema already in core)",
+      "description": "If using only the common SourceIdentifierAPI properties (primaryId, revision, domain, label), zero files \u2014 just apply the schema with a new instance name. If the vendor needs additional typed properties beyond the common set, they must register their own schema plugin (1+ files: schema.usda, plugInfo.json, optional C++/Python wrapper)."
+    },
+    "boilerplate_lines_new_vendor": {
+      "to_start_writing_identifiers": 0,
+      "for_domain_specific_properties": "~100-200 lines (schema.usda + plugInfo.json)",
+      "for_full_domain_api": "~400-600 lines (schema + C++ + Python + codegen)",
+      "description": "Zero boilerplate to start using the common properties. Domain-specific extensions require schema authoring and plugin registration \u2014 a familiar but non-trivial process."
+    },
+    "coordination_required": {
+      "level": "LOW for common properties, MEDIUM for domain extensions",
+      "description": "Using common properties (primaryId, revision, domain, label) requires no coordination \u2014 just pick a unique instance name. Adding domain-specific properties requires either extending the base schema (requires agreement) or registering a new companion schema (independent but creates schema sprawl)."
+    },
+    "collision_risk": {
+      "level": "LOW",
+      "description": "Instance name collision (two vendors both using 'tracker') is DETECTABLE \u2014 the apiSchemas list shows all applied schemas, and schema registration can warn about conflicting definitions. The 'domain' property provides secondary disambiguation via reverse-DNS. However, actual data collision is still possible if two layers both author the same instance's properties.",
+      "detection": "Schema registry warnings; apiSchemas list inspection",
+      "mitigation": "Instance naming convention + domain attribute"
+    },
+    "heterogeneous_metadata": {
+      "flexibility": "LIMITED by common property set",
+      "description": "The base schema provides only primaryId, revision, domain, label. Domain-specific fields (Windchill's navigationType, IFC's ifcType) require either: (a) a companion domain-specific schema, (b) custom attributes alongside schema properties, or (c) encoding metadata in the primaryId string (lossy). This tension between uniformity and domain flexibility is the central trade-off.",
+      "workaround": "A domain-specific companion schema (e.g., WindchillIdentifierAPI) that includes SourceIdentifierAPI as a built-in and adds typed properties for domain-specific metadata."
+    },
+    "promotion_lifecycle": {
+      "effort": "LOW-MEDIUM \u2014 domain attribute migration",
+      "steps": [
+        "1. Agree on new standard instance name (or keep existing)",
+        "2. Migrate domain attribute value (e.g., 'com.nvidia.simready' \u2192 'org.aousd.simready')",
+        "3. Optionally register new schema instance under standard name",
+        "4. Schema versioning tracks the migration",
+        "5. Old instance can be deprecated with clear successor path"
+      ],
+      "description": "Promotion can be as simple as updating the domain token value, since tools can query by domain rather than instance name. Schema versioning provides a mechanism for tracking the migration. If the instance name also changes, content migration is needed but the schema system makes the change explicit and trackable."
+    },
+    "scale_at_20_vendors_5_schemes_each": {
+      "namespace_entries": "400 properties (20 \u00d7 5 \u00d7 4 props each) + 100 apiSchemas entries",
+      "description": "Each vendor instance adds 4 properties (primaryId, revision, domain, label). 100 instances \u00d7 4 = 400 property names in the prim's property namespace, plus 100 entries in the apiSchemas list. Properties are individually addressable and typed, but the property namespace becomes crowded.",
+      "manageability": "MODERATE \u2014 more entries but typed and queryable"
+    },
+    "gui_presentation": {
+      "level": "AUTOMATIC",
+      "description": "Applied schemas contribute to UsdPrimDefinition. Properties appear in GUI property panels automatically. Fallback values (empty strings) mean unauthored properties are still visible and editable. Schema-aware tools can present source identifiers without any custom knowledge of the convention."
+    }
+  },
+  "summary": {},
+  "scores": {
+    "approach_a": {
+      "ease_of_initial_adoption": 5,
+      "collision_safety": 2,
+      "metadata_flexibility": 5,
+      "gui_integration": 2,
+      "promotion_lifecycle": 3,
+      "scale_manageability": 3,
+      "discoverability": 2,
+      "schema_validation": 1
+    },
+    "approach_b": {
+      "ease_of_initial_adoption": 4,
+      "collision_safety": 4,
+      "metadata_flexibility": 3,
+      "gui_integration": 5,
+      "promotion_lifecycle": 4,
+      "scale_manageability": 3,
+      "discoverability": 5,
+      "schema_validation": 5
+    },
+    "approach_a_total": 23,
+    "approach_b_total": 33
+  }
+}

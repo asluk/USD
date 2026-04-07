@@ -1,0 +1,95 @@
+#usda 1.0
+(
+    "Schema for source identifier convenience API (Approach A)."
+    "Provides typed access to assetInfo['sourceIds'] sub-dictionaries."
+    "Follows the UsdMediaAssetPreviewsAPI precedent: schema provides a"
+    "described spec and convenience API, but data lives in composed"
+    "assetInfo metadata."
+    subLayers = [
+        @usd/schema.usda@
+    ]
+)
+
+over "GLOBAL" (
+    customData = {
+        string libraryName      = "usdSourceId"
+        string libraryPath      = "pxr/usd/usdSourceId"
+    }
+)
+{
+}
+
+class "SourceIdAPI" (
+    inherits = </APISchemaBase>
+    doc = """UsdSourceIdAPI provides a convenience interface for authoring and
+    querying external source identifiers stored as sub-dictionaries within
+    a prim's assetInfo metadata.
+
+    This schema implements Approach A from the 'Separation of Concerns for
+    Identifiers in USD' proposal: source identifiers are expressed as
+    stratified sub-dictionaries within assetInfo, with this applied API
+    schema providing typed convenience access.
+
+    The data layout in assetInfo follows this structure:
+
+    ```
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary <domain> = {
+                string primaryId = "..."
+                string revision  = "..."
+                dictionary metadata = { ... }
+            }
+        }
+    }
+    ```
+
+    Where <domain> is a vendor or standards-body identifier such as
+    "windchill", "ifc", "revit", "nvidia", etc.
+
+    Multiple domains can coexist on a single prim. The sourceIds
+    sub-dictionary is composed element-wise following standard assetInfo
+    composition semantics (strongest opinion wins per key).
+
+    This schema can be applied to any prim, not just model roots. While
+    assetInfo's convenience API on UsdModelAPI is scoped to model roots,
+    the underlying assetInfo metadata is registered in SdfSchema for all
+    prims and properties.
+
+    Example usage (Python):
+    ```python
+    api = UsdSourceId.SourceIdAPI.Apply(prim)
+    api.SetSourceId("windchill", "VR:wt.part.WTPart:23639563", revision="Rev.C")
+    api.SetSourceId("ifc", "2O2Fr$t4X7Zf8NOew3FNr2")
+    
+    # Query
+    ids = api.GetAllSourceIds()  # {"windchill": {...}, "ifc": {...}}
+    primary = api.GetPrimaryId("windchill")  # "VR:wt.part.WTPart:23639563"
+    ```
+    """
+    customData = {
+        token apiSchemaType = "singleApply"
+        dictionary schemaTokens = {
+            dictionary sourceIds = {
+                string doc = """Dictionary key in assetInfo for the
+                source identifiers sub-dictionary."""
+            }
+            dictionary primaryId = {
+                string doc = """Key within a domain's source identifier
+                dictionary for the primary identifier string."""
+            }
+            dictionary revision = {
+                string doc = """Key within a domain's source identifier
+                dictionary for the revision string."""
+            }
+            dictionary metadata = {
+                string doc = """Key within a domain's source identifier
+                dictionary for additional metadata."""
+            }
+        }
+    }
+)
+{
+    # No properties -- data lives in assetInfo metadata,
+    # following the UsdMediaAssetPreviewsAPI precedent.
+}

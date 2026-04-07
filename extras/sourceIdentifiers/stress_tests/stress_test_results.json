@@ -1,0 +1,29 @@
+{
+  "approach_a": {
+    "generation_time_sec": 6.365,
+    "file_size_bytes": 111422213,
+    "file_size_mb": 106.26,
+    "num_prims": 100000
+  },
+  "approach_b": {
+    "generation_time_sec": 1.294,
+    "file_size_bytes": 96002040,
+    "file_size_mb": 91.55,
+    "num_prims": 100000
+  },
+  "file_size_ratio_b_over_a": 0.862,
+  "discovery": {
+    "approach_a_sec": 0.6384,
+    "approach_b_sec": 0.5899,
+    "approach_b_matches": 1
+  },
+  "line_count": {
+    "approach_a": 3085417,
+    "approach_b": 2020995,
+    "ratio_b_over_a": 0.655
+  },
+  "namespace_footprint": {
+    "approach_a_unique_keys": 10,
+    "approach_b_unique_properties": 30
+  }
+}

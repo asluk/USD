@@ -1,0 +1,210 @@
+#usda 1.0
+(
+    """
+    Approach A: Multi-vendor ecosystem simulation.
+    
+    Simulates 8 vendors/standards bodies each adding their own identifier
+    schemes to the same prims via assetInfo["sourceIds"] sub-dictionaries.
+    
+    Demonstrates:
+    - Independent vendor adoption (no coordination needed)
+    - Heterogeneous metadata packages per domain
+    - Namespace collision potential
+    - Sprawl at scale
+    """
+    defaultPrim = "Assembly"
+    metersPerUnit = 1.0
+)
+
+def Xform "Assembly" (
+    kind = "assembly"
+)
+{
+    # Turbine blade with identifiers from 8 different systems
+    def Mesh "TurbineBlade_001" (
+        assetInfo = {
+            dictionary sourceIds = {
+                # --- VENDOR: NVIDIA (Omniverse asset tracking) ---
+                dictionary nvidia = {
+                    string primaryId = "omni://nucleus.nvidia.com/assets/turbine/blade_v3"
+                    string revision = "3.2.1"
+                    dictionary metadata = {
+                        string omniHost = "nucleus.nvidia.com"
+                        string checkpoint = "cp_20260315_final"
+                        string creator = "NVIDIA SimReady"
+                        string[] tags = ["turbine", "blade", "aerospace"]
+                    }
+                }
+                # --- VENDOR: Adobe (Substance 3D) ---
+                dictionary adobe = {
+                    string primaryId = "adb:sub3d:asset:a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    string revision = "v2"
+                    dictionary metadata = {
+                        string substanceId = "sbs://turbine_blade_material"
+                        string collection = "Aerospace Materials"
+                    }
+                }
+                # --- VENDOR: Apple (Reality Composer Pro) ---
+                dictionary apple = {
+                    string primaryId = "com.apple.realitykit.asset.turbine-blade-001"
+                    string revision = "1.0"
+                    dictionary metadata = {
+                        string bundleId = "com.example.turbinesim"
+                        string spatialId = "anchor:blade001"
+                    }
+                }
+                # --- VENDOR: SideFX (Houdini) ---
+                dictionary sidefx = {
+                    string primaryId = "hda://SideFX::turbine_blade::3.0"
+                    string revision = "3.0"
+                    dictionary metadata = {
+                        string hdaPath = "/obj/turbine_blade1"
+                        string nodeType = "SideFX::turbine_blade::3.0"
+                        string hipFile = "turbine_assembly_v12.hip"
+                    }
+                }
+                # --- VENDOR: Autodesk (Fusion) ---
+                dictionary autodesk = {
+                    string primaryId = "urn:adsk.wipprod:dm.lineage:7Rf2wvPxSEeHmBq-XqFD_g"
+                    string revision = "v47"
+                    dictionary metadata = {
+                        string fusionProjectId = "a.YnVzaW5lc3M6bnZpZGlh"
+                        string componentName = "Turbine Blade Assembly"
+                        string material = "Inconel 718"
+                    }
+                }
+                # --- STANDARDS: IFC / buildingSMART ---
+                dictionary ifc = {
+                    string primaryId = "2O2Fr$t4X7Zf8NOew3FL02"
+                    dictionary metadata = {
+                        string ifcType = "IfcMechanicalFastener"
+                        string schema = "IFC4x3"
+                        string classification = "MasterFormat:23 07 00"
+                    }
+                }
+                # --- STANDARDS: Khronos (MaterialX) ---
+                dictionary materialx = {
+                    string primaryId = "NG_turbine_blade_surface"
+                    string revision = "1.39.0"
+                    dictionary metadata = {
+                        string nodeGraph = "NG_turbine_blade_surface"
+                        string materialxDoc = "turbine_materials.mtlx"
+                        string colorSpace = "ACEScg"
+                    }
+                }
+                # --- STANDARDS: STEP/ISO ---
+                dictionary step = {
+                    string primaryId = "STEP-FILE-ID:#4782"
+                    string revision = "AP242-ED3"
+                    dictionary metadata = {
+                        string entityType = "PRODUCT_DEFINITION"
+                        string productId = "TB-INC718-001"
+                        string standard = "ISO 10303-242:2022"
+                    }
+                }
+            }
+        }
+    )
+    {
+    }
+
+    # 30 identical bolts — shared source identity, different instance paths
+    def Xform "Fasteners"
+    {
+        def Mesh "Bolt_001" (
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary windchill = {
+                        string primaryId = "VR:wt.part.WTPart:55012001"
+                        string revision = "Rev.A"
+                        dictionary metadata = {
+                            string displayNumber = "BLT-M12-35-GR8.8"
+                            string serialNumber = "SN-2025-00001"
+                        }
+                    }
+                }
+            }
+        )
+        {
+        }
+        def Mesh "Bolt_002" (
+            assetInfo = {
+                dictionary sourceIds = {
+                    dictionary windchill = {
+                        string primaryId = "VR:wt.part.WTPart:55012001"
+                        string revision = "Rev.A"
+                        dictionary metadata = {
+                            string displayNumber = "BLT-M12-35-GR8.8"
+                            string serialNumber = "SN-2025-00002"
+                        }
+                    }
+                }
+            }
+        )
+        {
+        }
+        # ... (28 more bolts share the same part number, differ in serial)
+    }
+
+    # =========================================================================
+    # COLLISION SCENARIO: Two vendors accidentally pick the same domain key
+    # =========================================================================
+    # 
+    # With Approach A, if two unrelated vendors both use the key "tracker",
+    # their data silently collides. There is no registry or validation to
+    # prevent this.
+    def Mesh "CollisionDemo" (
+        assetInfo = {
+            dictionary sourceIds = {
+                # Vendor 1 uses "tracker" for their internal asset DB
+                dictionary tracker = {
+                    string primaryId = "TRACK-001-V1"
+                    dictionary metadata = {
+                        string system = "Vendor1 Internal Asset Tracker"
+                    }
+                }
+                # If Vendor 2 also uses "tracker" for their system...
+                # the data from Vendor 1 would be SILENTLY OVERWRITTEN
+                # in the same dictionary. Only one "tracker" key can exist.
+                #
+                # In Approach A, collision prevention depends entirely on
+                # naming conventions (e.g., reverse-DNS: "com.vendor1.tracker").
+                # There is no schema enforcement.
+            }
+        }
+    )
+    {
+    }
+
+    # =========================================================================
+    # PROMOTION LIFECYCLE: Vendor identifier promoted to standard
+    # =========================================================================
+    #
+    # Scenario: NVIDIA's internal "simready" identifier scheme gains
+    # industry adoption and is promoted to an AOUSD standard "simready".
+    #
+    # In Approach A:
+    # - Rename the key from "nvidia_simready" to "aousd_simready"
+    # - All existing content must be migrated (key rename in assetInfo dicts)
+    # - No schema versioning; migration is a string replacement task
+    # - Tools that query by key must be updated
+    def Mesh "PromotionDemo" (
+        assetInfo = {
+            dictionary sourceIds = {
+                # Before promotion: vendor-prefixed key
+                dictionary nvidia_simready = {
+                    string primaryId = "simready://turbine_blade_v3"
+                    string revision = "3.0"
+                    dictionary metadata = {
+                        string certification = "SimReady 2.0"
+                    }
+                }
+                # After promotion, this would become:
+                # dictionary aousd_simready = { ... }
+                # which requires editing all existing content.
+            }
+        }
+    )
+    {
+    }
+}
