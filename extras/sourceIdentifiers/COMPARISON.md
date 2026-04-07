@@ -38,9 +38,9 @@ metadata. Follows the `UsdMediaAssetPreviewsAPI` precedent.
 
 **Approach B: Multi-apply schema with typed properties.**
 Source identifiers are expressed as typed properties on a multi-apply API
-schema (`UsdSourceIdentifierAPI`), with each external system represented as
-a schema instance (e.g., `SourceIdentifierAPI:windchill`,
-`SourceIdentifierAPI:ifc`). Each instance carries four typed properties:
+schema (`UsdSourceIdSchemaAPI`), with each external system represented as
+a schema instance (e.g., `SourceIdSchemaAPI:windchill`,
+`SourceIdSchemaAPI:ifc`). Each instance carries four typed properties:
 `primaryId`, `revision`, `domain`, and `label`. Follows the
 `UsdSemanticsLabelsAPI` / `UsdCollectionAPI` precedent.
 
@@ -199,7 +199,7 @@ std::vector<TfToken> domains = api.GetDomains();
 ### Approach B: Multi-apply schema with typed properties
 
 **Module:** `pxr/usd/usdSourceIdSchema/`  
-**Schema type:** Multi-apply API schema (`UsdSourceIdentifierAPI`)  
+**Schema type:** Multi-apply API schema (`UsdSourceIdSchemaAPI`)  
 **Precedent:** `UsdSemanticsLabelsAPI`, `UsdCollectionAPI`, `UsdPhysicsLimitAPI`  
 
 **Mechanism.** Each external system is represented as an instance of a
@@ -208,8 +208,8 @@ multi-apply schema, with typed properties under a namespaced prefix:
 ```usda
 def Mesh "Column_C14" (
     prepend apiSchemas = [
-        "SourceIdentifierAPI:ifc",
-        "SourceIdentifierAPI:windchill"
+        "SourceIdSchemaAPI:ifc",
+        "SourceIdSchemaAPI:windchill"
     ]
 )
 {
@@ -255,7 +255,7 @@ def Mesh "Column_C14" (
 **C++ API usage:**
 
 ```cpp
-auto api = UsdSourceIdentifierAPI::Apply(prim, TfToken("windchill"));
+auto api = UsdSourceIdSchemaAPI::Apply(prim, TfToken("windchill"));
 
 // Set properties
 api.CreatePrimaryIdAttr(VtValue(std::string("VR:wt.part.WTPart:23639563")));
@@ -267,7 +267,7 @@ std::string id;
 api.GetPrimaryIdAttr().Get(&id);
 
 // List all instances on a prim
-std::vector<TfToken> instances = UsdSourceIdentifierAPI::GetAll(prim);
+std::vector<TfToken> instances = UsdSourceIdSchemaAPI::GetAll(prim);
 ```
 
 ### Side-by-side summary
@@ -365,7 +365,7 @@ are preserved from the base.
 # Override layer (Approach B)
 def Xform "Chiller" (
     prepend references = @./composition_test_b_base.usda@
-    prepend apiSchemas = ["SourceIdentifierAPI:opcua"]
+    prepend apiSchemas = ["SourceIdSchemaAPI:opcua"]
 )
 {
     string sourceIdentifier:windchill:revision = "Rev.C"
@@ -590,7 +590,7 @@ identifier schemes to a single turbine blade prim:
   codebase. Zero coordination required. A vendor can ship support in a
   single afternoon.
 
-- **Approach B:** Each vendor applies `SourceIdentifierAPI:<name>` and
+- **Approach B:** Each vendor applies `SourceIdSchemaAPI:<name>` and
   authors four properties. Also zero files touched if the common
   properties suffice. But if the vendor needs domain-specific fields
   (6 of 8 simulated vendors do), they must either register a companion
@@ -604,7 +604,7 @@ identifier schemes to a single turbine blade prim:
   Mitigation: reverse-DNS keys (e.g., `"com.vendor1.tracker"`), but
   this is convention, not enforcement.
 
-- **Approach B:** If two vendors both use `SourceIdentifierAPI:tracker`,
+- **Approach B:** If two vendors both use `SourceIdSchemaAPI:tracker`,
   the `apiSchemas` list cannot contain duplicate entries. The `domain`
   property provides secondary disambiguation. More importantly, schema
   registration makes the collision *visible* — tools inspecting the
@@ -835,9 +835,9 @@ def validate_source_ids_b(stage, registry):
     """Validate Approach B source identifiers against a domain registry."""
     errors = []
     for prim in stage.Traverse():
-        instances = UsdSourceIdentifierAPI.GetAll(prim)
+        instances = UsdSourceIdSchemaAPI.GetAll(prim)
         for instance_name in instances:
-            api = UsdSourceIdentifierAPI.Get(prim, instance_name)
+            api = UsdSourceIdSchemaAPI.Get(prim, instance_name)
             # Check domain is registered
             domain = api.GetDomainAttr().Get()
             if domain and domain not in registry:
@@ -909,10 +909,10 @@ dictionaries for the `"ifc"` key. There is no way to declare
 # What a domain stakeholder must produce:
 
 1. plugInfo.json declaring the validator with:
-   - schemaTypes: ["SourceIdentifierAPI"]
+   - schemaTypes: ["SourceIdSchemaAPI"]
    - keywords: ["sourceIdentifier", "ifc"]
 2. Validator implementation (C++ or Python)
-   - Can target SourceIdentifierAPI schema type directly
+   - Can target SourceIdSchemaAPI schema type directly
    - Uses typed API: GetPrimaryIdAttr(), GetDomainAttr()
    - Domain filtering via GetDomainAttr().Get() == "org.buildingsmart.ifc"
    - Domain-specific validation is still custom but benefits from
@@ -1041,7 +1041,7 @@ Access is through the generic `UsdPrim::GetAttribute()` and
 
 This dramatically lowers the barrier for domain-specific schemas in
 Approach B/C. A domain stakeholder (e.g., buildingSMART) could produce
-a codeless `IfcSourceIdentifierAPI` schema with typed properties for
+a codeless `IfcSourceIdSchemaAPI` schema with typed properties for
 ifcType, schema, and classification in ~50 lines of `schema.usda` +
 a single `usdGenSchema` run. No C++ expertise required.
 
@@ -1110,7 +1110,7 @@ the hybrid embraces it: **the schema carries the governed common fields;
 mechanisms coexist on the same prim, linked by the domain key.
 
 ```usda
-class "SourceIdentifierAPI" (
+class "SourceIdHybridAPI" (
     inherits = </APISchemaBase>
     customData = {
         token apiSchemaType = "multipleApply"
@@ -1136,8 +1136,8 @@ class "SourceIdentifierAPI" (
 ```usda
 def Xform "Chiller_01" (
     prepend apiSchemas = [
-        "SourceIdentifierAPI:windchill",
-        "SourceIdentifierAPI:opcua"
+        "SourceIdHybridAPI:windchill",
+        "SourceIdHybridAPI:opcua"
     ]
     # Domain-specific metadata in assetInfo (element-wise composed)
     assetInfo = {
@@ -1280,7 +1280,7 @@ The three-tier AOUSD Domains Registry (Section 6.2) applies directly:
 Pipelines currently using `customData`, `displayName`, or ad-hoc
 `assetInfo` conventions can migrate incrementally:
 
-1. Apply `SourceIdentifierAPI:<domain>` to prims that carry identifiers.
+1. Apply `SourceIdHybridAPI:<domain>` to prims that carry identifiers.
 2. Move the primary identifier value to `primaryId`.
 3. Move revision/version to `revision`.
 4. Set `domain` to the registered reverse-DNS key.

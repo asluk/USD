@@ -27,9 +27,9 @@ def Xform "Chiller" (
         }
     }
     prepend apiSchemas = [
-        "SourceIdentifierAPI:windchill",
-        "SourceIdentifierAPI:sap",
-        "SourceIdentifierAPI:ifc"
+        "SourceIdHybridAPI:windchill",
+        "SourceIdHybridAPI:sap",
+        "SourceIdHybridAPI:ifc"
     ]
 )
 {

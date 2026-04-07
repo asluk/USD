@@ -47,28 +47,28 @@ struct UsdSourceIdHybridTokensType {
     USDSOURCEIDHYBRID_API UsdSourceIdHybridTokensType();
     /// \brief "sourceIdentifier"
     /// 
-    /// Property namespace prefix for the UsdSourceIdHybridSourceIdentifierAPI schema.
+    /// Property namespace prefix for the UsdSourceIdHybridSourceIdHybridAPI schema.
     const TfToken sourceIdentifier;
     /// \brief "sourceIdentifier:__INSTANCE_NAME__:domain"
     /// 
-    /// UsdSourceIdHybridSourceIdentifierAPI
+    /// UsdSourceIdHybridSourceIdHybridAPI
     const TfToken sourceIdentifier_MultipleApplyTemplate_Domain;
     /// \brief "sourceIdentifier:__INSTANCE_NAME__:label"
     /// 
-    /// UsdSourceIdHybridSourceIdentifierAPI
+    /// UsdSourceIdHybridSourceIdHybridAPI
     const TfToken sourceIdentifier_MultipleApplyTemplate_Label;
     /// \brief "sourceIdentifier:__INSTANCE_NAME__:primaryId"
     /// 
-    /// UsdSourceIdHybridSourceIdentifierAPI
+    /// UsdSourceIdHybridSourceIdHybridAPI
     const TfToken sourceIdentifier_MultipleApplyTemplate_PrimaryId;
     /// \brief "sourceIdentifier:__INSTANCE_NAME__:revision"
     /// 
-    /// UsdSourceIdHybridSourceIdentifierAPI
+    /// UsdSourceIdHybridSourceIdHybridAPI
     const TfToken sourceIdentifier_MultipleApplyTemplate_Revision;
-    /// \brief "SourceIdentifierAPI"
+    /// \brief "SourceIdHybridAPI"
     /// 
-    /// Schema identifer and family for UsdSourceIdHybridSourceIdentifierAPI
-    const TfToken SourceIdentifierAPI;
+    /// Schema identifer and family for UsdSourceIdHybridSourceIdHybridAPI
+    const TfToken SourceIdHybridAPI;
     /// A vector of all of the tokens listed above.
     const std::vector<TfToken> allTokens;
 };

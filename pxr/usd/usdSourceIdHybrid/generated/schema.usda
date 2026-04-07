@@ -18,9 +18,9 @@ over "GLOBAL" (
 {
 }
 
-class "SourceIdentifierAPI" (
+class "SourceIdHybridAPI" (
     inherits = </APISchemaBase>
-    doc = """UsdSourceIdentifierAPI is a multi-apply API schema for expressing
+    doc = """UsdSourceIdHybridAPI is a multi-apply API schema for expressing
     external source identifiers as typed properties on a prim, with
     domain-specific metadata stored in assetInfo sub-dictionaries.
 
@@ -52,8 +52,8 @@ class "SourceIdentifierAPI" (
     ```usda
     def Xform "Chiller_01" (
         prepend apiSchemas = [
-            "SourceIdentifierAPI:windchill",
-            "SourceIdentifierAPI:opcua"
+            "SourceIdHybridAPI:windchill",
+            "SourceIdHybridAPI:opcua"
         ]
         assetInfo = {
             dictionary sourceIds = {
@@ -91,7 +91,7 @@ class "SourceIdentifierAPI" (
     - Instance name links schema properties to assetInfo sub-dictionary.
     """
     customData = {
-        string className = "SourceIdentifierAPI"
+        string className = "SourceIdHybridAPI"
         token apiSchemaType = "multipleApply"
         token propertyNamespacePrefix = "sourceIdentifier"
     }

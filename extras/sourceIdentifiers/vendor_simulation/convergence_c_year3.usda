@@ -15,7 +15,7 @@
       the metadata dict is also migrated.
     
     Option 2 — FULL MIGRATION (new instance):
-      Add "SourceIdentifierAPI:aousd_opbinding" with standard schema
+      Add "SourceIdHybridAPI:aousd_opbinding" with standard schema
       properties + standard metadata field names. Remove old instance.
       Clean but requires touching all layers.
     
@@ -41,7 +41,7 @@ def Xform "ChillerPlant" (
     # Keep instance name "contoso_iot", update domain only.
     # Migrate metadata field names to standard where possible.
     def Xform "Chiller_01_SoftMigrated" (
-        prepend apiSchemas = ["SourceIdentifierAPI:contoso_iot"]
+        prepend apiSchemas = ["SourceIdHybridAPI:contoso_iot"]
         assetInfo = {
             dictionary sourceIds = {
                 dictionary contoso_iot = {
@@ -68,7 +68,7 @@ def Xform "ChillerPlant" (
     # ===== Option 2: Full migration (Chiller_02) =====
     # New standard instance replaces old vendor instance entirely.
     def Xform "Chiller_02_FullyMigrated" (
-        prepend apiSchemas = ["SourceIdentifierAPI:aousd_opbinding"]
+        prepend apiSchemas = ["SourceIdHybridAPI:aousd_opbinding"]
         assetInfo = {
             dictionary sourceIds = {
                 dictionary aousd_opbinding = {
@@ -95,8 +95,8 @@ def Xform "ChillerPlant" (
     # Both old and new instances exist during transition.
     def Xform "Chiller_03_ParallelTransition" (
         prepend apiSchemas = [
-            "SourceIdentifierAPI:aousd_opbinding",
-            "SourceIdentifierAPI:contoso_iot"
+            "SourceIdHybridAPI:aousd_opbinding",
+            "SourceIdHybridAPI:contoso_iot"
         ]
         assetInfo = {
             dictionary sourceIds = {
@@ -139,7 +139,7 @@ def Xform "ChillerPlant" (
 # A tool wanting "all operational bindings" can:
 #
 # 1. Query by domain (schema property — typed, queryable):
-#    for instance in SourceIdentifierAPI.GetAll(prim):
+#    for instance in SourceIdHybridAPI.GetAll(prim):
 #        domain = api.GetDomainAttr().Get()
 #        if domain == "org.aousd.opbinding":
 #            # found standard binding

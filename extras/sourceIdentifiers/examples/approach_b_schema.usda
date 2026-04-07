@@ -4,7 +4,7 @@
     Approach B: Source identifiers via multi-apply schema with typed properties.
     
     Same building scenario as approach_a_assetinfo.usda, implemented using
-    SourceIdentifierAPI multi-apply schema instances. Each external system
+    SourceIdSchemaAPI multi-apply schema instances. Each external system
     is a schema instance with typed properties.
     """
     defaultPrim = "Building"
@@ -15,8 +15,8 @@
 def Xform "Building" (
     kind = "assembly"
     prepend apiSchemas = [
-        "SourceIdentifierAPI:revit",
-        "SourceIdentifierAPI:ifc"
+        "SourceIdSchemaAPI:revit",
+        "SourceIdSchemaAPI:ifc"
     ]
 )
 {
@@ -36,10 +36,10 @@ def Xform "Building" (
         # A structural column with identifiers from 4 external systems
         def Mesh "Column_C14" (
             prepend apiSchemas = [
-                "SourceIdentifierAPI:ifc",
-                "SourceIdentifierAPI:revit",
-                "SourceIdentifierAPI:uniclass",
-                "SourceIdentifierAPI:omniclass"
+                "SourceIdSchemaAPI:ifc",
+                "SourceIdSchemaAPI:revit",
+                "SourceIdSchemaAPI:uniclass",
+                "SourceIdSchemaAPI:omniclass"
             ]
         )
         {
@@ -64,9 +64,9 @@ def Xform "Building" (
         # Another instance of the same column type
         def Mesh "Column_C15" (
             prepend apiSchemas = [
-                "SourceIdentifierAPI:ifc",
-                "SourceIdentifierAPI:revit",
-                "SourceIdentifierAPI:uniclass"
+                "SourceIdSchemaAPI:ifc",
+                "SourceIdSchemaAPI:revit",
+                "SourceIdSchemaAPI:uniclass"
             ]
         )
         {
@@ -92,10 +92,10 @@ def Xform "Building" (
         def Xform "Chiller_01" (
             kind = "component"
             prepend apiSchemas = [
-                "SourceIdentifierAPI:windchill",
-                "SourceIdentifierAPI:sap",
-                "SourceIdentifierAPI:opcua",
-                "SourceIdentifierAPI:ifc"
+                "SourceIdSchemaAPI:windchill",
+                "SourceIdSchemaAPI:sap",
+                "SourceIdSchemaAPI:opcua",
+                "SourceIdSchemaAPI:ifc"
             ]
         )
         {
@@ -120,7 +120,7 @@ def Xform "Building" (
             # Sub-component: compressor module
             def Xform "Compressor" (
                 prepend apiSchemas = [
-                    "SourceIdentifierAPI:windchill"
+                    "SourceIdSchemaAPI:windchill"
                 ]
             )
             {
@@ -133,8 +133,8 @@ def Xform "Building" (
             # Sensor prim with operational telemetry binding
             def Xform "SupplyTempSensor" (
                 prepend apiSchemas = [
-                    "SourceIdentifierAPI:opcua",
-                    "SourceIdentifierAPI:bacnet"
+                    "SourceIdSchemaAPI:opcua",
+                    "SourceIdSchemaAPI:bacnet"
                 ]
             )
             {
@@ -156,8 +156,8 @@ def Xform "Building" (
         # Room with purely numeric identifier in source system
         def Xform "Room_1001" (
             prepend apiSchemas = [
-                "SourceIdentifierAPI:revit",
-                "SourceIdentifierAPI:ifc"
+                "SourceIdSchemaAPI:revit",
+                "SourceIdSchemaAPI:ifc"
             ]
         )
         {

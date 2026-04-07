@@ -37,7 +37,7 @@ def Xform "ChillerPlant" (
 {
     # Approach 1: Full migration (renamed instance + domain)
     def Xform "Chiller_01" (
-        prepend apiSchemas = ["SourceIdentifierAPI:aousd_opbinding"]
+        prepend apiSchemas = ["SourceIdSchemaAPI:aousd_opbinding"]
     )
     {
         string sourceIdentifier:aousd_opbinding:primaryId = "device://contoso.com/bldg-42/chiller-01"
@@ -50,7 +50,7 @@ def Xform "ChillerPlant" (
 
     # Approach 2: Soft migration (keep instance name, update domain only)
     def Xform "Chiller_02" (
-        prepend apiSchemas = ["SourceIdentifierAPI:contoso_iot"]
+        prepend apiSchemas = ["SourceIdSchemaAPI:contoso_iot"]
     )
     {
         string sourceIdentifier:contoso_iot:primaryId = "device://contoso.com/bldg-42/chiller-02"
@@ -68,8 +68,8 @@ def Xform "ChillerPlant" (
 #
 # A tool wanting "all operational bindings" can query by domain:
 #   for prim in stage.Traverse():
-#       for instance in SourceIdentifierAPI.GetAll(prim):
-#           api = SourceIdentifierAPI.Get(prim, instance)
+#       for instance in SourceIdSchemaAPI.GetAll(prim):
+#           api = SourceIdSchemaAPI.Get(prim, instance)
 #           domain = api.GetDomainAttr().Get()
 #           if domain in ["com.contoso.iot", "com.fabrikam.digitaltwin",
 #                         "org.aousd.opbinding"]:

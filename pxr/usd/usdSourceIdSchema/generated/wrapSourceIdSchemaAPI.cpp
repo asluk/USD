@@ -4,7 +4,7 @@
 // Licensed under the terms set forth in the LICENSE.txt file available at
 // https://openusd.org/license.
 //
-#include "pxr/usd/usdSourceIdHybrid/sourceIdentifierAPI.h"
+#include "pxr/usd/usdSourceIdSchema/sourceIdSchemaAPI.h"
 #include "pxr/usd/usd/schemaBase.h"
 
 #include "pxr/usd/sdf/primSpec.h"
@@ -34,75 +34,75 @@ WRAP_CUSTOM;
 
         
 static UsdAttribute
-_CreatePrimaryIdAttr(UsdSourceIdHybridSourceIdentifierAPI &self,
+_CreatePrimaryIdAttr(UsdSourceIdSchemaSourceIdSchemaAPI &self,
                                       object defaultVal, bool writeSparsely) {
     return self.CreatePrimaryIdAttr(
         UsdPythonToSdfType(defaultVal, SdfValueTypeNames->String), writeSparsely);
 }
         
 static UsdAttribute
-_CreateRevisionAttr(UsdSourceIdHybridSourceIdentifierAPI &self,
+_CreateRevisionAttr(UsdSourceIdSchemaSourceIdSchemaAPI &self,
                                       object defaultVal, bool writeSparsely) {
     return self.CreateRevisionAttr(
         UsdPythonToSdfType(defaultVal, SdfValueTypeNames->String), writeSparsely);
 }
         
 static UsdAttribute
-_CreateDomainAttr(UsdSourceIdHybridSourceIdentifierAPI &self,
+_CreateDomainAttr(UsdSourceIdSchemaSourceIdSchemaAPI &self,
                                       object defaultVal, bool writeSparsely) {
     return self.CreateDomainAttr(
         UsdPythonToSdfType(defaultVal, SdfValueTypeNames->Token), writeSparsely);
 }
         
 static UsdAttribute
-_CreateLabelAttr(UsdSourceIdHybridSourceIdentifierAPI &self,
+_CreateLabelAttr(UsdSourceIdSchemaSourceIdSchemaAPI &self,
                                       object defaultVal, bool writeSparsely) {
     return self.CreateLabelAttr(
         UsdPythonToSdfType(defaultVal, SdfValueTypeNames->String), writeSparsely);
 }
 
-static bool _WrapIsSourceIdentifierAPIPath(const SdfPath &path) {
+static bool _WrapIsSourceIdSchemaAPIPath(const SdfPath &path) {
     TfToken collectionName;
-    return UsdSourceIdHybridSourceIdentifierAPI::IsSourceIdentifierAPIPath(
+    return UsdSourceIdSchemaSourceIdSchemaAPI::IsSourceIdSchemaAPIPath(
         path, &collectionName);
 }
 
 static std::string
-_Repr(const UsdSourceIdHybridSourceIdentifierAPI &self)
+_Repr(const UsdSourceIdSchemaSourceIdSchemaAPI &self)
 {
     std::string primRepr = TfPyRepr(self.GetPrim());
     std::string instanceName = TfPyRepr(self.GetName());
     return TfStringPrintf(
-        "UsdSourceIdHybrid.SourceIdentifierAPI(%s, '%s')",
+        "UsdSourceIdSchema.SourceIdSchemaAPI(%s, '%s')",
         primRepr.c_str(), instanceName.c_str());
 }
 
-struct UsdSourceIdHybridSourceIdentifierAPI_CanApplyResult : 
+struct UsdSourceIdSchemaSourceIdSchemaAPI_CanApplyResult : 
     public TfPyAnnotatedBoolResult<std::string>
 {
-    UsdSourceIdHybridSourceIdentifierAPI_CanApplyResult(bool val, std::string const &msg) :
+    UsdSourceIdSchemaSourceIdSchemaAPI_CanApplyResult(bool val, std::string const &msg) :
         TfPyAnnotatedBoolResult<std::string>(val, msg) {}
 };
 
-static UsdSourceIdHybridSourceIdentifierAPI_CanApplyResult
+static UsdSourceIdSchemaSourceIdSchemaAPI_CanApplyResult
 _WrapCanApply(const UsdPrim& prim, const TfToken& name)
 {
     std::string whyNot;
-    bool result = UsdSourceIdHybridSourceIdentifierAPI::CanApply(prim, name, &whyNot);
-    return UsdSourceIdHybridSourceIdentifierAPI_CanApplyResult(result, whyNot);
+    bool result = UsdSourceIdSchemaSourceIdSchemaAPI::CanApply(prim, name, &whyNot);
+    return UsdSourceIdSchemaSourceIdSchemaAPI_CanApplyResult(result, whyNot);
 }
 
 } // anonymous namespace
 
-void wrapUsdSourceIdHybridSourceIdentifierAPI()
+void wrapUsdSourceIdSchemaSourceIdSchemaAPI()
 {
-    typedef UsdSourceIdHybridSourceIdentifierAPI This;
+    typedef UsdSourceIdSchemaSourceIdSchemaAPI This;
 
-    UsdSourceIdHybridSourceIdentifierAPI_CanApplyResult::Wrap<UsdSourceIdHybridSourceIdentifierAPI_CanApplyResult>(
+    UsdSourceIdSchemaSourceIdSchemaAPI_CanApplyResult::Wrap<UsdSourceIdSchemaSourceIdSchemaAPI_CanApplyResult>(
         "_CanApplyResult", "whyNot");
 
     class_<This, bases<UsdAPISchemaBase> >
-        cls("SourceIdentifierAPI");
+        cls("SourceIdSchemaAPI");
 
     cls
         .def(init<UsdPrim, TfToken>((arg("prim"), arg("name"))))
@@ -110,19 +110,19 @@ void wrapUsdSourceIdHybridSourceIdentifierAPI()
         .def(TfTypePythonClass())
 
         .def("Get",
-            (UsdSourceIdHybridSourceIdentifierAPI(*)(const UsdStagePtr &stage, 
+            (UsdSourceIdSchemaSourceIdSchemaAPI(*)(const UsdStagePtr &stage, 
                                        const SdfPath &path))
                &This::Get,
             (arg("stage"), arg("path")))
         .def("Get",
-            (UsdSourceIdHybridSourceIdentifierAPI(*)(const UsdPrim &prim,
+            (UsdSourceIdSchemaSourceIdSchemaAPI(*)(const UsdPrim &prim,
                                        const TfToken &name))
                &This::Get,
             (arg("prim"), arg("name")))
         .staticmethod("Get")
 
         .def("GetAll",
-            (std::vector<UsdSourceIdHybridSourceIdentifierAPI>(*)(const UsdPrim &prim))
+            (std::vector<UsdSourceIdSchemaSourceIdSchemaAPI>(*)(const UsdPrim &prim))
                 &This::GetAll,
             arg("prim"),
             return_value_policy<TfPySequenceToList>())
@@ -181,8 +181,8 @@ void wrapUsdSourceIdHybridSourceIdentifierAPI()
              (arg("defaultValue")=object(),
               arg("writeSparsely")=false))
 
-        .def("IsSourceIdentifierAPIPath", _WrapIsSourceIdentifierAPIPath)
-            .staticmethod("IsSourceIdentifierAPIPath")
+        .def("IsSourceIdSchemaAPIPath", _WrapIsSourceIdSchemaAPIPath)
+            .staticmethod("IsSourceIdSchemaAPIPath")
         .def("__repr__", ::_Repr)
     ;
 

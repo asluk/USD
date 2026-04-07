@@ -27,7 +27,7 @@
     in the same instance or other instances.
     
     Adding a new instance (opcua) uses list-editing on apiSchemas:
-    `prepend apiSchemas = ["SourceIdentifierAPI:opcua"]` adds the
+    `prepend apiSchemas = ["SourceIdSchemaAPI:opcua"]` adds the
     schema without disturbing existing entries.
     """
     defaultPrim = "Chiller"
@@ -36,7 +36,7 @@
 def Xform "Chiller" (
     prepend references = @./composition_test_b_base.usda@
     # Add new system binding, override windchill revision only
-    prepend apiSchemas = ["SourceIdentifierAPI:opcua"]
+    prepend apiSchemas = ["SourceIdSchemaAPI:opcua"]
 )
 {
     # Override ONLY the revision — primaryId, domain, label are untouched

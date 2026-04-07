@@ -26,7 +26,7 @@
 
 PXR_NAMESPACE_OPEN_SCOPE
 
-/// \class UsdSourceIdentifierAPI
+/// \class UsdSourceIdHybridAPI
 ///
 /// Hybrid approach (Approach C): Multi-apply schema with typed common
 /// properties for discoverability and validation, plus assetInfo
@@ -40,19 +40,19 @@ PXR_NAMESPACE_OPEN_SCOPE
 /// for schema properties, plus dictionary getters/setters for the
 /// assetInfo metadata.
 ///
-class UsdSourceIdentifierAPI : public UsdAPISchemaBase
+class UsdSourceIdHybridAPI : public UsdAPISchemaBase
 {
 public:
     static const UsdSchemaKind schemaKind = UsdSchemaKind::MultipleApplyAPI;
 
-    explicit UsdSourceIdentifierAPI(
+    explicit UsdSourceIdHybridAPI(
         const UsdPrim &prim=UsdPrim(),
         const TfToken &name=TfToken())
         : UsdAPISchemaBase(prim, name)
     {
     }
 
-    explicit UsdSourceIdentifierAPI(
+    explicit UsdSourceIdHybridAPI(
         const UsdSchemaBase &schemaObj,
         const TfToken &name=TfToken())
         : UsdAPISchemaBase(schemaObj, name)
@@ -60,14 +60,14 @@ public:
     }
 
     USDSOURCEIDHYBRID_API
-    virtual ~UsdSourceIdentifierAPI();
+    virtual ~UsdSourceIdHybridAPI();
 
     USDSOURCEIDHYBRID_API
-    static UsdSourceIdentifierAPI
+    static UsdSourceIdHybridAPI
     Get(const UsdStagePtr &stage, const SdfPath &path, const TfToken &name);
 
     USDSOURCEIDHYBRID_API
-    static UsdSourceIdentifierAPI
+    static UsdSourceIdHybridAPI
     Get(const UsdPrim &prim, const TfToken &name);
 
     USDSOURCEIDHYBRID_API
@@ -76,7 +76,7 @@ public:
              std::string *whyNot = nullptr);
 
     USDSOURCEIDHYBRID_API
-    static UsdSourceIdentifierAPI
+    static UsdSourceIdHybridAPI
     Apply(const UsdPrim &prim, const TfToken &name);
 
     USDSOURCEIDHYBRID_API

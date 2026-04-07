@@ -22,9 +22,9 @@ def Xform "WarehouseFloor" (
     def Xform "Robot_1" (
         kind = "component"
         prepend apiSchemas = [
-            "SourceIdentifierAPI:ros",
-            "SourceIdentifierAPI:fleet",
-            "SourceIdentifierAPI:manufacturer"
+            "SourceIdSchemaAPI:ros",
+            "SourceIdSchemaAPI:fleet",
+            "SourceIdSchemaAPI:manufacturer"
         ]
     )
     {
@@ -46,9 +46,9 @@ def Xform "WarehouseFloor" (
 
         def Xform "LiDAR_Front" (
             prepend apiSchemas = [
-                "SourceIdentifierAPI:manufacturer",
-                "SourceIdentifierAPI:ros",
-                "SourceIdentifierAPI:opcua"
+                "SourceIdSchemaAPI:manufacturer",
+                "SourceIdSchemaAPI:ros",
+                "SourceIdSchemaAPI:opcua"
             ]
         )
         {
@@ -68,8 +68,8 @@ def Xform "WarehouseFloor" (
 
         def Xform "Camera_RGB" (
             prepend apiSchemas = [
-                "SourceIdentifierAPI:manufacturer",
-                "SourceIdentifierAPI:ros"
+                "SourceIdSchemaAPI:manufacturer",
+                "SourceIdSchemaAPI:ros"
             ]
         )
         {
@@ -86,9 +86,9 @@ def Xform "WarehouseFloor" (
     def Xform "Robot_2" (
         kind = "component"
         prepend apiSchemas = [
-            "SourceIdentifierAPI:ros",
-            "SourceIdentifierAPI:fleet",
-            "SourceIdentifierAPI:manufacturer"
+            "SourceIdSchemaAPI:ros",
+            "SourceIdSchemaAPI:fleet",
+            "SourceIdSchemaAPI:manufacturer"
         ]
     )
     {

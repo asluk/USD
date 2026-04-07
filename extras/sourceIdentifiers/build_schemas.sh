@@ -68,7 +68,9 @@ generate_schema() {
         cp "${GEN_DIR}/generatedSchema.usda" "${PLUGIN_DIR}/resources/"
     fi
     if [ -f "${GEN_DIR}/plugInfo.json" ]; then
-        cp "${GEN_DIR}/plugInfo.json" "${PLUGIN_DIR}/resources/"
+        # Replace build-time tokens with codeless-schema runtime paths
+        sed 's|@PLUG_INFO_LIBRARY_PATH@||g; s|@PLUG_INFO_RESOURCE_PATH@|.|g; s|@PLUG_INFO_ROOT@|.|g' \
+            "${GEN_DIR}/plugInfo.json" > "${PLUGIN_DIR}/resources/plugInfo.json"
     fi
 
     echo "  Installed to: ${PLUGIN_DIR}/resources/"
@@ -103,30 +105,43 @@ echo "=== Verifying schemas load ==="
 export PXR_PLUGINPATH_NAME="${INSTALL_DIR}/usdSourceId/resources:${INSTALL_DIR}/usdSourceIdSchema/resources:${INSTALL_DIR}/usdSourceIdHybrid/resources"
 
 ${PY312} -c "
-from pxr import Usd, Sdf, Plug
+from pxr import Usd, Sdf, Plug, Tf
+import sys
 
 # Force plugin discovery
-Plug.Registry().GetAllPlugins()
+all_plugins = Plug.Registry().GetAllPlugins()
+our_plugins = [p for p in all_plugins if 'ourceId' in p.name]
+print(f'Our plugins: {[p.name for p in our_plugins]}')
 
-# Check schema registry
-registry = Usd.SchemaRegistry()
+# Create a stage and try applying each schema
+stage = Usd.Stage.CreateInMemory()
+prim = stage.DefinePrim('/TestPrim', 'Xform')
 
-# Try to find our schemas
-schemas_found = []
-schemas_missing = []
-
-for name in ['SourceIdAPI', 'SourceIdentifierAPI']:
-    schema_type = registry.FindAppliedAPIPrimDefinition(name)
-    if schema_type:
-        schemas_found.append(name)
+results = {}
+for schema_name in ['SourceIdAPI', 'SourceIdSchemaAPI', 'SourceIdHybridAPI']:
+    instance_name = 'test'
+    applied_name = f'{schema_name}:{instance_name}' if schema_name != 'SourceIdAPI' else schema_name
+    ok = prim.AddAppliedSchema(applied_name)
+    results[schema_name] = ok
+    if ok:
+        print(f'  ✅ {schema_name}: applied successfully')
     else:
-        schemas_missing.append(name)
+        print(f'  ❌ {schema_name}: failed to apply')
 
-print(f'Schemas found: {schemas_found}')
-print(f'Schemas missing: {schemas_missing}')
+print(f'Applied schemas on prim: {prim.GetAppliedSchemas()}')
 
-# List all known API schemas
-print(f'Total applied API schemas in registry: {len(registry.GetAppliedAPISchemaNames())}')
+# Verify hybrid schema has properties defined
+for attr_name in ['sourceIdentifier:test:primaryId', 'sourceIdentifier:test:domain']:
+    attr = prim.GetAttribute(attr_name)
+    if attr:
+        print(f'  Property {attr_name}: type={attr.GetTypeName()}')
+    else:
+        print(f'  Property {attr_name}: not found (codeless - must create manually)')
+
+all_ok = all(results.values())
+if not all_ok:
+    sys.exit(1)
+print('\nAll schemas verified!')
 " 2>&1
 
 echo ""

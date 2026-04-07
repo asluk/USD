@@ -27,65 +27,65 @@ TF_DEFINE_PRIVATE_TOKENS(
 
 TF_REGISTRY_FUNCTION(TfType)
 {
-    TfType::Define<UsdSourceIdentifierAPI,
+    TfType::Define<UsdSourceIdHybridAPI,
         TfType::Bases< UsdAPISchemaBase > >();
 }
 
 /* virtual */
-UsdSourceIdentifierAPI::~UsdSourceIdentifierAPI()
+UsdSourceIdHybridAPI::~UsdSourceIdHybridAPI()
 {
 }
 
 /* static */
-UsdSourceIdentifierAPI
-UsdSourceIdentifierAPI::Get(const UsdStagePtr &stage, const SdfPath &path,
+UsdSourceIdHybridAPI
+UsdSourceIdHybridAPI::Get(const UsdStagePtr &stage, const SdfPath &path,
                              const TfToken &name)
 {
     if (!stage) {
         TF_CODING_ERROR("Invalid stage");
-        return UsdSourceIdentifierAPI();
+        return UsdSourceIdHybridAPI();
     }
-    return UsdSourceIdentifierAPI(stage->GetPrimAtPath(path), name);
+    return UsdSourceIdHybridAPI(stage->GetPrimAtPath(path), name);
 }
 
 /* static */
-UsdSourceIdentifierAPI
-UsdSourceIdentifierAPI::Get(const UsdPrim &prim, const TfToken &name)
+UsdSourceIdHybridAPI
+UsdSourceIdHybridAPI::Get(const UsdPrim &prim, const TfToken &name)
 {
-    return UsdSourceIdentifierAPI(prim, name);
+    return UsdSourceIdHybridAPI(prim, name);
 }
 
 /* virtual */
-UsdSchemaKind UsdSourceIdentifierAPI::_GetSchemaKind() const
+UsdSchemaKind UsdSourceIdHybridAPI::_GetSchemaKind() const
 {
-    return UsdSourceIdentifierAPI::schemaKind;
+    return UsdSourceIdHybridAPI::schemaKind;
 }
 
 /* static */
 bool
-UsdSourceIdentifierAPI::CanApply(const UsdPrim &prim, const TfToken &name,
+UsdSourceIdHybridAPI::CanApply(const UsdPrim &prim, const TfToken &name,
                                   std::string *whyNot)
 {
-    return prim.CanApplyAPI<UsdSourceIdentifierAPI>(name, whyNot);
+    return prim.CanApplyAPI<UsdSourceIdHybridAPI>(name, whyNot);
 }
 
 /* static */
-UsdSourceIdentifierAPI
-UsdSourceIdentifierAPI::Apply(const UsdPrim &prim, const TfToken &name)
+UsdSourceIdHybridAPI
+UsdSourceIdHybridAPI::Apply(const UsdPrim &prim, const TfToken &name)
 {
-    if (prim.ApplyAPI<UsdSourceIdentifierAPI>(name)) {
-        return UsdSourceIdentifierAPI(prim, name);
+    if (prim.ApplyAPI<UsdSourceIdHybridAPI>(name)) {
+        return UsdSourceIdHybridAPI(prim, name);
     }
-    return UsdSourceIdentifierAPI();
+    return UsdSourceIdHybridAPI();
 }
 
 /* static */
 std::vector<TfToken>
-UsdSourceIdentifierAPI::GetAll(const UsdPrim &prim)
+UsdSourceIdHybridAPI::GetAll(const UsdPrim &prim)
 {
     std::vector<TfToken> result;
     const TfTokenVector &appliedSchemas = prim.GetAppliedSchemas();
-    const std::string prefix = "SourceIdentifierAPI:";
+    const std::string prefix = "SourceIdHybridAPI:";
     for (const auto &schema : appliedSchemas) {
         const std::string &s = schema.GetString();
         if (s.substr(0, prefix.size()) == prefix) {
@@ -97,22 +97,22 @@ UsdSourceIdentifierAPI::GetAll(const UsdPrim &prim)
 
 /* static */
 const TfType &
-UsdSourceIdentifierAPI::_GetStaticTfType()
+UsdSourceIdHybridAPI::_GetStaticTfType()
 {
-    static TfType tfType = TfType::Find<UsdSourceIdentifierAPI>();
+    static TfType tfType = TfType::Find<UsdSourceIdHybridAPI>();
     return tfType;
 }
 
 /* static */
 bool
-UsdSourceIdentifierAPI::_IsTypedSchema()
+UsdSourceIdHybridAPI::_IsTypedSchema()
 {
     static bool isTyped = _GetStaticTfType().IsA<UsdTyped>();
     return isTyped;
 }
 
 TfToken
-UsdSourceIdentifierAPI::_GetNamespacedPropertyName(
+UsdSourceIdHybridAPI::_GetNamespacedPropertyName(
     const TfToken &suffix) const
 {
     const TfToken &instanceName = GetName();
@@ -126,14 +126,14 @@ UsdSourceIdentifierAPI::_GetNamespacedPropertyName(
 // ========================================================================= //
 
 UsdAttribute
-UsdSourceIdentifierAPI::GetPrimaryIdAttr() const
+UsdSourceIdHybridAPI::GetPrimaryIdAttr() const
 {
     return GetPrim().GetAttribute(
         _GetNamespacedPropertyName(_tokens->primaryId));
 }
 
 UsdAttribute
-UsdSourceIdentifierAPI::CreatePrimaryIdAttr(
+UsdSourceIdHybridAPI::CreatePrimaryIdAttr(
     const VtValue &defaultValue, bool writeSparsely) const
 {
     return UsdSchemaBase::_CreateAttr(
@@ -146,14 +146,14 @@ UsdSourceIdentifierAPI::CreatePrimaryIdAttr(
 }
 
 UsdAttribute
-UsdSourceIdentifierAPI::GetRevisionAttr() const
+UsdSourceIdHybridAPI::GetRevisionAttr() const
 {
     return GetPrim().GetAttribute(
         _GetNamespacedPropertyName(_tokens->revision));
 }
 
 UsdAttribute
-UsdSourceIdentifierAPI::CreateRevisionAttr(
+UsdSourceIdHybridAPI::CreateRevisionAttr(
     const VtValue &defaultValue, bool writeSparsely) const
 {
     return UsdSchemaBase::_CreateAttr(
@@ -166,14 +166,14 @@ UsdSourceIdentifierAPI::CreateRevisionAttr(
 }
 
 UsdAttribute
-UsdSourceIdentifierAPI::GetDomainAttr() const
+UsdSourceIdHybridAPI::GetDomainAttr() const
 {
     return GetPrim().GetAttribute(
         _GetNamespacedPropertyName(_tokens->domain));
 }
 
 UsdAttribute
-UsdSourceIdentifierAPI::CreateDomainAttr(
+UsdSourceIdHybridAPI::CreateDomainAttr(
     const VtValue &defaultValue, bool writeSparsely) const
 {
     return UsdSchemaBase::_CreateAttr(
@@ -186,14 +186,14 @@ UsdSourceIdentifierAPI::CreateDomainAttr(
 }
 
 UsdAttribute
-UsdSourceIdentifierAPI::GetLabelAttr() const
+UsdSourceIdHybridAPI::GetLabelAttr() const
 {
     return GetPrim().GetAttribute(
         _GetNamespacedPropertyName(_tokens->label));
 }
 
 UsdAttribute
-UsdSourceIdentifierAPI::CreateLabelAttr(
+UsdSourceIdHybridAPI::CreateLabelAttr(
     const VtValue &defaultValue, bool writeSparsely) const
 {
     return UsdSchemaBase::_CreateAttr(
@@ -210,7 +210,7 @@ UsdSourceIdentifierAPI::CreateLabelAttr(
 // ========================================================================= //
 
 bool
-UsdSourceIdentifierAPI::GetDomainMetadata(VtDictionary *metadata) const
+UsdSourceIdHybridAPI::GetDomainMetadata(VtDictionary *metadata) const
 {
     const TfToken &instanceName = GetName();
     VtValue sourceIdsVal = GetPrim().GetAssetInfoByKey(_tokens->sourceIds);
@@ -229,7 +229,7 @@ UsdSourceIdentifierAPI::GetDomainMetadata(VtDictionary *metadata) const
 }
 
 void
-UsdSourceIdentifierAPI::SetDomainMetadata(
+UsdSourceIdHybridAPI::SetDomainMetadata(
     const VtDictionary &metadata) const
 {
     const TfToken &instanceName = GetName();
@@ -243,7 +243,7 @@ UsdSourceIdentifierAPI::SetDomainMetadata(
 }
 
 VtValue
-UsdSourceIdentifierAPI::GetDomainMetadataByKey(const TfToken &key) const
+UsdSourceIdHybridAPI::GetDomainMetadataByKey(const TfToken &key) const
 {
     VtDictionary metadata;
     if (!GetDomainMetadata(&metadata)) {
@@ -257,7 +257,7 @@ UsdSourceIdentifierAPI::GetDomainMetadataByKey(const TfToken &key) const
 }
 
 void
-UsdSourceIdentifierAPI::SetDomainMetadataByKey(
+UsdSourceIdHybridAPI::SetDomainMetadataByKey(
     const TfToken &key, const VtValue &value) const
 {
     VtDictionary metadata;
@@ -267,7 +267,7 @@ UsdSourceIdentifierAPI::SetDomainMetadataByKey(
 }
 
 void
-UsdSourceIdentifierAPI::ClearDomainMetadata() const
+UsdSourceIdHybridAPI::ClearDomainMetadata() const
 {
     const TfToken &instanceName = GetName();
     VtValue sourceIdsVal = GetPrim().GetAssetInfoByKey(_tokens->sourceIds);

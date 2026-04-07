@@ -24,14 +24,14 @@ def Xform "Assembly" (
 {
     def Mesh "TurbineBlade_001" (
         prepend apiSchemas = [
-            "SourceIdentifierAPI:nvidia",
-            "SourceIdentifierAPI:adobe",
-            "SourceIdentifierAPI:apple",
-            "SourceIdentifierAPI:sidefx",
-            "SourceIdentifierAPI:autodesk",
-            "SourceIdentifierAPI:ifc",
-            "SourceIdentifierAPI:ashrae",
-            "SourceIdentifierAPI:step"
+            "SourceIdHybridAPI:nvidia",
+            "SourceIdHybridAPI:adobe",
+            "SourceIdHybridAPI:apple",
+            "SourceIdHybridAPI:sidefx",
+            "SourceIdHybridAPI:autodesk",
+            "SourceIdHybridAPI:ifc",
+            "SourceIdHybridAPI:ashrae",
+            "SourceIdHybridAPI:step"
         ]
         # ALL domain-specific metadata lives here — no companion schemas needed
         assetInfo = {
@@ -121,7 +121,7 @@ def Xform "Assembly" (
 
     # Collision scenario — hybrid behavior
     def Mesh "CollisionDemo" (
-        prepend apiSchemas = ["SourceIdentifierAPI:tracker"]
+        prepend apiSchemas = ["SourceIdHybridAPI:tracker"]
         # assetInfo key matches instance name — collision detectable
         # via apiSchemas (structural) even if assetInfo key collision
         # is silent (behavioral)
@@ -144,7 +144,7 @@ def Xform "Assembly" (
 
     # Promotion lifecycle — hybrid advantage
     def Mesh "PromotionDemo" (
-        prepend apiSchemas = ["SourceIdentifierAPI:nvidia_simready"]
+        prepend apiSchemas = ["SourceIdHybridAPI:nvidia_simready"]
         assetInfo = {
             dictionary sourceIds = {
                 dictionary nvidia_simready = {
@@ -165,7 +165,7 @@ def Xform "Assembly" (
 
     # Heterogeneous metadata — hybrid handles it naturally
     def Mesh "HeterogeneousDemo" (
-        prepend apiSchemas = ["SourceIdentifierAPI:windchill"]
+        prepend apiSchemas = ["SourceIdHybridAPI:windchill"]
         # All domain-specific metadata fits in assetInfo — no companion schema
         assetInfo = {
             dictionary sourceIds = {

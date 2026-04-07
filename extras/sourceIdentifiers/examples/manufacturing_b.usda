@@ -21,8 +21,8 @@
 def Xform "TractorAssembly" (
     kind = "assembly"
     prepend apiSchemas = [
-        "SourceIdentifierAPI:windchill",
-        "SourceIdentifierAPI:creo"
+        "SourceIdSchemaAPI:windchill",
+        "SourceIdSchemaAPI:creo"
     ]
 )
 {
@@ -43,10 +43,10 @@ def Xform "TractorAssembly" (
     def Xform "EngineBlock" (
         kind = "component"
         prepend apiSchemas = [
-            "SourceIdentifierAPI:windchill",
-            "SourceIdentifierAPI:supplier_oem",
-            "SourceIdentifierAPI:supplier_service",
-            "SourceIdentifierAPI:step"
+            "SourceIdSchemaAPI:windchill",
+            "SourceIdSchemaAPI:supplier_oem",
+            "SourceIdSchemaAPI:supplier_service",
+            "SourceIdSchemaAPI:step"
         ]
     )
     {
@@ -71,7 +71,7 @@ def Xform "TractorAssembly" (
         string sourceIdentifier:step:label = "STEP Product Definition"
 
         def Xform "CylinderBore_1" (
-            prepend apiSchemas = ["SourceIdentifierAPI:amt"]
+            prepend apiSchemas = ["SourceIdSchemaAPI:amt"]
         )
         {
             string sourceIdentifier:amt:primaryId = "FID:ENG-BLK-6068:BORE:CYL1"
@@ -87,7 +87,7 @@ def Xform "TractorAssembly" (
         }
 
         def Xform "DatumFace_A" (
-            prepend apiSchemas = ["SourceIdentifierAPI:amt"]
+            prepend apiSchemas = ["SourceIdSchemaAPI:amt"]
         )
         {
             string sourceIdentifier:amt:primaryId = "FID:ENG-BLK-6068:DATUM:A"
@@ -99,7 +99,7 @@ def Xform "TractorAssembly" (
 
     def Xform "Headlight_Assembly" (
         kind = "component"
-        prepend apiSchemas = ["SourceIdentifierAPI:mercedes"]
+        prepend apiSchemas = ["SourceIdSchemaAPI:mercedes"]
     )
     {
         string sourceIdentifier:mercedes:primaryId = "A 213 906 76 01"
@@ -116,7 +116,7 @@ def Xform "TractorAssembly" (
     )
     {
         def Mesh "Bolt_001" (
-            prepend apiSchemas = ["SourceIdentifierAPI:windchill"]
+            prepend apiSchemas = ["SourceIdSchemaAPI:windchill"]
         )
         {
             string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:55012001"
@@ -126,7 +126,7 @@ def Xform "TractorAssembly" (
             # Cannot express serialNumber in base schema
         }
         def Mesh "Bolt_002" (
-            prepend apiSchemas = ["SourceIdentifierAPI:windchill"]
+            prepend apiSchemas = ["SourceIdSchemaAPI:windchill"]
         )
         {
             string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:55012001"

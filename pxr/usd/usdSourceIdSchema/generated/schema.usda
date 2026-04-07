@@ -18,9 +18,9 @@ over "GLOBAL" (
 {
 }
 
-class "SourceIdentifierAPI" (
+class "SourceIdSchemaAPI" (
     inherits = </APISchemaBase>
-    doc = """UsdSourceIdentifierAPI is a multi-apply API schema for expressing
+    doc = """UsdSourceIdSchemaAPI is a multi-apply API schema for expressing
     external source identifiers as typed properties on a prim.
 
     This schema implements Approach B from the 'Separation of Concerns for
@@ -50,9 +50,9 @@ class "SourceIdentifierAPI" (
     ```usda
     def Mesh "Column_C14" (
         prepend apiSchemas = [
-            "SourceIdentifierAPI:ifc",
-            "SourceIdentifierAPI:revit",
-            "SourceIdentifierAPI:uniclass"
+            "SourceIdSchemaAPI:ifc",
+            "SourceIdSchemaAPI:revit",
+            "SourceIdSchemaAPI:uniclass"
         ]
     )
     {
@@ -81,7 +81,7 @@ class "SourceIdentifierAPI" (
     - Multi-apply instances compose per-property (strongest opinion wins).
     """
     customData = {
-        string className = "SourceIdentifierAPI"
+        string className = "SourceIdSchemaAPI"
         token apiSchemaType = "multipleApply"
         token propertyNamespacePrefix = "sourceIdentifier"
     }

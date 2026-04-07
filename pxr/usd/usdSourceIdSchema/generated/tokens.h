@@ -47,28 +47,28 @@ struct UsdSourceIdSchemaTokensType {
     USDSOURCEIDSCHEMA_API UsdSourceIdSchemaTokensType();
     /// \brief "sourceIdentifier"
     /// 
-    /// Property namespace prefix for the UsdSourceIdSchemaSourceIdentifierAPI schema.
+    /// Property namespace prefix for the UsdSourceIdSchemaSourceIdSchemaAPI schema.
     const TfToken sourceIdentifier;
     /// \brief "sourceIdentifier:__INSTANCE_NAME__:domain"
     /// 
-    /// UsdSourceIdSchemaSourceIdentifierAPI
+    /// UsdSourceIdSchemaSourceIdSchemaAPI
     const TfToken sourceIdentifier_MultipleApplyTemplate_Domain;
     /// \brief "sourceIdentifier:__INSTANCE_NAME__:label"
     /// 
-    /// UsdSourceIdSchemaSourceIdentifierAPI
+    /// UsdSourceIdSchemaSourceIdSchemaAPI
     const TfToken sourceIdentifier_MultipleApplyTemplate_Label;
     /// \brief "sourceIdentifier:__INSTANCE_NAME__:primaryId"
     /// 
-    /// UsdSourceIdSchemaSourceIdentifierAPI
+    /// UsdSourceIdSchemaSourceIdSchemaAPI
     const TfToken sourceIdentifier_MultipleApplyTemplate_PrimaryId;
     /// \brief "sourceIdentifier:__INSTANCE_NAME__:revision"
     /// 
-    /// UsdSourceIdSchemaSourceIdentifierAPI
+    /// UsdSourceIdSchemaSourceIdSchemaAPI
     const TfToken sourceIdentifier_MultipleApplyTemplate_Revision;
-    /// \brief "SourceIdentifierAPI"
+    /// \brief "SourceIdSchemaAPI"
     /// 
-    /// Schema identifer and family for UsdSourceIdSchemaSourceIdentifierAPI
-    const TfToken SourceIdentifierAPI;
+    /// Schema identifer and family for UsdSourceIdSchemaSourceIdSchemaAPI
+    const TfToken SourceIdSchemaAPI;
     /// A vector of all of the tokens listed above.
     const std::vector<TfToken> allTokens;
 };

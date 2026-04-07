@@ -3,7 +3,7 @@
     """
     Approach B — Convergence Year 1: Independent vendor authoring.
     
-    Both vendors use the same SourceIdentifierAPI multi-apply schema
+    Both vendors use the same SourceIdSchemaAPI multi-apply schema
     with different instance names. They coexist on the same prim.
     
     KEY DIFFERENCE from Approach A: the 'domain' property provides a
@@ -20,8 +20,8 @@ def Xform "ChillerPlant" (
 {
     def Xform "Chiller_01" (
         prepend apiSchemas = [
-            "SourceIdentifierAPI:contoso_iot",
-            "SourceIdentifierAPI:fabrikam_dt"
+            "SourceIdSchemaAPI:contoso_iot",
+            "SourceIdSchemaAPI:fabrikam_dt"
         ]
     )
     {
@@ -41,7 +41,7 @@ def Xform "ChillerPlant" (
     }
 
     def Xform "Chiller_02" (
-        prepend apiSchemas = ["SourceIdentifierAPI:contoso_iot"]
+        prepend apiSchemas = ["SourceIdSchemaAPI:contoso_iot"]
     )
     {
         string sourceIdentifier:contoso_iot:primaryId = "device://contoso.com/bldg-42/chiller-02"

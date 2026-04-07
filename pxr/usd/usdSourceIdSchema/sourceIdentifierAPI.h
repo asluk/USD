@@ -24,15 +24,15 @@
 
 PXR_NAMESPACE_OPEN_SCOPE
 
-/// \class UsdSourceIdentifierAPI
+/// \class UsdSourceIdSchemaAPI
 ///
 /// Approach B: Multi-apply API schema for source identifiers with typed
 /// properties.
 ///
 /// Each external system is represented as a schema instance:
-/// - `SourceIdentifierAPI:windchill`
-/// - `SourceIdentifierAPI:ifc`
-/// - `SourceIdentifierAPI:revit`
+/// - `SourceIdSchemaAPI:windchill`
+/// - `SourceIdSchemaAPI:ifc`
+/// - `SourceIdSchemaAPI:revit`
 ///
 /// Each instance provides typed properties:
 /// - `primaryId` (string): Main identifier in the external system
@@ -44,8 +44,8 @@ PXR_NAMESPACE_OPEN_SCOPE
 ///
 /// ```usda
 /// def Mesh "Column" (
-///     prepend apiSchemas = ["SourceIdentifierAPI:ifc",
-///                           "SourceIdentifierAPI:windchill"]
+///     prepend apiSchemas = ["SourceIdSchemaAPI:ifc",
+///                           "SourceIdSchemaAPI:windchill"]
 /// )
 /// {
 ///     string sourceIdentifier:ifc:primaryId = "2O2Fr$t4X7Zf8NOew3FNr2"
@@ -67,7 +67,7 @@ PXR_NAMESPACE_OPEN_SCOPE
 ///
 /// ```cpp
 /// // Apply for a specific domain
-/// auto api = UsdSourceIdentifierAPI::Apply(prim, TfToken("windchill"));
+/// auto api = UsdSourceIdSchemaAPI::Apply(prim, TfToken("windchill"));
 ///
 /// // Set properties
 /// api.GetPrimaryIdAttr().Set(std::string("VR:wt.part.WTPart:23639563"));
@@ -79,27 +79,27 @@ PXR_NAMESPACE_OPEN_SCOPE
 /// api.GetPrimaryIdAttr().Get(&id);
 ///
 /// // Get all applied instances
-/// auto instances = UsdSourceIdentifierAPI::GetSchemaAttributeNames(false);
+/// auto instances = UsdSourceIdSchemaAPI::GetSchemaAttributeNames(false);
 /// ```
 ///
-class UsdSourceIdentifierAPI : public UsdAPISchemaBase
+class UsdSourceIdSchemaAPI : public UsdAPISchemaBase
 {
 public:
     /// Compile time constant representing what kind of schema this class is.
     static const UsdSchemaKind schemaKind = UsdSchemaKind::MultipleApplyAPI;
 
-    /// Construct a UsdSourceIdentifierAPI on UsdPrim \p prim with
+    /// Construct a UsdSourceIdSchemaAPI on UsdPrim \p prim with
     /// instance name \p name.
-    explicit UsdSourceIdentifierAPI(
+    explicit UsdSourceIdSchemaAPI(
         const UsdPrim &prim=UsdPrim(),
         const TfToken &name=TfToken())
         : UsdAPISchemaBase(prim, name)
     {
     }
 
-    /// Construct a UsdSourceIdentifierAPI on the prim held by
+    /// Construct a UsdSourceIdSchemaAPI on the prim held by
     /// \p schemaObj with instance name \p name.
-    explicit UsdSourceIdentifierAPI(
+    explicit UsdSourceIdSchemaAPI(
         const UsdSchemaBase &schemaObj,
         const TfToken &name=TfToken())
         : UsdAPISchemaBase(schemaObj, name)
@@ -108,19 +108,19 @@ public:
 
     /// Destructor.
     USDSOURCEIDSCHEMA_API
-    virtual ~UsdSourceIdentifierAPI();
+    virtual ~UsdSourceIdSchemaAPI();
 
-    /// Return a UsdSourceIdentifierAPI with instance name \p name
+    /// Return a UsdSourceIdSchemaAPI with instance name \p name
     /// holding the prim at \p path on \p stage.
     USDSOURCEIDSCHEMA_API
-    static UsdSourceIdentifierAPI
+    static UsdSourceIdSchemaAPI
     Get(const UsdStagePtr &stage, const SdfPath &path,
         const TfToken &name);
 
-    /// Return a UsdSourceIdentifierAPI with instance name \p name
+    /// Return a UsdSourceIdSchemaAPI with instance name \p name
     /// attached to the given prim.
     USDSOURCEIDSCHEMA_API
-    static UsdSourceIdentifierAPI
+    static UsdSourceIdSchemaAPI
     Get(const UsdPrim &prim, const TfToken &name);
 
     /// Returns true if this schema can be applied with \p name to \p prim.
@@ -131,10 +131,10 @@ public:
 
     /// Applies this multi-apply API schema with instance \p name.
     USDSOURCEIDSCHEMA_API
-    static UsdSourceIdentifierAPI
+    static UsdSourceIdSchemaAPI
     Apply(const UsdPrim &prim, const TfToken &name);
 
-    /// Returns all instance names of applied SourceIdentifierAPI schemas
+    /// Returns all instance names of applied SourceIdSchemaAPI schemas
     /// on \p prim.
     USDSOURCEIDSCHEMA_API
     static std::vector<TfToken>

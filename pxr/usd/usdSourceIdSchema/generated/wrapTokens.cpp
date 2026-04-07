@@ -22,5 +22,5 @@ void wrapUsdSourceIdSchemaTokens()
     _ADD_TOKEN(cls, sourceIdentifier_MultipleApplyTemplate_Label);
     _ADD_TOKEN(cls, sourceIdentifier_MultipleApplyTemplate_PrimaryId);
     _ADD_TOKEN(cls, sourceIdentifier_MultipleApplyTemplate_Revision);
-    _ADD_TOKEN(cls, SourceIdentifierAPI);
+    _ADD_TOKEN(cls, SourceIdSchemaAPI);
 }

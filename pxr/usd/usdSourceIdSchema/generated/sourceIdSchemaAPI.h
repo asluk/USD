@@ -4,10 +4,10 @@
 // Licensed under the terms set forth in the LICENSE.txt file available at
 // https://openusd.org/license.
 //
-#ifndef USDSOURCEIDSCHEMA_GENERATED_SOURCEIDENTIFIERAPI_H
-#define USDSOURCEIDSCHEMA_GENERATED_SOURCEIDENTIFIERAPI_H
+#ifndef USDSOURCEIDSCHEMA_GENERATED_SOURCEIDSCHEMAAPI_H
+#define USDSOURCEIDSCHEMA_GENERATED_SOURCEIDSCHEMAAPI_H
 
-/// \file usdSourceIdSchema/sourceIdentifierAPI.h
+/// \file usdSourceIdSchema/sourceIdSchemaAPI.h
 
 #include "pxr/pxr.h"
 #include "pxr/usd/usdSourceIdSchema/api.h"
@@ -30,12 +30,12 @@ PXR_NAMESPACE_OPEN_SCOPE
 class SdfAssetPath;
 
 // -------------------------------------------------------------------------- //
-// SOURCEIDENTIFIERAPI                                                        //
+// SOURCEIDSCHEMAAPI                                                          //
 // -------------------------------------------------------------------------- //
 
-/// \class UsdSourceIdSchemaSourceIdentifierAPI
+/// \class UsdSourceIdSchemaSourceIdSchemaAPI
 ///
-/// UsdSourceIdentifierAPI is a multi-apply API schema for expressing
+/// UsdSourceIdSchemaAPI is a multi-apply API schema for expressing
 /// external source identifiers as typed properties on a prim.
 /// 
 /// This schema implements Approach B from the 'Separation of Concerns for
@@ -65,9 +65,9 @@ class SdfAssetPath;
 /// ```usda
 /// def Mesh "Column_C14" (
 /// prepend apiSchemas = [
-/// "SourceIdentifierAPI:ifc",
-/// "SourceIdentifierAPI:revit",
-/// "SourceIdentifierAPI:uniclass"
+/// "SourceIdSchemaAPI:ifc",
+/// "SourceIdSchemaAPI:revit",
+/// "SourceIdSchemaAPI:uniclass"
 /// ]
 /// )
 /// {
@@ -101,7 +101,7 @@ class SdfAssetPath;
 /// So to set an attribute to the value "rightHanded", use UsdSourceIdSchemaTokens->rightHanded
 /// as the value.
 ///
-class UsdSourceIdSchemaSourceIdentifierAPI : public UsdAPISchemaBase
+class UsdSourceIdSchemaSourceIdSchemaAPI : public UsdAPISchemaBase
 {
 public:
     /// Compile time constant representing what kind of schema this class is.
@@ -109,32 +109,32 @@ public:
     /// \sa UsdSchemaKind
     static const UsdSchemaKind schemaKind = UsdSchemaKind::MultipleApplyAPI;
 
-    /// Construct a UsdSourceIdSchemaSourceIdentifierAPI on UsdPrim \p prim with
+    /// Construct a UsdSourceIdSchemaSourceIdSchemaAPI on UsdPrim \p prim with
     /// name \p name . Equivalent to
-    /// UsdSourceIdSchemaSourceIdentifierAPI::Get(
+    /// UsdSourceIdSchemaSourceIdSchemaAPI::Get(
     ///    prim.GetStage(),
     ///    prim.GetPath().AppendProperty(
     ///        "sourceIdentifier:name"));
     ///
     /// for a \em valid \p prim, but will not immediately throw an error for
     /// an invalid \p prim
-    explicit UsdSourceIdSchemaSourceIdentifierAPI(
+    explicit UsdSourceIdSchemaSourceIdSchemaAPI(
         const UsdPrim& prim=UsdPrim(), const TfToken &name=TfToken())
         : UsdAPISchemaBase(prim, /*instanceName*/ name)
     { }
 
-    /// Construct a UsdSourceIdSchemaSourceIdentifierAPI on the prim held by \p schemaObj with
+    /// Construct a UsdSourceIdSchemaSourceIdSchemaAPI on the prim held by \p schemaObj with
     /// name \p name.  Should be preferred over
-    /// UsdSourceIdSchemaSourceIdentifierAPI(schemaObj.GetPrim(), name), as it preserves
+    /// UsdSourceIdSchemaSourceIdSchemaAPI(schemaObj.GetPrim(), name), as it preserves
     /// SchemaBase state.
-    explicit UsdSourceIdSchemaSourceIdentifierAPI(
+    explicit UsdSourceIdSchemaSourceIdSchemaAPI(
         const UsdSchemaBase& schemaObj, const TfToken &name)
         : UsdAPISchemaBase(schemaObj, /*instanceName*/ name)
     { }
 
     /// Destructor.
     USDSOURCEIDSCHEMA_API
-    virtual ~UsdSourceIdSchemaSourceIdentifierAPI();
+    virtual ~UsdSourceIdSchemaSourceIdSchemaAPI();
 
     /// Return a vector of names of all pre-declared attributes for this schema
     /// class and all its ancestor classes.  Does not include attributes that
@@ -157,7 +157,7 @@ public:
         return _GetInstanceName();
     }
 
-    /// Return a UsdSourceIdSchemaSourceIdentifierAPI holding the prim adhering to this
+    /// Return a UsdSourceIdSchemaSourceIdSchemaAPI holding the prim adhering to this
     /// schema at \p path on \p stage.  If no prim exists at \p path on
     /// \p stage, or if the prim at that path does not adhere to this schema,
     /// return an invalid schema object.  \p path must be of the format
@@ -167,38 +167,38 @@ public:
     ///
     /// \code
     /// TfToken name = SdfPath::StripNamespace(path.GetToken());
-    /// UsdSourceIdSchemaSourceIdentifierAPI(
+    /// UsdSourceIdSchemaSourceIdSchemaAPI(
     ///     stage->GetPrimAtPath(path.GetPrimPath()), name);
     /// \endcode
     ///
     USDSOURCEIDSCHEMA_API
-    static UsdSourceIdSchemaSourceIdentifierAPI
+    static UsdSourceIdSchemaSourceIdSchemaAPI
     Get(const UsdStagePtr &stage, const SdfPath &path);
 
-    /// Return a UsdSourceIdSchemaSourceIdentifierAPI with name \p name holding the
-    /// prim \p prim. Shorthand for UsdSourceIdSchemaSourceIdentifierAPI(prim, name);
+    /// Return a UsdSourceIdSchemaSourceIdSchemaAPI with name \p name holding the
+    /// prim \p prim. Shorthand for UsdSourceIdSchemaSourceIdSchemaAPI(prim, name);
     USDSOURCEIDSCHEMA_API
-    static UsdSourceIdSchemaSourceIdentifierAPI
+    static UsdSourceIdSchemaSourceIdSchemaAPI
     Get(const UsdPrim &prim, const TfToken &name);
 
-    /// Return a vector of all named instances of UsdSourceIdSchemaSourceIdentifierAPI on the 
+    /// Return a vector of all named instances of UsdSourceIdSchemaSourceIdSchemaAPI on the 
     /// given \p prim.
     USDSOURCEIDSCHEMA_API
-    static std::vector<UsdSourceIdSchemaSourceIdentifierAPI>
+    static std::vector<UsdSourceIdSchemaSourceIdSchemaAPI>
     GetAll(const UsdPrim &prim);
 
     /// Checks if the given name \p baseName is the base name of a property
-    /// of SourceIdentifierAPI.
+    /// of SourceIdSchemaAPI.
     USDSOURCEIDSCHEMA_API
     static bool
     IsSchemaPropertyBaseName(const TfToken &baseName);
 
     /// Checks if the given path \p path is of an API schema of type
-    /// SourceIdentifierAPI. If so, it stores the instance name of
+    /// SourceIdSchemaAPI. If so, it stores the instance name of
     /// the schema in \p name and returns true. Otherwise, it returns false.
     USDSOURCEIDSCHEMA_API
     static bool
-    IsSourceIdentifierAPIPath(const SdfPath &path, TfToken *name);
+    IsSourceIdSchemaAPIPath(const SdfPath &path, TfToken *name);
 
     /// Returns true if this <b>multiple-apply</b> API schema can be applied,
     /// with the given instance name, \p name, to the given \p prim. If this 
@@ -224,13 +224,13 @@ public:
     /// Applies this <b>multiple-apply</b> API schema to the given \p prim 
     /// along with the given instance name, \p name. 
     /// 
-    /// This information is stored by adding "SourceIdentifierAPI:<i>name</i>" 
+    /// This information is stored by adding "SourceIdSchemaAPI:<i>name</i>" 
     /// to the token-valued, listOp metadata \em apiSchemas on the prim.
     /// For example, if \p name is 'instance1', the token 
-    /// 'SourceIdentifierAPI:instance1' is added to 'apiSchemas'.
+    /// 'SourceIdSchemaAPI:instance1' is added to 'apiSchemas'.
     /// 
-    /// \return A valid UsdSourceIdSchemaSourceIdentifierAPI object is returned upon success. 
-    /// An invalid (or empty) UsdSourceIdSchemaSourceIdentifierAPI object is returned upon 
+    /// \return A valid UsdSourceIdSchemaSourceIdSchemaAPI object is returned upon success. 
+    /// An invalid (or empty) UsdSourceIdSchemaSourceIdSchemaAPI object is returned upon 
     /// failure. See \ref UsdPrim::ApplyAPI() for 
     /// conditions resulting in failure. 
     /// 
@@ -241,7 +241,7 @@ public:
     /// \sa UsdPrim::RemoveAPI()
     ///
     USDSOURCEIDSCHEMA_API
-    static UsdSourceIdSchemaSourceIdentifierAPI 
+    static UsdSourceIdSchemaSourceIdSchemaAPI 
     Apply(const UsdPrim &prim, const TfToken &name);
 
 protected:

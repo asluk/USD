@@ -49,7 +49,7 @@
     "name": "Approach B: Multi-apply schema with typed properties",
     "files_touched_by_new_vendor": {
       "count": "0-1 (with a common base schema already in core)",
-      "description": "If using only the common SourceIdentifierAPI properties (primaryId, revision, domain, label), zero files \u2014 just apply the schema with a new instance name. If the vendor needs additional typed properties beyond the common set, they must register their own schema plugin (1+ files: schema.usda, plugInfo.json, optional C++/Python wrapper)."
+      "description": "If using only the common SourceIdSchemaAPI properties (primaryId, revision, domain, label), zero files \u2014 just apply the schema with a new instance name. If the vendor needs additional typed properties beyond the common set, they must register their own schema plugin (1+ files: schema.usda, plugInfo.json, optional C++/Python wrapper)."
     },
     "boilerplate_lines_new_vendor": {
       "to_start_writing_identifiers": 0,
@@ -70,7 +70,7 @@
     "heterogeneous_metadata": {
       "flexibility": "LIMITED by common property set",
       "description": "The base schema provides only primaryId, revision, domain, label. Domain-specific fields (Windchill's navigationType, IFC's ifcType) require either: (a) a companion domain-specific schema, (b) custom attributes alongside schema properties, or (c) encoding metadata in the primaryId string (lossy). This tension between uniformity and domain flexibility is the central trade-off.",
-      "workaround": "A domain-specific companion schema (e.g., WindchillIdentifierAPI) that includes SourceIdentifierAPI as a built-in and adds typed properties for domain-specific metadata."
+      "workaround": "A domain-specific companion schema (e.g., WindchillIdentifierAPI) that includes SourceIdSchemaAPI as a built-in and adds typed properties for domain-specific metadata."
     },
     "promotion_lifecycle": {
       "effort": "LOW-MEDIUM \u2014 domain attribute migration",

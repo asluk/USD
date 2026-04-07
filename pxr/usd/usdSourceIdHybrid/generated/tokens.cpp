@@ -14,14 +14,14 @@ UsdSourceIdHybridTokensType::UsdSourceIdHybridTokensType() :
     sourceIdentifier_MultipleApplyTemplate_Label("sourceIdentifier:__INSTANCE_NAME__:label", TfToken::Immortal),
     sourceIdentifier_MultipleApplyTemplate_PrimaryId("sourceIdentifier:__INSTANCE_NAME__:primaryId", TfToken::Immortal),
     sourceIdentifier_MultipleApplyTemplate_Revision("sourceIdentifier:__INSTANCE_NAME__:revision", TfToken::Immortal),
-    SourceIdentifierAPI("SourceIdentifierAPI", TfToken::Immortal),
+    SourceIdHybridAPI("SourceIdHybridAPI", TfToken::Immortal),
     allTokens({
         sourceIdentifier,
         sourceIdentifier_MultipleApplyTemplate_Domain,
         sourceIdentifier_MultipleApplyTemplate_Label,
         sourceIdentifier_MultipleApplyTemplate_PrimaryId,
         sourceIdentifier_MultipleApplyTemplate_Revision,
-        SourceIdentifierAPI
+        SourceIdHybridAPI
     })
 {
 }

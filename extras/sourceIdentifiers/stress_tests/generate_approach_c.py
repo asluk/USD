@@ -95,7 +95,7 @@ def generate_approach_c(num_prims, output_path):
             prim_name = f"Prim_{i:06d}"
 
             # apiSchemas list
-            schemas = [f'"SourceIdentifierAPI:{d["key"]}"' for d in selected]
+            schemas = [f'"SourceIdHybridAPI:{d["key"]}"' for d in selected]
             schemas_str = ",\n            ".join(schemas)
 
             # assetInfo metadata

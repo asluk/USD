@@ -22,9 +22,9 @@ def Xform "Chiller" (
         string version = "2.1"
     }
     prepend apiSchemas = [
-        "SourceIdentifierAPI:windchill",
-        "SourceIdentifierAPI:sap",
-        "SourceIdentifierAPI:ifc"
+        "SourceIdSchemaAPI:windchill",
+        "SourceIdSchemaAPI:sap",
+        "SourceIdSchemaAPI:ifc"
     ]
 )
 {
@@ -43,7 +43,7 @@ def Xform "Chiller" (
     string sourceIdentifier:ifc:label = "IFC GlobalId"
 
     def Xform "Compressor" (
-        prepend apiSchemas = ["SourceIdentifierAPI:windchill"]
+        prepend apiSchemas = ["SourceIdSchemaAPI:windchill"]
     )
     {
         string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639601"

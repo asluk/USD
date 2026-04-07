@@ -37,7 +37,7 @@
 def Xform "Chiller" (
     prepend references = @./composition_test_c_base.usda@
     # Add new OPC UA schema instance
-    prepend apiSchemas = ["SourceIdentifierAPI:opcua"]
+    prepend apiSchemas = ["SourceIdHybridAPI:opcua"]
     # Override windchill state + add opcua metadata
     assetInfo = {
         dictionary sourceIds = {

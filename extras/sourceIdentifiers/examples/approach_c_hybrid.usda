@@ -20,8 +20,8 @@
 def Xform "Building" (
     kind = "assembly"
     prepend apiSchemas = [
-        "SourceIdentifierAPI:revit",
-        "SourceIdentifierAPI:ifc"
+        "SourceIdHybridAPI:revit",
+        "SourceIdHybridAPI:ifc"
     ]
     assetInfo = {
         dictionary sourceIds = {
@@ -54,10 +54,10 @@ def Xform "Building" (
         # Structural column with 4 systems — full hybrid treatment
         def Mesh "Column_C14" (
             prepend apiSchemas = [
-                "SourceIdentifierAPI:ifc",
-                "SourceIdentifierAPI:revit",
-                "SourceIdentifierAPI:uniclass",
-                "SourceIdentifierAPI:omniclass"
+                "SourceIdHybridAPI:ifc",
+                "SourceIdHybridAPI:revit",
+                "SourceIdHybridAPI:uniclass",
+                "SourceIdHybridAPI:omniclass"
             ]
             # Domain-specific metadata in assetInfo (freeform)
             assetInfo = {
@@ -113,10 +113,10 @@ def Xform "Building" (
         def Xform "Chiller_01" (
             kind = "component"
             prepend apiSchemas = [
-                "SourceIdentifierAPI:windchill",
-                "SourceIdentifierAPI:sap",
-                "SourceIdentifierAPI:opcua",
-                "SourceIdentifierAPI:ifc"
+                "SourceIdHybridAPI:windchill",
+                "SourceIdHybridAPI:sap",
+                "SourceIdHybridAPI:opcua",
+                "SourceIdHybridAPI:ifc"
             ]
             # Domain-specific metadata that B alone cannot carry
             assetInfo = {
@@ -163,7 +163,7 @@ def Xform "Building" (
 
             # Sub-component with its own hybrid identifiers
             def Xform "Compressor" (
-                prepend apiSchemas = ["SourceIdentifierAPI:windchill"]
+                prepend apiSchemas = ["SourceIdHybridAPI:windchill"]
                 assetInfo = {
                     dictionary sourceIds = {
                         dictionary windchill = {
@@ -182,8 +182,8 @@ def Xform "Building" (
             # Sensor with operational telemetry metadata
             def Xform "SupplyTempSensor" (
                 prepend apiSchemas = [
-                    "SourceIdentifierAPI:opcua",
-                    "SourceIdentifierAPI:bacnet"
+                    "SourceIdHybridAPI:opcua",
+                    "SourceIdHybridAPI:bacnet"
                 ]
                 assetInfo = {
                     dictionary sourceIds = {
@@ -217,8 +217,8 @@ def Xform "Building" (
     {
         def Xform "Room_1001" (
             prepend apiSchemas = [
-                "SourceIdentifierAPI:revit",
-                "SourceIdentifierAPI:ifc"
+                "SourceIdHybridAPI:revit",
+                "SourceIdHybridAPI:ifc"
             ]
             assetInfo = {
                 dictionary sourceIds = {

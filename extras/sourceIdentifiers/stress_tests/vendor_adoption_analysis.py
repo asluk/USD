@@ -130,7 +130,7 @@ def analyze_approach_b():
         "files_touched_by_new_vendor": {
             "count": "0-1 (with a common base schema already in core)",
             "description": (
-                "If using only the common SourceIdentifierAPI properties "
+                "If using only the common SourceIdSchemaAPI properties "
                 "(primaryId, revision, domain, label), zero files — just apply "
                 "the schema with a new instance name. If the vendor needs "
                 "additional typed properties beyond the common set, they must "
@@ -187,7 +187,7 @@ def analyze_approach_b():
             ),
             "workaround": (
                 "A domain-specific companion schema (e.g., WindchillIdentifierAPI) "
-                "that includes SourceIdentifierAPI as a built-in and adds typed "
+                "that includes SourceIdSchemaAPI as a built-in and adds typed "
                 "properties for domain-specific metadata."
             ),
         },

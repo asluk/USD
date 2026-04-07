@@ -16,8 +16,8 @@ def Xform "ChillerPlant" (
 {
     def Xform "Chiller_01" (
         prepend apiSchemas = [
-            "SourceIdentifierAPI:contoso_iot",
-            "SourceIdentifierAPI:fabrikam_dt"
+            "SourceIdHybridAPI:contoso_iot",
+            "SourceIdHybridAPI:fabrikam_dt"
         ]
         assetInfo = {
             dictionary sourceIds = {
@@ -51,7 +51,7 @@ def Xform "ChillerPlant" (
     }
 
     def Xform "Chiller_02" (
-        prepend apiSchemas = ["SourceIdentifierAPI:contoso_iot"]
+        prepend apiSchemas = ["SourceIdHybridAPI:contoso_iot"]
         assetInfo = {
             dictionary sourceIds = {
                 dictionary contoso_iot = {

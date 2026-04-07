@@ -206,7 +206,7 @@ def generate_approach_b(num_prims, output_path):
             prim_name = f"Prim_{i:06d}"
             
             # Build apiSchemas list
-            schemas = [f'"SourceIdentifierAPI:{d["key"]}"' for d in selected_domains]
+            schemas = [f'"SourceIdSchemaAPI:{d["key"]}"' for d in selected_domains]
             schemas_str = ",\n            ".join(schemas)
             
             f.write(f'    def Xform "{prim_name}" (\n')
