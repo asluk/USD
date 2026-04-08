@@ -16,12 +16,13 @@
 > you construct the API object directly on any prim.
 >
 > This differs from `UsdMediaAssetPreviewsAPI`, which is single-apply despite
-> also wrapping `assetInfo`. The non-applied design is more honest: Approach A
-> defines no properties and adds no built-in behavior to the prim definition.
-> Making it applied would force an `apiSchemas` listing that carries no
-> structural information — the schema contributes nothing to
-> `UsdPrimDefinition`. `UsdModelAPI` faces the same situation (wrapping
-> `kind` and `assetInfo` metadata) and is non-applied for exactly this reason.
+> also wrapping `assetInfo`. The non-applied design for Approach A
+> is a deliberate choice: the schema defines no properties and adds no
+> built-in behavior to the prim definition. Making it applied would force an
+> `apiSchemas` listing that carries no structural information — the schema
+> contributes nothing to `UsdPrimDefinition`. `UsdModelAPI` faces the same
+> situation (wrapping `kind` and `assetInfo` metadata) and is non-applied
+> for exactly this reason.
 
 **Mechanism.** Source identifiers are stored as nested dictionaries within the
 composed `assetInfo` metadata on any prim:

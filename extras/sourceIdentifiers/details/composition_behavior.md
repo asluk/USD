@@ -120,7 +120,7 @@ to the existing schema list without disturbing other entries.
 | Override granularity | Per dictionary key at each nesting level | Per individual property |
 | Risk of unintentional data loss | Medium (round-trip serialization hazard) | None |
 | Adding a new domain | Add key to `sourceIds` dict | `prepend apiSchemas` + author properties |
-| Removing a domain | Delete key (requires authoring empty or using `ClearDomain()`) | Remove from `apiSchemas` list |
+| Removing a domain | Cannot block (erase) a key from a weaker layer; must override with empty/sentinel values or reauthor the full dict without the key | `delete apiSchemas` list op or reauthor without the schema |
 | Partial field update | Works if structured correctly; subtle | Always works; no subtlety |
 | Tool author burden | Must understand dict merge semantics | Standard property authoring |
 
