@@ -244,10 +244,105 @@ migration script can clean them up (see Phase 5).
 
 _Old stages with `scope` in overflow still work. Migration script moves values to schema property._
 
-<!-- PHASE 5 CONTENT PLACEHOLDER -->
+**Scenario.** Post-promotion, the ecosystem has a mix of old and new content:
+
+- **Old stages:** `scope` in `assetInfo` overflow dict (written before promotion)
+- **New stages:** `scope` as schema property `sourceIdentifier:<domain>:scope`
+- **Mixed stages:** Some prims migrated, some not (incremental pipeline updates)
+
+All three cases work correctly because:
+1. The schema property defaults to `""` (empty token) — old files without the
+   property are valid
+2. The overflow dict is not schema-validated — leftover `scope` keys don't
+   cause errors
+3. Migration can happen per-layer, per-domain, without disrupting composition
+
+**What the script shows:**
+([`examples/scope_promotion/phase5_migration.py`](../examples/scope_promotion/phase5_migration.py))
+
+The migration script processes a mixed stage:
+- `BatteryPack_SN42` — scope in overflow, not in schema → **migrated**
+- `Chiller_01` — already migrated, no scope in overflow → **skipped**
+- `UR10e_ModelDef` — scope in overflow, not in schema → **migrated**
+- `Column_C14` — never had scope → **skipped**
+
+**Sample output:**
+
+```
+Actions:
+  ✅ /BatteryPack_SN42 (dpp): migrated scope='instance' from overflow to schema
+  ⏭️  /Chiller_01 (windchill): no scope in overflow — skipped
+  ✅ /UR10e_ModelDef (ros): migrated scope='type' from overflow to schema
+  ⏭️  /Column_C14 (ifc): no scope in overflow — skipped
+
+Summary: 2 migrated, 0 cleaned, 2 skipped
+
+Before (BatteryPack_SN42):
+  schema scope: ''
+  overflow:     {"batteryModel": "LFP-280Ah-48V", "chemistry": "LFP", "scope": "instance"}
+
+After (BatteryPack_SN42):
+  schema scope: 'instance'
+  overflow:     {"batteryModel": "LFP-280Ah-48V", "chemistry": "LFP"}
+```
+
+**Key observation:** Migration is straightforward, incremental, and non-breaking.
+No big-bang migration required. The overflow dict naturally shrinks as fields
+are promoted, while domain-specific metadata (batteryModel, chemistry, etc.)
+remains in the overflow where it belongs.
 
 ---
 
 ## Conclusions
 
-<!-- CONCLUSIONS PLACEHOLDER -->
+### The overflow dict is a staging area, not a dead end
+
+This simulation demonstrates the complete lifecycle of a metadata field
+through Hybrid C's architecture:
+
+```
+Phase 1: Freeform overflow     → Domain-specific, no governance
+Phase 2: Cross-domain adoption  → Convention spreads via registry docs
+Phase 3: Registry-spec validation → CI enforcement, still in overflow
+Phase 4: Schema promotion        → Full USD-native validation + GUI
+Phase 5: Migration               → Incremental cleanup, non-breaking
+```
+
+At no point was the process blocked. At every phase, the existing content
+continued to work. The overflow dict provided a **zero-friction onramp**
+for AAS-specific metadata, and the promotion path provided a **governed
+escalation** when the field proved universally useful.
+
+### Why this matters for the Hybrid C recommendation
+
+1. **The overflow dict answers the "what if we need more fields" objection.**
+   Stakeholders can ship immediately without schema work. Fields that prove
+   their worth get promoted. Fields that remain domain-specific stay in
+   overflow — and that's fine.
+
+2. **The promotion path answers the "overflow is opaque" objection.**
+   Yes, overflow dicts lack schema validation and GUI rendering. But that's
+   a *temporary* condition for cross-cutting fields, not a permanent one.
+   The registry-spec mechanism (Phase 3) provides intermediate governance,
+   and schema promotion (Phase 4) provides full governance.
+
+3. **The migration path answers the "how do we evolve" objection.**
+   Schema changes are non-breaking (empty defaults). Migration is
+   incremental (per-layer, per-domain). Old and new content coexist.
+   This is the same pattern USD uses for schema versioning generally.
+
+### Promotion criteria (suggested)
+
+Based on this simulation, a field should be considered for promotion when:
+
+| Criterion | Threshold |
+|-----------|-----------|
+| Cross-domain adoption | 3+ independent domains using it |
+| Semantic consistency | Same field name, type, and allowed values across domains |
+| Validation demand | CI validators exist and are catching real errors |
+| Runtime gap | Stakeholders are requesting GUI/query support |
+| Stability | Field semantics haven't changed in 6+ months |
+
+These criteria could be formalized in the AOUSD governance documentation
+alongside the three-tier domain promotion path (vendor → multi-vendor →
+standard).
