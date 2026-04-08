@@ -223,6 +223,20 @@ immediately. Promotion to multi-vendor or standard status is opt-in, not
 mandatory — a vendor domain that serves its community well has no obligation
 to seek broader standardization.
 
+**A note on centralization.** The hybrid introduces structural declaration
+(`apiSchemas`) that Approach A does not require, and the governance registry
+adds namespace coordination. This is a deliberate tradeoff: self-describing
+data enables interoperability without vendor-specific parsing code, at the
+cost of requiring vendors to declare their participation. The registry
+provides namespace coordination, not approval authority — following the
+Khronos model, where vendor extensions require only a unique prefix
+reservation, not content review (cf. Neil Trevett's characterization at
+AOUSD Summit 2025: Khronos does not police vendor extension names beyond
+requiring vendor prefixes). The process is administrative, not evaluative.
+Vendors who prefer zero coordination can still author `assetInfo` overflow
+dictionaries without registration; the schema declaration and registry
+entry formalize what is already implicit in the data.
+
 **Structural advantage of B/C:** The `apiSchemas` list functions like glTF's
 `extensionsUsed` (or W3C's declared feature policies) — a consumer knows which
 identifier domains are present without parsing all `assetInfo` dictionaries
