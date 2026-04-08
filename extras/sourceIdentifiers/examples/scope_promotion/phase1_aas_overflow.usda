@@ -1,0 +1,102 @@
+#usda 1.0
+(
+    doc = """Phase 1: scope lives ONLY in AAS/DPP overflow dict.
+    
+    The 'scope' field distinguishes type-level identifiers (product family,
+    part designation) from instance-level identifiers (serial number, deployed
+    unit). At this stage, only AAS/DPP stakeholders use it — IFC and Windchill
+    have no need for it.
+    
+    Note how scope is domain-specific metadata in the assetInfo overflow dict,
+    NOT a schema property. The base schema carries only the 4 common fields."""
+)
+
+# ── AAS Digital Battery Passport: uses scope ──────────────────────────────
+
+def Xform "BatteryPack_SN42" (
+    prepend apiSchemas = ["SourceIdHybridAPI:dpp"]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary dpp = {
+                # scope is AAS-specific: "instance" = serial-number-level
+                string scope = "instance"
+                string batteryModel = "LFP-280Ah-48V"
+                string chemistry = "LFP"
+                string manufacturingDate = "2025-03-15"
+                string manufacturingPlant = "DE-RWE-02"
+            }
+        }
+    }
+)
+{
+    # Common fields: schema-validated, GUI-visible
+    string sourceIdentifier:dpp:primaryId = "urn:idta:dpp:battery:SN42:2025"
+    string sourceIdentifier:dpp:revision = "1.0"
+    token sourceIdentifier:dpp:domain = "org.idta.dpp"
+    string sourceIdentifier:dpp:label = "IEC 62474 Digital Battery Passport"
+}
+
+# AAS type-level identifier on the same product family
+def Xform "BatteryPack_LFP280" (
+    prepend apiSchemas = ["SourceIdHybridAPI:dpp"]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary dpp = {
+                # scope = "type" means this is the product family, not a unit
+                string scope = "type"
+                string chemistry = "LFP"
+                string nominalVoltage = "48V"
+                string nominalCapacity = "280Ah"
+            }
+        }
+    }
+)
+{
+    string sourceIdentifier:dpp:primaryId = "urn:idta:dpp:battery:LFP-280Ah-48V"
+    token sourceIdentifier:dpp:domain = "org.idta.dpp"
+    string sourceIdentifier:dpp:label = "Battery Product Family"
+}
+
+# ── IFC: no scope needed ──────────────────────────────────────────────────
+
+def Mesh "Column_C14" (
+    prepend apiSchemas = ["SourceIdHybridAPI:ifc"]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary ifc = {
+                # IFC GlobalId is ALWAYS instance-level by definition.
+                # No scope field needed — the domain semantics are unambiguous.
+                string ifcType = "IfcColumn"
+                string objectType = "W14x90"
+                string schema = "IFC4x3"
+            }
+        }
+    }
+)
+{
+    string sourceIdentifier:ifc:primaryId = "2O2Fr$t4X7Zf8NOew3FNr2"
+    token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+    string sourceIdentifier:ifc:label = "IFC GlobalId"
+}
+
+# ── Windchill: no scope needed (yet) ─────────────────────────────────────
+
+def Xform "Chiller_01" (
+    prepend apiSchemas = ["SourceIdHybridAPI:windchill"]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary windchill = {
+                # Windchill OID always points to a specific part instance.
+                # No scope field — PTC hasn't adopted the convention yet.
+                string displayNumber = "CH-7500-A"
+                string state = "Released"
+            }
+        }
+    }
+)
+{
+    string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639563"
+    string sourceIdentifier:windchill:revision = "Rev.C"
+    token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+    string sourceIdentifier:windchill:label = "Windchill Part OID"
+}

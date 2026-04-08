@@ -31,7 +31,35 @@ applicable, Python scripts demonstrating validation and migration.
 
 _`scope` is a domain-specific AAS convention. No other stakeholder uses it._
 
-<!-- PHASE 1 CONTENT PLACEHOLDER -->
+**Scenario.** The AAS/Industry 4.0 community needs to distinguish type-level
+identifiers (product families, part designations) from instance-level identifiers
+(serial numbers, deployed units). AAS calls these `globalAssetId` (type) and
+`specificAssetIds` (instance). They encode this as a `scope` string in their
+`assetInfo` overflow dictionary.
+
+Meanwhile, IFC's GlobalId is always instance-level by definition, and Windchill's
+part OID always references a specific part revision. Neither domain needs `scope`.
+
+**What the `.usda` shows:**
+([`examples/scope_promotion/phase1_aas_overflow.usda`](../examples/scope_promotion/phase1_aas_overflow.usda))
+
+- `BatteryPack_SN42` — DPP with `scope = "instance"` (a specific battery unit)
+- `BatteryPack_LFP280` — DPP with `scope = "type"` (the product family)
+- `Column_C14` — IFC, no scope (GlobalId is always instance-level)
+- `Chiller_01` — Windchill, no scope (OID is always a specific part)
+
+**Key observation:** `scope` lives entirely in the overflow dict. The base schema
+is untouched. No schema change, no TAC review, no impact on non-AAS domains.
+This is exactly the escape hatch Hybrid C is designed to provide.
+
+**Interoperability status of `scope` at this phase:**
+
+| Capability | Status |
+|------------|--------|
+| AAS tools can read/write scope | ✅ They know their own dict structure |
+| Non-AAS tools can discover scope exists | ❌ Must parse `assetInfo` dicts |
+| Validation | ❌ No enforcement; typos like `scope = "instnace"` pass silently |
+| GUI rendering | ❌ Hidden inside metadata dict |
 
 ---
 
