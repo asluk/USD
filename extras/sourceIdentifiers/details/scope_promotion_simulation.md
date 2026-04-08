@@ -67,7 +67,52 @@ This is exactly the escape hatch Hybrid C is designed to provide.
 
 _Manufacturing and robotics adopt the same `scope` convention. Registry-spec documents it._
 
-<!-- PHASE 2 CONTENT PLACEHOLDER -->
+**Scenario.** Six months after DPP adoption, two other communities independently
+reach the same conclusion: they need to distinguish type-level from instance-level
+identifiers.
+
+- **Manufacturing (PTC Windchill):** Their PLM export pipeline now distinguishes
+  product family designations (`scope = "type"`) from specific part revisions
+  (`scope = "instance"`). PTC's pipeline team saw the AAS convention in the
+  registry-spec documentation and adopted it rather than inventing their own.
+
+- **Robotics (ROS/URDF):** Robot model definitions (the URDF source) are
+  type-level; deployed fleet instances are instance-level. The robotics
+  community adopted `scope` with the same semantics.
+
+- **IFC:** Still no need for `scope`. IFC GlobalId is always instance-level
+  by definition. The convention exists alongside IFC identifiers without
+  requiring any change.
+
+**What the `.usda` shows:**
+([`examples/scope_promotion/phase2_cross_domain.usda`](../examples/scope_promotion/phase2_cross_domain.usda))
+
+- `BatteryPack_SN42` — DPP, `scope = "instance"` (unchanged from Phase 1)
+- `Chiller_Series7500` — Windchill, `scope = "type"` (product family) — **NEW**
+- `Chiller_01` — Windchill, `scope = "instance"` (specific deployed unit) — **NEW**
+- `UR10e_ModelDef` — ROS, `scope = "type"` (URDF model definition) — **NEW**
+- `UR10e_Cell3_Unit7` — ROS, `scope = "instance"` (deployed robot) — **NEW**
+- `Column_C14` — IFC, no scope (still unnecessary)
+
+**Key observation:** The `scope` convention spread organically through the
+registry-spec documentation — not through schema changes. Each domain adopted
+it independently, using the same values (`"type"`, `"instance"`) because the
+registry-spec provided a clear definition. No schema work was required. No
+TAC review. No C++ code.
+
+**The trigger for promotion consideration:** When 3+ domains independently
+adopt the same overflow field with the same semantics, that's a strong signal
+the field has graduated from domain-specific to cross-cutting. The AOUSD
+Domains Registry now has a discussion item: should `scope` be promoted?
+
+**Interoperability status of `scope` at this phase:**
+
+| Capability | Status |
+|------------|--------|
+| Multi-domain tools can filter by scope | ⚠️ Must parse overflow dicts, but convention is documented |
+| Validation | ❌ Still no enforcement; inconsistent values possible |
+| GUI rendering | ❌ Still hidden in metadata dict |
+| Cross-domain consistency | ✅ Registry-spec ensures same field name and allowed values |
 
 ---
 

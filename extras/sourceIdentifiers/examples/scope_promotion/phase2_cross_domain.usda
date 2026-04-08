@@ -1,0 +1,146 @@
+#usda 1.0
+(
+    doc = """Phase 2: scope adopted by multiple domains (~6-12 months).
+    
+    Manufacturing (Windchill) and robotics (ROS/URDF) have independently
+    adopted the same scope convention that AAS pioneered. The registry-spec
+    now documents the convention: scope is a string with allowed values
+    "type" or "instance".
+    
+    Key change from Phase 1: scope is no longer AAS-specific. Three domains
+    use it with consistent semantics. But it's still in the overflow dict,
+    not a schema property."""
+)
+
+# ── AAS DPP: scope = "instance" (unchanged from Phase 1) ─────────────────
+
+def Xform "BatteryPack_SN42" (
+    prepend apiSchemas = ["SourceIdHybridAPI:dpp"]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary dpp = {
+                string scope = "instance"
+                string batteryModel = "LFP-280Ah-48V"
+                string chemistry = "LFP"
+                string manufacturingDate = "2025-03-15"
+            }
+        }
+    }
+)
+{
+    string sourceIdentifier:dpp:primaryId = "urn:idta:dpp:battery:SN42:2025"
+    string sourceIdentifier:dpp:revision = "1.0"
+    token sourceIdentifier:dpp:domain = "org.idta.dpp"
+    string sourceIdentifier:dpp:label = "IEC 62474 Digital Battery Passport"
+}
+
+# ── Windchill: NOW uses scope ─────────────────────────────────────────────
+# PTC adopted scope to distinguish part-family designations from specific
+# part revisions in their PLM export pipeline.
+
+def Xform "Chiller_Series7500" (
+    prepend apiSchemas = ["SourceIdHybridAPI:windchill"]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary windchill = {
+                # NEW: scope = "type" — this is the product family, not a unit
+                string scope = "type"
+                string displayNumber = "CH-7500"
+                string productFamily = "IntelliChill Series 7500"
+                string state = "Released"
+            }
+        }
+    }
+)
+{
+    string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639000"
+    token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+    string sourceIdentifier:windchill:label = "Windchill Product Family"
+}
+
+def Xform "Chiller_01" (
+    prepend apiSchemas = ["SourceIdHybridAPI:windchill"]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary windchill = {
+                # scope = "instance" — this is a specific deployed unit
+                string scope = "instance"
+                string displayNumber = "CH-7500-A"
+                string serialNumber = "SN-2025-04-0042"
+                string state = "Released"
+            }
+        }
+    }
+)
+{
+    string sourceIdentifier:windchill:primaryId = "VR:wt.part.WTPart:23639563"
+    string sourceIdentifier:windchill:revision = "Rev.C"
+    token sourceIdentifier:windchill:domain = "com.ptc.windchill"
+    string sourceIdentifier:windchill:label = "Windchill Part OID"
+}
+
+# ── Robotics (ROS/URDF): NOW uses scope ──────────────────────────────────
+# Robotics pipelines adopted scope to distinguish the robot model definition
+# (URDF/SDF source) from a deployed fleet instance.
+
+def Xform "UR10e_ModelDef" (
+    prepend apiSchemas = ["SourceIdHybridAPI:ros"]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary ros = {
+                # scope = "type" — the robot model definition (URDF source)
+                string scope = "type"
+                string sourceFormat = "URDF"
+                string packageName = "ur_description"
+                string urdfPath = "urdf/ur10e.urdf.xacro"
+            }
+        }
+    }
+)
+{
+    string sourceIdentifier:ros:primaryId = "package://ur_description/urdf/ur10e"
+    string sourceIdentifier:ros:revision = "2.1.0"
+    token sourceIdentifier:ros:domain = "org.ros.urdf"
+    string sourceIdentifier:ros:label = "UR10e URDF Model"
+}
+
+def Xform "UR10e_Cell3_Unit7" (
+    prepend apiSchemas = ["SourceIdHybridAPI:ros"]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary ros = {
+                # scope = "instance" — a specific deployed robot on the factory floor
+                string scope = "instance"
+                string frameId = "cell3_ur10e_7_base_link"
+                string rosNamespace = "/factory/cell3/ur10e_7"
+                string fleetManagerId = "FM-C3-007"
+            }
+        }
+    }
+)
+{
+    string sourceIdentifier:ros:primaryId = "fleet://factory-north/cell3/ur10e-007"
+    token sourceIdentifier:ros:domain = "org.ros.urdf"
+    string sourceIdentifier:ros:label = "UR10e Cell 3 Unit 7"
+}
+
+# ── IFC: STILL no scope needed ────────────────────────────────────────────
+# IFC GlobalId remains always instance-level. No reason to add scope.
+
+def Mesh "Column_C14" (
+    prepend apiSchemas = ["SourceIdHybridAPI:ifc"]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary ifc = {
+                string ifcType = "IfcColumn"
+                string objectType = "W14x90"
+                string schema = "IFC4x3"
+            }
+        }
+    }
+)
+{
+    string sourceIdentifier:ifc:primaryId = "2O2Fr$t4X7Zf8NOew3FNr2"
+    token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+    string sourceIdentifier:ifc:label = "IFC GlobalId"
+}
