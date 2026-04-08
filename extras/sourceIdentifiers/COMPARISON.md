@@ -438,6 +438,21 @@ consumers must implement vendor-specific dictionary parsing, echoing the
 industrial workflows require without forcing every stakeholder to register companion
 schemas — creating schema sprawl or pushing metadata back into `customData`.
 
+The AOUSD Emerging Geometry Interest Group's `ParticleField` schemas demonstrate
+that all-schema extensibility *can* work: composable applied schemas promote
+mature combinations into concrete types, with no dictionary overflow. But that
+design fits because particle data consists of typed arrays (`float3[]`, `quatf[]`)
+requiring renderer integration, Hydra transport, and interpolation — each new
+schema earns its weight in codegen.
+
+Source identifier metadata is predominantly string-typed (URIs, version tokens,
+labels). The schema overhead per domain — codegen, C++ headers, Python bindings,
+plugin registration — is disproportionate to the data complexity. The hybrid
+follows the same *philosophy* (start minimal, compose features, promote what
+matures) but uses dictionary overflow where `ParticleField` uses new applied
+schemas, because the data shapes call for different trade-offs (see
+[Scope Promotion Simulation](details/scope_promotion_simulation.md)).
+
 ### Approach C: Multi-apply schema + `assetInfo` overflow
 
 **Schema (Approach B) for common fields. `assetInfo` (Approach A) for overflow.**
