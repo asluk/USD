@@ -290,10 +290,14 @@ fields (`batteryModel`, `manufacturingDate`, `chemistry`) without schema changes
 
 ### The case against either approach alone
 
-**Approach A alone** repeats the `customData` pattern: technically capable,
-but practically un-interoperable because every consumer must know every vendor's
-ad-hoc dictionary structure. No `apiSchemas` declaration, no schema validation,
-no GUI discoverability.
+**Approach A alone** provides no built-in mechanism for validation or GUI
+discoverability. While a registry-spec mechanism could partially close these gaps
+(see [details/registry_spec_analysis.md](details/registry_spec_analysis.md)),
+runtime validation and automatic property-panel rendering would require new USD
+infrastructure that does not exist today — infrastructure that Approach B provides
+natively through the existing schema system. Without such infrastructure,
+consumers must implement vendor-specific dictionary parsing, echoing the
+`customData` fragmentation pattern the proposal aims to resolve.
 
 **Approach B alone** cannot carry the domain-specific metadata that real-world
 industrial workflows require without forcing every stakeholder to register companion
