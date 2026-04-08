@@ -13,9 +13,11 @@ This is the TAC review guide. It is self-contained for a 15–20 minute read.
 
 **Suggested reading order:**
 1. [Executive Summary](#executive-summary) — problem, the three approaches, scores, recommendation
-2. [Key Findings](#key-findings) — one condensed verdict per analysis section
-3. [Hybrid Recommendation](#hybrid-recommendation) — the case for Approach C, with a concrete `.usda` example
-4. [Repository Map](#repository-map) — where to find implementations, examples, and stress test data
+2. [Decisions for TAC](#decisions-for-tac) — what you are being asked to decide
+3. [Key Findings](#key-findings) — the evidence, with each section building toward the recommendation
+4. [Why Structured Overflow Is Not `customData`](#why-structured-overflow-is-not-customdata) — addressing the most likely objection
+5. [Hybrid Recommendation](#hybrid-recommendation) — the case for Approach C, with a concrete `.usda` example
+6. [Repository Map](#repository-map) — where to find implementations, examples, and stress test data
 
 **Deep dives:** Each Key Findings subsection links to a standalone `details/` file if you want the full analysis, test code, and pseudocode for that topic.
 
@@ -89,7 +91,41 @@ overflow. See [Hybrid Recommendation](#hybrid-recommendation) for details.
 
 ---
 
+## Decisions for TAC
+
+This comparison asks the TAC to evaluate three questions and one open issue.
+The [Key Findings](#key-findings) below present the evidence for each.
+
+1. **Mechanism choice.** Should source identifiers use a multi-apply schema
+   with `assetInfo` overflow (Approach C / hybrid), a pure `assetInfo`
+   dictionary design (Approach A), or a pure multi-apply schema (Approach B)?
+   → Evidence: §3.1 Composition, §3.2 Industry Scenarios, §3.3 Stress Tests
+
+2. **Base schema fields.** If the TAC accepts a schema-based approach (B or C),
+   are the four proposed common fields the right ones: `primaryId`, `revision`,
+   `domain`, `label`? Or should additional fields (e.g., `scope`) be included
+   from the start?
+   → Evidence: §3.2 Industry Scenarios, §3.5 Scoping
+
+3. **Governance model.** Should AOUSD establish a domain registry with three
+   tiers (vendor → multi-vendor → standard), modeled on Khronos glTF / W3C
+   incubation precedents?
+   → Evidence: §3.4 Governance
+
+4. **Open question: `scope`.** The type-vs-instance distinction (`scope`) is
+   critical for AAS/Industry 4.0 but arguably domain-specific. Should it start
+   in the base schema, or begin in `assetInfo` overflow with a path to
+   promotion if cross-domain adoption emerges?
+   → Evidence: §3.5 Scoping, [scope promotion simulation](details/scope_promotion_simulation.md)
+
+---
+
 ## Key Findings
+
+The following sections present the evidence for the decisions above. Each
+builds on the last: composition safety motivates a schema; industry data
+shows why the schema alone is insufficient; stress tests quantify the
+tradeoffs; governance and scoping address how the mechanism evolves.
 
 ### 3.1 Composition Behavior
 
@@ -119,6 +155,11 @@ per-property composition — the structural guarantees that dictionaries cannot
 provide.
 
 → Deep dive: [details/composition_behavior.md](details/composition_behavior.md)
+
+Composition safety argues for schema properties. But does it matter in
+practice? The next section tests both approaches against four industry
+verticals to see where Approach B’s structural advantages help — and where
+its fixed four-property model breaks down.
 
 ---
 
@@ -153,6 +194,10 @@ dictionaries handle all tested scenarios without requiring per-domain schema wor
 - **M&E:** Model-level asset tracking maps equally well to both approaches.
 
 → Deep dive: [details/industry_scenarios.md](details/industry_scenarios.md)
+
+The industry data makes the case for both mechanisms: schema properties for
+the common fields every domain shares, and freeform dictionaries for the
+metadata that varies by domain. The next section quantifies this at scale.
 
 ---
 
@@ -200,6 +245,10 @@ TAC discussion priorities from the 2026-03-06 and subsequent sessions):
 | **Total** | **23** | **33** | **B** | |
 
 → Deep dive: [details/stress_tests.md](details/stress_tests.md)
+
+The scoring data supports Approach B for governed common fields. But a
+multi-vendor ecosystem needs more than a schema — it needs a governance
+model for who registers what, and how domains mature over time.
 
 ---
 
@@ -266,6 +315,12 @@ who need typed extension properties in B/C but may lack C++ expertise.
 | Compiled schema | 16+ | ~1,150+ | Yes |
 
 → Deep dive: [details/governance.md](details/governance.md)
+
+The governance model defines how identifier domains are registered and
+promoted. One question it deliberately leaves open: should
+type-vs-instance scoping be a universal schema field, or domain-specific
+metadata? This is the most concrete test of where to draw the line between
+schema and overflow.
 
 ---
 
@@ -337,6 +392,33 @@ traces the full lifecycle of `scope` from AAS-only overflow dict through cross-d
 adoption, registry-spec validation, TAC-ratified schema promotion, and incremental
 migration, with concrete `.usda` files and runnable Python scripts at each phase.
 
+The scoping question illustrates the core tradeoff: putting everything in the
+schema is premature for emerging fields; putting everything in dictionaries
+sacrifices the safety and discoverability the evidence above supports. The
+hybrid’s `assetInfo` overflow is designed for exactly this middle ground — but
+it raises a natural objection.
+
+---
+
+## Why Structured Overflow Is Not `customData`
+
+The most likely objection to Approach C: does the `assetInfo` overflow dict
+simply recreate the `customData` dumping ground the proposal aims to resolve?
+Three structural differences:
+
+1. **Scoped, not global.** Overflow lives under `assetInfo["sourceIds"][<domain>]`,
+   keyed to a registered domain. `customData` is a flat, unscoped namespace.
+2. **Linked to a schema instance.** The overflow dict key matches the
+   `SourceIdHybridAPI:<domain>` instance name — tools know which overflow
+   dict belongs to which schema instance. `customData` has no such linkage.
+3. **Governed evolution path.** Overflow fields that prove cross-domain utility
+   can be promoted to schema properties through the registry-spec → schema
+   promotion lifecycle (see [scope promotion simulation](details/scope_promotion_simulation.md)).
+   `customData` fields have no standardized promotion path.
+
+In short: overflow is scoped, linked, and has a graduation path. `customData`
+is none of these.
+
 ---
 
 ## Hybrid Recommendation
@@ -355,22 +437,6 @@ consumers must implement vendor-specific dictionary parsing, echoing the
 **Approach B alone** cannot carry the domain-specific metadata that real-world
 industrial workflows require without forcing every stakeholder to register companion
 schemas — creating schema sprawl or pushing metadata back into `customData`.
-
-### Why the overflow dict is not `customData`
-
-A natural objection: does the `assetInfo` overflow dict simply recreate the
-`customData` dumping ground the proposal aims to resolve? Three structural
-differences:
-
-1. **Scoped, not global.** Overflow lives under `assetInfo["sourceIds"][<domain>]`,
-   keyed to a registered domain. `customData` is a flat, unscoped namespace.
-2. **Linked to a schema instance.** The overflow dict key matches the
-   `SourceIdHybridAPI:<domain>` instance name — tools know which overflow
-   dict belongs to which schema instance. `customData` has no such linkage.
-3. **Governed evolution path.** Overflow fields that prove cross-domain utility
-   can be promoted to schema properties through the registry-spec → schema
-   promotion lifecycle (see [scope promotion simulation](details/scope_promotion_simulation.md)).
-   `customData` fields have no standardized promotion path.
 
 ### Approach C: Multi-apply schema + `assetInfo` overflow
 
