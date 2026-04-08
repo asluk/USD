@@ -284,6 +284,11 @@ fields (`batteryModel`, `manufacturingDate`, `chemistry`) without schema changes
 
 → Deep dive: [details/hybrid_analysis.md](details/hybrid_analysis.md)
 
+→ Simulation: [details/scope_promotion_simulation.md](details/scope_promotion_simulation.md) —
+traces the full lifecycle of `scope` from AAS-only overflow dict through cross-domain
+adoption, registry-spec validation, TAC-ratified schema promotion, and incremental
+migration, with concrete `.usda` files and runnable Python scripts at each phase.
+
 ---
 
 ## Hybrid Recommendation
