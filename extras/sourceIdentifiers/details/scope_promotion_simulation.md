@@ -120,7 +120,54 @@ Domains Registry now has a discussion item: should `scope` be promoted?
 
 _AOUSD CI validator enforces `scope` values. The convention is formalized._
 
-<!-- PHASE 3 CONTENT PLACEHOLDER -->
+**Scenario.** With three domains using `scope`, the AOUSD community formalizes
+the field in the registry-spec. A CI validator is added to the AOUSD validation
+toolkit that reads overflow dictionaries and checks `scope` values against the
+registered allowed set.
+
+**What the script shows:**
+([`examples/scope_promotion/phase3_validator.py`](../examples/scope_promotion/phase3_validator.py))
+
+The validator reads `assetInfo["sourceIds"]` overflow dictionaries and checks:
+- `scope` must be a string (catches wrong types)
+- `scope` must be `"type"` or `"instance"` (catches typos)
+- Missing `scope` is fine (it's optional)
+
+**Sample output:**
+
+```
+AOUSD Source Identifier Validator — scope field (registry-spec v1.0)
+
+  ✅ /BatteryPack_SN42: 'scope' = 'instance' in domain 'org.idta.dpp'
+  ✅ /Chiller_Series7500: 'scope' = 'type' in domain 'com.ptc.windchill'
+  ✅ /Chiller_01: 'scope' = 'instance' in domain 'com.ptc.windchill'
+  ✅ /UR10e_ModelDef: 'scope' = 'type' in domain 'org.ros.urdf'
+  ✅ /UR10e_Cell3_Unit7: 'scope' = 'instance' in domain 'org.ros.urdf'
+  ⚠️  /BadPrim_Typo: unrecognized value 'instnace' (allowed: ['type', 'instance'])
+  ❌ /BadPrim_WrongType: must be a string, got int: 42
+
+Results: 5 passed, 1 warnings, 1 errors
+VALIDATION FAILED
+```
+
+**Key observation:** The registry-spec mechanism delivers **CI-level validation**
+for an overflow dict field — without any schema changes to USD. The validator
+is ~50 lines of Python. This is the intermediate step between "freeform
+overflow" and "schema property": the field is still in `assetInfo`, but its
+values are now governed.
+
+**What's still missing:** Runtime validation (would need a USD plugin) and
+GUI discoverability (would need property-panel integration). These gaps
+are what motivate the next phase: promotion to schema property.
+
+**Interoperability status of `scope` at this phase:**
+
+| Capability | Status |
+|------------|--------|
+| CI/offline validation | ✅ Registry-spec validator catches errors |
+| Runtime validation | ❌ Still external-only |
+| GUI rendering | ❌ Still hidden in metadata dict |
+| Cross-domain consistency | ✅ Enforced by validator |
 
 ---
 
