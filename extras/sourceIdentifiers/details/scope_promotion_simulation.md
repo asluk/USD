@@ -175,7 +175,68 @@ are what motivate the next phase: promotion to schema property.
 
 _TAC ratifies `scope` as an optional 5th property on `SourceIdHybridAPI`._
 
-<!-- PHASE 4 CONTENT PLACEHOLDER -->
+**Scenario.** After ~18 months of cross-domain adoption and registry-spec
+validation, the AOUSD TAC considers a proposal to promote `scope` from the
+overflow dict to a typed schema property. The evidence is strong:
+
+- 3+ domains adopted it independently with consistent semantics
+- The CI validator has been catching errors in production pipelines
+- The two remaining gaps (runtime validation, GUI rendering) can only be
+  closed by making `scope` a schema property
+
+The TAC ratifies `scope` as an **optional** `token` property with
+`allowedTokens = ["type", "instance", ""]`. The empty default means
+domains that don't need it (IFC, glTF, MaterialX) are unaffected.
+
+**What the files show:**
+
+[`examples/scope_promotion/phase4_schema.usda`](../examples/scope_promotion/phase4_schema.usda)
+— The updated `SourceIdHybridAPI` class definition with `scope` as the
+5th property. Input to `usdGenSchema`.
+
+[`examples/scope_promotion/phase4_promoted.usda`](../examples/scope_promotion/phase4_promoted.usda)
+— Same prims as Phase 2, but `scope` has moved from the overflow dict
+to a schema property. Domain-specific metadata (batteryModel, displayNumber,
+frameId, etc.) **remains in the overflow dict** — only `scope` was promoted.
+
+**Before (Phase 2) vs After (Phase 4) — BatteryPack_SN42:**
+
+```diff
+  def Xform "BatteryPack_SN42" (
+      prepend apiSchemas = ["SourceIdHybridAPI:dpp"]
+      assetInfo = {
+          dictionary sourceIds = {
+              dictionary dpp = {
+-                 string scope = "instance"
+                  string batteryModel = "LFP-280Ah-48V"
+                  string chemistry = "LFP"
+              }
+          }
+      }
+  )
+  {
+      string sourceIdentifier:dpp:primaryId = "urn:idta:dpp:battery:SN42:2025"
+      token sourceIdentifier:dpp:domain = "org.idta.dpp"
+      string sourceIdentifier:dpp:label = "IEC 62474 Digital Battery Passport"
++     token sourceIdentifier:dpp:scope = "instance"
+  }
+```
+
+**What promotion buys:**
+
+| Capability | Before (overflow) | After (schema property) |
+|------------|-------------------|------------------------|
+| Runtime validation | ❌ External only | ✅ USD-native (`allowedTokens`) |
+| GUI rendering | ❌ Hidden in metadata | ✅ Automatic in property panels |
+| Per-property composition | ❌ Dict-level merge | ✅ Independent opinion stack |
+| Query/filter | ❌ Parse all `assetInfo` dicts | ✅ `GetScopeAttr().Get()` |
+| Backwards compatibility | N/A | ✅ Old files without scope still work (defaults to "") |
+
+**Key observation:** Promotion is **non-breaking**. Existing files without
+`scope` continue to work — the empty default means the property exists but
+is unset. Existing files with `scope` in the overflow dict also continue
+to work (the overflow dict is not validated against the schema), but a
+migration script can clean them up (see Phase 5).
 
 ---
 

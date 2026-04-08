@@ -1,0 +1,67 @@
+#usda 1.0
+(
+    doc = """Phase 4: Updated schema definition with 'scope' as 5th property.
+    
+    TAC has ratified scope as an optional token property on SourceIdHybridAPI.
+    This file shows the updated schema.usda definition (the input to usdGenSchema).
+    
+    Changes from the original schema:
+    - Added: token scope = "" (optional, allowed values: "type", "instance", "")
+    - Original 4 properties unchanged: primaryId, revision, domain, label
+    
+    The empty string default means scope is optional — domains that don't
+    need it (IFC, glTF, MaterialX) simply leave it unset."""
+)
+
+class "SourceIdHybridAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        token propertyNamespacePrefix = "sourceIdentifier"
+    }
+    doc = """Multi-apply API schema for external source identifiers.
+    
+    Each instance represents one external system's identifier for this prim.
+    Common fields are typed schema properties; domain-specific metadata lives
+    in assetInfo["sourceIds"][<instance>] overflow dictionaries.
+    
+    Version 2.0: Added 'scope' property (TAC-ratified, promoted from
+    overflow dict after cross-domain adoption by AAS/DPP, PTC Windchill,
+    and ROS/URDF communities)."""
+)
+{
+    # Original 4 properties (unchanged)
+    string primaryId = "" (
+        doc = "Primary linkage key for this external system."
+    )
+    string revision = "" (
+        doc = "Version or revision designator."
+    )
+    token domain = "" (
+        doc = "Formal reverse-DNS domain identifier (e.g., com.ptc.windchill)."
+    )
+    string label = "" (
+        doc = "Human-readable description of this identifier."
+    )
+
+    # NEW: Promoted from overflow dict (v2.0)
+    token scope = "" (
+        doc = """Classifies this identifier as type-level or instance-level.
+        
+        Allowed values:
+          "type"     — product family, model definition, part designation
+          "instance" — serial number, deployed unit, specific revision
+          ""         — unset (domain semantics are unambiguous or N/A)
+        
+        History: Originated as an AAS/Industry 4.0 convention in the
+        assetInfo overflow dict. Adopted by PTC Windchill and ROS/URDF
+        communities. Promoted to schema property after demonstrating
+        cross-domain utility across 3+ domains over ~18 months.
+        
+        Domains where scope is typically unnecessary:
+          - IFC (GlobalId is always instance-level)
+          - ECLASS (always type-level)
+          - glTF, MaterialX (no type-vs-instance distinction)"""
+        allowedTokens = ["type", "instance", ""]
+    )
+}
