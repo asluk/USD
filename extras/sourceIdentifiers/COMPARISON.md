@@ -33,6 +33,11 @@ a governance model informed by Khronos glTF, IETF/IANA, W3C, and
 buildingSMART precedents. Approach C (hybrid) was then implemented as the
 recommended synthesis.
 
+Both approaches preserve **round-trip fidelity** for opaque, vendor-specific
+identifiers — strings survive a round-trip through USD without loss regardless
+of mechanism. The approaches differ in validation, discoverability, and
+governance, not in data preservation.
+
 ### The three approaches
 
 **Approach A — `assetInfo` stratified sub-dictionaries** (`pxr/usd/usdSourceId/`)**.**
@@ -72,7 +77,9 @@ dictionaries (Approach A) for domain-specific metadata. The recommended path.
 Approach B scores higher on the dimensions that matter most for a
 multi-stakeholder standard (safety, discoverability, validation, governance),
 while Approach A wins decisively on metadata flexibility — a critical
-requirement for heterogeneous industrial use cases.
+requirement for heterogeneous industrial use cases. The scores reflect
+TAC discussion priorities; both approaches are viable for simple identifier
+schemes.
 
 **Recommendation:** Neither approach alone is sufficient. The recommended
 path is **Approach C (hybrid)**: Approach B's multi-apply schema for the
@@ -104,6 +111,13 @@ and writing it back (a common pattern), it writes the full dictionary including
 fields from the base layer, which then shadow the base — corrupting composition
 silently. Approach B's per-property model has no equivalent risk.
 
+This composition difference is also why the hybrid places the common identifier
+fields (the ones most likely to be overridden across layers) in schema
+properties rather than the dictionary. Schema properties contribute to
+`UsdPrimDefinition`, giving tools fallback values, GUI presentation, and
+per-property composition — the structural guarantees that dictionaries cannot
+provide.
+
 → Deep dive: [details/composition_behavior.md](details/composition_behavior.md)
 
 ---
@@ -126,12 +140,12 @@ Four verticals were tested (AECO, manufacturing, robotics, M&E):
 **The critical finding:** For simple identifier schemes (a string ID + optional
 version), both approaches are equivalent. For industries with rich, heterogeneous
 identifier metadata — manufacturing, AECO, robotics — Approach A's freeform
-dictionaries are significantly more capable without requiring per-domain schema work.
+dictionaries handle all tested scenarios without requiring per-domain schema work.
 
 - **AECO:** IFC metadata (`ifcType`, `schema`, `objectType`), Revit metadata
   (`category`, `familyType`, `level`) fit naturally in A's dicts. B requires
   companion schemas to carry them.
-- **Manufacturing:** Windchill parts carry `displayNumber`, `navigationType`,
+- **Manufacturing:** PTC Windchill parts carry `displayNumber`, `navigationType`,
   `serialNumber`, `lifecyclePhase`. B's four properties are insufficient;
   6 of 8 simulated vendors needed domain-specific fields beyond the base schema.
 - **Robotics:** Source format provenance (URDF/SDF), ROS frame IDs, sensor
@@ -170,7 +184,8 @@ C's 57% size increase over B is the dual-mechanism cost, overstated because: not
 domains need overflow, binary formats compress dicts efficiently, and the alternative
 (companion schemas) would create even more property names.
 
-**Vendor adoption scoring** (8 dimensions, 1–5 each):
+**Vendor adoption scoring** (8 dimensions, 1–5 each; weights reflect
+TAC discussion priorities from the 2026-03-06 and subsequent sessions):
 
 | Dimension | A | B | Winner | TAC Weight |
 |-----------|---|---|--------|------------|
@@ -199,9 +214,14 @@ registration policies. Three tiers (paralleling both glTF's
 Recommendation):
 
 - **Vendor domains** (`com.ptc.windchill`, `com.nvidia.omniverse`): self-service,
-  First Come First Served
+  First Come First Served — no approval required, no membership fee
 - **Multi-vendor domains** (`ext.simready`): demonstrated multi-vendor adoption
 - **AOUSD standard domains** (`aousd.ifc`): TAC ratification
+
+The design is **decentralized by default**: any vendor can register and ship
+immediately. Promotion to multi-vendor or standard status is opt-in, not
+mandatory — a vendor domain that serves its community well has no obligation
+to seek broader standardization.
 
 **Structural advantage of B/C:** The `apiSchemas` list functions like glTF's
 `extensionsUsed` (or W3C's declared feature policies) — a consumer knows which
@@ -218,10 +238,12 @@ across all prims. Approach A has no equivalent.
 | Lines of validation code | ~30 | ~15 |
 
 **Schema registration cost:** A full compiled companion schema requires ~1,150 lines
-across 16 files (reference: `UsdSemanticsLabelsAPI`). However, **codeless schemas**
-(`skipCodeGeneration = true`) require only ~80 lines across 3 files — no C++,
-no Python wrappers, no CMake. This dramatically lowers the barrier for domain
-stakeholders who need typed extension properties in B/C.
+across 16 files (reference: `UsdSemanticsLabelsAPI`). **Codeless schemas**
+(`skipCodeGeneration = true`) reduce this to ~80 lines across 3 files — no C++,
+no Python wrappers, no CMake — lowering the barrier from "requires USD build
+system expertise" to "edit a `.usda` file and run `usdGenSchema`." This is
+relevant for domain stakeholders (AECO firms, PLM vendors, standards bodies)
+who need typed extension properties in B/C but may lack C++ expertise.
 
 | Deployment tier | Files | Lines | C++ needed? |
 |----------------|-------|-------|-------------|
@@ -275,7 +297,12 @@ central to AAS/Industry 4.0 but arguably irrelevant for many other domains (IFC
 GlobalId is always instance-level; ECLASS is always type-level; glTF/MaterialX have
 no such concept). If `scope` is domain-specific rather than universal, it may belong
 in the `assetInfo` overflow dict — which is precisely the escape hatch Approach C
-provides. This is literal "scope creep" and merits TAC discussion.
+provides. This is literal "scope creep" and merits TAC discussion. The
+[scope promotion simulation](details/scope_promotion_simulation.md)
+demonstrates one concrete resolution: `scope` starts in the overflow dict,
+gains cross-domain adoption, undergoes registry-spec validation, and is
+eventually promoted to a schema property — with concrete `.usda` files and
+runnable scripts at each phase.
 
 **DPP proof-of-concept.** Michael Wagner (SyncTwin) built a bidirectional AAS Digital
 Battery Passport ↔ OpenUSD mapping (PR asluk/OpenUSD-proposals#2) that exercises both
@@ -307,6 +334,22 @@ consumers must implement vendor-specific dictionary parsing, echoing the
 **Approach B alone** cannot carry the domain-specific metadata that real-world
 industrial workflows require without forcing every stakeholder to register companion
 schemas — creating schema sprawl or pushing metadata back into `customData`.
+
+### Why the overflow dict is not `customData`
+
+A natural objection: does the `assetInfo` overflow dict simply recreate the
+`customData` dumping ground the proposal aims to resolve? Three structural
+differences:
+
+1. **Scoped, not global.** Overflow lives under `assetInfo["sourceIds"][<domain>]`,
+   keyed to a registered domain. `customData` is a flat, unscoped namespace.
+2. **Linked to a schema instance.** The overflow dict key matches the
+   `SourceIdHybridAPI:<domain>` instance name — tools know which overflow
+   dict belongs to which schema instance. `customData` has no such linkage.
+3. **Governed evolution path.** Overflow fields that prove cross-domain utility
+   can be promoted to schema properties through the registry-spec → schema
+   promotion lifecycle (see [scope promotion simulation](details/scope_promotion_simulation.md)).
+   `customData` fields have no standardized promotion path.
 
 ### Approach C: Multi-apply schema + `assetInfo` overflow
 
@@ -423,7 +466,9 @@ extras/sourceIdentifiers/
 │   ├── industry_scenarios.md              # Section 4: AECO/mfg/robotics/M&E
 │   ├── stress_tests.md                    # Section 5: 8-vendor sim, 100K-prim
 │   ├── governance.md                      # Section 6: Registry model, validators
-│   └── hybrid_analysis.md                 # Section 7: C design + migration path
+│   ├── hybrid_analysis.md                 # Section 7: C design + migration path
+│   ├── registry_spec_analysis.md          # Could a registry close A's interop gap?
+│   └── scope_promotion_simulation.md      # Lifecycle: overflow → schema property
 ├── examples/
 │   ├── approach_a_assetinfo.usda          # AECO building (A)
 │   ├── approach_b_schema.usda             # AECO building (B)
@@ -438,6 +483,13 @@ extras/sourceIdentifiers/
 ├── vendor_simulation/
 │   ├── approach_a_vendors.usda            # 8-vendor simulation (A)
 │   └── approach_b_vendors.usda            # 8-vendor simulation (B)
+├── scope_promotion/
+│   ├── phase1_aas_overflow.usda           # Phase 1: scope in AAS overflow only
+│   ├── phase2_cross_domain.usda           # Phase 2: Windchill + ROS adopt scope
+│   ├── phase3_validator.py                # Phase 3: Registry-spec CI validator
+│   ├── phase4_schema.usda                 # Phase 4: Updated schema definition
+│   ├── phase4_promoted.usda               # Phase 4: scope as schema property
+│   └── phase5_migration.py                # Phase 5: Overflow → schema migration
 └── stress_tests/
     ├── generate_large_stage.py            # 100K-prim generator (seed=42)
     ├── stress_test_results.json           # Empirical measurements
