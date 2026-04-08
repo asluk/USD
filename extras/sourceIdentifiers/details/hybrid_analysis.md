@@ -268,7 +268,7 @@ The `scope = "instance"` value flags this as a serial-number-level identifier
 the schema or the overflow dict is an open question (see COMPARISON.md §3.5).
 DPP-specific fields land in the `assetInfo` overflow with no schema changes required.
 
-**Validation.** Michael Wagner (SyncTwin) built a bidirectional AAS DPP ↔ OpenUSD
+**Validation.** A community contributor built a bidirectional AAS DPP ↔ OpenUSD
 mapping (asluk/OpenUSD-proposals#2) exercising both Approach A and B. The hybrid
 pattern absorbed all DPP-specific fields in the overflow dictionary, confirming that
 no companion schema is needed for this use case.

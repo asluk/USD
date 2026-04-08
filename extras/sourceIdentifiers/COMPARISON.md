@@ -325,7 +325,7 @@ gains cross-domain adoption, undergoes registry-spec validation, and is
 eventually promoted to a schema property — with concrete `.usda` files and
 runnable scripts at each phase.
 
-**DPP proof-of-concept.** Michael Wagner (SyncTwin) built a bidirectional AAS Digital
+**DPP proof-of-concept.** A community contributor built a bidirectional AAS Digital
 Battery Passport ↔ OpenUSD mapping (PR asluk/OpenUSD-proposals#2) that exercises both
 Approach A and B, validating that the hybrid overflow pattern handles DPP-specific
 fields (`batteryModel`, `manufacturingDate`, `chemistry`) without schema changes.

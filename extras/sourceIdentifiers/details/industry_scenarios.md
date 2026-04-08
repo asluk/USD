@@ -74,7 +74,7 @@ identifiers, and Mercedes-Benz-style part numbering with extension codes.
   typed list of instance-level identifiers (serial number, batch ID,
   deployed unit ID) per asset directly parallels the multi-identifier-per-prim
   requirement analyzed above: each entry needs a type label and a scope
-  (type-level vs. instance-level). Michael Wagner's AAS Digital Battery
+  (type-level vs. instance-level). The AAS Digital Battery
   Passport ↔ OpenUSD proof-of-concept (asluk/OpenUSD-proposals#2) confirms
   that Approach C's `assetInfo` overflow handles this list pattern without
   requiring additional schemas.
