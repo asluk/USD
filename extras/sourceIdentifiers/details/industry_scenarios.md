@@ -148,7 +148,7 @@ The pattern across all four verticals is consistent:
 (a string ID + optional version), both approaches are equivalent. For
 industries with rich, heterogeneous identifier metadata - which includes
 manufacturing, AECO, and robotics - Approach A's freeform dictionaries
-are significantly more capable without requiring per-domain schema work.
+handle all tested scenarios without requiring per-domain schema work.
 
 This is the central tension driving the hybrid recommendation in
 [hybrid_analysis.md](hybrid_analysis.md).
