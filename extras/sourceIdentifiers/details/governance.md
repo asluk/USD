@@ -17,7 +17,7 @@ Six precedents from other standards bodies inform this design:
 | **Khronos OpenGL/Vulkan** | Extension registry | `GL_NV_` → `GL_EXT_` → `GL_ARB_` → core | Formal registry at registry.khronos.org | Registered prefixes |
 | **IETF/IANA** | RFC 8126 registration policies | Private Use → First Come First Served → Expert Review → Standards Action | IANA registry with designated expert | Unique registration per entry |
 | **W3C** | WICG incubation | Community Group → Working Group → Recommendation | Community Group proposal | `data-*` for freeform; standard attrs governed |
-| **buildingSMART** | bSDD data dictionary | Organization-published → reviewed → standard | Online portal + REST API | Centralized namespace |
+| **buildingSMART** | bSDD data dictionary | Organization-published dictionaries hosted centrally | Online portal + REST API | Centralized namespace |
 | **Java/XML** | Reverse-DNS convention | Single tier (by convention) | None (self-service) | Domain name ownership |
 
 **Key insight:** Two models bracket the design space for what AOUSD would
