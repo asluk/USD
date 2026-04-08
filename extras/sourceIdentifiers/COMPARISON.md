@@ -295,9 +295,12 @@ round-tripping, filtering, and collision prevention across systems.
   convention without out-of-band knowledge.
 
 - **Approach B:** The `domain` token already serves as the authoritative identifier
-  type label. A `scope` token could be added to the schema, but many domains (IFC,
-  glTF, MaterialX) have no type-vs-instance distinction — making it arguably
-  domain-specific rather than universal. The open-ended `specificAssetIds` list
+  type label. A `scope` token could be added to the schema, but many domains
+  have no need for it — making it arguably domain-specific rather than
+  universal. glTF and MaterialX each have internal type/instance concepts
+  (mesh reuse, node definitions) but define no type-vs-instance distinction
+  at the external identifier level. IFC assigns a GlobalId to every entity
+  regardless of whether it is a type object or an instance object. The open-ended `specificAssetIds` list
   structure cannot be expressed without a companion schema or falling back to
   `customData`.
 
@@ -307,9 +310,13 @@ round-tripping, filtering, and collision prevention across systems.
   needed, without schema proliferation.
 
 **Open question: where does `scope` live?** The type-vs-instance distinction is
-central to AAS/Industry 4.0 but arguably irrelevant for many other domains (IFC
-GlobalId is always instance-level; ECLASS is always type-level; glTF/MaterialX have
-no such concept). If `scope` is domain-specific rather than universal, it may belong
+central to AAS/Industry 4.0 but arguably irrelevant for many other domains.
+IFC GlobalId uniquely identifies each entity — both type objects
+(`IfcTypeObject`) and instance objects (`IfcObject`) carry their own
+GlobalId, so the type-vs-instance distinction is structural (class
+hierarchy), not at the identifier level. ECLASS is a product classification
+standard and is inherently type-level. glTF and MaterialX have internal
+type/instance concepts but no equivalent external identifier distinction. If `scope` is domain-specific rather than universal, it may belong
 in the `assetInfo` overflow dict — which is precisely the escape hatch Approach C
 provides. This is literal "scope creep" and merits TAC discussion. The
 [scope promotion simulation](details/scope_promotion_simulation.md)

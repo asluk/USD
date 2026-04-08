@@ -170,8 +170,10 @@ def Mesh "Column_C14" (
   type-level identifiers (part families) from instance-level (serial numbers)
   via `globalAssetId` vs `specificAssetIds`. The schema *could* add an
   optional `scope` token (`"type"`, `"instance"`, or unset), but many
-  domains have no such distinction (IFC GlobalId = always instance; ECLASS =
-  always type; glTF/MaterialX = N/A). Whether `scope` belongs in the base
+  domains have no such distinction at the identifier level (IFC GlobalId
+  identifies each entity uniquely regardless of type vs. instance; ECLASS
+  is inherently type-level; glTF and MaterialX have no equivalent external
+  identifier scoping). Whether `scope` belongs in the base
   schema or in the domain-specific `assetInfo` overflow dict is an open
   question. The existing `domain` token already serves as the authoritative
   identifier type label (PLM, IFC, ERP, ECLASS).

@@ -37,7 +37,8 @@ identifiers (product families, part designations) from instance-level identifier
 `specificAssetIds` (instance). They encode this as a `scope` string in their
 `assetInfo` overflow dictionary.
 
-Meanwhile, IFC's GlobalId is always instance-level by definition, and Windchill's
+Meanwhile, IFC's GlobalId identifies each entity uniquely (both type objects
+and instance objects), and Windchill's
 part OID always references a specific part revision. Neither domain needs `scope`.
 
 **What the `.usda` shows:**
@@ -45,7 +46,7 @@ part OID always references a specific part revision. Neither domain needs `scope
 
 - `BatteryPack_SN42` — DPP with `scope = "instance"` (a specific battery unit)
 - `BatteryPack_LFP280` — DPP with `scope = "type"` (the product family)
-- `Column_C14` — IFC, no scope (GlobalId is always instance-level)
+- `Column_C14` — IFC, no scope (GlobalId identifies each entity, type or instance)
 - `Chiller_01` — Windchill, no scope (OID is always a specific part)
 
 **Key observation:** `scope` lives entirely in the overflow dict. The base schema
@@ -80,7 +81,9 @@ identifiers.
   type-level; deployed fleet instances are instance-level. The robotics
   community adopted `scope` with the same semantics.
 
-- **IFC:** Still no need for `scope`. IFC GlobalId is always instance-level
+- **IFC:** Still no need for `scope`. IFC GlobalId identifies each entity
+  uniquely (both type objects and instance objects), so the type-vs-instance
+  distinction is structural, not at the identifier level
   by definition. The convention exists alongside IFC identifiers without
   requiring any change.
 
@@ -186,7 +189,9 @@ overflow dict to a typed schema property. The evidence is strong:
 
 The TAC ratifies `scope` as an **optional** `token` property with
 `allowedTokens = ["type", "instance", ""]`. The empty default means
-domains that don't need it (IFC, glTF, MaterialX) are unaffected.
+domains that don't need it are unaffected — IFC assigns GlobalIds to both
+type and instance objects without distinction, and glTF and MaterialX have
+no equivalent external identifier scoping.
 
 **What the files show:**
 

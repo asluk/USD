@@ -125,7 +125,7 @@ def Xform "UR10e_Cell3_Unit7" (
 }
 
 # ── IFC: scope left unset (default empty token) ──────────────────────────
-# IFC GlobalId is always instance-level by definition. No need to set scope.
+# IFC GlobalId identifies each entity (type or instance). No need to set scope.
 
 def Mesh "Column_C14" (
     prepend apiSchemas = ["SourceIdHybridAPI:ifc"]

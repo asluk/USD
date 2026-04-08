@@ -64,8 +64,8 @@ def Mesh "Column_C14" (
     assetInfo = {
         dictionary sourceIds = {
             dictionary ifc = {
-                # IFC GlobalId is ALWAYS instance-level by definition.
-                # No scope field needed — the domain semantics are unambiguous.
+                # IFC GlobalId uniquely identifies each entity (type or instance).
+                # No scope field needed — the identifier doesn't distinguish.
                 string ifcType = "IfcColumn"
                 string objectType = "W14x90"
                 string schema = "IFC4x3"

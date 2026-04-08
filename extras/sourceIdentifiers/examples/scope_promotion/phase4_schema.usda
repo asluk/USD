@@ -59,7 +59,7 @@ class "SourceIdHybridAPI" (
         cross-domain utility across 3+ domains over ~18 months.
         
         Domains where scope is typically unnecessary:
-          - IFC (GlobalId is always instance-level)
+          - IFC (GlobalId identifies each entity, type or instance)
           - ECLASS (always type-level)
           - glTF, MaterialX (no type-vs-instance distinction)"""
         allowedTokens = ["type", "instance", ""]
