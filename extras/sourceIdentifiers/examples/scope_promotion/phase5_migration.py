@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Phase 5: Migration script — move 'scope' from overflow dict to schema property.
+"""Phase 5: Migration script -- move 'scope' from overflow dict to schema property.
 
 After TAC promotes scope to a schema property, existing stages may have scope
 values in both places:
@@ -24,7 +24,7 @@ import sys
 import copy
 import json
 
-# ── Simulated stage: mixed old (overflow) and new (schema) scope values ───
+# -- Simulated stage: mixed old (overflow) and new (schema) scope values ---
 
 SIMULATED_STAGE = {
     "/BatteryPack_SN42": {
@@ -77,7 +77,7 @@ SIMULATED_STAGE = {
         "schema_props": {
             "sourceIdentifier:ifc:primaryId": "2O2Fr$t4X7Zf8NOew3FNr2",
             "sourceIdentifier:ifc:domain": "org.buildingsmart.ifc",
-            "sourceIdentifier:ifc:scope": "",  # Never had scope — leave empty
+            "sourceIdentifier:ifc:scope": "",  # Never had scope -- leave empty
         },
         "overflow": {
             "ifc": {
@@ -111,28 +111,28 @@ def migrate_scope(stage_data):
             schema_scope = data["schema_props"].get(scope_prop, "")
 
             if overflow_scope is None:
-                # No scope in overflow — nothing to migrate
+                # No scope in overflow -- nothing to migrate
                 actions.append(
-                    f"  ⏭️  {prim_path} ({instance}): "
-                    f"no scope in overflow — skipped"
+                    f"  SKIP {prim_path} ({instance}): "
+                    f"no scope in overflow -- skipped"
                 )
                 continue
 
             if schema_scope and schema_scope != "":
-                # Schema property already set — just clean up overflow
+                # Schema property already set -- just clean up overflow
                 del result[prim_path]["overflow"][instance]["scope"]
                 actions.append(
-                    f"  🧹 {prim_path} ({instance}): "
-                    f"schema already has scope='{schema_scope}' — "
+                    f"  CLEAN {prim_path} ({instance}): "
+                    f"schema already has scope='{schema_scope}' -- "
                     f"removed duplicate from overflow"
                 )
                 continue
 
-            # Migrate: copy overflow → schema, remove from overflow
+            # Migrate: copy overflow -> schema, remove from overflow
             result[prim_path]["schema_props"][scope_prop] = overflow_scope
             del result[prim_path]["overflow"][instance]["scope"]
             actions.append(
-                f"  ✅ {prim_path} ({instance}): "
+                f"  MIGRATE {prim_path} ({instance}): "
                 f"migrated scope='{overflow_scope}' from overflow to schema"
             )
 
@@ -141,7 +141,7 @@ def migrate_scope(stage_data):
 
 def main():
     print("=" * 70)
-    print("Scope Migration: overflow dict → schema property")
+    print("Scope Migration: overflow dict -> schema property")
     print("=" * 70)
     print()
 

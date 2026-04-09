@@ -76,6 +76,30 @@ domains from the 8-vendor pool, with metadata fields.
 | Line count | 3,085,417 | 2,020,995 | 0.655× |
 | Generation time | 6.37 s | 1.29 s | 0.203× |
 
+### Estimated binary (usdc) sizes
+
+The stress test generates `.usda` text files. Production USD pipelines
+typically use the Crate binary format (`.usdc`), which compresses
+significantly. Based on published Crate compression characteristics
+(string deduplication, integer compression, structural overhead removal),
+typical compression ratios for attribute-heavy data are 3–5× smaller
+than `.usda`.
+
+| Metric | A (usda) | B (usda) | C (usda) | A (est. usdc) | B (est. usdc) | C (est. usdc) |
+|--------|---------|---------|---------|--------------|--------------|--------------|
+| File size | 106.3 MB | 91.6 MB | 144.0 MB | ~25–35 MB | ~22–31 MB | ~34–48 MB |
+
+**Note:** These are estimates, not measurements. Actual `usdc` sizes depend
+on string deduplication efficiency (which favors B's repeated property name
+patterns) and dictionary encoding overhead (which may compress differently
+for A's nested structures). Generating actual `usdc` files requires a built
+OpenUSD environment; contributions of measured values are welcome.
+
+The key observation is that the relative ordering (B < A < C) is likely
+preserved in binary format, but the absolute differences narrow
+substantially. C's 57% text-format overhead over B likely reduces to
+~30–50% in binary.
+
 **Analysis:** Approach B produces 14% smaller files and 35% fewer lines.
 This is because:
 

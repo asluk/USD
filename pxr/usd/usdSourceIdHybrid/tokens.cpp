@@ -4,28 +4,28 @@
 // Licensed under the terms set forth in the LICENSE.txt file available at
 // https://openusd.org/license.
 //
-#include "pxr/usd/usdSourceIdSchema/tokens.h"
+#include "pxr/usd/usdSourceIdHybrid/tokens.h"
 
 PXR_NAMESPACE_OPEN_SCOPE
 
-UsdSourceIdSchemaTokensType::UsdSourceIdSchemaTokensType() :
+UsdSourceIdHybridTokensType::UsdSourceIdHybridTokensType() :
     sourceIdentifier("sourceIdentifier", TfToken::Immortal),
     sourceIdentifier_MultipleApplyTemplate_Domain("sourceIdentifier:__INSTANCE_NAME__:domain", TfToken::Immortal),
     sourceIdentifier_MultipleApplyTemplate_Label("sourceIdentifier:__INSTANCE_NAME__:label", TfToken::Immortal),
     sourceIdentifier_MultipleApplyTemplate_PrimaryId("sourceIdentifier:__INSTANCE_NAME__:primaryId", TfToken::Immortal),
     sourceIdentifier_MultipleApplyTemplate_Revision("sourceIdentifier:__INSTANCE_NAME__:revision", TfToken::Immortal),
-    SourceIdSchemaAPI("SourceIdSchemaAPI", TfToken::Immortal),
+    SourceIdHybridAPI("SourceIdHybridAPI", TfToken::Immortal),
     allTokens({
         sourceIdentifier,
         sourceIdentifier_MultipleApplyTemplate_Domain,
         sourceIdentifier_MultipleApplyTemplate_Label,
         sourceIdentifier_MultipleApplyTemplate_PrimaryId,
         sourceIdentifier_MultipleApplyTemplate_Revision,
-        SourceIdSchemaAPI
+        SourceIdHybridAPI
     })
 {
 }
 
-TfStaticData<UsdSourceIdSchemaTokensType> UsdSourceIdSchemaTokens;
+TfStaticData<UsdSourceIdHybridTokensType> UsdSourceIdHybridTokens;
 
 PXR_NAMESPACE_CLOSE_SCOPE

@@ -213,3 +213,24 @@ std::vector<TfToken> instances = UsdSourceIdSchemaAPI::GetAll(prim);
 | Fallback values | None | Empty strings |
 | GUI presentation | Requires custom code | Automatic |
 | Composition | Per dict key (element-wise) | Per property (independent) |
+
+## Terminology note: `metadata` sub-dictionary key
+
+Approach A uses the key `metadata` within each domain's source identifier
+dictionary to hold additional fields (e.g.,
+`assetInfo["sourceIds"]["windchill"]["metadata"]["displayNumber"]`). This
+term is overloaded in USD, where "metadata" already refers to the
+prim/property metadata system (`GetMetadata()`, `SetMetadata()`,
+`customData`, `assetInfo` itself).
+
+A production implementation should consider alternative names for this
+sub-dictionary key to avoid confusion:
+
+- **`extensions`** — following glTF's `extensions` / `extras` precedent,
+  where `extensions` carries governed vendor data alongside a core schema.
+- **`domainData`** — explicit about what it contains.
+- **`extra`** — shorter, following the glTF `extras` pattern.
+
+The prototype uses `metadata` for clarity during the comparison phase.
+The final key name is a minor detail to be resolved during the solution
+proposal.

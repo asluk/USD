@@ -138,6 +138,28 @@ property.
   the two mechanisms is explicit and follows established USD patterns
   (cf. `UsdMediaAssetPreviewsAPI` storing data in `assetInfo`).
 
+### 7.3a Instance-name-to-dict-key linkage
+
+The hybrid's key convention — `SourceIdHybridAPI:windchill` matches
+`assetInfo["sourceIds"]["windchill"]` — is enforced by the convenience API
+(`GetDomainMetadata()` uses the instance name to locate the overflow dict),
+not by the schema system itself. Nothing structurally prevents authoring a
+schema instance `SourceIdHybridAPI:wc` with an overflow dict key `windchill`.
+
+This is a class of error that pure-schema (B) and pure-dict (A) approaches
+cannot produce. Mitigation:
+
+1. **Convenience API enforcement.** The `SetDomainMetadata()` and
+   `GetDomainMetadata()` methods always use the instance name as the dict
+   key, so tools using the API cannot create mismatches.
+2. **Validator rule.** The hybrid's validation specification should include a
+   rule: "for each `SourceIdHybridAPI:<name>` instance, if
+   `assetInfo["sourceIds"]` contains a key that does not match any applied
+   instance name, emit a warning." This catches orphaned overflow dicts and
+   mismatched keys.
+3. **Documentation.** The convention must be prominently documented in the
+   schema's docstring and any onboarding guides.
+
 ### 7.4 Composition behavior of the hybrid
 
 The hybrid composes as follows:
@@ -188,6 +210,34 @@ because:
    property count would be even higher than the hybrid's `assetInfo`
    overhead.
 
+### 7.5a VtDictionary access performance
+
+Reading overflow metadata requires walking a nested dictionary chain:
+`assetInfo` → `sourceIds` → `<domain>` → `<key>`. This path is not
+indexed by the USD composition engine in the way that schema property
+names are indexed by `SdfPath` + attribute name.
+
+For **per-prim reads** (e.g., a GUI panel displaying a single prim's
+identifiers), the overhead is negligible — dictionary lookups are O(1)
+hash operations at each level.
+
+For **full-stage queries** ("find all prims whose Windchill
+`navigationType` matches a given filter"), the query requires a full
+stage traversal with dictionary inspection at each prim. This is no
+worse than Approach A (which faces the same traversal) and comparable
+to Approach B for non-indexed queries. In production, both approaches
+benefit from **external indexing** — the mechanism must make building
+such indexes tractable, which it does (schema properties via
+`GetAll()` + attribute access, overflow dicts via the convenience API's
+`GetDomainMetadata()`).
+
+The hybrid's schema properties (`primaryId`, `domain`) — the fields most
+commonly used in cross-stage queries — benefit from the faster
+property-access path. Domain-specific overflow fields, which are
+typically queried only within a known subtree, use the dictionary path.
+This aligns the access-performance characteristics with the query
+patterns.
+
 ### 7.5 Governance model for the hybrid
 
 The three-tier AOUSD Domains Registry (Section 6.2) applies directly:
@@ -219,6 +269,50 @@ Pipelines currently using `customData`, `displayName`, or ad-hoc
 
 This can be done per-layer, per-domain, without disrupting existing
 composition. No big-bang migration required.
+
+**Concrete example: IFC pipeline migration.**
+
+A pipeline currently storing IFC GlobalId in `customData`:
+
+```usda
+# Before (ad-hoc customData convention)
+def Mesh "Column_C14" (
+    customData = {
+        string ifcGlobalId = "2O2Fr$t4X7Zf8NOew3FNr2"
+        string ifcType = "IfcColumn"
+    }
+)
+{
+}
+```
+
+Migrated to Approach C:
+
+```usda
+# After (hybrid: schema for linkage key, overflow for domain metadata)
+def Mesh "Column_C14" (
+    prepend apiSchemas = ["SourceIdHybridAPI:ifc"]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary ifc = {
+                string ifcType = "IfcColumn"
+                string schema = "IFC4x3"
+                string objectType = "W14x90"
+            }
+        }
+    }
+)
+{
+    string sourceIdentifier:ifc:primaryId = "2O2Fr$t4X7Zf8NOew3FNr2"
+    token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+    string sourceIdentifier:ifc:label = "IFC GlobalId"
+}
+```
+
+The migration moves the linkage key (`ifcGlobalId`) to the schema's
+`primaryId`, adds domain registration, and places IFC-specific metadata
+in the overflow dict. The old `customData` entries can be removed. This
+can be done per-layer without disrupting existing composition.
 
 ### 7.6a AAS Digital Battery Passport mapping
 

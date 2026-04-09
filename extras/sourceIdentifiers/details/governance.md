@@ -20,6 +20,20 @@ Six precedents from other standards bodies inform this design:
 | **buildingSMART** | bSDD data dictionary | Organization-published dictionaries hosted centrally | Online portal + REST API | Centralized namespace |
 | **Java/XML** | Reverse-DNS convention | Single tier (by convention) | None (self-service) | Domain name ownership |
 
+**Relationship to buildingSMART bSDD.** The buildingSMART Data Dictionary
+(bSDD) is a centralized data dictionary for building industry property
+definitions — it defines what properties mean (e.g., "fire resistance
+rating" with units, allowed values, and translations). The proposed AOUSD
+Domains Registry serves a different purpose: it coordinates **namespace
+ownership** for identifier domains (e.g., "the key `org.buildingsmart.ifc`
+belongs to buildingSMART"). The two systems are complementary, not
+competing: bSDD defines property semantics; the AOUSD registry prevents
+namespace collisions. A buildingSMART stakeholder would register their
+domain prefix in the AOUSD registry and publish their identifier field
+definitions in bSDD (or their own specification), just as a Khronos vendor
+registers an extension prefix and publishes the extension specification
+separately.
+
 **Key insight:** Two models bracket the design space for what AOUSD would
 need for source identifiers:
 
