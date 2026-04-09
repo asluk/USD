@@ -18,7 +18,7 @@ Usage:
 import sys
 import json
 
-# ── Registry spec (normally loaded from AOUSD Domains Registry) ───────────
+# -- Registry spec (normally loaded from AOUSD Domains Registry) -----------
 
 SCOPE_REGISTRY_SPEC = {
     "field": "scope",
@@ -36,7 +36,7 @@ SCOPE_REGISTRY_SPEC = {
     ],
 }
 
-# ── Simulated stage data (from phase2_cross_domain.usda) ─────────────────
+# -- Simulated stage data (from phase2_cross_domain.usda) ------------------
 # In production, this would use the USD Python API:
 #   from pxr import Usd
 #   stage = Usd.Stage.Open(filepath)
@@ -64,7 +64,7 @@ SIMULATED_STAGE = {
         "domain": "org.ros.urdf",
         "overflow": {"scope": "instance", "frameId": "cell3_ur10e_7_base_link"},
     },
-    # ── Deliberately broken entries for validation demo ──
+    # -- Deliberately broken entries for validation demo --
     "/BadPrim_Typo": {
         "domain": "org.idta.dpp",
         "overflow": {"scope": "instnace"},  # Typo!
@@ -75,7 +75,7 @@ SIMULATED_STAGE = {
     },
     "/Column_C14": {
         "domain": "org.buildingsmart.ifc",
-        "overflow": {"ifcType": "IfcColumn"},  # No scope — that's fine
+        "overflow": {"ifcType": "IfcColumn"},  # No scope -- that's fine
     },
 }
 
@@ -125,7 +125,7 @@ def validate_scope(stage_data, spec):
 
 def main():
     print("=" * 70)
-    print("AOUSD Source Identifier Validator — scope field (registry-spec v1.0)")
+    print("AOUSD Source Identifier Validator -- scope field (registry-spec v1.0)")
     print("=" * 70)
     print()
     print(f"Spec: {SCOPE_REGISTRY_SPEC['doc']}")
@@ -140,7 +140,7 @@ def main():
     passed = 0
 
     for prim_path, severity, message in results:
-        icon = {"OK": "✅", "WARNING": "⚠️ ", "ERROR": "❌"}[severity]
+        icon = {"OK": "PASS", "WARNING": "WARN", "ERROR": "FAIL"}[severity]
         print(f"  {icon} {prim_path}: {message}")
         if severity == "ERROR":
             errors += 1
@@ -154,10 +154,10 @@ def main():
     print()
 
     if errors > 0:
-        print("VALIDATION FAILED — fix errors before merging.")
+        print("VALIDATION FAILED -- fix errors before merging.")
         return 1
     elif warnings > 0:
-        print("VALIDATION PASSED with warnings — review before merging.")
+        print("VALIDATION PASSED with warnings -- review before merging.")
         return 0
     else:
         print("VALIDATION PASSED.")

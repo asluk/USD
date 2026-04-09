@@ -1,38 +1,29 @@
 {
   "approach_a": {
-    "generation_time_sec": 6.365,
-    "file_size_bytes": 111422213,
-    "file_size_mb": 106.26,
+    "generation_time_sec": 7.705,
+    "file_size_bytes": 114695180,
+    "file_size_mb": 109.38,
     "num_prims": 100000
   },
   "approach_b": {
-    "generation_time_sec": 1.294,
-    "file_size_bytes": 96002040,
-    "file_size_mb": 91.55,
+    "generation_time_sec": 2.872,
+    "file_size_bytes": 97612029,
+    "file_size_mb": 93.09,
     "num_prims": 100000
   },
-  "file_size_ratio_b_over_a": 0.862,
+  "file_size_ratio_b_over_a": 0.851,
   "discovery": {
-    "approach_a_sec": 0.6384,
-    "approach_b_sec": 0.5899,
+    "approach_a_sec": 1.3342,
+    "approach_b_sec": 0.9415,
     "approach_b_matches": 1
   },
   "line_count": {
     "approach_a": 3085417,
     "approach_b": 2020995,
-    "ratio_b_over_a": 0.655,
-    "approach_c": 3583150
+    "ratio_b_over_a": 0.655
   },
   "namespace_footprint": {
     "approach_a_unique_keys": 10,
-    "approach_b_unique_properties": 30,
-    "approach_c_unique_properties": 30,
-    "approach_c_unique_dict_keys": 9
-  },
-  "approach_c": {
-    "generation_time_sec": 5.706,
-    "file_size_bytes": 151032507,
-    "file_size_mb": 144.04,
-    "num_prims": 100000
+    "approach_b_unique_properties": 30
   }
 }
