@@ -112,6 +112,31 @@ operational telemetry binding.
   bind a sensor prim to its ROS data stream. These are domain-specific
   fields that B's base schema cannot carry.
 
+**Round-trip scenario: URDF → USD → modify → URDF.**
+
+Consider a concrete round-trip workflow:
+
+1. A UR10e robot is authored in URDF as `package://ur_description/urdf/ur10e.urdf`
+2. An ingestion pipeline converts it to USD, creating `/World/UR10e`
+3. An artist in Omniverse adds visual materials and adjusts joint limits
+4. The modified asset is exported back to URDF for simulation in Gazebo
+
+**Without source identifiers (today):** The originating package URI
+(`package://ur_description/urdf/ur10e.urdf`), model name (`UR10e`), and
+source format (`URDF`) are lost on ingest — or stored in ad-hoc `customData`
+that the URDF exporter doesn't know to look for. The export pipeline must
+either require manual annotation or guess the output package structure.
+
+**With the hybrid:** The ingestion pipeline writes:
+- `sourceIdentifier:ros:primaryId = "package://ur_description/urdf/ur10e.urdf"`
+- `sourceIdentifier:ros:domain = "org.ros"`
+- Overflow: `{packageName: "ur_description", modelName: "UR10e", sourceFormat: "URDF"}`
+
+The URDF exporter reads `sourceIdentifier:ros:primaryId` to reconstruct the
+package URI and uses the overflow metadata to restore the URDF structure.
+The round-trip preserves provenance without the exporter needing to know
+about ad-hoc `customData` conventions.
+
 ## 4.4 Media & Entertainment
 
 While not separately implemented as a test file (USD's existing `assetInfo`

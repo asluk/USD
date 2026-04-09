@@ -107,6 +107,25 @@ The [Key Findings](#key-findings) below present the evidence for each.
    from the start?
    → Evidence: §3.2 Industry Scenarios, §3.5 Scoping
 
+   **Field-by-field justification:**
+
+   | Field | AECO | Manufacturing | Robotics | M&E | Universality |
+   |-------|------|--------------|----------|-----|-------------|
+   | `primaryId` | IFC GlobalId, Revit ElementId | Windchill OID, SAP Material # | ROS package URI, fleet ID | Asset DB ID | Universal — every identifier scheme has a primary key |
+   | `revision` | Design phase version | Rev.C, AP242-ED3 | Package version (1.4.2) | Asset version | High — but absent for some schemes (IFC GlobalId, OPC UA NodeId have no revision concept) |
+   | `domain` | org.buildingsmart.ifc | com.ptc.windchill | org.ros | com.studio.tracker | Universal — collision prevention requires unambiguous system identification |
+   | `label` | "IFC GlobalId" | "Windchill Part OID" | "ROS Package URI" | "Asset DB ID" | Universal — see note below |
+
+   **Note on `label`.** `label` sits at the boundary of display and
+   identification. It is *not* a display name for the prim (that is
+   `displayName` / `uiHints`); it describes *the identifier's role in
+   the external system* — e.g., "IFC GlobalId" vs. "Revit ElementId" on
+   the same prim. This serves tooling (GUI property panels listing
+   multiple identifiers, diagnostic output, BOM reports) and is distinct
+   from presentation concerns. Without `label`, a GUI showing
+   `sourceIdentifier:ifc:primaryId = "2O2Fr$t4X7Zf8NOew3FNr2"` has no
+   human-readable context for what that string means.
+
 3. **Governance model.** Should AOUSD establish a domain registry with three
    tiers (vendor → multi-vendor → standard), modeled on Khronos glTF / W3C
    incubation precedents?
@@ -220,14 +239,22 @@ metadata that varies by domain. The next section quantifies this at scale.
 
 | Metric | Approach A | Approach B | C (Hybrid) |
 |--------|-----------|-----------|------------|
-| File size | 106.3 MB | 91.6 MB | 144.0 MB |
+| File size (usda) | 106.3 MB | 91.6 MB | 144.0 MB |
+| File size (est. usdc) | ~25–35 MB | ~22–31 MB | ~34–48 MB |
 | Line count | 3.09M | 2.02M | 3.58M |
 | Namespace footprint | 10 dict keys | 30 property names | 30 props + 9 dict keys |
 | Full-stage text scan | 0.638 s | 0.590 s | — |
 
-C's 57% size increase over B is the dual-mechanism cost, overstated because: not all
-domains need overflow, binary formats compress dicts efficiently, and the alternative
-(companion schemas) would create even more property names.
+The `usdc` estimates assume 3–5× compression (typical for attribute-heavy
+Crate files; actual measurements require a built OpenUSD environment — see
+[details/stress_tests.md](details/stress_tests.md)). The relative ordering
+B < A < C is likely preserved, but absolute differences narrow substantially
+in binary format.
+
+C's 57% text-format size increase over B (estimated ~30–50% in binary) is the
+dual-mechanism cost, overstated because: not all domains need overflow, binary
+formats compress dicts efficiently, and the alternative (companion schemas)
+would create even more property names.
 
 **Vendor adoption scoring** (8 dimensions, 1–5 each; weights reflect
 TAC discussion priorities from the 2026-03-06 and subsequent sessions):
@@ -243,6 +270,22 @@ TAC discussion priorities from the 2026-03-06 and subsequent sessions):
 | Discoverability | 2 | 5 | B | High |
 | Schema validation | 1 | 5 | B | High |
 | **Total** | **23** | **33** | **B** | |
+
+**Weight rationale.** "High" weight was assigned to dimensions that TAC
+discussion identified as load-bearing for a multi-stakeholder standard:
+collision safety (silent data corruption is unacceptable), discoverability
+(tools must find identifiers without prior knowledge), schema validation
+(type safety at the data layer), and metadata flexibility (real-world
+industrial data requires more than four fields). "Medium" for dimensions
+important but not differentiating between the approaches in practice. "Low"
+for dimensions where both approaches perform similarly (scale manageability).
+
+Note that the scoring is illustrative, not prescriptive. Readers who weight
+metadata flexibility as the dominant concern (e.g., manufacturing
+stakeholders with rich PLM metadata) would see a narrower gap between A
+and B. The scoring's primary value is identifying *which dimensions each
+approach wins on*, not producing a single winner — which is why the
+recommendation is a hybrid rather than either pure approach.
 
 → Deep dive: [details/stress_tests.md](details/stress_tests.md)
 
@@ -380,6 +423,27 @@ gains cross-domain adoption, undergoes registry-spec validation, and is
 eventually promoted to a schema property — with concrete `.usda` files and
 runnable scripts at each phase.
 
+**Counter-argument: start `scope` in the schema.** If three domains (AAS,
+manufacturing, robotics) independently need `scope` on day 1, the case for
+starting it in the schema is stronger than the promotion simulation suggests.
+The simulation demonstrates that promotion *can* work, but manufacturing
+stakeholders building BOM generation and serialization workflows need
+type-vs-instance distinction immediately — waiting 2+ years for overflow-to-schema
+promotion delays time-to-value for a critical use case. The TAC should weigh:
+
+- **Start in overflow (conservative):** Lets the field prove itself across
+  domains before committing schema surface area. Lower risk of premature
+  standardization. Follows the "ship independently, converge when proven"
+  principle.
+- **Start in schema (aggressive):** Faster time-to-value for manufacturing
+  and AAS stakeholders. `scope` as an optional token with empty default is
+  backwards-compatible and imposes no burden on domains that don't need it.
+  The evidence for cross-domain need already exists.
+
+This is genuinely a judgment call. The comparison presents both options;
+the TAC should decide based on how much weight to give day-1 manufacturing
+needs vs. the risk of premature commitment.
+
 **DPP proof-of-concept.** A community contributor built a bidirectional AAS Digital
 Battery Passport ↔ OpenUSD mapping (PR asluk/OpenUSD-proposals#2) that exercises both
 Approach A and B, validating that the hybrid overflow pattern handles DPP-specific
@@ -510,6 +574,61 @@ reads from `assetInfo`; `GetPrimaryIdAttr()` reads the schema property.
 | `label` | Schema property (typed) | Human-readable; GUI display name |
 | Domain-specific fields | `assetInfo["sourceIds"]` (freeform dict) | Overflow; no schema changes needed |
 
+### Why not Approach B with codeless companion schemas?
+
+A natural alternative to the hybrid: use Approach B's multi-apply schema
+for common fields, and have each domain produce a **codeless companion
+schema** (§3.4, ~80 lines, no C++) for its domain-specific fields. This
+avoids the dual-mechanism complexity of Approach C. Four reasons the hybrid
+is preferred:
+
+1. **Plugin distribution friction.** Each codeless schema still requires a
+   `generatedSchema.usda` + `plugInfo.json` deployed to a USD plugin path.
+   For a single vendor this is manageable; for an ecosystem with dozens of
+   domain schemas, it creates a distribution and version management burden
+   that `assetInfo` overflow does not.
+2. **`usdGenSchema` barrier.** Codeless schemas still require running
+   `usdGenSchema` — a tool that non-M&E stakeholders (AECO firms, PLM
+   vendors, standards bodies) may not have installed or be familiar with.
+   The overflow dict requires zero tooling beyond a text editor.
+3. **Day-1 adoption velocity.** A PLM vendor can ship overflow metadata
+   in a single afternoon. A codeless companion schema requires defining a
+   schema, generating it, distributing the plugin, and coordinating with
+   consumers to add it to their plugin paths. The overflow dict is the
+   zero-friction onramp; companion schemas can be added later if a domain's
+   metadata stabilizes and warrants formal typing.
+4. **Strictly more flexible.** The hybrid does not *prevent* companion
+   schemas — domains that want typed extension properties can produce them.
+   The overflow dict is an escape hatch, not a mandate. Approach B without
+   overflow forces every domain into schema work regardless of maturity.
+
+### Trade-offs of the hybrid approach
+
+The hybrid's dual-mechanism design introduces costs that should be
+acknowledged:
+
+- **Cognitive burden on tool authors.** Developers must understand both
+  per-property schema composition (for `primaryId`, `revision`, `domain`,
+  `label`) and element-wise dictionary composition (for `assetInfo`
+  overflow). The convenience API bridges the two, but authors writing
+  override layers or building custom tooling must be aware of both
+  semantics.
+- **Consistency maintenance.** The convention that the schema instance
+  name matches the `assetInfo["sourceIds"]` dictionary key is enforced
+  by the API, not the schema system. Mismatches are possible if tools
+  bypass the convenience API (see
+  [details/hybrid_analysis.md §7.3a](details/hybrid_analysis.md)).
+- **Larger file size.** The hybrid produces the largest text-format
+  files (§3.3). In production binary formats (`usdc`), the gap narrows
+  but does not disappear (see
+  [details/stress_tests.md](details/stress_tests.md)).
+
+These costs are mitigated by the design: the common fields (the ones most
+frequently overridden and queried) use the safe per-property path, while
+overflow dicts carry less-frequently-modified domain metadata. The
+convenience API ensures most tool authors never interact with the raw
+dictionary structure directly.
+
 ### Final recommendation
 
 > **Adopt a multi-apply schema (Approach C/hybrid) with `assetInfo` overflow
@@ -570,7 +689,8 @@ extras/sourceIdentifiers/
 │   ├── governance.md                      # Section 6: Registry model, validators
 │   ├── hybrid_analysis.md                 # Section 7: C design + migration path
 │   ├── registry_spec_analysis.md          # Could a registry close A's interop gap?
-│   └── scope_promotion_simulation.md      # Lifecycle: overflow → schema property
+│   ├── scope_promotion_simulation.md      # Lifecycle: overflow → schema property
+│   └── agentic-development.md             # Process retrospective (not technical)
 ├── examples/
 │   ├── approach_a_assetinfo.usda          # AECO building (A)
 │   ├── approach_b_schema.usda             # AECO building (B)
@@ -581,7 +701,8 @@ extras/sourceIdentifiers/
 │   ├── manufacturing_a.usda               # Manufacturing lifecycle (A)
 │   ├── manufacturing_b.usda               # Manufacturing lifecycle (B)
 │   ├── robotics_a.usda                    # Robotics fleet (A)
-│   └── robotics_b.usda                    # Robotics fleet (B)
+│   ├── robotics_b.usda                    # Robotics fleet (B)
+│   └── verify_composition.py              # Structural composition checks
 ├── vendor_simulation/
 │   ├── approach_a_vendors.usda            # 8-vendor simulation (A)
 │   └── approach_b_vendors.usda            # 8-vendor simulation (B)
@@ -610,3 +731,24 @@ python3 vendor_adoption_analysis.py
 All three schema implementations have been processed through `usdGenSchema`.
 Codeless (runtime-only) versions are in `extras/sourceIdentifiers/installed_schemas/`
 and verified to load at runtime.
+
+**Composition verification:** Run `python3 examples/verify_composition.py` to
+verify the structural correctness of the composition test `.usda` files. This
+script performs text-level checks (reference structure, field authoring patterns,
+schema declarations) without requiring a built OpenUSD environment. Full
+USD API verification (actual composed values via `UsdStage`) requires a build.
+
+**Prototype naming note.** The generated class names in the prototype
+(`UsdSourceIdSchemaSourceIdSchemaAPI`, `UsdSourceIdHybridSourceIdHybridAPI`)
+contain double-stuttered library/class prefixes — a `usdGenSchema` artifact
+of the prototype library naming. A production proposal would use cleaner
+names (e.g., library `usdSid`, class `SourceIdentifierAPI` →
+`UsdSidSourceIdentifierAPI`). The prototype prioritized getting schema
+behavior right over naming polish.
+
+**External validation status.** These implementations have been processed
+through `usdGenSchema` and the codeless variants load at runtime. However,
+they have not yet been independently tested by parties outside the author.
+Feedback, testing, and corrections from external reviewers are welcome and
+encouraged — particularly from stakeholders in the industry verticals
+described in §3.2.
