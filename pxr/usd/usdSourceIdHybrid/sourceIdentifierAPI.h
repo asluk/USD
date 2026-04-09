@@ -59,6 +59,11 @@ public:
     {
     }
 
+    /// Returns the name of this multiple-apply schema instance.
+    TfToken GetName() const {
+        return _GetInstanceName();
+    }
+
     USDSOURCEIDHYBRID_API
     virtual ~UsdSourceIdHybridAPI();
 
@@ -151,6 +156,9 @@ protected:
     UsdSchemaKind _GetSchemaKind() const override;
 
 private:
+    // needs to invoke _GetStaticTfType.
+    friend class UsdSchemaRegistry;
+
     static const TfType &_GetStaticTfType();
     static bool _IsTypedSchema();
     TfToken _GetNamespacedPropertyName(const TfToken &suffix) const;

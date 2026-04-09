@@ -3,6 +3,7 @@ set(PXR_PACKAGE usdSourceIdHybrid)
 
 pxr_library(usdSourceIdHybrid
     INCLUDE_SCHEMA_FILES
+    DISABLE_PRECOMPILED_HEADERS
 
     LIBRARIES
         tf

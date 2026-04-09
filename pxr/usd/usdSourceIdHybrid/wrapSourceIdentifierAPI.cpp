@@ -137,8 +137,7 @@ void wrapUsdSourceIdHybridAPI()
 
         .def("GetSchemaAttributeNames",
              &This::GetSchemaAttributeNames,
-             (arg("includeInherited")=true,
-              arg("instanceName")=TfToken()),
+             arg("includeInherited")=true,
              return_value_policy<TfPySequenceToList>())
         .staticmethod("GetSchemaAttributeNames")
 
