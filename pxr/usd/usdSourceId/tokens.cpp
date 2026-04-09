@@ -1,5 +1,5 @@
 //
-// Copyright 2026 NVIDIA Corporation
+// Copyright 2016 Pixar
 //
 // Licensed under the terms set forth in the LICENSE.txt file available at
 // https://openusd.org/license.
@@ -8,6 +8,22 @@
 
 PXR_NAMESPACE_OPEN_SCOPE
 
-TF_DEFINE_PUBLIC_TOKENS(UsdSourceIdTokens, USDSOURCEID_TOKENS);
+UsdSourceIdTokensType::UsdSourceIdTokensType() :
+    metadata("metadata", TfToken::Immortal),
+    primaryId("primaryId", TfToken::Immortal),
+    revision("revision", TfToken::Immortal),
+    sourceIds("sourceIds", TfToken::Immortal),
+    SourceIdAPI("SourceIdAPI", TfToken::Immortal),
+    allTokens({
+        metadata,
+        primaryId,
+        revision,
+        sourceIds,
+        SourceIdAPI
+    })
+{
+}
+
+TfStaticData<UsdSourceIdTokensType> UsdSourceIdTokens;
 
 PXR_NAMESPACE_CLOSE_SCOPE

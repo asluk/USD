@@ -4,10 +4,10 @@
 // Licensed under the terms set forth in the LICENSE.txt file available at
 // https://openusd.org/license.
 //
-#ifndef USDSOURCEIDSCHEMA_TOKENS_H
-#define USDSOURCEIDSCHEMA_TOKENS_H
+#ifndef USDSOURCEIDHYBRID_TOKENS_H
+#define USDSOURCEIDHYBRID_TOKENS_H
 
-/// \file usdSourceIdSchema/tokens.h
+/// \file usdSourceIdHybrid/tokens.h
 
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // 
@@ -17,7 +17,7 @@
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 #include "pxr/pxr.h"
-#include "pxr/usd/usdSourceIdSchema/api.h"
+#include "pxr/usd/usdSourceIdHybrid/api.h"
 #include "pxr/base/tf/staticData.h"
 #include "pxr/base/tf/token.h"
 #include <vector>
@@ -25,9 +25,9 @@
 PXR_NAMESPACE_OPEN_SCOPE
 
 
-/// \class UsdSourceIdSchemaTokensType
+/// \class UsdSourceIdHybridTokensType
 ///
-/// \link UsdSourceIdSchemaTokens \endlink provides static, efficient
+/// \link UsdSourceIdHybridTokens \endlink provides static, efficient
 /// \link TfToken TfTokens\endlink for use in all public USD API.
 ///
 /// These tokens are auto-generated from the module's schema, representing
@@ -36,48 +36,48 @@ PXR_NAMESPACE_OPEN_SCOPE
 /// manner, and allow the compiler to verify that you spelled the name
 /// correctly.
 ///
-/// UsdSourceIdSchemaTokens also contains all of the \em allowedTokens values
+/// UsdSourceIdHybridTokens also contains all of the \em allowedTokens values
 /// declared for schema builtin attributes of 'token' scene description type.
-/// Use UsdSourceIdSchemaTokens like so:
+/// Use UsdSourceIdHybridTokens like so:
 ///
 /// \code
-///     gprim.GetMyTokenValuedAttr().Set(UsdSourceIdSchemaTokens->sourceIdentifier);
+///     gprim.GetMyTokenValuedAttr().Set(UsdSourceIdHybridTokens->sourceIdentifier);
 /// \endcode
-struct UsdSourceIdSchemaTokensType {
-    USDSOURCEIDSCHEMA_API UsdSourceIdSchemaTokensType();
+struct UsdSourceIdHybridTokensType {
+    USDSOURCEIDHYBRID_API UsdSourceIdHybridTokensType();
     /// \brief "sourceIdentifier"
     /// 
-    /// Property namespace prefix for the UsdSourceIdSchemaSourceIdSchemaAPI schema.
+    /// Property namespace prefix for the UsdSourceIdHybridSourceIdHybridAPI schema.
     const TfToken sourceIdentifier;
     /// \brief "sourceIdentifier:__INSTANCE_NAME__:domain"
     /// 
-    /// UsdSourceIdSchemaSourceIdSchemaAPI
+    /// UsdSourceIdHybridSourceIdHybridAPI
     const TfToken sourceIdentifier_MultipleApplyTemplate_Domain;
     /// \brief "sourceIdentifier:__INSTANCE_NAME__:label"
     /// 
-    /// UsdSourceIdSchemaSourceIdSchemaAPI
+    /// UsdSourceIdHybridSourceIdHybridAPI
     const TfToken sourceIdentifier_MultipleApplyTemplate_Label;
     /// \brief "sourceIdentifier:__INSTANCE_NAME__:primaryId"
     /// 
-    /// UsdSourceIdSchemaSourceIdSchemaAPI
+    /// UsdSourceIdHybridSourceIdHybridAPI
     const TfToken sourceIdentifier_MultipleApplyTemplate_PrimaryId;
     /// \brief "sourceIdentifier:__INSTANCE_NAME__:revision"
     /// 
-    /// UsdSourceIdSchemaSourceIdSchemaAPI
+    /// UsdSourceIdHybridSourceIdHybridAPI
     const TfToken sourceIdentifier_MultipleApplyTemplate_Revision;
-    /// \brief "SourceIdSchemaAPI"
+    /// \brief "SourceIdHybridAPI"
     /// 
-    /// Schema identifer and family for UsdSourceIdSchemaSourceIdSchemaAPI
-    const TfToken SourceIdSchemaAPI;
+    /// Schema identifer and family for UsdSourceIdHybridSourceIdHybridAPI
+    const TfToken SourceIdHybridAPI;
     /// A vector of all of the tokens listed above.
     const std::vector<TfToken> allTokens;
 };
 
-/// \var UsdSourceIdSchemaTokens
+/// \var UsdSourceIdHybridTokens
 ///
 /// A global variable with static, efficient \link TfToken TfTokens\endlink
-/// for use in all public USD API.  \sa UsdSourceIdSchemaTokensType
-extern USDSOURCEIDSCHEMA_API TfStaticData<UsdSourceIdSchemaTokensType> UsdSourceIdSchemaTokens;
+/// for use in all public USD API.  \sa UsdSourceIdHybridTokensType
+extern USDSOURCEIDHYBRID_API TfStaticData<UsdSourceIdHybridTokensType> UsdSourceIdHybridTokens;
 
 PXR_NAMESPACE_CLOSE_SCOPE
 

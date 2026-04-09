@@ -19,6 +19,9 @@ set(DIRS
     usdUI
     usdUtils
     usdPhysics
+    usdSourceId
+    usdSourceIdSchema
+    usdSourceIdHybrid
     plugin
 )
 

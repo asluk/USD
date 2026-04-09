@@ -746,18 +746,22 @@ names (e.g., library `usdSid`, class `SourceIdentifierAPI` →
 `UsdSidSourceIdentifierAPI`). The prototype prioritized getting schema
 behavior right over naming polish.
 
-**Build integration note.** The prototype schema implementations under
+**Build integration.** The prototype schema implementations under
 `pxr/usd/usdSourceId/`, `pxr/usd/usdSourceIdSchema/`, and
-`pxr/usd/usdSourceIdHybrid/` do not include `CMakeLists.txt` files,
-test targets, or build system integration. They cannot currently be built
-into OpenUSD — they exist as `usdGenSchema`-processed source files to
-demonstrate the schema design and generated API surface. A production
-proposal would need to add CMake build rules, plugin registration, test
-targets (both C++ and Python), and integration with OpenUSD's existing
-build infrastructure (`cmake/defaults/`, `pxr/usd/plugin/`). This is
-intentionally deferred: the prototype's purpose is to validate schema
-design and composition behavior, not to provide a merge-ready
-implementation.
+`pxr/usd/usdSourceIdHybrid/` include `CMakeLists.txt` files and are
+registered in `pxr/usd/CMakeLists.txt`. To build them as part of
+OpenUSD:
+
+```bash
+cd build && cmake .. -DPXR_BUILD_USD_TOOLS=ON  # standard OpenUSD build
+cmake --build . --target usdSourceId usdSourceIdSchema usdSourceIdHybrid
+```
+
+Each library builds as a shared library with Python bindings. The schemas
+register as plugins and are discoverable via `UsdSchemaRegistry` at
+runtime. Note that production test targets (C++ and Python) are not yet
+included — these would be part of a production proposal if the TAC
+accepts the mechanism.
 
 **External validation status.** These implementations have been processed
 through `usdGenSchema` and the codeless variants load at runtime. However,
