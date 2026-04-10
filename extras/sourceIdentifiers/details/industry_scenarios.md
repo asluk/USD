@@ -161,8 +161,12 @@ two domains at different maturity levels on the same prim.
 
 **Setup:** A building chiller prim carries both IFC and AAS/DPP identifiers.
 IFC has three stable metadata fields that have been promoted to a codeless
-companion schema; AAS has a mix of stable and experimental fields spanning
-overflow and a companion schema.
+companion schema; AAS has a mix of stable identifier fields in a companion
+schema and broader DPP fields (lifecycle, compliance, sustainability) in
+overflow. Note: AAS community review confirmed that a Digital Product
+Passport encompasses information beyond identity — those overflow fields
+depend on source identifiers as a foundation but are out of scope for this
+mechanism. They appear here to illustrate overflow's role as a staging area.
 
 ```usda
 def Xform "Chiller_01" (
@@ -180,7 +184,8 @@ def Xform "Chiller_01" (
                 string pset_Classification_UniClass = "Ss_75_50_16"
             }
             dictionary aas = {
-                # DPP-specific fields not yet stable enough for companion schema
+                # DPP lifecycle/compliance fields — beyond identity scope,
+                # included to illustrate overflow as a staging area
                 string batteryPassportVersion = "3.0.1"
                 string complianceRegion = "EU"
                 string recyclingCode = "CR-7822"
@@ -220,7 +225,8 @@ def Xform "Chiller_01" (
    IFC property set values stay in overflow because they're
    project/country-specific. AAS's `assetKind` (formerly `scope`) has
    graduated from overflow to the IDTA companion schema; DPP-specific
-   regulatory fields are still experimental.
+   lifecycle and compliance fields remain in overflow as they are beyond
+   the identity scope of this mechanism.
 
 3. **Per-property vs. element-wise composition.** The companion schema
    properties (`ifcType`, `assetKind`) compose per-property — an override

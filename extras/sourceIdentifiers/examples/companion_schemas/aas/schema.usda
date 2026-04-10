@@ -33,9 +33,12 @@ class "SourceIdAasAPI" (
         token apiSchemaType = "multipleApply"
         token propertyNamespacePrefix = "sourceId"
         string doc = """Illustrative codeless companion schema for AAS
-        (Asset Administration Shell) / Digital Product Passport source
-        identifier metadata. Provides typed access to stable AAS
-        metadata fields that have graduated from assetInfo overflow.
+        (Asset Administration Shell) source identifier metadata.
+        Provides typed access to stable AAS identifier fields that
+        have graduated from assetInfo overflow. Note: DPP encompasses
+        lifecycle, compliance, and sustainability information beyond
+        identity — those fields would use overflow or a separate
+        DPP-specific schema, not this identifier companion.
 
         This schema would be authored and distributed by IDTA, not
         AOUSD. It is included here as an example of the three-tier
