@@ -444,10 +444,12 @@ This is genuinely a judgment call. The comparison presents both options;
 the TAC should decide based on how much weight to give day-1 manufacturing
 needs vs. the risk of premature commitment.
 
-**DPP proof-of-concept.** A community contributor built a bidirectional AAS Digital
-Battery Passport ↔ OpenUSD mapping (PR asluk/OpenUSD-proposals#2) that exercises both
-Approach A and B, validating that the hybrid overflow pattern handles DPP-specific
-fields (`batteryModel`, `manufacturingDate`, `chemistry`) without schema changes.
+**DPP proof-of-concept.** A bidirectional AAS Digital Battery Passport ↔ OpenUSD
+mapping (PR asluk/OpenUSD-proposals#2) exercises both Approach A and B. AAS community
+review confirmed the identifier handling aligns with AAS conventions, but noted that
+a DPP encompasses lifecycle, compliance, and sustainability information beyond
+identity — requiring a semantic layer that depends on source identifiers as a
+foundation but is out of scope for this mechanism.
 
 → Deep dive: [details/hybrid_analysis.md](details/hybrid_analysis.md)
 
