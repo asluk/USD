@@ -1,0 +1,67 @@
+#usda 1.0
+(
+    subLayers = [
+        # In a real deployment, this would reference the installed USD schema path.
+        # @usd/schema.usda@
+    ]
+)
+
+over "GLOBAL" (
+    customData = {
+        bool skipCodeGeneration = true
+        string libraryName = "sourceIdAas"
+        string libraryPath = "."
+    }
+) {
+}
+
+# ---------------------------------------------------------------------------
+# ILLUSTRATIVE EXAMPLE — not a normative specification.
+#
+# This schema demonstrates how IDTA (Industrial Digital Twin Association)
+# could define a codeless companion schema for AAS / Digital Product
+# Passport source identifier metadata. The actual schema would be authored
+# and maintained by IDTA.
+#
+# Properties use the "sourceId:" namespace to sit alongside the core
+# SourceIdHybridAPI properties (which use "sourceIdentifier:").
+# ---------------------------------------------------------------------------
+
+class "SourceIdAasAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        token propertyNamespacePrefix = "sourceId"
+        string doc = """Illustrative codeless companion schema for AAS
+        (Asset Administration Shell) / Digital Product Passport source
+        identifier metadata. Provides typed access to stable AAS
+        metadata fields that have graduated from assetInfo overflow.
+
+        This schema would be authored and distributed by IDTA, not
+        AOUSD. It is included here as an example of the three-tier
+        extensibility model's Tier 2 (codeless companion schemas)."""
+    }
+)
+{
+    token assetKind (
+        allowedTokens = ["Type", "Instance"]
+        doc = """Whether this identifier refers to a product type
+        (design-level) or a specific instance (serial-number-level).
+        Maps directly to AAS's assetKind enum. This field was the
+        original motivation for the 'scope' property discussed in
+        the source identifiers proposal; it graduated from overflow
+        to this companion schema as a stable, cross-domain concept."""
+    )
+
+    string idShort (
+        doc = """The AAS short identifier — a human-readable label
+        for the asset within its administration shell. Stable in the
+        AAS metamodel since V3.0."""
+    )
+
+    string submodelId (
+        doc = """The identifier of the AAS submodel this asset
+        participates in (e.g., a Digital Product Passport submodel).
+        Optional — not all AAS assets belong to a named submodel."""
+    )
+}

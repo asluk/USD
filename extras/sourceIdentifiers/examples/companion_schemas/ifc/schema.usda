@@ -1,0 +1,60 @@
+#usda 1.0
+(
+    subLayers = [
+        # In a real deployment, this would reference the installed USD schema path.
+        # @usd/schema.usda@
+    ]
+)
+
+over "GLOBAL" (
+    customData = {
+        bool skipCodeGeneration = true
+        string libraryName = "sourceIdIfc"
+        string libraryPath = "."
+    }
+) {
+}
+
+# ---------------------------------------------------------------------------
+# ILLUSTRATIVE EXAMPLE — not a normative specification.
+#
+# This schema demonstrates how buildingSMART (or another domain body) could
+# define a codeless companion schema for IFC source identifier metadata.
+# The actual schema would be authored and maintained by buildingSMART.
+#
+# Properties use the "sourceId:" namespace to sit alongside the core
+# SourceIdHybridAPI properties (which use "sourceIdentifier:").
+# ---------------------------------------------------------------------------
+
+class "SourceIdIfcAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        token propertyNamespacePrefix = "sourceId"
+        string doc = """Illustrative codeless companion schema for IFC
+        source identifier metadata. Provides typed access to stable IFC
+        metadata fields that have graduated from assetInfo overflow.
+
+        This schema would be authored and distributed by buildingSMART,
+        not AOUSD. It is included here as an example of the three-tier
+        extensibility model's Tier 2 (codeless companion schemas)."""
+    }
+)
+{
+    token ifcType (
+        doc = """The IFC entity type (e.g., 'IfcWall', 'IfcColumn',
+        'IfcChiller'). Stable since IFC2x (2000)."""
+    )
+
+    token ifcSchema (
+        doc = """The IFC schema version (e.g., 'IFC4x3', 'IFC5').
+        Stable field — the version of the IFC standard that produced
+        this entity."""
+    )
+
+    string ifcObjectType (
+        doc = """The IFC ObjectType value — a freeform string describing
+        the specific type within the IFC class (e.g., 'Air-Cooled Scroll
+        Chiller' for an IfcChiller). Optional."""
+    )
+}

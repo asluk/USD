@@ -485,9 +485,9 @@ Four structural differences:
    [scope promotion simulation](details/scope_promotion_simulation.md).
    `customData` fields have no standardized promotion path.
 4. **Explicitly temporary.** The overflow dict is framed as a staging area
-   for early-stage and experimental fields. Stable domain metadata is
-   expected to graduate to codeless companion schemas. `customData` has no
-   such expectation or mechanism.
+   for early-stage and experimental fields. Stable domain metadata should
+   graduate to codeless companion schemas. `customData` has no such
+   expectation or mechanism.
 
 In short: overflow is scoped, linked, temporary by design, and has a
 three-tier graduation path. `customData` is none of these.
@@ -593,7 +593,8 @@ The hybrid recommends three tiers for domain metadata, not two:
 2. **Codeless companion schemas** (~80 lines `schema.usda` + `plugInfo.json`,
    no C++) — for domain-specific fields that have stabilized. Typed,
    discoverable via `UsdSchemaRegistry`, per-property composition. Domains
-   produce these when their metadata matures.
+   should produce these when their metadata matures; see the illustrative
+   IFC and AAS companion schemas in `examples/companion_schemas/`.
 3. **`assetInfo` overflow dicts** — the zero-friction onramp for
    experimental or early-stage fields. No tooling, no plugin distribution,
    no schema registration. Explicitly a staging area, not a permanent home.
@@ -668,6 +669,17 @@ dictionary structure directly.
 > proposal: separation of concerns, industry agnosticism, vendor extensibility,
 > composability, discoverability, external queryability, round-trip fidelity,
 > and minimal disruption.
+
+**A note on joint governance.** Where a domain body produces native USD
+schemas — as buildingSMART is doing with IFC5 — those schemas naturally
+supersede companion schemas for that domain. The three-tier model
+accommodates this: a domain’s companion schema can coexist with, extend,
+or eventually be replaced by the domain body’s own schema work, and the
+Domains Registry tracks which tier each domain’s fields currently occupy.
+Joint governance between AOUSD and external bodies (buildingSMART, IDTA,
+Khronos) should follow the same lightweight coordination model used by
+W3C liaison relationships: each body governs its own schemas, AOUSD
+governs the core tier and the registry.
 
 → Deep dive: [details/hybrid_analysis.md](details/hybrid_analysis.md)
 
