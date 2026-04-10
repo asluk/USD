@@ -470,20 +470,27 @@ it raises a natural objection.
 
 The most likely objection to Approach C: does the `assetInfo` overflow dict
 simply recreate the `customData` dumping ground the proposal aims to resolve?
-Three structural differences:
+Four structural differences:
 
 1. **Scoped, not global.** Overflow lives under `assetInfo["sourceIds"][<domain>]`,
    keyed to a registered domain. `customData` is a flat, unscoped namespace.
 2. **Linked to a schema instance.** The overflow dict key matches the
    `SourceIdHybridAPI:<domain>` instance name — tools know which overflow
    dict belongs to which schema instance. `customData` has no such linkage.
-3. **Governed evolution path.** Overflow fields that prove cross-domain utility
-   can be promoted to schema properties through the registry-spec → schema
-   promotion lifecycle (see [scope promotion simulation](details/scope_promotion_simulation.md)).
+3. **Governed graduation path.** Overflow fields that prove cross-domain
+   utility graduate first to **codeless companion schemas** (typed,
+   per-property composition, discoverable) and eventually to core schema
+   properties. The three-tier promotion lifecycle — overflow → codeless
+   companion → core — is demonstrated in the
+   [scope promotion simulation](details/scope_promotion_simulation.md).
    `customData` fields have no standardized promotion path.
+4. **Explicitly temporary.** The overflow dict is framed as a staging area
+   for early-stage and experimental fields. Stable domain metadata is
+   expected to graduate to codeless companion schemas. `customData` has no
+   such expectation or mechanism.
 
-In short: overflow is scoped, linked, and has a graduation path. `customData`
-is none of these.
+In short: overflow is scoped, linked, temporary by design, and has a
+three-tier graduation path. `customData` is none of these.
 
 ---
 
@@ -574,35 +581,47 @@ reads from `assetInfo`; `GetPrimaryIdAttr()` reads the schema property.
 | `revision` | Schema property (typed) | Standard versioning field; per-property composition |
 | `domain` | Schema property (typed) | Collision-resistant reverse-DNS; queryable by token |
 | `label` | Schema property (typed) | Human-readable; GUI display name |
-| Domain-specific fields | `assetInfo["sourceIds"]` (freeform dict) | Overflow; no schema changes needed |
+| Stable domain fields | Codeless companion schema | Typed, per-property composition, discoverable — no C++ needed (~80 lines) |
+| Experimental domain fields | `assetInfo["sourceIds"]` (freeform dict) | Zero-friction onramp; no schema changes, no tooling, no plugin distribution |
 
-### Why not Approach B with codeless companion schemas?
+### Codeless companion schemas: the graduation path
 
-A natural alternative to the hybrid: use Approach B's multi-apply schema
-for common fields, and have each domain produce a **codeless companion
-schema** (§3.4, ~80 lines, no C++) for its domain-specific fields. This
-avoids the dual-mechanism complexity of Approach C. Four reasons the hybrid
-is preferred:
+The hybrid recommends three tiers for domain metadata, not two:
 
-1. **Plugin distribution friction.** Each codeless schema still requires a
+1. **Core schema properties** (`primaryId`, `revision`, `domain`, `label`) —
+   governed by AOUSD; per-property composition; schema-validated.
+2. **Codeless companion schemas** (~80 lines `schema.usda` + `plugInfo.json`,
+   no C++) — for domain-specific fields that have stabilized. Typed,
+   discoverable via `UsdSchemaRegistry`, per-property composition. Domains
+   produce these when their metadata matures.
+3. **`assetInfo` overflow dicts** — the zero-friction onramp for
+   experimental or early-stage fields. No tooling, no plugin distribution,
+   no schema registration. Explicitly a staging area, not a permanent home.
+
+The promotion path is: **overflow → codeless companion schema → core
+schema property** (see [scope promotion simulation](details/scope_promotion_simulation.md)).
+
+**Why not skip the overflow tier and require codeless schemas from day 1?**
+
+1. **Plugin distribution friction.** Each codeless schema requires
    `generatedSchema.usda` + `plugInfo.json` deployed to a USD plugin path.
    For a single vendor this is manageable; for an ecosystem with dozens of
    domain schemas, it creates a distribution and version management burden
-   that `assetInfo` overflow does not.
+   that overflow does not.
 2. **`usdGenSchema` barrier.** Codeless schemas still require running
    `usdGenSchema` — a tool that non-M&E stakeholders (AECO firms, PLM
    vendors, standards bodies) may not have installed or be familiar with.
-   The overflow dict requires zero tooling beyond a text editor.
+   Overflow requires zero tooling beyond a text editor.
 3. **Day-1 adoption velocity.** A PLM vendor can ship overflow metadata
-   in a single afternoon. A codeless companion schema requires defining a
-   schema, generating it, distributing the plugin, and coordinating with
-   consumers to add it to their plugin paths. The overflow dict is the
-   zero-friction onramp; companion schemas can be added later if a domain's
-   metadata stabilizes and warrants formal typing.
+   in a single afternoon. A codeless companion schema requires defining,
+   generating, distributing, and coordinating with consumers. Overflow is
+   the zero-friction onramp; companion schemas follow when a domain's
+   metadata stabilizes.
 4. **Strictly more flexible.** The hybrid does not *prevent* companion
-   schemas — domains that want typed extension properties can produce them.
-   The overflow dict is an escape hatch, not a mandate. Approach B without
-   overflow forces every domain into schema work regardless of maturity.
+   schemas at any stage — domains that want typed extension properties can
+   produce them immediately. The overflow dict is an escape hatch, not a
+   mandate. Requiring codeless schemas from day 1 forces every domain into
+   schema work regardless of maturity.
 
 ### Trade-offs of the hybrid approach
 
@@ -633,15 +652,17 @@ dictionary structure directly.
 
 ### Final recommendation
 
-> **Adopt a multi-apply schema (Approach C/hybrid) with `assetInfo` overflow
-> for domain-specific metadata.** This provides schema-backed common fields for
-> interoperability and governance, plus a freeform escape hatch for the
-> domain-specific metadata that real-world industrial workflows require.
+> **Adopt a multi-apply schema (Approach C/hybrid) with a three-tier
+> extensibility model:** core schema properties for common fields, codeless
+> companion schemas for stable domain metadata, and `assetInfo` overflow
+> for early-stage fields. This provides schema-backed interoperability and
+> governance, a typed graduation path for maturing domain fields, and a
+> zero-friction onramp for new stakeholders.
 >
 > Establish an AOUSD Domains Registry informed by Khronos glTF's `Prefixes.md`
 > and W3C's WICG incubation model: low-barrier vendor registration (à la
 > glTF prefix reservation or W3C Community Group creation), three-tier
-> promotion path, GitHub-based process.
+> promotion path (overflow → codeless companion → core), GitHub-based process.
 >
 > The resulting mechanism addresses all eight design principles from the
 > proposal: separation of concerns, industry agnosticism, vendor extensibility,
