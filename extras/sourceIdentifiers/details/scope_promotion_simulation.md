@@ -5,11 +5,13 @@
 ## Overview
 
 This simulation traces the lifecycle of a single metadata field — `scope`
-(type-vs-instance identifier classification) — as it evolves from a
-domain-specific convention in one vendor's overflow dictionary to a
-ratified schema property on the base `SourceIdHybridAPI`. The simulation
-demonstrates Hybrid C's key architectural advantage: **the overflow dict
-is not a dead end, but a staging area for field maturation.**
+(type-vs-instance identifier classification) — as it evolves through the
+hybrid's **three-tier promotion path**: from a domain-specific convention
+in one vendor's overflow dictionary, through a codeless companion schema,
+to a ratified core schema property on the base `SourceIdHybridAPI`. The
+simulation demonstrates Hybrid C's key architectural advantage: **the
+overflow dict is not a dead end, but the first stage of a governed
+graduation path.**
 
 Each phase includes concrete `.usda` files in
 [`examples/scope_promotion/`](../examples/scope_promotion/) and, where
@@ -22,8 +24,18 @@ applicable, Python scripts demonstrating validation and migration.
 | 1 | Day 1 | AAS overflow dict only | AAS/DPP stakeholders |
 | 2 | ~6–12 months | Overflow dict (3+ domains) | AAS, manufacturing, robotics |
 | 3 | ~1–2 years | Overflow dict + registry-spec validation | All adopters; CI-enforced |
-| 4 | ~2+ years | Schema property (5th field) | Everyone; TAC-ratified |
-| 5 | Post-promotion | Schema property; overflow deprecated | Migration complete |
+| 3b | ~1.5–2 years | Codeless companion schema | Domains with stable `scope` usage |
+| 4 | ~2+ years | Core schema property (5th field) | Everyone; TAC-ratified |
+| 5 | Post-promotion | Core schema property; overflow deprecated | Migration complete |
+
+**Phase 3b** is the codeless companion schema tier: domains that have
+stabilized their use of `scope` can publish a codeless companion schema
+(~80 lines, no C++) that gives `scope` type safety, per-property
+composition, and `UsdSchemaRegistry` discoverability — without waiting
+for TAC ratification into the core schema. This intermediate tier reduces
+the jump from freeform dict to core property and gives the TAC evidence
+that the field is production-ready before committing core schema surface
+area.
 
 ---
 

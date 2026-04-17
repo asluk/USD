@@ -170,3 +170,51 @@ care about most (ease of adoption, metadata flexibility). This is not
 a contradiction - it reflects the fundamental trade-off between
 governance and flexibility, and it's why the hybrid recommendation
 exists (see [hybrid_analysis.md](hybrid_analysis.md)).
+
+## 5.4 Three-tier scoring: Approach C with codeless companions
+
+The three-tier model (core schema + codeless companion schemas + overflow)
+changes the scoring for Approach C by splitting the domain-specific metadata
+tier into two maturity levels.
+
+| Dimension | A | B | C (two-tier) | C (three-tier) | Notes |
+|-----------|---|---|-------------|----------------|-------|
+| Ease of initial adoption | 5 | 4 | 5 | 5 | Overflow onramp unchanged |
+| Collision safety | 2 | 4 | 4 | 4 | Core + companion both use schema namespace |
+| Metadata flexibility | 5 | 3 | 5 | 5 | Overflow still available for experimental fields |
+| GUI integration | 2 | 5 | 4 | 4.5 | Companion fields now discoverable in GUIs |
+| Promotion lifecycle | 3 | 4 | 4 | 5 | **Three-tier path is smoother** |
+| Scale manageability | 3 | 3 | 3 | 3 | Unchanged |
+| Discoverability | 2 | 5 | 3 | 4 | **Stable fields now in schema registry** |
+| Schema validation | 1 | 5 | 3 | 4 | **Stable fields now typed and validated** |
+| **Total** | **23** | **33** | **31** | **34.5** | |
+
+**Key changes from two-tier to three-tier:**
+
+- **Promotion lifecycle (+1):** The overflow → codeless companion → core
+  path is more gradual than overflow → core. Domains can graduate stable
+  fields to a companion schema without TAC approval, reducing bottleneck
+  risk.
+- **Discoverability (+1):** Fields in codeless companion schemas are
+  visible in `UsdSchemaRegistry`, appear in property panels, and are
+  queryable by type. The two-tier model had these fields hidden in
+  opaque dicts.
+- **Schema validation (+1):** Companion schema properties have declared
+  types. `ifcType` as a `token` is validated differently than a freeform
+  dict string.
+- **GUI integration (+0.5):** Companion properties appear in DCC property
+  panels alongside core properties. Overflow fields still require custom
+  UI.
+
+**Why C (three-tier) now edges past B:** The three-tier model recovers
+most of B's governance advantages (discoverability, validation) for stable
+fields while retaining A's flexibility for experimental fields. The total
+score (34.5) exceeds B (33) because the three-tier model provides a
+strictly better promotion path and retains overflow flexibility that B
+lacks entirely.
+
+**Caveat:** These scores are illustrative, not objective measurements.
+The weights reflect TAC priorities (governance dimensions weighted higher)
+and the specific scenarios tested. Different weights would produce
+different totals. The scoring is included to structure the comparison, not
+to declare a winner by arithmetic.

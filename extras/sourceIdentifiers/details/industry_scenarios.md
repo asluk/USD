@@ -154,26 +154,131 @@ already covers the M&E model-level case), the analysis confirms:
   DB) is the same multi-domain pattern demonstrated in the other
   scenarios.
 
+## 4.5 Three-tier scenario: IFC codeless companion + AAS overflow graduation
+
+This scenario demonstrates the three-tier model from §6 of COMPARISON.md using
+two domains at different maturity levels on the same prim.
+
+**Setup:** A building chiller prim carries both IFC and AAS/DPP identifiers.
+IFC has three stable metadata fields that have been promoted to a codeless
+companion schema; AAS has a mix of stable identifier fields in a companion
+schema and broader DPP fields (lifecycle, compliance, sustainability) in
+overflow. Note: AAS community review confirmed that a Digital Product
+Passport encompasses information beyond identity — those overflow fields
+depend on source identifiers as a foundation but are out of scope for this
+mechanism. They appear here to illustrate overflow's role as a staging area.
+
+```usda
+def Xform "Chiller_01" (
+    prepend apiSchemas = [
+        "SourceIdHybridAPI:ifc",
+        "SourceIdHybridAPI:aas",
+        "SourceIdIfcAPI:ifc",       # codeless companion (buildingSMART)
+        "SourceIdAasAPI:aas"        # codeless companion (IDTA)
+    ]
+    assetInfo = {
+        dictionary sourceIds = {
+            dictionary ifc = {
+                # IFC property sets — project/country-specific, stays in overflow
+                string pset_ThermalPerformance_COP = "4.2"
+                string pset_Classification_UniClass = "Ss_75_50_16"
+            }
+            dictionary aas = {
+                # DPP lifecycle/compliance fields — beyond identity scope,
+                # included to illustrate overflow as a staging area
+                string batteryPassportVersion = "3.0.1"
+                string complianceRegion = "EU"
+                string recyclingCode = "CR-7822"
+            }
+        }
+    }
+)
+{
+    # Core schema properties (Tier 1 — governed by AOUSD)
+    string sourceIdentifier:ifc:primaryId = "2O2Fr$t4X7Zf8NOew3FNr2"
+    token sourceIdentifier:ifc:domain = "org.buildingsmart.ifc"
+    string sourceIdentifier:ifc:label = "IFC GlobalId"
+
+    string sourceIdentifier:aas:primaryId = "urn:dpp:bat:SN-42-LFP-2026"
+    token sourceIdentifier:aas:domain = "org.idtwin.aas"
+    string sourceIdentifier:aas:label = "AAS Global Asset ID"
+
+    # IFC codeless companion properties (Tier 2 — published by buildingSMART)
+    token sourceId:ifc:ifcType = "IfcChiller"
+    token sourceId:ifc:ifcSchema = "IFC4x3"
+    string sourceId:ifc:ifcObjectType = "Air-Cooled Scroll Chiller"
+
+    # AAS codeless companion properties (Tier 2 — published by IDTA)
+    token sourceId:aas:assetKind = "Instance"
+    string sourceId:aas:idShort = "Chiller_HVAC_01"
+}
+```
+
+**What this demonstrates:**
+
+1. **Three tiers coexist cleanly.** Core schema properties, codeless companion
+   properties, and overflow dicts all compose on the same prim without
+   conflict. Each tier has its own namespace.
+
+2. **Maturity maps to tier.** IFC's `ifcType` and `ifcSchema` are in the
+   companion schema because they've been stable since IFC2x (20+ years).
+   IFC property set values stay in overflow because they're
+   project/country-specific. AAS's `assetKind` (formerly `scope`) has
+   graduated from overflow to the IDTA companion schema; DPP-specific
+   lifecycle and compliance fields remain in overflow as they are beyond
+   the identity scope of this mechanism.
+
+3. **Per-property vs. element-wise composition.** The companion schema
+   properties (`ifcType`, `assetKind`) compose per-property — an override
+   layer can change `ifcType` without affecting `ifcSchema`. The overflow
+   dict entries compose element-wise — overriding one key in the `ifc`
+   dict doesn't discard the others, but the composition semantics are
+   coarser.
+
+4. **Independent domain evolution.** buildingSMART can update their
+   companion schema (add `ifcPredefinedType`) without coordinating with
+   IDTA or AOUSD. IDTA can promote `idShort` from overflow to companion
+   schema on their own schedule.
+
+**Distribution model for this scenario:**
+
+| Schema | Publisher | Distribution |
+|--------|-----------|-------------|
+| `SourceIdHybridAPI` (core) | AOUSD | Ships with OpenUSD |
+| `SourceIdIfcAPI` (companion) | buildingSMART | Bundled with IFC↔USD converter tools |
+| `SourceIdAasAPI` (companion) | IDTA | Published as standalone plugin, bundled with AAS tooling |
+| Overflow dict conventions | Each domain | Documented in AOUSD Domains Registry |
+
 ## Cross-industry synthesis
 
 The pattern across all four verticals is consistent:
 
-| Dimension | Approach A | Approach B |
-|-----------|-----------|------------|
-| Primary identifier (linkage key) | ✅ Adequate | ✅ Adequate |
-| Revision/version | ✅ Adequate | ✅ Adequate |
-| Domain-specific metadata | ✅ Natural (freeform dict) | ❌ Requires companion schema or custom attrs |
-| Multi-domain on single prim | ✅ Natural | ✅ Natural |
-| Shared identity across instances | ✅ Natural | ✅ Natural |
-| Composite keys (configurable products) | ✅ Natural | ❌ Cannot express without extension |
-| Alternative/equivalent identifiers | ✅ Natural | ✅ Natural (each gets an instance) |
-| Relationship between alternatives | ✅ Metadata in dict | ❌ No mechanism |
+| Dimension | Approach A | Approach B | Approach C (three-tier) |
+|-----------|-----------|------------|------------------------|
+| Primary identifier (linkage key) | ✅ Adequate | ✅ Adequate | ✅ Schema property |
+| Revision/version | ✅ Adequate | ✅ Adequate | ✅ Schema property |
+| Domain-specific metadata (stable) | ✅ Natural (dict) | ❌ Requires companion schema | ✅ Codeless companion schema |
+| Domain-specific metadata (experimental) | ✅ Natural (dict) | ❌ Requires companion schema | ✅ Overflow dict |
+| Multi-domain on single prim | ✅ Natural | ✅ Natural | ✅ Natural |
+| Shared identity across instances | ✅ Natural | ✅ Natural | ✅ Natural |
+| Composite keys (configurable products) | ✅ Natural | ❌ Cannot express without extension | ✅ Companion or overflow |
+| Alternative/equivalent identifiers | ✅ Natural | ✅ Natural (each gets an instance) | ✅ Natural |
+| Relationship between alternatives | ✅ Metadata in dict | ❌ No mechanism | ✅ Companion or overflow |
+| Type safety for stable fields | ❌ Untyped dict | ✅ Schema-validated | ✅ Companion schema |
+| Discoverability for stable fields | ❌ No schema registry | ✅ Full registry | ✅ Companion in registry |
 
 **The critical finding:** For industries with simple identifier schemes
 (a string ID + optional version), both approaches are equivalent. For
-industries with rich, heterogeneous identifier metadata - which includes
-manufacturing, AECO, and robotics - Approach A's freeform dictionaries
+industries with rich, heterogeneous identifier metadata — which includes
+manufacturing, AECO, and robotics — Approach A's freeform dictionaries
 handle all tested scenarios without requiring per-domain schema work.
+
+**The three-tier refinement** addresses the gap: domains with stable
+metadata fields (IFC's `ifcType`, AAS's `assetKind`) gain type safety
+and discoverability through codeless companion schemas, while
+experimental fields retain the zero-friction overflow path. This
+resolves the tension between Approach A's flexibility and Approach B's
+governance without requiring all domains to do schema work on day 1.
 
 This is the central tension driving the hybrid recommendation in
 [hybrid_analysis.md](hybrid_analysis.md).
