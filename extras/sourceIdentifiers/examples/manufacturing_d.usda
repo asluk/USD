@@ -1,0 +1,203 @@
+#usda 1.0
+(
+    """
+    Approach D (Labels + Identity): Manufacturing scenario.
+
+    Same tractor assembly as manufacturing_a.usda / manufacturing_b.usda.
+
+    Identity → assetInfo["source"][<system>]: opaque IDs and id-adjacent
+    strings (displayNumber, navigationType, serialNumber, basePartNumber,
+    extensionCode) that round-trip into the originating system.
+
+    Classification → SemanticsLabelsAPI:<system>:<facet>: controlled-vocabulary
+    terms (state, lifecyclePhase, organization, configContext, modelType,
+    units, identifierType, equivalence, manufacturingOp, machineId,
+    featureType, identifierSystem) that map to enumerable label vocabularies.
+
+    Borderline calls (per the working rule in COMPARISON.md "Open Questions"):
+      - serialNumber: identity (must round-trip exactly into PLM)
+      - displayNumber: identity (round-trips to Mercedes-Benz part number)
+      - lifecyclePhase: classification (controlled vocab: Production / EOL / ...)
+      - state: classification (Released / In Work / ...)
+
+    No new applied schema. Uses UsdSemanticsLabelsAPI (shipping in 24.11).
+    """
+    defaultPrim = "TractorAssembly"
+    metersPerUnit = 1.0
+)
+
+def Xform "TractorAssembly" (
+    kind = "assembly"
+    prepend apiSchemas = [
+        "SemanticsLabelsAPI:windchill:state",
+        "SemanticsLabelsAPI:windchill:organization",
+        "SemanticsLabelsAPI:windchill:configContext",
+        "SemanticsLabelsAPI:creo:modelType",
+        "SemanticsLabelsAPI:creo:units"
+    ]
+    assetInfo = {
+        dictionary source = {
+            dictionary windchill = {
+                string identifier = "VR:wt.part.WTPart:30001001"
+                string version = "Rev.D"
+                string displayNumber = "TRACTOR-6000-SERIES"
+                string navigationType = "OR:wt.filter.NavigationCriteria:7608531"
+            }
+            dictionary creo = {
+                string identifier = "urn:adsk.creo:model:tractor_6000_asm"
+                string version = "47"
+            }
+        }
+    }
+)
+{
+    token[] semantics:labels:windchill:state         = ["Released"]
+    token[] semantics:labels:windchill:organization  = ["com.deere.engineering"]
+    token[] semantics:labels:windchill:configContext = ["North America", "Tier 4 Final"]
+    token[] semantics:labels:creo:modelType          = ["Assembly"]
+    token[] semantics:labels:creo:units              = ["mmNs"]
+
+    def Xform "EngineBlock" (
+        kind = "component"
+        prepend apiSchemas = [
+            "SemanticsLabelsAPI:windchill:state",
+            "SemanticsLabelsAPI:windchill:lifecyclePhase",
+            "SemanticsLabelsAPI:supplier_oem:identifierType",
+            "SemanticsLabelsAPI:supplier_oem:equivalence",
+            "SemanticsLabelsAPI:supplier_oem:supplier",
+            "SemanticsLabelsAPI:supplier_service:identifierType",
+            "SemanticsLabelsAPI:step:entityType",
+            "SemanticsLabelsAPI:step:standard"
+        ]
+        assetInfo = {
+            dictionary source = {
+                dictionary windchill = {
+                    string identifier = "VR:wt.part.WTPart:30002001"
+                    string version = "Rev.B"
+                    string displayNumber = "ENG-BLK-6068"
+                    string serialNumber = "SN-2025-00847"
+                }
+                dictionary supplier_oem = {
+                    string identifier = "SUP-CUM-6068HF-485"
+                }
+                dictionary supplier_service = {
+                    string identifier = "SVC-RE-6068HF-485-REMAN"
+                    string note = "Remanufactured equivalent"
+                }
+                dictionary step = {
+                    string identifier = "STEP-FILE-ID:#12001"
+                    string version = "AP242-ED3"
+                }
+            }
+        }
+    )
+    {
+        token[] semantics:labels:windchill:state              = ["Released"]
+        token[] semantics:labels:windchill:lifecyclePhase     = ["Production"]
+        token[] semantics:labels:supplier_oem:identifierType  = ["OEM Part Number"]
+        token[] semantics:labels:supplier_oem:equivalence     = ["form-fit-function"]
+        token[] semantics:labels:supplier_oem:supplier        = ["Cummins"]
+        token[] semantics:labels:supplier_service:identifierType = ["Service Part Number", "Replacement Part Number"]
+        token[] semantics:labels:step:entityType              = ["PRODUCT_DEFINITION"]
+        token[] semantics:labels:step:standard                = ["ISO 10303-242:2022"]
+
+        def Xform "CylinderBore_1" (
+            prepend apiSchemas = [
+                "SemanticsLabelsAPI:amt:featureType",
+                "SemanticsLabelsAPI:amt:manufacturingOp",
+                "SemanticsLabelsAPI:amt:machineId"
+            ]
+            assetInfo = {
+                dictionary source = {
+                    dictionary amt = {
+                        string identifier = "FID:ENG-BLK-6068:BORE:CYL1"
+                        string diameter_mm = "106.5"
+                        string tolerance = "H7"
+                    }
+                }
+            }
+        )
+        {
+            token[] semantics:labels:amt:featureType     = ["CylindricalBore"]
+            token[] semantics:labels:amt:manufacturingOp = ["Finish Boring"]
+            token[] semantics:labels:amt:machineId       = ["CNC-MAZAK-5X-042"]
+        }
+
+        def Xform "DatumFace_A" (
+            prepend apiSchemas = [
+                "SemanticsLabelsAPI:amt:featureType"
+            ]
+            assetInfo = {
+                dictionary source = {
+                    dictionary amt = {
+                        string identifier = "FID:ENG-BLK-6068:DATUM:A"
+                        string flatness_mm = "0.025"
+                        string surfaceFinish_Ra = "0.8"
+                    }
+                }
+            }
+        )
+        {
+            token[] semantics:labels:amt:featureType = ["DatumPlane"]
+        }
+    }
+
+    def Xform "Headlight_Assembly" (
+        kind = "component"
+        prepend apiSchemas = [
+            "SemanticsLabelsAPI:mercedes:identifierSystem",
+            "SemanticsLabelsAPI:mercedes:colorCode"
+        ]
+        assetInfo = {
+            dictionary source = {
+                dictionary mercedes = {
+                    string identifier = "A 213 906 76 01"
+                    string version = "ES1"
+                    string basePartNumber = "A 213 906 76 01"
+                    string extensionCode = "ES1"
+                    string extensionMeaning = "Color variant: Obsidian Black (197)"
+                    string note = "ES2 variant: A 213 906 76 01 ES2 = Selenite Grey (992)"
+                }
+            }
+        }
+    )
+    {
+        token[] semantics:labels:mercedes:identifierSystem = ["Mercedes-Benz Part Numbering"]
+        token[] semantics:labels:mercedes:colorCode        = ["Obsidian Black", "0197"]
+    }
+
+    def Xform "Fasteners" (
+        kind = "group"
+    )
+    {
+        def Mesh "Bolt_001" (
+            assetInfo = {
+                dictionary source = {
+                    dictionary windchill = {
+                        string identifier = "VR:wt.part.WTPart:55012001"
+                        string version = "Rev.A"
+                        string displayNumber = "BLT-M12x35-GR8.8"
+                        string serialNumber = "SN-2025-00001"
+                    }
+                }
+            }
+        )
+        {
+        }
+
+        def Mesh "Bolt_002" (
+            assetInfo = {
+                dictionary source = {
+                    dictionary windchill = {
+                        string identifier = "VR:wt.part.WTPart:55012001"
+                        string version = "Rev.A"
+                        string displayNumber = "BLT-M12x35-GR8.8"
+                        string serialNumber = "SN-2025-00002"
+                    }
+                }
+            }
+        )
+        {
+        }
+    }
+}

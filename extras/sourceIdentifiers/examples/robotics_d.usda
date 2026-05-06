@@ -1,0 +1,161 @@
+#usda 1.0
+(
+    """
+    Approach D (Labels + Identity): Robotics simulation scenario.
+
+    Same fleet composition as robotics_a.usda / robotics_b.usda.
+
+    Identity → assetInfo["source"][<system>]: ROS package URIs, fleet
+    instance IDs, manufacturer serial numbers, OPC UA NodeIds — opaque
+    pointers that round-trip into their source systems.
+
+    Classification → SemanticsLabelsAPI:<system>:<facet>: source format
+    (URDF/SDF), ROS distro, model name, manufacturer name, fleet/station
+    membership, frame IDs and topic names (controlled-vocabulary strings
+    drawn from each system's published namespaces).
+
+    No new applied schema. Uses UsdSemanticsLabelsAPI (shipping in 24.11).
+    """
+    defaultPrim = "WarehouseFloor"
+    metersPerUnit = 1.0
+    upAxis = "Z"
+)
+
+def Xform "WarehouseFloor" (
+    kind = "assembly"
+)
+{
+    def Xform "Robot_1" (
+        kind = "component"
+        prepend apiSchemas = [
+            "SemanticsLabelsAPI:ros:packageName",
+            "SemanticsLabelsAPI:ros:modelName",
+            "SemanticsLabelsAPI:ros:sourceFormat",
+            "SemanticsLabelsAPI:ros:rosDistro",
+            "SemanticsLabelsAPI:fleet:fleetId",
+            "SemanticsLabelsAPI:fleet:stationAssignment",
+            "SemanticsLabelsAPI:manufacturer:manufacturer",
+            "SemanticsLabelsAPI:manufacturer:modelNumber"
+        ]
+        assetInfo = {
+            dictionary source = {
+                dictionary ros = {
+                    string identifier = "package://amr_500_description/urdf/amr_500.urdf"
+                    string version = "1.4.2"
+                }
+                dictionary fleet = {
+                    string identifier = "FLEET-NYC-WH3:AMR:001"
+                    string firmwareVersion = "2.8.1"
+                    string lastCalibration = "2026-03-15T08:30:00Z"
+                }
+                dictionary manufacturer = {
+                    string identifier = "MFR-FETCH-AMR500-SN20250001"
+                    string serialNumber = "SN-2025-0001"
+                    string warrantyExpiry = "2028-03-15"
+                }
+            }
+        }
+    )
+    {
+        token[] semantics:labels:ros:packageName            = ["amr_500_description"]
+        token[] semantics:labels:ros:modelName              = ["AMR-500"]
+        token[] semantics:labels:ros:sourceFormat           = ["URDF"]
+        token[] semantics:labels:ros:rosDistro              = ["jazzy"]
+        token[] semantics:labels:fleet:fleetId              = ["NYC-WH3"]
+        token[] semantics:labels:fleet:stationAssignment    = ["Aisle-4-Pick"]
+        token[] semantics:labels:manufacturer:manufacturer  = ["Fetch Robotics"]
+        token[] semantics:labels:manufacturer:modelNumber   = ["AMR-500"]
+
+        def Xform "LiDAR_Front" (
+            prepend apiSchemas = [
+                "SemanticsLabelsAPI:manufacturer:manufacturer",
+                "SemanticsLabelsAPI:manufacturer:partNumber",
+                "SemanticsLabelsAPI:ros:topicName",
+                "SemanticsLabelsAPI:ros:frameId",
+                "SemanticsLabelsAPI:opcua:nodeClass"
+            ]
+            assetInfo = {
+                dictionary source = {
+                    dictionary manufacturer = {
+                        string identifier = "MFR-VELODYNE-VLP16-SN30042"
+                        string datasheetRevision = "Rev.F"
+                    }
+                    dictionary ros = {
+                        string identifier = "package://velodyne_description/urdf/VLP-16.urdf.xacro"
+                    }
+                    dictionary opcua = {
+                        string identifier = "ns=2;s=Fleet.Robot1.LiDAR.Front"
+                    }
+                }
+            }
+        )
+        {
+            token[] semantics:labels:manufacturer:manufacturer = ["Velodyne"]
+            token[] semantics:labels:manufacturer:partNumber   = ["VLP-16"]
+            token[] semantics:labels:ros:topicName             = ["/robot_1/lidar_front/points"]
+            token[] semantics:labels:ros:frameId               = ["robot_1_lidar_front_link"]
+            token[] semantics:labels:opcua:nodeClass           = ["Object"]
+        }
+
+        def Xform "Camera_RGB" (
+            prepend apiSchemas = [
+                "SemanticsLabelsAPI:manufacturer:manufacturer",
+                "SemanticsLabelsAPI:manufacturer:partNumber",
+                "SemanticsLabelsAPI:ros:topicName",
+                "SemanticsLabelsAPI:ros:frameId"
+            ]
+            assetInfo = {
+                dictionary source = {
+                    dictionary manufacturer = {
+                        string identifier = "MFR-FLIR-BFS-U3-16S2C-SN80001"
+                    }
+                    dictionary ros = {
+                        string identifier = "package://flir_camera_description/urdf/bfs_u3.urdf.xacro"
+                    }
+                }
+            }
+        )
+        {
+            token[] semantics:labels:manufacturer:manufacturer = ["FLIR"]
+            token[] semantics:labels:manufacturer:partNumber   = ["BFS-U3-16S2C-CS"]
+            token[] semantics:labels:ros:topicName             = ["/robot_1/camera_rgb/image_raw"]
+            token[] semantics:labels:ros:frameId               = ["robot_1_camera_rgb_optical_frame"]
+        }
+    }
+
+    def Xform "Robot_2" (
+        kind = "component"
+        prepend apiSchemas = [
+            "SemanticsLabelsAPI:ros:packageName",
+            "SemanticsLabelsAPI:ros:modelName",
+            "SemanticsLabelsAPI:ros:sourceFormat",
+            "SemanticsLabelsAPI:fleet:fleetId",
+            "SemanticsLabelsAPI:fleet:stationAssignment",
+            "SemanticsLabelsAPI:manufacturer:manufacturer"
+        ]
+        assetInfo = {
+            dictionary source = {
+                dictionary ros = {
+                    string identifier = "package://amr_500_description/urdf/amr_500.urdf"
+                    string version = "1.4.2"
+                }
+                dictionary fleet = {
+                    string identifier = "FLEET-NYC-WH3:AMR:002"
+                    string firmwareVersion = "2.8.0"
+                }
+                dictionary manufacturer = {
+                    string identifier = "MFR-FETCH-AMR500-SN20250002"
+                    string serialNumber = "SN-2025-0002"
+                }
+            }
+        }
+    )
+    {
+        token[] semantics:labels:ros:packageName           = ["amr_500_description"]
+        token[] semantics:labels:ros:modelName             = ["AMR-500"]
+        token[] semantics:labels:ros:sourceFormat          = ["URDF"]
+        token[] semantics:labels:fleet:fleetId             = ["NYC-WH3"]
+        token[] semantics:labels:fleet:stationAssignment   = ["Aisle-7-Pack"]
+        token[] semantics:labels:manufacturer:manufacturer = ["Fetch Robotics"]
+    }
+}

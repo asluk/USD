@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 """
-Vendor Adoption Analysis for Source Identifier Approaches A and B.
+Vendor Adoption Analysis for Source Identifier Approaches A, B, C, and D.
 
 Measures the friction of adding a new vendor's identifier scheme to each
 approach, simulating the experience of a standards body or vendor team
 integrating with OpenUSD.
 
-Metrics:
-1. Files touched per new vendor
-2. Boilerplate lines per new vendor
-3. Coordination required (can vendors work independently?)
-4. Collision risk surface
-5. Domain-specific metadata flexibility
-6. Promotion lifecycle effort
+Scoring dimensions match COMPARISON.md §3.6:
+  - Initial adoption friction
+  - Distribution friction (no new schema = higher)
+  - Per-prim discoverability (what systems on this prim)
+  - Per-facet discoverability (what facet of which system)
+  - Metadata heterogeneity (carries arbitrary domain data)
+  - Validator implementability
+  - Composition for typical edits (non-timevarying strings)
+  - File size cost (smaller = higher)
+
+Collision detection, governance enforceability, and composition behavior
+for non-timevarying strings are treated as symmetric across mechanisms;
+the dimensions deliberately do not credit any approach for those
+properties as schema-only advantages.
 """
 
 import json
@@ -235,93 +242,179 @@ def analyze_approach_b():
     }
 
 
+def analyze_approach_c():
+    """Approach C — Hybrid (B's typed schema + A's assetInfo overflow)."""
+    return {
+        "name": "Approach C: Hybrid (multi-apply schema + assetInfo overflow)",
+        "structure": (
+            "Multi-apply SourceIdHybridAPI:<system> with the four common "
+            "fields (primaryId, revision, domain, label), plus "
+            "assetInfo['sourceIds'][<system>] for domain-specific metadata."
+        ),
+        "what_a_new_vendor_does": (
+            "Apply the schema instance, author the four typed properties, "
+            "and add any domain-specific metadata to the assetInfo overflow "
+            "dict under the matching system key."
+        ),
+        "distribution_dependency": (
+            "Requires SourceIdHybridAPI to ship — a new ratified multi-apply "
+            "schema in OpenUSD or as a distributed plugin."
+        ),
+        "discoverability": (
+            "apiSchemas list shows which systems are on the prim. To know "
+            "which domain-specific fields are present, consumers parse the "
+            "assetInfo overflow dict — same as A for that tier."
+        ),
+    }
+
+
+def analyze_approach_d():
+    """Approach D — Labels + Identity (the recommended mechanism)."""
+    return {
+        "name": "Approach D: Labels + Identity (SemanticsLabelsAPI + assetInfo)",
+        "structure": (
+            "Identity -> assetInfo['source'][<system>] with `identifier` and "
+            "optional `version` keys. Classification -> "
+            "SemanticsLabelsAPI:<system>:<facet> instances with token[] "
+            "semantics:labels:<system>:<facet> properties."
+        ),
+        "what_a_new_vendor_does": (
+            "Author assetInfo['source'][<system>] with the identifier string. "
+            "Apply SemanticsLabelsAPI:<system>:<facet> for each classification "
+            "facet and author the corresponding token[] property. No new "
+            "applied schema required — UsdSemanticsLabelsAPI ships in 24.11."
+        ),
+        "distribution_dependency": (
+            "None. UsdSemanticsLabelsAPI is already in OpenUSD core (24.11+). "
+            "An AOUSD Domains Registry is recommended for namespace "
+            "coordination but is administrative, not enforcement."
+        ),
+        "discoverability": (
+            "Per-facet apiSchemas instances expose both the system and the "
+            "facet — finer-grained than B/C's per-system instances. A consumer "
+            "asking 'what facets does Revit carry on this prim?' can answer "
+            "from the apiSchemas list alone, without parsing properties or "
+            "dictionaries."
+        ),
+    }
+
+
 def compare():
-    """Generate side-by-side comparison."""
+    """Generate side-by-side comparison across A, B, C, D."""
     a = analyze_approach_a()
     b = analyze_approach_b()
-    
-    dimensions = [
-        ("files_touched_by_new_vendor", "Files Touched by New Vendor"),
-        ("boilerplate_lines_new_vendor", "Boilerplate for New Vendor"),
-        ("coordination_required", "Coordination Required"),
-        ("collision_risk", "Collision Risk"),
-        ("heterogeneous_metadata", "Heterogeneous Metadata"),
-        ("promotion_lifecycle", "Promotion Lifecycle"),
-        ("scale_at_20_vendors_5_schemes_each", "Scale (20 vendors × 5 schemes)"),
-        ("gui_presentation", "GUI Presentation"),
-    ]
-    
+    c = analyze_approach_c()
+    d = analyze_approach_d()
+
     comparison = {
         "approach_a": a,
         "approach_b": b,
+        "approach_c": c,
+        "approach_d": d,
         "summary": {},
     }
-    
-    # Scoring (1-5, higher = better for ecosystem adoption)
+
+    # Scoring (1-5, higher = better for ecosystem adoption).
+    # Dimensions match COMPARISON.md §3.6.
+    # Honest scoring: collision detection / governance enforcement / composition
+    # for non-timevarying strings are treated as symmetric across mechanisms
+    # (the differences are in what a registry-spec validator must parse).
     scores = {
         "approach_a": {
-            "ease_of_initial_adoption": 5,
-            "collision_safety": 2,
-            "metadata_flexibility": 5,
-            "gui_integration": 2,
-            "promotion_lifecycle": 3,
-            "scale_manageability": 3,
-            "discoverability": 2,
-            "schema_validation": 1,
+            "initial_adoption_friction":     5,  # zero coordination, just write dict
+            "distribution_friction":         5,  # no new schema needed
+            "per_prim_discoverability":      2,  # must parse assetInfo
+            "per_facet_discoverability":     2,  # must parse assetInfo
+            "metadata_heterogeneity":        5,  # freeform dicts handle anything
+            "validator_implementability":    2,  # full traversal + dict parsing
+            "composition_typical_edits":     4,  # equivalent for non-timevarying
+            "file_size_cost":                4,  # 109.4 MB / 100K prims
         },
         "approach_b": {
-            "ease_of_initial_adoption": 4,
-            "collision_safety": 4,
-            "metadata_flexibility": 3,
-            "gui_integration": 5,
-            "promotion_lifecycle": 4,
-            "scale_manageability": 3,
-            "discoverability": 5,
-            "schema_validation": 5,
+            "initial_adoption_friction":     4,  # apply schema instance
+            "distribution_friction":         2,  # new SourceIdSchemaAPI to ship
+            "per_prim_discoverability":      4,  # apiSchemas list (per-system)
+            "per_facet_discoverability":     2,  # no facet structure
+            "metadata_heterogeneity":        2,  # 4 fixed properties; companion schemas needed
+            "validator_implementability":    4,  # GetAll() + typed access
+            "composition_typical_edits":     4,  # equivalent for non-timevarying
+            "file_size_cost":                5,  # 93.1 MB — smallest
+        },
+        "approach_c": {
+            "initial_adoption_friction":     4,  # apply schema + author overflow
+            "distribution_friction":         2,  # new SourceIdHybridAPI to ship
+            "per_prim_discoverability":      4,  # apiSchemas list (per-system)
+            "per_facet_discoverability":     3,  # apiSchemas + overflow walk
+            "metadata_heterogeneity":        5,  # overflow dicts handle anything
+            "validator_implementability":    4,  # schema-targeted + overflow check
+            "composition_typical_edits":     4,  # equivalent for non-timevarying
+            "file_size_cost":                3,  # 147.1 MB — largest
+        },
+        "approach_d": {
+            "initial_adoption_friction":     4,  # apply per-facet schemas + author labels
+            "distribution_friction":         5,  # no new schema; uses shipping SemanticsLabelsAPI
+            "per_prim_discoverability":      5,  # apiSchemas list shows facets per system
+            "per_facet_discoverability":     5,  # per-facet instances expose structure
+            "metadata_heterogeneity":        4,  # token labels + assetInfo strings
+            "validator_implementability":    5,  # apiSchemas list shows system+facet directly
+            "composition_typical_edits":     4,  # equivalent for non-timevarying
+            "file_size_cost":                4,  # 115.8 MB — between A and C
         },
     }
-    
+
     comparison["scores"] = scores
-    comparison["scores"]["approach_a_total"] = sum(scores["approach_a"].values())
-    comparison["scores"]["approach_b_total"] = sum(scores["approach_b"].values())
-    
+    for key in ("approach_a", "approach_b", "approach_c", "approach_d"):
+        comparison["scores"][f"{key}_total"] = sum(scores[key].values())
+
     return comparison
 
 
 def main():
     comparison = compare()
-    
+
     output_path = os.path.join(OUTPUT_DIR, "vendor_adoption_analysis.json")
     with open(output_path, "w") as f:
         json.dump(comparison, f, indent=2)
-    
+
     print("=" * 72)
-    print("VENDOR ADOPTION ANALYSIS")
+    print("VENDOR ADOPTION ANALYSIS (A/B/C/D)")
     print("=" * 72)
-    
+
     print("\n--- Approach A: assetInfo sub-dictionaries ---")
     a = comparison["approach_a"]
     print(f"  Files to touch: {a['files_touched_by_new_vendor']['count']}")
-    print(f"  Collision risk: {a['collision_risk']['level']}")
     print(f"  Metadata flexibility: {a['heterogeneous_metadata']['flexibility']}")
-    print(f"  GUI presentation: {a['gui_presentation']['level']}")
-    
+
     print("\n--- Approach B: Multi-apply schema ---")
     b = comparison["approach_b"]
     print(f"  Files to touch: {b['files_touched_by_new_vendor']['count']}")
-    print(f"  Collision risk: {b['collision_risk']['level']}")
     print(f"  Metadata flexibility: {b['heterogeneous_metadata']['flexibility']}")
-    print(f"  GUI presentation: {b['gui_presentation']['level']}")
-    
+
+    print("\n--- Approach C: Hybrid (B + assetInfo overflow) ---")
+    c = comparison["approach_c"]
+    print(f"  {c['structure']}")
+    print(f"  Distribution dependency: {c['distribution_dependency']}")
+
+    print("\n--- Approach D: Labels + Identity ---")
+    d = comparison["approach_d"]
+    print(f"  {d['structure']}")
+    print(f"  Distribution dependency: {d['distribution_dependency']}")
+
     print("\n--- Scoring (1-5 per dimension, higher = better) ---")
-    for dim in comparison["scores"]["approach_a"]:
+    dims = list(comparison["scores"]["approach_a"].keys())
+    header = f"  {'dimension':35s}  A   B   C   D"
+    print(header)
+    print(f"  {'-'*35}  --  --  --  --")
+    for dim in dims:
         a_score = comparison["scores"]["approach_a"][dim]
         b_score = comparison["scores"]["approach_b"][dim]
-        winner = "A" if a_score > b_score else ("B" if b_score > a_score else "=")
-        print(f"  {dim:35s}  A={a_score}  B={b_score}  [{winner}]")
-    
-    print(f"\n  TOTAL: A={comparison['scores']['approach_a_total']}  B={comparison['scores']['approach_b_total']}")
-    
+        c_score = comparison["scores"]["approach_c"][dim]
+        d_score = comparison["scores"]["approach_d"][dim]
+        print(f"  {dim:35s}  {a_score}   {b_score}   {c_score}   {d_score}")
+
+    totals = comparison["scores"]
+    print(f"\n  {'TOTAL':35s}  {totals['approach_a_total']}  {totals['approach_b_total']}  "
+          f"{totals['approach_c_total']}  {totals['approach_d_total']}")
     print(f"\nResults saved to {output_path}")
 
 

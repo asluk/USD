@@ -20,10 +20,29 @@
   "line_count": {
     "approach_a": 3085417,
     "approach_b": 2020995,
-    "ratio_b_over_a": 0.655
+    "ratio_b_over_a": 0.655,
+    "approach_d": 3094533,
+    "approach_c": 3583150
   },
   "namespace_footprint": {
     "approach_a_unique_keys": 10,
-    "approach_b_unique_properties": 30
+    "approach_b_unique_properties": 30,
+    "approach_d_unique_apischema_instances": 11,
+    "approach_d_unique_label_properties": 11,
+    "approach_d_unique_dict_keys": 9,
+    "approach_c_unique_properties": 30,
+    "approach_c_unique_dict_keys": 9
+  },
+  "approach_d": {
+    "generation_time_sec": 5.006,
+    "file_size_bytes": 121443858,
+    "file_size_mb": 115.82,
+    "num_prims": 100000
+  },
+  "approach_c": {
+    "generation_time_sec": 8.782,
+    "file_size_bytes": 154204424,
+    "file_size_mb": 147.06,
+    "num_prims": 100000
   }
 }

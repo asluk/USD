@@ -93,29 +93,65 @@
       "description": "Applied schemas contribute to UsdPrimDefinition. Properties appear in GUI property panels automatically. Fallback values (empty strings) mean unauthored properties are still visible and editable. Schema-aware tools can present source identifiers without any custom knowledge of the convention."
     }
   },
+  "approach_c": {
+    "name": "Approach C: Hybrid (multi-apply schema + assetInfo overflow)",
+    "structure": "Multi-apply SourceIdHybridAPI:<system> with the four common fields (primaryId, revision, domain, label), plus assetInfo['sourceIds'][<system>] for domain-specific metadata.",
+    "what_a_new_vendor_does": "Apply the schema instance, author the four typed properties, and add any domain-specific metadata to the assetInfo overflow dict under the matching system key.",
+    "distribution_dependency": "Requires SourceIdHybridAPI to ship \u2014 a new ratified multi-apply schema in OpenUSD or as a distributed plugin.",
+    "discoverability": "apiSchemas list shows which systems are on the prim. To know which domain-specific fields are present, consumers parse the assetInfo overflow dict \u2014 same as A for that tier."
+  },
+  "approach_d": {
+    "name": "Approach D: Labels + Identity (SemanticsLabelsAPI + assetInfo)",
+    "structure": "Identity -> assetInfo['source'][<system>] with `identifier` and optional `version` keys. Classification -> SemanticsLabelsAPI:<system>:<facet> instances with token[] semantics:labels:<system>:<facet> properties.",
+    "what_a_new_vendor_does": "Author assetInfo['source'][<system>] with the identifier string. Apply SemanticsLabelsAPI:<system>:<facet> for each classification facet and author the corresponding token[] property. No new applied schema required \u2014 UsdSemanticsLabelsAPI ships in 24.11.",
+    "distribution_dependency": "None. UsdSemanticsLabelsAPI is already in OpenUSD core (24.11+). An AOUSD Domains Registry is recommended for namespace coordination but is administrative, not enforcement.",
+    "discoverability": "Per-facet apiSchemas instances expose both the system and the facet \u2014 finer-grained than B/C's per-system instances. A consumer asking 'what facets does Revit carry on this prim?' can answer from the apiSchemas list alone, without parsing properties or dictionaries."
+  },
   "summary": {},
   "scores": {
     "approach_a": {
-      "ease_of_initial_adoption": 5,
-      "collision_safety": 2,
-      "metadata_flexibility": 5,
-      "gui_integration": 2,
-      "promotion_lifecycle": 3,
-      "scale_manageability": 3,
-      "discoverability": 2,
-      "schema_validation": 1
+      "initial_adoption_friction": 5,
+      "distribution_friction": 5,
+      "per_prim_discoverability": 2,
+      "per_facet_discoverability": 2,
+      "metadata_heterogeneity": 5,
+      "validator_implementability": 2,
+      "composition_typical_edits": 4,
+      "file_size_cost": 4
     },
     "approach_b": {
-      "ease_of_initial_adoption": 4,
-      "collision_safety": 4,
-      "metadata_flexibility": 3,
-      "gui_integration": 5,
-      "promotion_lifecycle": 4,
-      "scale_manageability": 3,
-      "discoverability": 5,
-      "schema_validation": 5
+      "initial_adoption_friction": 4,
+      "distribution_friction": 2,
+      "per_prim_discoverability": 4,
+      "per_facet_discoverability": 2,
+      "metadata_heterogeneity": 2,
+      "validator_implementability": 4,
+      "composition_typical_edits": 4,
+      "file_size_cost": 5
     },
-    "approach_a_total": 23,
-    "approach_b_total": 33
+    "approach_c": {
+      "initial_adoption_friction": 4,
+      "distribution_friction": 2,
+      "per_prim_discoverability": 4,
+      "per_facet_discoverability": 3,
+      "metadata_heterogeneity": 5,
+      "validator_implementability": 4,
+      "composition_typical_edits": 4,
+      "file_size_cost": 3
+    },
+    "approach_d": {
+      "initial_adoption_friction": 4,
+      "distribution_friction": 5,
+      "per_prim_discoverability": 5,
+      "per_facet_discoverability": 5,
+      "metadata_heterogeneity": 4,
+      "validator_implementability": 5,
+      "composition_typical_edits": 4,
+      "file_size_cost": 4
+    },
+    "approach_a_total": 29,
+    "approach_b_total": 27,
+    "approach_c_total": 29,
+    "approach_d_total": 36
   }
 }
