@@ -2,130 +2,137 @@
 
 ← [Back to COMPARISON.md](../COMPARISON.md)
 
-Composition behavior is one of the most consequential differences between the
-two approaches. It governs what happens when source identifiers are authored
-across multiple layers - a common scenario when a base asset (authored by a
-design team) is overridden by a downstream consumer (e.g., a construction
-coordinator updating a revision, or an operational system adding telemetry
-bindings).
+## Headline
+
+**For non-timevarying strings, composition behavior is effectively equivalent
+across approaches A, B, C, and D at the granularity authors actually use.**
+Identifier values and most classification labels are non-timevarying strings,
+so this regime covers nearly all real cases. The differences live elsewhere
+(fallback values via `UsdPrimDefinition`, schema-driven property metadata for
+GUIs and validators) and are noted at the end.
+
+A narrow round-trip-rewrite hazard exists for any mechanism that exposes
+composed values to authoring tools — covered below — but it is a tool-author
+bug rather than a structural property of any one approach.
 
 ## Test scenario
 
-Both approaches were tested with the same scenario:
+The same scenario was authored under each approach (`examples/composition_test_*.usda`):
 
 - **Base layer:** A chiller prim carries identifiers from three systems
-  (Windchill, SAP, IFC). The Windchill entry includes `primaryId`,
-  `revision`, and a `metadata` sub-dict with `displayNumber` and `state`.
+  (Windchill, SAP, IFC), with Windchill including a primary ID, revision,
+  and a small metadata bundle (`displayNumber`, `state`).
+- **Override layer:** References the base and changes Windchill's revision
+  ("Rev.B" → "Rev.C") and state ("In Work" → "Released"), while adding an
+  OPC UA binding.
 
-- **Override layer:** References the base and makes two changes:
-  1. Updates the Windchill `revision` from "Rev.B" to "Rev.C" and
-     `state` from "In Work" to "Released"
-  2. Adds a new OPC UA domain binding
+The test asks: does the override compose with the base such that updated
+fields take the override value, untouched fields keep the base value, and
+new fields are visible — under each approach?
 
-## Approach A: Element-wise dictionary composition
+## Result: all four pass for the typical case
 
-```usda
-# Override layer (Approach A)
-def Xform "Chiller" (
-    prepend references = @./composition_test_a_base.usda@
-    assetInfo = {
-        dictionary sourceIds = {
-            dictionary windchill = {
-                string revision = "Rev.C"
-                dictionary metadata = {
-                    string state = "Released"
-                }
-            }
-            dictionary opcua = {
-                string primaryId = "ns=4;s=Building.HVAC.Chiller01"
-            }
-        }
-    }
-)
-```
+| Field | Source | Composed value | A | B | C | D |
+|---|---|---|---|---|---|---|
+| Windchill `primaryId` / `identifier` | base | `"VR:wt.part.WTPart:23639563"` | ✅ | ✅ | ✅ | ✅ |
+| Windchill `revision` / `version` | override | `"Rev.C"` | ✅ | ✅ | ✅ | ✅ |
+| Windchill `state` (label in D) | override | `"Released"` | ✅ | ✅ | ✅ | ✅ |
+| Windchill `displayNumber` | base | `"CH-7500-A"` | ✅ | n/a | ✅ | ✅ |
+| OPC UA binding | override | new instance | ✅ | ✅ | ✅ | ✅ |
+| SAP / IFC | base | unchanged | ✅ | ✅ | ✅ | ✅ |
 
-**Composed result for `windchill`:**
+(B has no place to put `displayNumber` without a companion schema; that's a
+heterogeneity gap, not a composition gap.)
 
-`assetInfo` composes element-wise at each dictionary nesting level. The
-override provides `revision` and `metadata.state`; the base provides
-`primaryId` and `metadata.displayNumber`. Because composition merges per
-key at each level:
+For non-timevarying strings, the four mechanisms produce equivalent composed
+results when the override layer authors what it intends to author. The
+mechanisms differ in *how* the override expresses those edits (per-key dict
+edits in A/C-overflow/D-identity, per-property edits in B/C-schema/D-labels),
+but the end-state is the same.
 
-- `primaryId` = `"VR:wt.part.WTPart:23639563"` ✅ (from base - preserved)
-- `revision` = `"Rev.C"` ✅ (from override - updated)
-- `metadata.displayNumber` = `"CH-7500-A"` ✅ (from base - preserved)
-- `metadata.state` = `"Released"` ✅ (from override - updated)
+## The narrow round-trip hazard
 
-This works correctly **in this case** because both layers structured their
-dictionaries at the same granularity. However, the behavior is subtle:
+Where dictionaries diverge from properties is in **round-trip serialization**:
+a tool that reads a *composed* value and writes the *whole composed dictionary*
+back to its own layer can shadow base-layer keys it didn't intend to override.
+For example, an override layer that authors only `revision = "Rev.C"` but
+*serializes* the whole `windchill` dictionary (including the base's
+`primaryId` and `displayNumber`) creates a layer that now opaquely owns
+all of those values.
 
-**Risk scenario:** If the override layer had authored the entire `windchill`
-dictionary with only `revision` (omitting `primaryId`), the composed result
-would still contain `primaryId` from the base - because `assetInfo` merges
-per key. But if a tool *serializes* the override by first reading the
-composed value and writing it back (a common pattern), it would write the
-full dictionary including `primaryId`, which would then shadow the base
-layer's value. This round-trip hazard is inherent to dictionary-based
-composition and requires discipline from authoring tools.
+This is real, but:
 
-**SAP and IFC:** Completely untouched. The override layer's `sourceIds`
-merges at the domain level, so domains not mentioned in the override
-are preserved from the base.
+- It is a **tool-author bug**, not a property of the mechanism — careful
+  serialization that authors only what changed avoids it entirely.
+- The same hazard applies whenever a tool round-trips a composed value back
+  into its own layer (e.g., reading and writing `apiSchemas` lists, or
+  re-authoring a relationship target list). It is symmetric with other USD
+  composition surfaces, not unique to dictionaries.
+- D's identity tier carries fewer keys per system (typically just
+  `identifier` and optional `version`), so the round-trip surface is
+  smaller than A or C-overflow. D's classification tier uses per-property
+  token arrays, which have no round-trip hazard.
 
-**OPC UA:** Added cleanly as a new key in `sourceIds`.
+This hazard is real but not load-bearing for the choice between mechanisms.
 
-## Approach B: Per-property composition
+## What does genuinely differ
 
-```usda
-# Override layer (Approach B)
-def Xform "Chiller" (
-    prepend references = @./composition_test_b_base.usda@
-    prepend apiSchemas = ["SourceIdSchemaAPI:opcua"]
-)
-{
-    string sourceIdentifier:windchill:revision = "Rev.C"
+The composition differences that matter for governed common fields are:
 
-    string sourceIdentifier:opcua:primaryId = "ns=4;s=Building.HVAC.Chiller01"
-    token sourceIdentifier:opcua:domain = "org.opcfoundation.ua"
-    string sourceIdentifier:opcua:label = "OPC UA NodeId"
-}
-```
+- **Per-field fallback values via `UsdPrimDefinition`.** Schema properties
+  contribute defaults; dictionary keys do not. This favors B/C's typed
+  common fields and D's `SemanticsLabelsAPI` properties; it does not apply
+  to `assetInfo` content under any approach.
+- **Schema-driven property metadata.** Schema property declarations carry
+  type, doc strings, allowed-value hints — usable by GUIs and validators.
+  Dictionary keys carry only the value.
 
-**Composed result for `windchill`:**
+Both differences favor schemas over dictionaries — but D obtains them
+via `UsdSemanticsLabelsAPI` (already shipping) without ratifying anything
+new, while B/C require shipping a new applied schema for the identifier
+common fields.
 
-Each property composes independently. The override authors only
-`sourceIdentifier:windchill:revision`; every other `windchill` property
-retains its value from the base:
+## Per-approach composition mechanics
 
-- `primaryId` = `"VR:wt.part.WTPart:23639563"` ✅ (from base)
-- `revision` = `"Rev.C"` ✅ (from override)
-- `domain` = `"com.ptc.windchill"` ✅ (from base)
-- `label` = `"Windchill Part OID"` ✅ (from base)
+Brief descriptions for completeness — the test results above are the
+load-bearing finding.
 
-There is **no risk of unintentional side effects**. Overriding one property
-cannot disturb another property, even within the same instance. This is
-the standard USD property composition model that all schema-based data
-follows.
+### Approach A: element-wise dictionary composition
 
-**SAP and IFC:** Completely untouched. Their properties are separate
-attributes with their own opinion stacks.
+`assetInfo` composes by merging dictionaries at each nesting level, with
+the strongest opinion winning per key. An override layer can add a new
+domain key without disturbing existing ones; a partial-key edit at any
+nesting level works as long as the override authors only the edited keys.
+The round-trip-rewrite hazard above applies here.
 
-**OPC UA:** Added via `prepend apiSchemas` (list editing), which appends
-to the existing schema list without disturbing other entries.
+### Approach B: per-property composition
 
-## Composition comparison
+Each typed property composes independently. Overriding
+`sourceIdentifier:windchill:revision` does not affect
+`sourceIdentifier:windchill:primaryId` — they are separate attributes
+with separate opinion stacks. Adding a new system requires
+`prepend apiSchemas` (list editing), which appends without disturbing
+other entries.
 
-| Aspect | Approach A | Approach B |
-|--------|-----------|------------|
-| Override granularity | Per dictionary key at each nesting level | Per individual property |
-| Risk of unintentional data loss | Medium (round-trip serialization hazard) | None |
-| Adding a new domain | Add key to `sourceIds` dict | `prepend apiSchemas` + author properties |
-| Removing a domain | Cannot block (erase) a key from a weaker layer; must override with empty/sentinel values or reauthor the full dict without the key | `delete apiSchemas` list op or reauthor without the schema |
-| Partial field update | Works if structured correctly; subtle | Always works; no subtlety |
-| Tool author burden | Must understand dict merge semantics | Standard property authoring |
+### Approach C: hybrid
 
-**Verdict:** Approach B's per-property composition is strictly safer and
-more predictable. Approach A's element-wise dictionary composition works
-correctly but requires more discipline from tool authors and has a
-round-trip serialization hazard that could cause subtle data corruption
-in careless implementations.
+Common fields compose per-property (B's mechanics). Overflow dictionaries
+compose element-wise (A's mechanics). The convention that the schema
+instance name matches the overflow dict key is enforced by the convenience
+API, not the schema system — see `hybrid_analysis.md` §7.3a.
+
+### Approach D: labels + identity
+
+Identity dict (`assetInfo["source"][<system>]`) composes element-wise
+(A's mechanics). Label arrays (`token[] semantics:labels:<system>:<facet>`)
+compose per-property — the `apiSchemas` list edits via `prepend`/`delete`
+list ops, and each `token[]` value composes independently. Adding a new
+classification facet is `prepend apiSchemas = ["SemanticsLabelsAPI:foo:bar"]`
+plus authoring the corresponding `token[]` property; nothing else changes.
+
+## Verdict
+
+Composition behavior is not a meaningful differentiator between the four
+approaches for the cases authors actually exercise. The discoverability,
+distribution-friction, and governance differences in COMPARISON.md §3.2–3.4
+are where the choice actually turns.

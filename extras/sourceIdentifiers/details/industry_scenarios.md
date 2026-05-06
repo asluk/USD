@@ -2,10 +2,19 @@
 
 ← [Back to COMPARISON.md](../COMPARISON.md)
 
-Both approaches were exercised across four industry verticals using realistic
-identifier data. The examples are available as matching A/B pairs in
-`extras/sourceIdentifiers/examples/`. This section summarizes the key
-findings from each scenario.
+All four approaches were exercised across four industry verticals using
+realistic identifier data. The examples are available as matching
+A / B / C / D scenarios in `extras/sourceIdentifiers/examples/` and
+`vendor_simulation/`. This section summarizes the key findings from each
+vertical.
+
+**Approach D (Labels + Identity)** splits each domain's metadata along
+the identity vs. classification seam: opaque identifier strings and
+identity-adjacent fields (those that must round-trip exactly into the
+source system) live in `assetInfo["source"][<system>]`; controlled-vocabulary
+terms (drawn from each system's published namespace) ride
+`SemanticsLabelsAPI:<system>:<facet>` instances. The split test in each
+vertical below evaluates whether D's working rule produces a clean fit.
 
 ## 4.1 Architecture, Engineering, Construction & Operations (AECO)
 
@@ -36,6 +45,17 @@ SAP + OPC UA + BACnet + IFC), and rooms with purely numeric identifiers.
   work equally well in both approaches for the primary identifier. But
   telemetry metadata (nodeClass, dataType, engineeringUnits) is again
   natural in A and absent in B's base schema.
+
+**Approach D fit:** AECO classification metadata (`ifcType`, `ifcSchema`,
+Revit `category`/`familyType`/`mark`/`level`, UniClass and OmniClass codes)
+is *all* drawn from controlled vocabularies, so it routes cleanly to
+`SemanticsLabelsAPI:<system>:<facet>` instances. The opaque identifier strings
+(IFC GlobalId, Revit ElementId, classification codes) sit in
+`assetInfo["source"][<system>]`. The canonical column example
+(`examples/column_d.usda`) shows the full pattern in 32 lines, no new
+schema. Per-facet `apiSchemas` instances (`SemanticsLabelsAPI:revit:familyType`,
+`SemanticsLabelsAPI:revit:mark`) make consumer queries like "which Revit
+facets does this prim carry?" answerable from the apiSchemas list directly.
 
 ## 4.2 Manufacturing, Product Lifecycle & Digital Engineering
 
@@ -85,6 +105,36 @@ identifiers, and Mercedes-Benz-style part numbering with extension codes.
   `AmtFeatureIdentifierAPI` schema - exactly the kind of per-domain
   schema proliferation the proposal warns about.
 
+**Approach D fit (the hardest test):** Manufacturing has the most
+heterogeneous metadata of any vertical, and the identity-vs-classification
+split test surfaces several borderline calls.
+
+- **Identity (in `assetInfo`):** Windchill OID and SAP material number
+  (opaque pointers); `displayNumber` (round-trips to the human-readable
+  part number); `serialNumber` (the unique-instance string); `navigationType`
+  (an opaque PTC filter object); Mercedes `basePartNumber` and
+  `extensionCode` (round-trip exactly into the part-number system);
+  feature-level identifiers like `FID:ENG-BLK-6068:BORE:CYL1` and their
+  numeric `diameter_mm` / `tolerance` strings.
+- **Classification (on `SemanticsLabelsAPI`):** `state` ("Released",
+  "In Work" — controlled vocab); `lifecyclePhase` ("Production", "EOL");
+  `organization` (reverse-DNS-style published vocab); `configContext`
+  ("North America", "Tier 4 Final"); supplier `identifierType` ("OEM Part
+  Number", "Service Part Number"); supplier `equivalence`
+  ("form-fit-function"); supplier `supplier` name; STEP `entityType`
+  and `standard`; AMT `featureType`, `manufacturingOp`, `machineId`;
+  Mercedes `colorCode` and `identifierSystem`.
+
+The runnable scenario (`examples/manufacturing_d.usda`) shows all of these
+in the same tractor assembly used for A/B comparisons. 7 of 8 simulated
+PLM/ERP fields fit cleanly under the working rule. The borderline case
+flagged for TAC validation is `displayNumber` — it is identity-adjacent
+(round-trips to the human-readable part number) but also functions as a
+display label in some pipelines. The doc treats it as identity in the
+default mapping; pipelines that prefer to surface it as a label can author
+both an `assetInfo["source"][windchill]["displayNumber"]` and a
+`SemanticsLabelsAPI:windchill:displayNumber` without conflict.
+
 ## 4.3 Robotics & Simulation
 
 **Files:** `robotics_a.usda`, `robotics_b.usda`
@@ -127,15 +177,29 @@ source format (`URDF`) are lost on ingest — or stored in ad-hoc `customData`
 that the URDF exporter doesn't know to look for. The export pipeline must
 either require manual annotation or guess the output package structure.
 
-**With the hybrid:** The ingestion pipeline writes:
+**With the hybrid (C):** The ingestion pipeline writes:
 - `sourceIdentifier:ros:primaryId = "package://ur_description/urdf/ur10e.urdf"`
 - `sourceIdentifier:ros:domain = "org.ros"`
 - Overflow: `{packageName: "ur_description", modelName: "UR10e", sourceFormat: "URDF"}`
 
 The URDF exporter reads `sourceIdentifier:ros:primaryId` to reconstruct the
 package URI and uses the overflow metadata to restore the URDF structure.
-The round-trip preserves provenance without the exporter needing to know
-about ad-hoc `customData` conventions.
+
+**With Approach D (`examples/robotics_d.usda`):** The pipeline writes
+- `assetInfo["source"]["ros"]["identifier"] = "package://ur_description/urdf/ur10e.urdf"`
+- `apiSchemas` includes `SemanticsLabelsAPI:ros:packageName`,
+  `SemanticsLabelsAPI:ros:modelName`, `SemanticsLabelsAPI:ros:sourceFormat`,
+  `SemanticsLabelsAPI:ros:rosDistro`
+- `token[] semantics:labels:ros:packageName = ["ur_description"]`,
+  `token[] semantics:labels:ros:modelName = ["UR10e"]`,
+  `token[] semantics:labels:ros:sourceFormat = ["URDF"]`,
+  `token[] semantics:labels:ros:rosDistro = ["jazzy"]`
+
+ROS topic names and frame IDs ride additional `SemanticsLabelsAPI` instances
+(`ros:topicName`, `ros:frameId`). The URDF exporter reads the identifier
+and reconstructs structure from the labeled facets. **No new schema**, and
+per-facet apiSchemas instances let the exporter discover which ROS metadata
+is present without parsing dictionaries.
 
 ## 4.4 Media & Entertainment
 
@@ -154,10 +218,24 @@ already covers the M&E model-level case), the analysis confirms:
   DB) is the same multi-domain pattern demonstrated in the other
   scenarios.
 
-## 4.5 Three-tier scenario: IFC codeless companion + AAS overflow graduation
+**Approach D fit:** M&E identifiers are typically just an asset-DB ID +
+version + sometimes a tracker URL. Identity sits in `assetInfo["source"]`;
+classification metadata is sparse, so `apiSchemas` stays small (often
+empty for M&E-only prims). This is D's lightest case; it costs nothing to
+adopt and adds no friction over A.
 
-This scenario demonstrates the three-tier model from §6 of COMPARISON.md using
-two domains at different maturity levels on the same prim.
+## 4.5 Three-tier scenario: IFC codeless companion + AAS overflow graduation (Approach C)
+
+This scenario originally demonstrated the three-tier model under the prior
+recommendation (Approach C) and is preserved here for reference. **Under the
+revised recommendation (Approach D), the three-tier graduation path becomes
+much simpler:** stable classification facets simply join the AOUSD Domains
+Registry as recognized facets under their system; no codeless companion
+schema is required because `SemanticsLabelsAPI` already provides the typed,
+discoverable, schema-validated container. The C three-tier model below
+remains the fallback design if a domain emerges that needs typed
+non-token-array structure (e.g., a numeric tolerance or date range) which
+`SemanticsLabelsAPI` cannot represent.
 
 **Setup:** A building chiller prim carries both IFC and AAS/DPP identifiers.
 IFC has three stable metadata fields that have been promoted to a codeless
@@ -253,32 +331,30 @@ def Xform "Chiller_01" (
 
 The pattern across all four verticals is consistent:
 
-| Dimension | Approach A | Approach B | Approach C (three-tier) |
-|-----------|-----------|------------|------------------------|
-| Primary identifier (linkage key) | ✅ Adequate | ✅ Adequate | ✅ Schema property |
-| Revision/version | ✅ Adequate | ✅ Adequate | ✅ Schema property |
-| Domain-specific metadata (stable) | ✅ Natural (dict) | ❌ Requires companion schema | ✅ Codeless companion schema |
-| Domain-specific metadata (experimental) | ✅ Natural (dict) | ❌ Requires companion schema | ✅ Overflow dict |
-| Multi-domain on single prim | ✅ Natural | ✅ Natural | ✅ Natural |
-| Shared identity across instances | ✅ Natural | ✅ Natural | ✅ Natural |
-| Composite keys (configurable products) | ✅ Natural | ❌ Cannot express without extension | ✅ Companion or overflow |
-| Alternative/equivalent identifiers | ✅ Natural | ✅ Natural (each gets an instance) | ✅ Natural |
-| Relationship between alternatives | ✅ Metadata in dict | ❌ No mechanism | ✅ Companion or overflow |
-| Type safety for stable fields | ❌ Untyped dict | ✅ Schema-validated | ✅ Companion schema |
-| Discoverability for stable fields | ❌ No schema registry | ✅ Full registry | ✅ Companion in registry |
+| Dimension | A | B | C | D |
+|-----------|---|---|---|---|
+| Primary identifier (linkage key) | ✅ Dict | ✅ Schema prop | ✅ Schema prop | ✅ Identity dict |
+| Revision/version | ✅ Dict | ✅ Schema prop | ✅ Schema prop | ✅ Identity dict |
+| Classification metadata (stable) | ✅ Dict | ❌ Companion needed | ✅ Companion or overflow | ✅ `SemanticsLabelsAPI` |
+| Classification metadata (experimental) | ✅ Dict | ❌ Companion needed | ✅ Overflow | ✅ `SemanticsLabelsAPI` |
+| Multi-domain on single prim | ✅ | ✅ | ✅ | ✅ |
+| Shared identity across instances | ✅ | ✅ | ✅ | ✅ |
+| Composite keys (configurable products) | ✅ | ❌ Cannot express | ✅ Overflow | ✅ Identity dict |
+| Alternative/equivalent identifiers | ✅ | ✅ (each = instance) | ✅ | ✅ |
+| Relationship between alternatives | ✅ Dict | ❌ No mechanism | ✅ Overflow | ✅ Label or identity dict |
+| Type safety for stable fields | ❌ Untyped | ✅ Schema-validated | ✅ Companion | ✅ `token[]` typed |
+| Discoverability for stable fields | ❌ Parse | ✅ Schema registry | ✅ Companion | ✅ Per-facet `apiSchemas` |
+| **No new schema required?** | **✅** | ❌ | ❌ | **✅** |
 
-**The critical finding:** For industries with simple identifier schemes
-(a string ID + optional version), both approaches are equivalent. For
-industries with rich, heterogeneous identifier metadata — which includes
-manufacturing, AECO, and robotics — Approach A's freeform dictionaries
-handle all tested scenarios without requiring per-domain schema work.
+**The cross-vertical finding:** D's identity-vs-classification split test
+produces a clean fit in every vertical without forcing companion schemas
+on stakeholders and without requiring AOUSD to ratify a new applied schema.
+A handles the same content as well as D for what it expresses, but lacks
+D's per-facet discoverability. B alone is structurally insufficient for
+verticals with rich classification metadata (manufacturing, AECO, robotics).
+C absorbs B's gap into overflow but at the cost of carrying both mechanisms
+and shipping a new schema.
 
-**The three-tier refinement** addresses the gap: domains with stable
-metadata fields (IFC's `ifcType`, AAS's `assetKind`) gain type safety
-and discoverability through codeless companion schemas, while
-experimental fields retain the zero-friction overflow path. This
-resolves the tension between Approach A's flexibility and Approach B's
-governance without requiring all domains to do schema work on day 1.
-
-This is the central tension driving the hybrid recommendation in
-[hybrid_analysis.md](hybrid_analysis.md).
+The three-tier model in §4.5 remains the fallback if a future domain surfaces
+classification fields that genuinely need typed non-token-array structure.
+Across the four verticals tested, no such field has been identified.

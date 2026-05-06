@@ -1,6 +1,18 @@
-# Scope Promotion Simulation: From Overflow Dict to Schema Property
+# Scope Promotion Simulation: From Overflow Dict to Schema Property (Approach C)
 
 ← [Back to COMPARISON.md](../COMPARISON.md)
+
+> **Scope under D vs. C.** Under Approach D, a field like `scope` is a
+> classification facet from day one — it lives at
+> `SemanticsLabelsAPI:aas:scope`. "Promotion" reduces to a registry-level
+> facet addition (a GitHub PR adding `scope` to the registered facets for
+> the `aas` system, then optionally to other systems' facet lists as
+> adoption broadens). No schema property to ratify, no codegen, no plugin
+> distribution. The five-phase lifecycle in this document is the
+> Approach-C path — preserved here as illustrative of the harder
+> graduation a future field would face if it needs typed structure
+> beyond what `SemanticsLabelsAPI` supports. For D-aware planning, see
+> COMPARISON.md "Open Questions" §2 on AAS scoping.
 
 ## Overview
 

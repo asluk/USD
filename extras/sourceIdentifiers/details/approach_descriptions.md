@@ -201,18 +201,116 @@ api.GetPrimaryIdAttr().Get(&id);
 std::vector<TfToken> instances = UsdSourceIdSchemaAPI::GetAll(prim);
 ```
 
+## Approach C: Hybrid (B + assetInfo overflow)
+
+**Module:** `pxr/usd/usdSourceIdHybrid/`
+**Schema type:** Multi-apply API schema (`UsdSourceIdHybridAPI`)
+**See:** [hybrid_analysis.md](hybrid_analysis.md) for the full design rationale,
+trade-offs, and migration path.
+
+C combines B's typed common fields with A's freeform overflow dictionary,
+keyed by matching the schema instance name to the `assetInfo["sourceIds"]`
+dictionary key. Documented as a **fallback if D-gaps emerge** — see
+hybrid_analysis.md for the design rationale.
+
+---
+
+## Approach D: Labels + Identity
+
+**Schema type:** No new applied schema. Uses `UsdSemanticsLabelsAPI` (shipping
+in OpenUSD 24.11) plus `assetInfo` conventions.
+**Precedent:** `UsdSemanticsLabelsAPI` for classification facets;
+`UsdModelAPI` for the `assetInfo`-only identity tier.
+
+**Mechanism.** Decomposes the source-identifiers problem along its natural
+seams:
+
+- **Identity axis** — opaque pointers back into the source system live in
+  `assetInfo["source"][<system>]`, with conventional keys `identifier` (the
+  primary ID string), optional `version`, and any identity-adjacent strings
+  that round-trip into the system (e.g., `displayNumber`, `serialNumber`,
+  `navigationType`).
+- **Classification axis** — controlled-vocabulary terms drawn from each
+  system's published namespace ride `SemanticsLabelsAPI:<system>:<facet>`
+  instances, with values in `token[] semantics:labels:<system>:<facet>`
+  properties. Each facet is its own apiSchema instance — finer-grained than
+  B/C's per-system instances.
+
+```usda
+def Mesh "Column_C14" (
+    apiSchemas = ["SemanticsLabelsAPI:ifc:type",       "SemanticsLabelsAPI:ifc:objectType",
+                  "SemanticsLabelsAPI:revit:category", "SemanticsLabelsAPI:revit:familyType",
+                  "SemanticsLabelsAPI:revit:mark",     "SemanticsLabelsAPI:revit:level"]
+    assetInfo = {
+        dictionary source = {
+            dictionary ifc   = { string identifier = "2O2Fr$t4X7Zf8NOew3FNr2" }
+            dictionary revit = { string identifier = "847562"
+                                 string version = "2026.1" }
+        }
+    }
+)
+{
+    token[] semantics:labels:ifc:type         = ["IfcColumn"]
+    token[] semantics:labels:ifc:objectType   = ["W14x90"]
+    token[] semantics:labels:revit:category   = ["Structural Columns"]
+    token[] semantics:labels:revit:familyType = ["W14x90"]
+    token[] semantics:labels:revit:mark       = ["C-14"]
+    token[] semantics:labels:revit:level      = ["Level 3"]
+}
+```
+
+**Key characteristics:**
+
+- **No new applied schema.** D requires no ratification, no codegen, no
+  plugin distribution. The applied schema (`UsdSemanticsLabelsAPI`) is
+  already in OpenUSD core. Vendors and standards bodies can adopt D the
+  day the AOUSD Domains Registry publishes their system key.
+
+- **The four "common fields" of B/C dissolve.**
+  - `domain` ≡ apiSchema instance system name (`revit`).
+  - `label` ≡ apiSchema instance facet (`revit:familyType`) plus the
+    registered domain's display label.
+  - `revision` is per-system in `assetInfo` (because not every system has
+    a revision concept).
+  - `primaryId` is the `identifier` dict key in `assetInfo`.
+
+- **Per-facet apiSchema instances expose structure.** A consumer asking
+  "what facets does Revit carry on this prim?" answers from the apiSchemas
+  list directly, without parsing properties or dictionaries — finer-grained
+  than B/C's per-system instances.
+
+- **The identity vs. classification split is the working rule.** Identifier
+  strings and identity-adjacent fields (anything that must round-trip
+  exactly into the source system) go in `assetInfo`. Controlled-vocabulary
+  terms (anything drawn from a published namespace) ride
+  `SemanticsLabelsAPI`. Borderline fields (e.g., Windchill `displayNumber`,
+  Mercedes `extensionCode`) need TAC validation — see COMPARISON.md
+  Open Questions.
+
+- **Composition** is per-property for label arrays (token arrays, finer
+  than B/C's per-system instance) and per-key for `assetInfo` strings
+  (same as A and the overflow tier of C). For non-timevarying strings —
+  which describes nearly all identifier and label values — composition
+  behavior is effectively equivalent to A/B/C at the granularity authors
+  actually use.
+
+**No C++ API required.** Authors and consumers use the existing
+`UsdSemanticsLabelsAPI` and `UsdPrim::GetAssetInfo()` APIs. No
+identifier-specific class or wrapper is needed.
+
+---
+
 ## Side-by-side summary
 
-| Aspect | Approach A | Approach B |
-|--------|-----------|------------|
-| Data location | `assetInfo` metadata | Prim properties |
-| Schema type | Non-applied | Multi-apply |
-| Properties defined | None | 4 per instance |
-| Domain metadata | Freeform dictionary | Fixed set (extensible via companion schemas) |
-| Discoverability | Must check `assetInfo["sourceIds"]` exists | `apiSchemas` list + `HasAPI<>()` |
-| Fallback values | None | Empty strings |
-| GUI presentation | Requires custom code | Automatic |
-| Composition | Per dict key (element-wise) | Per property (independent) |
+| Aspect | Approach A | Approach B | Approach C | Approach D |
+|--------|-----------|------------|------------|------------|
+| Identity location | `assetInfo` metadata | Prim properties | Prim properties | `assetInfo` metadata |
+| Classification location | `assetInfo` metadata | Prim properties | `assetInfo` overflow | `SemanticsLabelsAPI` token arrays |
+| New applied schema needed? | No | Yes | Yes | **No** |
+| `apiSchemas` granularity | None | Per-system | Per-system | **Per-facet** |
+| Domain metadata | Freeform dictionary | Fixed 4 fields | Fixed 4 + overflow | Token labels + identity dict |
+| Discoverability | Parse `assetInfo` | `apiSchemas` + `HasAPI<>()` | `apiSchemas` + parse overflow | `apiSchemas` (per-facet) |
+| Composition (non-timevarying) | Per dict key | Per property | Per property + per key | Per property + per key |
 
 ## Terminology note: `metadata` sub-dictionary key
 
