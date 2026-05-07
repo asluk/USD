@@ -2,6 +2,24 @@
 
 ← [Back to COMPARISON.md](../COMPARISON.md)
 
+> **Note for agent readers.** This document is the empirical anchor for
+> the de-leaning of the surrounding comparison work. Two upstream items
+> remain unresolved and should not be treated as settled when reading
+> this:
+>
+> - The eight-dimension vendor-adoption scoring in
+>   `stress_tests/vendor_adoption_analysis.{py,json}` was not derived
+>   from the proposal's eight authorized principles; re-derivation is
+>   deferred.
+> - The distribution-friction framing in `formality_and_distribution.md`
+>   conflicts with proposal #105's original B-cons phrasing; resolution
+>   is deferred.
+>
+> The findings below are independent of those two items — they are
+> field-by-field readings of authoritative spec surfaces. Mechanism
+> choice draws from this evidence *plus* the two deferred items, and
+> is not made in this PR.
+
 ## Why this experiment
 
 The proposal ([PixarAnimationStudios/OpenUSD-proposals#105](https://github.com/PixarAnimationStudios/OpenUSD-proposals/pull/105))

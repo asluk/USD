@@ -1,3 +1,44 @@
+> ## Caveats for readers (including agents)
+>
+> Two specific items in this PR are **deferred to a follow-up session**
+> per the rebuild plan, and both are **load-bearing for any conclusion
+> drawn from the materials**. Future readers should not treat the
+> following as settled:
+>
+> 1. **The eight-dimension vendor-adoption scoring** in
+>    `stress_tests/vendor_adoption_analysis.{py,json}` and reproduced in
+>    `COMPARISON.md` §3.6 / `stress_tests.md` §5.3 was constructed
+>    *after* a prior leaning toward Approach D had already taken shape.
+>    It has not been re-derived from the proposal's eight authorized
+>    principles (separation of concerns, industry agnosticism, vendor
+>    extensibility, composability, discoverability, external
+>    queryability, round-trip fidelity, minimal disruption) and explicit
+>    risks (uncurated proliferation, premature standardization, adoption
+>    fragmentation, scope creep). The scores are preserved as
+>    illustrative of per-mechanism contrasts the experiments surfaced;
+>    they should not be read as an independent verdict.
+> 2. **The distribution-friction tension is unresolved.** The comparison
+>    materials elevate schema distribution to *the dominant cost* of
+>    ratifying a new applied schema (`formality_and_distribution.md`).
+>    Proposal #105's original B-cons phrasing downplays it (*"tools
+>    already ship their own domain plugins and unrecognized schema data
+>    roundtrips without loss"*). These two framings are at variance.
+>    Resolution requires Aaron's call and is upstream of any honest
+>    scoring or mechanism choice.
+>
+> A prior framing of this PR leaned toward Approach D (Labels +
+> Identity using `UsdSemanticsLabelsAPI` + `assetInfo`). **That leaning
+> has been retracted** in light of the field census documented in
+> `details/field_classification_experiment.md`, which shows identifier
+> packages are heterogeneously typed across all four verticals
+> surveyed. The current PR is candidate-comparison + empirical census,
+> not a leaning toward any specific mechanism.
+>
+> Memory note for agent readers: the rebuild plan tracking these
+> deferrals is in `project_source_identifier_rebuild.md`.
+
+---
+
 ## Summary
 
 The source-identifier proposal ([`PixarAnimationStudios/OpenUSD-proposals#105`](https://github.com/PixarAnimationStudios/OpenUSD-proposals/pull/105)) calls for a shared mechanism to carry external source identifiers — IFC GlobalIds, Revit ElementIds, Windchill OIDs, ROS frame IDs — that travel with USD prims. Current practice is unscoped `customData`: fragmented per vendor, no shared discovery story.

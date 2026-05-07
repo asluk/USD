@@ -6,6 +6,32 @@
 
 ---
 
+> ## Caveats for readers (including agents)
+>
+> Two items are **deferred to a follow-up session** and are
+> load-bearing for any conclusion drawn from this document:
+>
+> 1. **The eight-dimension vendor-adoption scoring** in §3.6 (and the
+>    methodology in `details/stress_tests.md` §5.3) was constructed
+>    *after* a prior leaning toward Approach D had already taken shape.
+>    It has not been re-derived from the proposal's eight authorized
+>    principles. Read the scores as illustrative, not as a verdict.
+> 2. **The distribution-friction tension is unresolved.** The
+>    elevation of distribution to "the dominant cost" in
+>    `details/formality_and_distribution.md` conflicts with proposal
+>    #105's original B-cons phrasing. Resolution is upstream of any
+>    honest mechanism choice.
+>
+> A prior framing of this comparison leaned toward Approach D (Labels
+> + Identity). **That leaning has been retracted** in light of the
+> field census in `details/field_classification_experiment.md`, which
+> shows identifier packages are heterogeneously typed across all four
+> verticals surveyed. The document presents the four candidates and
+> the empirical evidence symmetrically; **no mechanism leaning is
+> asserted** in this revision.
+
+---
+
 ## Executive Summary
 
 OpenUSD has no shared mechanism for carrying external source identifiers — IFC
