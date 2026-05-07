@@ -576,16 +576,21 @@ pxr/usd/
 
 extras/sourceIdentifiers/
 ├── COMPARISON.md                    ← this document
-├── details/                         ← deep dives (composition, scenarios, stress tests,
-│                                      governance, hybrid analysis, scope promotion,
-│                                      formality and distribution)
+├── agentic-development.md           ← April-2026 retrospective on producing the
+│                                      original A/B/C comparison with an AI agent
+│                                      (predates the 2026-05 rebuild; preserved
+│                                      for methodology-talk reference)
+├── details/                         ← technical deep dives (composition, scenarios,
+│                                      stress tests, governance, hybrid analysis,
+│                                      scope promotion, formality and distribution,
+│                                      field classification experiment)
 ├── examples/
 │   ├── approach_a_assetinfo.usda    # AECO building (A)
 │   ├── approach_b_schema.usda       # AECO building (B)
 │   ├── approach_c_hybrid.usda       # AECO building (C)
 │   ├── column_d.usda                # AECO column (D — Labels + Identity)
-│   ├── manufacturing_a.usda / _b.usda
-│   ├── robotics_a.usda / _b.usda
+│   ├── manufacturing_{a,b,d}.usda
+│   ├── robotics_{a,b,d}.usda
 │   └── verify_composition.py
 ├── vendor_simulation/               # 8-vendor stress test inputs
 └── stress_tests/                    # 100K-prim generator + measurements

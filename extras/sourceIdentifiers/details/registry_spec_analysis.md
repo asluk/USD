@@ -236,34 +236,32 @@ Suggested revision:
 
 ---
 
-## 8. Implications for Hybrid C
+## 8. Implications for the freeform-dict tier (Approaches A and C)
 
-The registry-spec analysis **strengthens the case for Hybrid C** rather
-than undermining it:
+A and C both expose a freeform-dict tier — A as the whole identifier
+package, C as the `assetInfo` overflow alongside the four typed
+schema properties. The registry-spec analysis informs both designs
+the same way: the freeform-dict portion need not remain permanently
+opaque.
 
-1. **Governed common fields get native schema benefits now.** The four
-   common properties (`primaryId`, `revision`, `domain`, `label`) benefit
-   immediately from schema validation, GUI rendering, and `apiSchemas`
-   discoverability. No new infrastructure needed.
+1. **Validation path for the freeform tier.** As the AOUSD ecosystem
+   matures, a registry-spec mechanism for `assetInfo["sourceIds"]`
+   dictionaries provides offline / CI validation — not a replacement
+   for any schema, a complement.
 
-2. **Overflow dict fields can gain registry-spec validation later.** As
-   the AOUSD ecosystem matures, a registry-spec mechanism for the
-   `assetInfo["sourceIds"]` overflow dictionaries becomes a natural
-   extension — not a replacement for the schema, but a complement to it.
-
-3. **Natural evolution path.** The governance model already describes
-   promoting overflow fields to schema properties when they stabilize
-   (§7.5). Registry-spec provides an intermediate step:
+2. **Promotion path for the freeform tier (C-specific).** C's
+   governance model already describes promoting overflow fields to
+   schema properties when they stabilize. Registry-spec provides an
+   intermediate step:
 
    ```
    Freeform overflow → Registry-spec validated → Promoted to schema property
-        (day 1)          (ecosystem matures)        (field stabilizes)
+        (day 1)          (ecosystem matures)        (field stabilizes, C-tier only)
    ```
 
-4. **Complementary, not competing.** Registry-spec doesn't argue against
-   schemas for common fields — it argues that the *overflow* portion of
-   Hybrid C need not remain permanently opaque. The two mechanisms layer
-   naturally.
+3. **Complementary, not competing.** Registry-spec doesn't argue
+   against schemas for typed fields — it argues that the freeform-dict
+   portion of A or C need not remain opaque to consumers.
 
 ---
 
@@ -274,5 +272,5 @@ than undermining it:
 | Could a registry-spec mechanism close Approach A's validation gap? | **Partially.** Offline/CI validation: yes. Runtime validation: requires new infra. |
 | Could it close the GUI discoverability gap? | **Only with significant new infrastructure** that would need adoption across all major USD consumers. |
 | Does this invalidate the schema-based candidates (B/C/D)? | **No.** Schemas provide these capabilities today, for free, through existing USD tooling. |
-| Does this change anything about Hybrid C? | **Yes — positively.** It shows the overflow dict has a path to becoming less opaque over time, strengthening C's long-term viability if it is adopted. |
+| Does this change anything about Approaches A or C? | **Yes — positively.** Both have a freeform-dict tier; registry-spec gives that tier a path to becoming less opaque to consumers over time. |
 | Should the claim language be revised? | **Yes.** "Practically un-interoperable" overstates the case. The gap is real but is a tooling gap, not an architectural impossibility. |
