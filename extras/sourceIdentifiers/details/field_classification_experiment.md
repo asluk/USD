@@ -1,72 +1,87 @@
-# Field Classification Experiment
+# Identifier-Package Field Census
 
 ← [Back to COMPARISON.md](../COMPARISON.md)
 
 ## Why this experiment
 
-Multiple places in the comparison materials assert:
+The proposal ([PixarAnimationStudios/OpenUSD-proposals#105](https://github.com/PixarAnimationStudios/OpenUSD-proposals/pull/105))
+frames source identifiers as *"metadata packages, not atomic strings"*
+and notes that *"different domains need different identifier
+fields"* — a heterogeneity that *"the more pronounced the contents,
+the more this tension favors dictionaries or a family of
+domain-specific schemas"* (B's cons, ¶1). This is the central
+heterogeneity tension the proposal asked AOUSD to weigh.
 
-> *"No domain-specific field surfaced that required typed non-token-array structure."*
-> *"Token arrays + identifier strings carried every metadata case tested."*
+Subsequent comparison materials in this PR built up a downstream
+claim that goes further:
+
+> *"No domain-specific field surfaced that required typed
+> non-token-array structure."*
+> *"Token arrays + identifier strings carried every metadata case
+> tested."*
 > ([details/formality_and_distribution.md](formality_and_distribution.md))
 
-These assertions are load-bearing for the leaning toward Approach D — they
-underpin the claim that reusing `UsdSemanticsLabelsAPI` (which carries
-`token[]`-typed values only) leaves no important shape on the table that a
-new applied schema would catch. Until now they have been stated without
-the underlying field census.
+That is a stronger claim than the proposal made. It says, in effect,
+that the heterogeneity the proposal asked AOUSD to weigh is *empty* in
+the verticals surveyed — that real identifier packages bundle only
+identifier strings + classification token arrays, not heterogeneous
+typed fields. If true, the proposal's heterogeneity tension goes away.
+That is the claim this experiment tests.
 
-This document is that census, conducted under pre-registered classification
-criteria (the buckets are committed before any field is enumerated, and
-the criteria are applied uniformly across verticals). It does not declare a
-winner among the four mechanisms. It tests one specific empirical
-assertion.
+The experiment does not pick a mechanism. It surveys *what real source
+systems actually bundle with their identifiers* and reports whether
+those packages are heterogeneously typed in the proposal's sense.
 
 ## Pre-registered classification
 
-A field belongs to exactly one of four buckets:
+Each field surveyed is sorted into one of four buckets, drawn from the
+proposal's own seam between identity and the heterogeneous metadata
+packaged around it:
 
 | Bucket | Test |
 |---|---|
-| **Identity** | The field must round-trip *exactly* back into the source system. It has no semantic value outside that system; it is a pointer. |
-| **Classification — token-array fit** | The value is drawn from a published controlled vocabulary; the value space is enumerable strings/identifiers; the native shape is a string or list of strings. Encodable as `token[]` without loss of structural type. |
-| **Classification — non-token-array typed structure** | The native shape is structured: numeric (with or without units), date/time, range, structured record, reference relationship, boolean. Cannot be flattened to a `token` without losing the structural type. |
-| **Identity-adjacent** | A round-trip-style string that helps locate or display the identifier (display number, human-readable label, browse name) but is not itself the round-trip pointer. Authors may carry it alongside identity. |
+| **Identity** | Opaque round-trip pointer back into the source system — the identity tier of the package. No semantic value outside the source system. |
+| **Identity-adjacent** | Display numbers, marks, human-readable labels paired with the identifier — locate or display the identifier without being it. |
+| **Controlled-vocabulary classification facets** | Terms drawn from a system's published controlled vocabulary. Enumerable strings; native shape is a string or list of strings. The classification surface. |
+| **Heterogeneous typed fields** | Per-domain fields with native typed shape that goes beyond strings: numeric measures with units, dates and timestamps, structured references between system entities, polymorphic typed values (e.g. AAS `Property.value` across the XSD type set), recursive composites. The proposal's heterogeneity surface. |
 
 ### Rules of the experiment
 
-1. **Cite the source.** Each field is sourced from its authoritative spec
-   (IFC schema HTML, AAS metamodel, ROS/SDF/URDF specs, Windchill REST API
-   docs, SAP Material Master / S/4HANA API, OpenAssetIO trait definitions,
-   MovieLabs OMC). The `industry_scenarios.md` description is *not* a
-   source — that document was constructed in service of D's classification
-   fit and would import its bias into this experiment.
-2. **Native data type comes from the spec.** Token-array fit means *fits
-   without losing structural type*. A `IfcReal`, `xs:dateTime`,
-   `xs:decimal`, `Reference`, `IfcPositiveLengthMeasure`, or boolean is
-   not a token.
+1. **Cite the source.** Each field is sourced from its authoritative
+   spec (IFC schema HTML, AAS metamodel, ROS/SDF/URDF specs, Windchill
+   REST API docs, SAP Material Master / S/4HANA API, OpenAssetIO trait
+   definitions, MovieLabs OMC, ShotGrid REST). The
+   [industry_scenarios.md](industry_scenarios.md) description is
+   *not* a source — that document was constructed downstream of the
+   leaning under review and would import its framing into this
+   experiment.
+2. **Native data type comes from the spec.** Whether a field is a
+   string, controlled vocabulary, numeric measure with unit, date,
+   composite reference, or polymorphic typed value is determined by
+   the source spec, not by how a USD encoding might choose to
+   serialize it.
 3. **Don't force a bucket.** Borderline / disputed fields are reported
-   borderline. Bucketing under pressure to confirm the assertion would
-   defeat the experiment.
+   borderline.
 4. **Field set is representative, not exhaustive.** Each vertical's
    field set is drawn from the system's mandatory + commonly-authored
-   identifier-adjacent surface, not cherry-picked. If anything was
-   excluded for a reason other than "not on identifier surface," the
+   identifier surface, not cherry-picked. If anything is excluded
+   for a reason other than "not on the identifier surface," the
    exclusion is noted in line.
-5. **One bucket per field.** A field that is genuinely both (e.g., a
+5. **One bucket per field.** A field that is genuinely both (e.g. a
    string with controlled-vocabulary semantics that also round-trips)
    is bucketed by its primary semantics in the source spec, with the
    secondary use noted.
 
 ### What the experiment can and cannot conclude
 
-It **can** conclude: in the field set surveyed, the following fields fall
-into the non-token-array typed bucket — by name, with native types and
-citations.
+It **can** conclude: in the field set surveyed, the following fields
+fall into the heterogeneous-typed-fields bucket — by name, with native
+types and citations.
 
-It **cannot** conclude: that this field set is exhaustive, that no future
-domain will surface non-token-array typed fields, or that any one
-mechanism is the right answer. AOUSD review sees the result and decides.
+It **cannot** conclude: that this field set is exhaustive, that no
+future domain will surface heterogeneous typed fields, or that any
+one mechanism is the right answer. AOUSD review weighs the result
+and the mechanism choice that follows from it.
 
 ## Field census
 
@@ -91,10 +106,10 @@ from this census on those grounds. They are surveyed cross-cutting in
 | `Name` ([IfcRoot](https://standards.buildingsmart.org/IFC/RELEASE/IFC4_3/HTML/lexical/IfcRoot.htm)) | `IfcLabel` (string) | Optional name "for use by the participating software systems or users" | **Identity-adjacent** (display) |
 | `Description` ([IfcRoot](https://standards.buildingsmart.org/IFC/RELEASE/IFC4_3/HTML/lexical/IfcRoot.htm)) | `IfcText` (string) | Optional informative comment | **Identity-adjacent** (display) |
 | `Tag` ([IfcElement](https://standards.buildingsmart.org/IFC/RELEASE/IFC4_3/HTML/lexical/IfcElement.htm)) | `IfcIdentifier` (string) | Tag/label at the occurrence level — serial/position number | **Identity-adjacent** (round-trip-ish but a different ID space) |
-| Entity type (`IfcColumn`, `IfcWall`, …) | enumeration of IFC entity names | The IFC class name itself; controlled vocabulary published by buildingSMART | **Classification — token-array fit** |
-| `PredefinedType` ([IfcColumn](https://standards.buildingsmart.org/IFC/RELEASE/IFC4_3/HTML/lexical/IfcColumn.htm)) | `IfcColumnTypeEnum`, `IfcWallTypeEnum`, … (controlled enum per entity) | Subtype within the entity (`COLUMN`, `PILASTER`, `USERDEFINED`, …) | **Classification — token-array fit** |
-| `ObjectType` ([IfcObject](https://standards.buildingsmart.org/IFC/RELEASE/IFC4_3/HTML/lexical/IfcObject.htm)) | `IfcLabel` (string) | User-defined subtype string when `PredefinedType` is `USERDEFINED` | **Classification — token-array fit** (free-text label, but its role is naming a vocabulary term) |
-| IFC schema version (e.g. `IFC4X3_ADD2`) | string identifier per buildingSMART | Which IFC schema produced this file | **Classification — token-array fit** |
+| Entity type (`IfcColumn`, `IfcWall`, …) | enumeration of IFC entity names | The IFC class name itself; controlled vocabulary published by buildingSMART | **Controlled-vocabulary classification facets** |
+| `PredefinedType` ([IfcColumn](https://standards.buildingsmart.org/IFC/RELEASE/IFC4_3/HTML/lexical/IfcColumn.htm)) | `IfcColumnTypeEnum`, `IfcWallTypeEnum`, … (controlled enum per entity) | Subtype within the entity (`COLUMN`, `PILASTER`, `USERDEFINED`, …) | **Controlled-vocabulary classification facets** |
+| `ObjectType` ([IfcObject](https://standards.buildingsmart.org/IFC/RELEASE/IFC4_3/HTML/lexical/IfcObject.htm)) | `IfcLabel` (string) | User-defined subtype string when `PredefinedType` is `USERDEFINED` | **Controlled-vocabulary classification facets** (free-text label, but its role is naming a vocabulary term) |
+| IFC schema version (e.g. `IFC4X3_ADD2`) | string identifier per buildingSMART | Which IFC schema produced this file | **Controlled-vocabulary classification facets** |
 
 **`IfcOwnerHistory`** (the audit-trail metadata bundle attached to every
 `IfcRoot` instance via the `OwnerHistory` reference) is reported separately
@@ -102,12 +117,12 @@ because it is a structured composite, not a single field:
 
 | Sub-field | Native IFC type | Bucket |
 |---|---|---|
-| `OwningUser` | `IfcPersonAndOrganization` (composite) | Non-token-array typed structure (composite reference) |
-| `OwningApplication` | `IfcApplication` (composite) | Non-token-array typed structure (composite reference) |
-| `State` | `IfcStateEnum` (`READWRITE`, `READONLY`, `LOCKED`, …) | Classification — token-array fit |
-| `ChangeAction` | `IfcChangeActionEnum` (`NOCHANGE`, `MODIFIED`, `ADDED`, `DELETED`, `MODIFIEDADDED`, `MODIFIEDDELETED`, `NOTDEFINED`) | Classification — token-array fit |
-| `LastModifiedDate` | `IfcTimeStamp` (integer seconds since epoch, per ISO 10303) | **Non-token-array typed structure** (numeric, semantically a timestamp) |
-| `CreationDate` | `IfcTimeStamp` (integer seconds since epoch) | **Non-token-array typed structure** (numeric, semantically a timestamp) |
+| `OwningUser` | `IfcPersonAndOrganization` (composite) | Heterogeneous typed field (composite reference) |
+| `OwningApplication` | `IfcApplication` (composite) | Heterogeneous typed field (composite reference) |
+| `State` | `IfcStateEnum` (`READWRITE`, `READONLY`, `LOCKED`, …) | Controlled-vocabulary classification facets |
+| `ChangeAction` | `IfcChangeActionEnum` (`NOCHANGE`, `MODIFIED`, `ADDED`, `DELETED`, `MODIFIEDADDED`, `MODIFIEDDELETED`, `NOTDEFINED`) | Controlled-vocabulary classification facets |
+| `LastModifiedDate` | `IfcTimeStamp` (integer seconds since epoch, per ISO 10303) | **Heterogeneous typed fields** (numeric, semantically a timestamp) |
+| `CreationDate` | `IfcTimeStamp` (integer seconds since epoch) | **Heterogeneous typed fields** (numeric, semantically a timestamp) |
 
 `IfcOwnerHistory` is not "the identifier," but it is the metadata bundle
 buildingSMART specifies as traveling with every identified IFC entity in
@@ -119,12 +134,12 @@ the model. Source: [IfcOwnerHistory](https://standards.buildingsmart.org/IFC/REL
 |---|---|---|---|
 | `UniqueId` ([Element](https://help.autodesk.com/cloudhelp/2024/ENU/Revit-API/files/Revit_API_Developers_Guide/Introduction/Elements_Essentials/Revit_API_Revit_API_Developers_Guide_Introduction_Elements_Essentials_General_Properties_html.html)) | `String` (GUID-shaped, project-portable) | The opaque pointer back into Revit (cross-project) | **Identity** |
 | `Id` (`ElementId`) | `ElementId` (wrapping `int`/`long`) | Integer ID unique within a single Revit project | **Identity** (numeric — see note below) |
-| `Category` | `Category` reference (resolves to a category name string) | Built-in category, controlled vocabulary | **Classification — token-array fit** |
-| `LevelId` | `ElementId` reference to a Level element | Reference to another Revit element | **Non-token-array typed structure** (relationship) |
+| `Category` | `Category` reference (resolves to a category name string) | Built-in category, controlled vocabulary | **Controlled-vocabulary classification facets** |
+| `LevelId` | `ElementId` reference to a Level element | Reference to another Revit element | **Heterogeneous typed fields** (relationship) |
 | `Mark` (`ALL_MODEL_MARK` parameter) | `String` (parameter `StorageType.String`) | User-authored per-instance mark (per-project unique by convention) | **Identity-adjacent** |
-| `Type Mark` (`ALL_MODEL_TYPE_MARK`) | `String` (parameter `StorageType.String`) | Type-level mark | **Classification — token-array fit** (controlled by template) |
-| Family / Type names (e.g. `W14x90`) | `String` | Family + type strings | **Classification — token-array fit** |
-| `OwnerViewId`, `GroupId`, `AssemblyInstanceId`, `DesignOption` | `ElementId` (each) | References to other Revit elements | **Non-token-array typed structure** (relationship — `ElementId` is a typed reference, not a string) |
+| `Type Mark` (`ALL_MODEL_TYPE_MARK`) | `String` (parameter `StorageType.String`) | Type-level mark | **Controlled-vocabulary classification facets** (controlled by template) |
+| Family / Type names (e.g. `W14x90`) | `String` | Family + type strings | **Controlled-vocabulary classification facets** |
+| `OwnerViewId`, `GroupId`, `AssemblyInstanceId`, `DesignOption` | `ElementId` (each) | References to other Revit elements | **Heterogeneous typed fields** (relationship — `ElementId` is a typed reference, not a string) |
 
 Note on `ElementId`: Autodesk's API exposes it as a typed reference object
 that wraps a numeric identifier. When *transported out of Revit* to USD it
@@ -138,16 +153,16 @@ element, which makes it a typed relationship in the source system.
 
 | Field | Native type | What it carries | Bucket |
 |---|---|---|---|
-| `Ss_25_10_30` style code ([UniClass 2015 Systems table](https://uniclass.thenbs.com/taxon/Ss_25_10_30/)) | String (4-segment, hierarchical) | A controlled-vocabulary code from a published table | **Classification — token-array fit** |
-| Title (e.g. `Framed partition systems`) | String | The published display title for the code | **Classification — token-array fit** |
-| Table identifier (e.g. `Ss`) | String / token (small enum: `Ss`, `Pr`, `EF`, `Ac`, …) | Which UniClass table the code belongs to | **Classification — token-array fit** |
-| OmniClass `23-13 11 13` | String (table-section format) | Same shape as UniClass — table + numeric segments | **Classification — token-array fit** |
+| `Ss_25_10_30` style code ([UniClass 2015 Systems table](https://uniclass.thenbs.com/taxon/Ss_25_10_30/)) | String (4-segment, hierarchical) | A controlled-vocabulary code from a published table | **Controlled-vocabulary classification facets** |
+| Title (e.g. `Framed partition systems`) | String | The published display title for the code | **Controlled-vocabulary classification facets** |
+| Table identifier (e.g. `Ss`) | String / token (small enum: `Ss`, `Pr`, `EF`, `Ac`, …) | Which UniClass table the code belongs to | **Controlled-vocabulary classification facets** |
+| OmniClass `23-13 11 13` | String (table-section format) | Same shape as UniClass — table + numeric segments | **Controlled-vocabulary classification facets** |
 
 Note: the hierarchical structure of UniClass/OmniClass codes (table prefix
 + digit groups) is *implicit* in the string. A consumer that needs the
 hierarchy explicitly can split on `_` / spaces; the canonical form is the
 string itself. So the field is a string from a published vocabulary —
-token-array fit is correct.
+controlled-vocabulary classification is the right bucket.
 
 #### AECO bucket counts (12 fields surveyed; OwnerHistory 6 sub-fields surveyed separately)
 
@@ -155,25 +170,25 @@ token-array fit is correct.
 |---|---|---|---|
 | Identity | 3 (IFC `GlobalId`, Revit `UniqueId`, Revit `Id`) | 0 | 3 |
 | Identity-adjacent | 3 (IFC `Name`, `Description`, `Tag`; Revit `Mark`) | 0 | 4 (counts Revit `Mark`) |
-| Classification — token-array fit | 7 (IFC entity, `PredefinedType`, `ObjectType`, IFC schema version, Revit `Category`, `Type Mark`, family/type names, UniClass/OmniClass code/title/table) | 2 (`State`, `ChangeAction`) | 9 |
-| Non-token-array typed structure | 2 (Revit `LevelId`/`GroupId`/`OwnerViewId`/`AssemblyInstanceId`/`DesignOption` — counted as "typed relationship" once) | 4 (`OwningUser`, `OwningApplication`, `LastModifiedDate`, `CreationDate`) | 6 |
+| Controlled-vocabulary classification facets | 7 (IFC entity, `PredefinedType`, `ObjectType`, IFC schema version, Revit `Category`, `Type Mark`, family/type names, UniClass/OmniClass code/title/table) | 2 (`State`, `ChangeAction`) | 9 |
+| Heterogeneous typed field | 2 (Revit `LevelId`/`GroupId`/`OwnerViewId`/`AssemblyInstanceId`/`DesignOption` — counted as "typed relationship" once) | 4 (`OwningUser`, `OwningApplication`, `LastModifiedDate`, `CreationDate`) | 6 |
 
 (The Revit relationship-references are functionally the same shape — five
 fields, one kind. The IFC `OwnerHistory` timestamps are two fields of the
 same kind. The composite-reference fields are two of the same kind.)
 
-**Headline AECO finding:** **non-token-array typed structure does
-surface** — IFC timestamps (`IfcTimeStamp`, integer seconds since epoch),
-IFC composite references (`IfcPersonAndOrganization`, `IfcApplication`),
-and Revit `ElementId`-typed relationships. Whether they are *required*
-to travel with the identifier is judgment-dependent: an identifier-only
-exchange can omit them; an OwnerHistory-aware exchange that the IFC spec
+**Headline AECO finding:** **heterogeneous typed fields surface** — IFC
+timestamps (`IfcTimeStamp`, integer seconds since epoch), IFC composite
+references (`IfcPersonAndOrganization`, `IfcApplication`), and Revit
+`ElementId`-typed relationships. Whether they are *required* to travel
+with the identifier is judgment-dependent: an identifier-only exchange
+can omit them; an OwnerHistory-aware exchange that the IFC spec
 prescribes for each `IfcRoot` instance cannot.
 
-The token-array bucket carries the canonical "what kind of thing is
-this?" classification work cleanly — entity types, predefined-type enums,
-classification codes, family/type names. The token-array claim is
-strongest there.
+The controlled-vocabulary classification bucket carries the canonical
+"what kind of thing is this?" work cleanly — entity types,
+predefined-type enums, classification codes, family/type names. That
+fit is uncontested.
 
 ### Vertical 2 — Manufacturing / PLM (AAS, Windchill, SAP)
 
@@ -198,16 +213,16 @@ for D's classification fit. Three sources of authority were exercised:
 | Field | Native AAS / XSD type | What it carries | Bucket |
 |---|---|---|---|
 | `AssetInformation.globalAssetId` ([overview](https://industrialdigitaltwin.io/aas-specifications/IDTA-01001/v3.1.2/spec-metamodel/overview.html)) | `Identifier` (string IRI) | The opaque round-trip pointer to the asset | **Identity** |
-| `AssetInformation.assetKind` | `AssetKind` enumeration (`Type`, `Instance`, `NotApplicable`) | Whether this AAS describes a type or an instance | **Classification — token-array fit** |
-| `AssetInformation.assetType` | `Identifier` (string) | Classification or taxonomy reference | **Classification — token-array fit** (it's a reference *string*, not a typed Reference) |
-| `AssetInformation.specificAssetIds` | `List<SpecificAssetId>` (composite) | Domain-specific identifiers (each is a structured triple) | **Non-token-array typed structure** (list of structured records) |
-| `SpecificAssetId.name` | `LabelType` (string, max 64) | Label naming the identifier kind | **Classification — token-array fit** (paired with `value`) |
+| `AssetInformation.assetKind` | `AssetKind` enumeration (`Type`, `Instance`, `NotApplicable`) | Whether this AAS describes a type or an instance | **Controlled-vocabulary classification facets** |
+| `AssetInformation.assetType` | `Identifier` (string) | Classification or taxonomy reference | **Controlled-vocabulary classification facets** (it's a reference *string*, not a typed Reference) |
+| `AssetInformation.specificAssetIds` | `List<SpecificAssetId>` (composite) | Domain-specific identifiers (each is a structured triple) | **Heterogeneous typed fields** (list of structured records) |
+| `SpecificAssetId.name` | `LabelType` (string, max 64) | Label naming the identifier kind | **Controlled-vocabulary classification facets** (paired with `value`) |
 | `SpecificAssetId.value` | `IdentifierType` (string) | The identifier value itself | **Identity** |
-| `SpecificAssetId.externalSubjectId` | `Reference` (composite — see below) | Subject/tenant context | **Non-token-array typed structure** (composite reference) |
-| `SpecificAssetId.semanticId` | `Reference` | Semantic definition pointer | **Non-token-array typed structure** (composite reference) |
-| `Identifiable.administration` (`AdministrativeInformation`) | composite: `version`, `revision`, `creator: Reference`, `templateId: Identifier` | Administrative metadata; `creator` is a typed Reference | **Non-token-array typed structure** (composite, contains a Reference) |
-| `Submodel.kind` (`ModellingKind`) | enum (`Template`, `Instance`) | Whether the submodel is a template or instance | **Classification — token-array fit** |
-| `Submodel.semanticId` | `Reference` | What concept this submodel realizes (e.g. `urn:idta:dpp:battery:1.0`) | **Non-token-array typed structure** (composite reference) |
+| `SpecificAssetId.externalSubjectId` | `Reference` (composite — see below) | Subject/tenant context | **Heterogeneous typed fields** (composite reference) |
+| `SpecificAssetId.semanticId` | `Reference` | Semantic definition pointer | **Heterogeneous typed fields** (composite reference) |
+| `Identifiable.administration` (`AdministrativeInformation`) | composite: `version`, `revision`, `creator: Reference`, `templateId: Identifier` | Administrative metadata; `creator` is a typed Reference | **Heterogeneous typed fields** (composite, contains a Reference) |
+| `Submodel.kind` (`ModellingKind`) | enum (`Template`, `Instance`) | Whether the submodel is a template or instance | **Controlled-vocabulary classification facets** |
+| `Submodel.semanticId` | `Reference` | What concept this submodel realizes (e.g. `urn:idta:dpp:battery:1.0`) | **Heterogeneous typed fields** (composite reference) |
 
 **The submodel element catalog** (the AAS extensible-metadata surface
 that travels under each AAS identifier — sourced from the
@@ -215,20 +230,20 @@ that travels under each AAS identifier — sourced from the
 
 | Submodel element | Native typing | Bucket |
 |---|---|---|
-| `Property.value` | XSD-typed: `xs:string`, `xs:int`, `xs:long`, `xs:decimal`, `xs:double`, `xs:float`, `xs:boolean`, `xs:date`, `xs:dateTime`, `xs:time`, `xs:duration`, `xs:anyURI`, `xs:base64Binary` | **Non-token-array typed structure** for any numeric, date, boolean, or binary case (token-array fit only when `valueType == xs:string`) |
-| `MultiLanguageProperty.value` | `MultiLanguageTextType` (list of `LangStringTextType` pairs) | **Non-token-array typed structure** (multilingual record list) |
-| `Range.min` / `Range.max` | Pair of XSD-typed values, same type set as `Property.value` | **Non-token-array typed structure** (a pair, with numeric/date possible) |
-| `ReferenceElement.value` | `Reference` (composite — list of `Key`s) | **Non-token-array typed structure** (composite reference) |
-| `RelationshipElement.first` / `.second` | Pair of `Reference`s | **Non-token-array typed structure** (composite reference pair) |
-| `AnnotatedRelationshipElement.annotations` | List of `DataElement` (recursive) | **Non-token-array typed structure** (recursive composite) |
+| `Property.value` | XSD-typed: `xs:string`, `xs:int`, `xs:long`, `xs:decimal`, `xs:double`, `xs:float`, `xs:boolean`, `xs:date`, `xs:dateTime`, `xs:time`, `xs:duration`, `xs:anyURI`, `xs:base64Binary` | **Heterogeneous typed field** for any numeric, date, boolean, or binary case (string is just one of the XSD types `valueType` can take) |
+| `MultiLanguageProperty.value` | `MultiLanguageTextType` (list of `LangStringTextType` pairs) | **Heterogeneous typed fields** (multilingual record list) |
+| `Range.min` / `Range.max` | Pair of XSD-typed values, same type set as `Property.value` | **Heterogeneous typed fields** (a pair, with numeric/date possible) |
+| `ReferenceElement.value` | `Reference` (composite — list of `Key`s) | **Heterogeneous typed fields** (composite reference) |
+| `RelationshipElement.first` / `.second` | Pair of `Reference`s | **Heterogeneous typed fields** (composite reference pair) |
+| `AnnotatedRelationshipElement.annotations` | List of `DataElement` (recursive) | **Heterogeneous typed fields** (recursive composite) |
 | `File.value` / `File.contentType` | URI string + MIME content-type token | Mixed: identity-adjacent (URI) + classification (content-type token) |
-| `Blob.value` / `Blob.contentType` | `xs:base64Binary` + MIME content-type token | **Non-token-array typed structure** (binary value) |
-| `Entity.entityType` | `EntityType` enum (`CoManagedEntity`, `SelfManagedEntity`) | Classification — token-array fit |
+| `Blob.value` / `Blob.contentType` | `xs:base64Binary` + MIME content-type token | **Heterogeneous typed fields** (binary value) |
+| `Entity.entityType` | `EntityType` enum (`CoManagedEntity`, `SelfManagedEntity`) | Controlled-vocabulary classification facets |
 | `Entity.globalAssetId` | `Identifier` | Identity |
-| `Entity.specificAssetIds` | `List<SpecificAssetId>` | Non-token-array typed structure (same as above) |
+| `Entity.specificAssetIds` | `List<SpecificAssetId>` | Heterogeneous typed field (same as above) |
 | `Capability` | (placeholder, no value) | n/a |
-| `Operation.inputVariables` / `outputVariables` / `inoutputVariables` | Lists of `OperationVariable` (each wrapping a `SubmodelElement`) | **Non-token-array typed structure** (recursive composite) |
-| `BasicEventElement.observed` | `Reference` | **Non-token-array typed structure** (composite reference) |
+| `Operation.inputVariables` / `outputVariables` / `inoutputVariables` | Lists of `OperationVariable` (each wrapping a `SubmodelElement`) | **Heterogeneous typed fields** (recursive composite) |
+| `BasicEventElement.observed` | `Reference` | **Heterogeneous typed fields** (composite reference) |
 
 This is decisive. The AAS metamodel — the standard explicitly named
 in the source-identifier proposal's emerging-consensus list and in the
@@ -249,11 +264,11 @@ typing system is polymorphic XSD, not strings.
 | `Name` | `Edm.String` (length 60) | Part name | **Identity-adjacent** (display) |
 | `Revision` (`Rev.C`) | `Edm.String` | Revision designator | **Identity-adjacent** (the revision is part of the round-trip identity tuple in PLM lookups) |
 | `Version` | `Edm.String` (e.g. `A.2`) | Version below revision | **Identity-adjacent** |
-| `State` (`Released`) | structured — `Value` token + `Display` string (per [PTC docs](https://www.ptc.com/en/support/article/CS304928)) | Lifecycle state | **Classification — token-array fit** (the `Value` is a controlled token) |
-| `Type` (`Part`, `Subassembly`) | `Edm.String` (controlled vocabulary) | Part type | **Classification — token-array fit** |
-| `OrganizationId` / `Organization.Name` | `Edm.String` | Organization owning the part | **Classification — token-array fit** |
-| `CreatedOn` | `Edm.DateTimeOffset` | When the part record was created | **Non-token-array typed structure** (timestamp) |
-| `LastModified` | `Edm.DateTimeOffset` | Last modification time | **Non-token-array typed structure** (timestamp) |
+| `State` (`Released`) | structured — `Value` token + `Display` string (per [PTC docs](https://www.ptc.com/en/support/article/CS304928)) | Lifecycle state | **Controlled-vocabulary classification facets** (the `Value` is a controlled token) |
+| `Type` (`Part`, `Subassembly`) | `Edm.String` (controlled vocabulary) | Part type | **Controlled-vocabulary classification facets** |
+| `OrganizationId` / `Organization.Name` | `Edm.String` | Organization owning the part | **Controlled-vocabulary classification facets** |
+| `CreatedOn` | `Edm.DateTimeOffset` | When the part record was created | **Heterogeneous typed fields** (timestamp) |
+| `LastModified` | `Edm.DateTimeOffset` | Last modification time | **Heterogeneous typed fields** (timestamp) |
 
 Windchill custom-attribute (IBA — Instance-Based Attribute) values are
 typed: `String`, `Integer`, `Real` (with units), `Boolean`,
@@ -269,18 +284,18 @@ Sources: [SAP Datasheet — MARA](https://www.sapdatasheet.org/abap/tabl/mara.ht
 | Field | ABAP DDIC type | What it carries | Bucket |
 |---|---|---|---|
 | `MATNR` | `CHAR(18)` (data element MATNR) | Material number — the SAP identifier | **Identity** |
-| `MTART` | `CHAR(4)` (Material Type, controlled vocab) | Material type code (`FERT`, `HALB`, `ROH`, …) | **Classification — token-array fit** |
-| `MATKL` | `CHAR(9)` (Material Group, controlled vocab) | Material group code | **Classification — token-array fit** |
-| `MEINS` | `UNIT(3)` (base unit of measure) | Unit-of-measure code (controlled vocab) | **Classification — token-array fit** |
-| `ERSDA` | `DATS(8)` | Date the material record was created | **Non-token-array typed structure** (date) |
-| `LAEDA` | `DATS(8)` | Date of last change | **Non-token-array typed structure** (date) |
+| `MTART` | `CHAR(4)` (Material Type, controlled vocab) | Material type code (`FERT`, `HALB`, `ROH`, …) | **Controlled-vocabulary classification facets** |
+| `MATKL` | `CHAR(9)` (Material Group, controlled vocab) | Material group code | **Controlled-vocabulary classification facets** |
+| `MEINS` | `UNIT(3)` (base unit of measure) | Unit-of-measure code (controlled vocab) | **Controlled-vocabulary classification facets** |
+| `ERSDA` | `DATS(8)` | Date the material record was created | **Heterogeneous typed fields** (date) |
+| `LAEDA` | `DATS(8)` | Date of last change | **Heterogeneous typed fields** (date) |
 | `ERNAM` | `CHAR(12)` | Username of creator | **Identity-adjacent** |
-| `NTGEW` | `QUAN(13,3)` (numeric, 3 decimals) | Net weight | **Non-token-array typed structure** (decimal with unit) |
-| `BRGEW` | `QUAN(13,3)` | Gross weight | **Non-token-array typed structure** (decimal with unit) |
-| `GEWEI` | `UNIT(3)` | Weight-unit code (controlled vocab — `KG`, `LB`, …) | **Classification — token-array fit** |
-| `VOLUM` | `QUAN(13,3)` | Volume | **Non-token-array typed structure** (decimal with unit) |
-| `MSTAE` | `CHAR(2)` (cross-plant material status, controlled) | Cross-plant material status code | **Classification — token-array fit** |
-| `MSTDE` | `DATS(8)` | Date from which the material status applies | **Non-token-array typed structure** (date) |
+| `NTGEW` | `QUAN(13,3)` (numeric, 3 decimals) | Net weight | **Heterogeneous typed fields** (decimal with unit) |
+| `BRGEW` | `QUAN(13,3)` | Gross weight | **Heterogeneous typed fields** (decimal with unit) |
+| `GEWEI` | `UNIT(3)` | Weight-unit code (controlled vocab — `KG`, `LB`, …) | **Controlled-vocabulary classification facets** |
+| `VOLUM` | `QUAN(13,3)` | Volume | **Heterogeneous typed fields** (decimal with unit) |
+| `MSTAE` | `CHAR(2)` (cross-plant material status, controlled) | Cross-plant material status code | **Controlled-vocabulary classification facets** |
+| `MSTDE` | `DATS(8)` | Date from which the material status applies | **Heterogeneous typed fields** (date) |
 
 `NTGEW`/`BRGEW`/`VOLUM` carry their unit via a paired field
 (`GEWEI`, `VOLEH`); the full quantity is a (number, unit) pair —
@@ -292,10 +307,10 @@ structurally a typed measure, not a string.
 |---|---|
 | Identity | 4 (AAS `globalAssetId`, AAS `SpecificAssetId.value`, Windchill `ID`, SAP `MATNR`) |
 | Identity-adjacent | 5 (Windchill `Number`, `Name`, `Revision`, `Version`; SAP `ERNAM`) |
-| Classification — token-array fit | 9 (AAS `assetKind`, `assetType`, `SpecificAssetId.name`, `Submodel.kind`; Windchill `State`, `Type`, `OrganizationId`; SAP `MTART`, `MATKL`, `MEINS`, `GEWEI`, `MSTAE` — counted as 9 distinct kinds, with the unit codes counted once) |
-| **Non-token-array typed structure** | **15+** — see breakdown below |
+| Controlled-vocabulary classification facets | 9 (AAS `assetKind`, `assetType`, `SpecificAssetId.name`, `Submodel.kind`; Windchill `State`, `Type`, `OrganizationId`; SAP `MTART`, `MATKL`, `MEINS`, `GEWEI`, `MSTAE` — counted as 9 distinct kinds, with the unit codes counted once) |
+| **Heterogeneous typed fields** | **15+** — see breakdown below |
 
-**The non-token-array typed fields explicitly:**
+**The heterogeneously typed fields explicitly:**
 
 | Field | Native shape |
 |---|---|
@@ -371,19 +386,19 @@ Sources: [REP 127 (Package manifest format two)](https://www.ros.org/reps/rep-01
 | Package URI (`package://<package>/<path>`) | string | The opaque pointer back into the ROS package system | **Identity** | strict |
 | Package name (e.g. `ur_description`) | string (regex per REP 144) | ROS package name | **Identity-adjacent** | strict |
 | Package version (e.g. `2.4.1`) | string (semver-ish) | Version of the package the description came from | **Identity-adjacent** | strict |
-| Source format (`URDF`, `SDF`, `MJCF`) | enum (controlled vocab) | Which description format originated this model | **Classification — token-array fit** | strict |
-| ROS distribution (e.g. `jazzy`, `humble`, `iron`) | enum (controlled vocab) | ROS distro the package targets | **Classification — token-array fit** | strict |
+| Source format (`URDF`, `SDF`, `MJCF`) | enum (controlled vocab) | Which description format originated this model | **Controlled-vocabulary classification facets** | strict |
+| ROS distribution (e.g. `jazzy`, `humble`, `iron`) | enum (controlled vocab) | ROS distro the package targets | **Controlled-vocabulary classification facets** | strict |
 | Maintainer name / email | strings | Provenance, not identity | **Identity-adjacent** | strict |
 | `std_msgs/Header.frame_id` | string | TF frame name the data is in | **Identity** | strict (it's a TF identifier) |
-| `std_msgs/Header.stamp` | `time` (uint32 sec + uint32 nsec) | Timestamp paired with the frame_id | **Non-token-array typed structure** (numeric pair, semantically a timestamp) | strict |
-| `std_msgs/Header.seq` | uint32 | Monotonic counter | **Non-token-array typed structure** (numeric) | strict |
+| `std_msgs/Header.stamp` | `time` (uint32 sec + uint32 nsec) | Timestamp paired with the frame_id | **Heterogeneous typed fields** (numeric pair, semantically a timestamp) | strict |
+| `std_msgs/Header.seq` | uint32 | Monotonic counter | **Heterogeneous typed fields** (numeric) | strict |
 | Topic name (`/scan`, `/cmd_vel`) | string (controlled by package convention) | Pub/sub channel name | **Identity** (round-trips back into ROS as a topic key) | strict |
 | Service name | string | Service endpoint name | **Identity** | strict |
 
 `std_msgs/Header` is the canonical "metadata that travels alongside ROS
 data" — it's appended to most ROS messages — and its `stamp` is
 explicitly a structured time pair (`uint32 sec + uint32 nsec`), not a
-string token. `seq` is a uint32. These are non-token-array typed
+string token. `seq` is a uint32. These are heterogeneously typed
 **already in the strict interpretation**.
 
 #### URDF link / joint surface (expanded interpretation — round-trip-back-to-URDF)
@@ -396,29 +411,29 @@ Sources: [URDF link XML reference (ROS wiki)](https://wiki.ros.org/urdf/XML/link
 | Field | Native type | What it carries | Bucket |
 |---|---|---|---|
 | `<link name="">` | string | Link name (the identifier within the URDF) | **Identity** |
-| `<inertial><mass value="">` | double (kg) | Link mass | **Non-token-array typed structure** (decimal with unit) |
-| `<inertial><inertia ixx ixy ixz iyy iyz izz>` | 6 × double (kg·m²) | Inertia tensor (symmetric 3×3, 6 components) | **Non-token-array typed structure** (numeric tensor) |
-| `<inertial><origin xyz="" rpy="">` | 3 doubles (m) + 3 doubles (rad) | Pose of the inertial frame | **Non-token-array typed structure** (numeric pose) |
-| `<visual>/<collision><geometry><box size="x y z">` | 3 × double (m) | Box dimensions | **Non-token-array typed structure** (numeric tuple) |
-| `<geometry><cylinder radius="" length="">` | 2 × double (m) | Cylinder dimensions | **Non-token-array typed structure** (numeric pair) |
-| `<geometry><sphere radius="">` | double (m) | Sphere radius | **Non-token-array typed structure** (numeric) |
+| `<inertial><mass value="">` | double (kg) | Link mass | **Heterogeneous typed fields** (decimal with unit) |
+| `<inertial><inertia ixx ixy ixz iyy iyz izz>` | 6 × double (kg·m²) | Inertia tensor (symmetric 3×3, 6 components) | **Heterogeneous typed fields** (numeric tensor) |
+| `<inertial><origin xyz="" rpy="">` | 3 doubles (m) + 3 doubles (rad) | Pose of the inertial frame | **Heterogeneous typed fields** (numeric pose) |
+| `<visual>/<collision><geometry><box size="x y z">` | 3 × double (m) | Box dimensions | **Heterogeneous typed fields** (numeric tuple) |
+| `<geometry><cylinder radius="" length="">` | 2 × double (m) | Cylinder dimensions | **Heterogeneous typed fields** (numeric pair) |
+| `<geometry><sphere radius="">` | double (m) | Sphere radius | **Heterogeneous typed fields** (numeric) |
 | `<geometry><mesh filename="" scale="">` | string + 3 × double | Mesh file URI + scale | mixed: URI is identity, scale is numeric |
 | `<joint name="">` | string | Joint name | **Identity** |
-| `<joint type="">` | enum (`revolute`, `continuous`, `prismatic`, `fixed`, `floating`, `planar`) | Joint kinematic type | **Classification — token-array fit** |
-| `<joint><parent link=""> / <child link="">` | strings (link-name references) | Joint topology | **Non-token-array typed structure** (typed reference into the link namespace) |
-| `<joint><origin xyz rpy>` | 3 + 3 doubles | Joint frame pose | **Non-token-array typed structure** (numeric pose) |
-| `<joint><axis xyz>` | 3 × double (unit vector) | Rotation/translation axis | **Non-token-array typed structure** (numeric vector) |
-| `<joint><limit lower upper effort velocity>` | 4 × double (rad / m / N·m / rad·s⁻¹ / m·s⁻¹) | Joint limits | **Non-token-array typed structure** (numeric, with units) |
-| `<joint><dynamics damping friction>` | 2 × double (per [urdfdom joint.cpp `parseJointDynamics`](https://github.com/ros/urdfdom/blob/master/urdf_parser/src/joint.cpp)) | Joint dynamics | **Non-token-array typed structure** (numeric, with units — N·s/m or N·m·s/rad) |
-| `<joint><mimic joint multiplier offset>` | string + 2 × double | Joint mimic relationship | **Non-token-array typed structure** (composite: reference + numeric) |
-| `<joint><safety_controller>` `soft_lower_limit`, `soft_upper_limit`, `k_position`, `k_velocity` | 4 × double | Safety controller settings | **Non-token-array typed structure** (numeric) |
+| `<joint type="">` | enum (`revolute`, `continuous`, `prismatic`, `fixed`, `floating`, `planar`) | Joint kinematic type | **Controlled-vocabulary classification facets** |
+| `<joint><parent link=""> / <child link="">` | strings (link-name references) | Joint topology | **Heterogeneous typed fields** (typed reference into the link namespace) |
+| `<joint><origin xyz rpy>` | 3 + 3 doubles | Joint frame pose | **Heterogeneous typed fields** (numeric pose) |
+| `<joint><axis xyz>` | 3 × double (unit vector) | Rotation/translation axis | **Heterogeneous typed fields** (numeric vector) |
+| `<joint><limit lower upper effort velocity>` | 4 × double (rad / m / N·m / rad·s⁻¹ / m·s⁻¹) | Joint limits | **Heterogeneous typed fields** (numeric, with units) |
+| `<joint><dynamics damping friction>` | 2 × double (per [urdfdom joint.cpp `parseJointDynamics`](https://github.com/ros/urdfdom/blob/master/urdf_parser/src/joint.cpp)) | Joint dynamics | **Heterogeneous typed fields** (numeric, with units — N·s/m or N·m·s/rad) |
+| `<joint><mimic joint multiplier offset>` | string + 2 × double | Joint mimic relationship | **Heterogeneous typed fields** (composite: reference + numeric) |
+| `<joint><safety_controller>` `soft_lower_limit`, `soft_upper_limit`, `k_position`, `k_velocity` | 4 × double | Safety controller settings | **Heterogeneous typed fields** (numeric) |
 
 #### SDF (Gazebo Simulation Description Format)
 
 Source: [gazebosim SDF spec](http://sdformat.org/spec) — SDF is a
 superset of URDF's value set, adding pose mode (`degrees="true"`), more
 joint types (gear, screw), and physics-engine knobs (CFM, ERP, slip).
-The numeric / non-token-array typed structure pattern is the same.
+The numeric / heterogeneous typed fields pattern is the same.
 Notably, SDF adds explicit unit handling (`<pose degrees="true">`) and
 quaternion-as-4-double options — both still numeric, not tokens.
 
@@ -428,23 +443,23 @@ quaternion-as-4-double options — both still numeric, not tokens.
 |---|---|---|
 | Identity | 4 (package URI, frame_id, topic, service) | 2 (link name, joint name) |
 | Identity-adjacent | 3 (package name, version, maintainer) | 0 |
-| Classification — token-array fit | 2 (source format, ROS distro) | 1 (joint type) |
-| **Non-token-array typed structure** | **2** (`Header.stamp`, `Header.seq`) | **12** (everything physical: mass, inertia, origins, axes, geometry params, limits, dynamics, mimic, safety, parent/child references) |
+| Controlled-vocabulary classification facets | 2 (source format, ROS distro) | 1 (joint type) |
+| **Heterogeneous typed fields** | **2** (`Header.stamp`, `Header.seq`) | **12** (everything physical: mass, inertia, origins, axes, geometry params, limits, dynamics, mimic, safety, parent/child references) |
 
 **Headline robotics finding:**
 
 - **Strict interpretation:** the identifier-package metadata is mostly
-  string/token-friendly, with the notable exception of `std_msgs/Header.stamp`
-  (timestamp pair) and `seq` (uint32). The token-array+identifier-string claim
-  *holds for the package-URI surface itself* but **fails for the canonical
-  bundled `Header` metadata.**
+  strings, with the notable exception of `std_msgs/Header.stamp` (timestamp
+  pair) and `seq` (uint32). The "identifier strings + classification
+  facets" framing *holds for the package-URI surface itself* but **fails
+  for the canonical bundled `Header` metadata.**
 - **Expanded interpretation:** the URDF/SDF source format is *predominantly*
   numeric. If preserving round-trip provenance into URDF/SDF is part of what
   "source identifier" means in robotics — and several explicit round-trip
   scenarios in the existing comparison materials assume it is
   ([industry_scenarios.md §4.3 round-trip scenario](industry_scenarios.md))
-  — then the token-array claim does not survive contact with this vertical's
-  authoritative format definitions.
+  — then the strings-and-classification framing does not survive contact
+  with this vertical's authoritative format definitions.
 
 ### Vertical 4 — Media & Entertainment (OpenAssetIO, MovieLabs OMC, Autodesk Flow)
 
@@ -459,7 +474,8 @@ identifiers are typically:
 
 The existing comparison flagged M&E as "the lightest case" for D
 because the metadata bundle is sparse. The census below tests whether
-"sparse" is the same as "purely token-array." Three sources:
+"sparse" is the same as "exclusively string-and-classification-shaped."
+Three sources:
 
 1. **OpenAssetIO** — the open-source foundation API for asset
    management interop, built originally to abstract over ftrack /
@@ -486,9 +502,9 @@ string. Around the reference, traits are typed dictionaries
 | Field | Native type | What it carries | Bucket |
 |---|---|---|---|
 | `entityReference` | string (URI-shaped, manager-defined) | The opaque identifier | **Identity** |
-| Manager identifier (`org.foundry.examplemanager`) | reverse-DNS string | Which asset manager the reference belongs to | **Classification — token-array fit** |
-| Trait IDs (e.g. `openassetio-mediacreation:content.LocatableContent`) | reverse-DNS string | Which trait is being communicated | **Classification — token-array fit** |
-| Trait property values | typed: `bool`, `int`, `float`, `str`, `dict<str, value>` (per [TraitsData spec](https://docs.openassetio.org/OpenAssetIO/classopenassetio_1_1trait_1_1_traits_data.html)) | Trait property values are polymorphic | **Non-token-array typed structure** for any non-string trait property |
+| Manager identifier (`org.foundry.examplemanager`) | reverse-DNS string | Which asset manager the reference belongs to | **Controlled-vocabulary classification facets** |
+| Trait IDs (e.g. `openassetio-mediacreation:content.LocatableContent`) | reverse-DNS string | Which trait is being communicated | **Controlled-vocabulary classification facets** |
+| Trait property values | typed: `bool`, `int`, `float`, `str`, `dict<str, value>` (per [TraitsData spec](https://docs.openassetio.org/OpenAssetIO/classopenassetio_1_1trait_1_1_traits_data.html)) | Trait property values are polymorphic | **Heterogeneous typed fields** for any non-string trait property |
 
 OpenAssetIO traits are explicitly typed (the spec lists `bool`, `int`,
 `float`, `str`, `dict` as the value type taxonomy). Examples in the
@@ -506,12 +522,12 @@ OMC defines typed identifier-surface concepts: `Asset` has
 | Field | Native type | What it carries | Bucket |
 |---|---|---|---|
 | `Asset.identifier` | string (URI/UUID, manager-defined) | The asset identifier | **Identity** |
-| `Asset.assetType` | enum (`SceneAsset`, `CharacterAsset`, `PropAsset`, `EnvironmentAsset`, …) | Asset taxonomy | **Classification — token-array fit** |
-| `Asset.status` | enum | Lifecycle state | **Classification — token-array fit** |
-| `Asset.version` | int (or string per implementation) | Version increment | **Non-token-array typed structure** when int (per OMC schema) |
-| `Asset.participants` | list of Participant references | Who created/edited the asset | **Non-token-array typed structure** (composite reference list) |
-| `Asset.creationContext` | structured (creator, application, time) | When/by whom/with what | **Non-token-array typed structure** (composite) |
-| `Asset.lifecycleEvents` | list of (event-type, timestamp) | Asset history | **Non-token-array typed structure** (composite) |
+| `Asset.assetType` | enum (`SceneAsset`, `CharacterAsset`, `PropAsset`, `EnvironmentAsset`, …) | Asset taxonomy | **Controlled-vocabulary classification facets** |
+| `Asset.status` | enum | Lifecycle state | **Controlled-vocabulary classification facets** |
+| `Asset.version` | int (or string per implementation) | Version increment | **Heterogeneous typed fields** when int (per OMC schema) |
+| `Asset.participants` | list of Participant references | Who created/edited the asset | **Heterogeneous typed fields** (composite reference list) |
+| `Asset.creationContext` | structured (creator, application, time) | When/by whom/with what | **Heterogeneous typed fields** (composite) |
+| `Asset.lifecycleEvents` | list of (event-type, timestamp) | Asset history | **Heterogeneous typed fields** (composite) |
 
 #### ShotGrid REST API — Asset entity
 
@@ -522,12 +538,12 @@ types follow the manager's field-type system:
 |---|---|---|---|
 | `id` | integer | ShotGrid internal asset ID | **Identity** |
 | `code` | string | Human-readable asset name | **Identity-adjacent** |
-| `sg_status_list` | controlled vocabulary string (e.g. `act`, `omt`, `cmpt`) | Status code | **Classification — token-array fit** |
-| `sg_asset_type` | controlled vocabulary string | Asset type | **Classification — token-array fit** |
-| `created_at`, `updated_at` | datetime | Timestamps | **Non-token-array typed structure** (datetime) |
-| `created_by`, `updated_by` | entity reference (typed: `HumanUser` link) | Authorship | **Non-token-array typed structure** (composite reference) |
-| `project` | entity reference (typed: `Project` link) | Project membership | **Non-token-array typed structure** (composite reference) |
-| `parents`, `assets` | list of entity references | Assembly relationships | **Non-token-array typed structure** (composite reference list) |
+| `sg_status_list` | controlled vocabulary string (e.g. `act`, `omt`, `cmpt`) | Status code | **Controlled-vocabulary classification facets** |
+| `sg_asset_type` | controlled vocabulary string | Asset type | **Controlled-vocabulary classification facets** |
+| `created_at`, `updated_at` | datetime | Timestamps | **Heterogeneous typed fields** (datetime) |
+| `created_by`, `updated_by` | entity reference (typed: `HumanUser` link) | Authorship | **Heterogeneous typed fields** (composite reference) |
+| `project` | entity reference (typed: `Project` link) | Project membership | **Heterogeneous typed fields** (composite reference) |
+| `parents`, `assets` | list of entity references | Assembly relationships | **Heterogeneous typed fields** (composite reference list) |
 | `image` (thumbnail) | URL string | Thumbnail | **Identity-adjacent** (URL) |
 
 #### M&E bucket counts (16 fields surveyed)
@@ -536,22 +552,23 @@ types follow the manager's field-type system:
 |---|---|
 | Identity | 3 (OpenAssetIO `entityReference`, OMC `Asset.identifier`, ShotGrid `id`) |
 | Identity-adjacent | 2 (ShotGrid `code`, `image`) |
-| Classification — token-array fit | 6 (manager id, trait id, OMC `assetType` & `status`, ShotGrid `sg_status_list` & `sg_asset_type`) |
-| **Non-token-array typed structure** | **6** (OpenAssetIO trait values when non-string; OMC `version` int, `participants`, `creationContext`, `lifecycleEvents`; ShotGrid `created_at`/`updated_at`, `created_by`/`updated_by`/`project`/`parents`/`assets`) |
+| Controlled-vocabulary classification facets | 6 (manager id, trait id, OMC `assetType` & `status`, ShotGrid `sg_status_list` & `sg_asset_type`) |
+| **Heterogeneous typed fields** | **6** (OpenAssetIO trait values when non-string; OMC `version` int, `participants`, `creationContext`, `lifecycleEvents`; ShotGrid `created_at`/`updated_at`, `created_by`/`updated_by`/`project`/`parents`/`assets`) |
 
 **Headline M&E finding:** even in the "lightest" vertical the
 identifier-bundle includes datetimes (created_at/updated_at) and
 typed entity-reference relationships (project, parent, created_by).
-These are not token-array shaped — they're structured datetimes and
-typed cross-entity references. The token-array+identifier-string claim
-is closest to holding here, but does not hold cleanly.
+These are heterogeneous typed shapes, not strings — structured
+datetimes and typed cross-entity references. The
+strings-and-classification framing is closest to holding here, but
+does not hold cleanly.
 
 ## Cross-vertical synthesis
 
 Field census totals across the four verticals (counting each *kind*
 of field once per system; not weighting by frequency in real stages):
 
-| Vertical | Identity | Identity-adjacent | Classification — token-array fit | **Non-token-array typed structure** |
+| Vertical | Identity | Identity-adjacent | Controlled-vocabulary classification facets | **Heterogeneous typed fields** |
 |---|---|---|---|---|
 | AECO (12 main + 6 OwnerHistory) | 3 | 4 | 9 | 6 (Revit relationships; IFC timestamps + composite refs) |
 | Manufacturing/PLM (33) | 4 | 5 | 9 | 15+ (AAS Property/Range/Reference/Relationship; Windchill DateTimeOffset; SAP DATS/QUAN) |
@@ -559,7 +576,7 @@ of field once per system; not weighting by frequency in real stages):
 | Robotics — expanded URDF (15) | 2 | 0 | 1 | 12 (mass, inertia, origins, axes, limits, dynamics, mimic, safety, parent/child refs) |
 | M&E (16) | 3 | 2 | 6 | 6 (datetimes; OMC version/participants; ShotGrid entity refs) |
 
-**Recurring kinds of non-token-array typed structure across verticals:**
+**Recurring kinds of heterogeneous typed fields across verticals:**
 
 1. **Timestamps** — IFC `IfcTimeStamp`, Windchill `Edm.DateTimeOffset`,
    SAP `DATS`, ROS `Header.stamp`, OMC `lifecycleEvents.timestamp`,
@@ -582,82 +599,106 @@ of field once per system; not weighting by frequency in real stages):
    `creationContext`/`lifecycleEvents`, URDF mimic relations.
    Present in PLM, Robotics, M&E.
 
-## Effect on the load-bearing assertion
+## What the census shows
 
-The asserted form, from
-[formality_and_distribution.md](formality_and_distribution.md):
+The census shows, against authoritative specs across all four
+verticals, that **identifier packages are heterogeneously typed.**
 
-> *"No domain-specific field surfaced that required typed
-> non-token-array structure."*
-> *"Token arrays + identifier strings carried every metadata case
-> tested."*
+- **Heterogeneous typed fields surface in every vertical surveyed.**
+  The recurring kinds (timestamps, numeric measures with units,
+  composite typed references, polymorphic typed values, recursive
+  composites) are not isolated edge cases; they are part of the
+  mandatory or commonly-authored identifier surface in their source
+  systems.
+- **The proposal's heterogeneity tension is real, not empty.**
+  Proposal #105 framed the heterogeneity question as a tension AOUSD
+  would have to weigh: *"the more heterogeneous the contents, the
+  more this tension favors dictionaries or a family of domain-specific
+  schemas"* (B's cons, ¶1). The empirical surface confirms the
+  premise of that framing. Identifier packages carry typed
+  heterogeneity that the proposal anticipated.
+- **AAS — the standard the proposal already cites in its
+  emerging-consensus list and proof-of-concept (asluk/OpenUSD-proposals#2)
+  — is the most strongly typed identifier-package surface of any
+  spec surveyed.** AAS `Property.value` is polymorphic across the XSD
+  type set by design, including numerics, dates, booleans, and
+  base64-binary. AAS `Range`, `Reference`, `RelationshipElement`,
+  `Operation`, and `BasicEventElement` are all structured composites.
+  The proposal's *"explicit identifier typing"* emerging-consensus
+  point traces back to AAS feedback; the typing AAS itself uses is
+  XSD-polymorphic, not flat tokens.
 
-What the field census shows:
+## What this means for the comparison's previous claim
 
-- **The assertion does not hold** as written across the four
-  verticals. Authoritative spec surfaces in *every* vertical surveyed
-  surface non-token-array typed fields — most uniformly timestamps and
-  composite typed references.
-- **The asymmetry between verticals matters.** AECO and M&E surface
-  non-token-array typed structure *modestly*, with the token-array
-  claim holding strongly for the canonical
-  what-kind-of-thing-is-this classification work. **Manufacturing/PLM
-  surfaces it heavily** — the AAS metamodel makes polymorphic XSD
-  typing the *standard* surface for identifier-bundled metadata.
-  **Robotics splits on interpretation** — the strict identifier-only
-  reading is mostly token-friendly; the expanded
-  preserve-round-trip-to-URDF reading is mostly numeric.
-- **The previous comparison's claim of "no field" was made against a
-  synthesized field set, not the spec surface.** The fields that
-  surfaced in the existing
-  [industry_scenarios.md](industry_scenarios.md) — IFC type/objectType,
-  Revit category/familyType/mark/level, UniClass code, Windchill
-  state/lifecyclePhase, ROS topic name — *are* the fields that fit
-  token arrays cleanly. The fields that don't (timestamps, numeric
-  measures, composite references, polymorphic AAS Properties) were
-  excluded from that field set on grounds (mostly implicit) that
-  they're "the asset's content, not its identifier metadata."
+The previous claim — that *"no domain-specific field surfaced that
+required typed non-token-array structure"* across the four verticals
+— **is not supported by the spec surfaces.** It was made against a
+synthesized field set in
+[industry_scenarios.md](industry_scenarios.md) (IFC type/objectType,
+Revit category/familyType/mark/level, UniClass code, Windchill
+state/lifecyclePhase, ROS topic name). Those fields *are* token-array
+shaped, and the claim holds for that subset. Heterogeneous typed
+fields (timestamps, numeric measures, composite refs, polymorphic AAS
+values) were excluded from the synthesized set without explicit
+justification and are present, in volume, in the spec surfaces.
 
-That excluding judgment is a *scope* call, not an empirical finding.
-A solution proposal that scopes "source identifier metadata" to the
-classification axis (entity types, status codes, classification
-codes, format/distro tokens) can reasonably claim token-array fit
-for that scope. A solution proposal that scopes it to "everything
-the source format makes you carry alongside the identifier"
-(`IfcOwnerHistory`, AAS submodel `Property`s, URDF physical fields)
-cannot.
+The exclusion was a scope call — but the scope call wasn't argued.
+The empirical evidence does not support drawing the
+identifier-package boundary in a way that excludes the heterogeneous
+typed surface; that surface is what the source systems put there.
 
-The doc's leaning relies on the broader-scope claim. The narrower,
-defensible version is something like:
+## What this means for mechanism choice
 
-> *"For the controlled-vocabulary classification axis surveyed
-> across the four verticals — entity types, predefined-type enums,
-> status codes, classification system codes, format/distro tokens
-> — token-array shape was sufficient. Non-token-array typed shapes
-> (timestamps, numeric measures with units, composite typed
-> references, polymorphic-XSD AAS submodel values) surface in every
-> vertical surveyed and are scope decisions, not absent
-> requirements."*
+The four candidates carry typed heterogeneity differently:
 
-That narrower form preserves the empirical observation that token
-arrays carry the classification axis cleanly, while not asserting an
-absence the spec surfaces refute.
+| Mechanism | Carries heterogeneous typed fields? |
+|---|---|
+| A — `assetInfo` dictionaries | Yes — freeform dicts admit any typed shape (subject to USD's value-type set), at the cost of no schema-side typing or discoverability. |
+| B — Multi-apply schema, four common typed properties | No — the four-property fixed surface cannot carry domain-specific typed fields without companion schemas per domain. |
+| C — Refinement of B (B + `assetInfo` overflow) | Yes — typed schema for the common fields, freeform-dict overflow for everything heterogeneous, including typed shapes. |
+| D — Refinement of B (`UsdSemanticsLabelsAPI` + `assetInfo` identity strings) | No — labels carry `token[]` and identifier strings; numeric, date, composite-reference, and polymorphic typed shapes have no slot. |
 
-### What this experiment does *not* answer
+Two implications, neither of which this experiment by itself decides
+but both of which it constrains:
 
-- Whether the identifier-package scope *should* be drawn at the
-  classification axis (D's premise) or expanded to include
-  non-token-array typed metadata (B/C's surface). That's a downstream
-  judgment about what the source-identifier mechanism is for.
-- Whether `UsdSemanticsLabelsAPI` plus an `assetInfo` identity tier
-  is the right mechanism for the classification scope. The
-  experiment doesn't compare mechanisms; it reports field surfaces.
-- Whether the leaning toward Approach D survives the narrower
-  formulation. That requires Aaron's judgment on the
-  identifier-vs-content scope question, and the
-  distribution-friction tension noted in the rebuild plan.
+1. **A and C accommodate the empirical heterogeneity.** D and B do
+   not. A solution proposal that wants to carry the typed
+   heterogeneity surface that real source systems bundle has to use a
+   mechanism with a freeform-dict tier or a per-domain typed-schema
+   tier (or both).
+2. **D's premise depends on a scope-narrowing the data does not
+   support.** D works for the controlled-vocabulary classification
+   axis cleanly, and the previous comparison's leaning toward D rested
+   on the assumption that the classification axis is *all that
+   matters* for source-identifier metadata. The empirical surface does
+   not show that axis to be all that matters — it shows it to be one
+   of four buckets, and not the largest in two of the four verticals.
 
-These are inputs for the next session, not for this experiment.
+A follow-up proposal could still argue for D *with* an explicit
+scope-narrowing — i.e. *"source identifiers are identity strings +
+classification facets, and everything else (timestamps, numeric
+measures, composite refs) is the asset's content, carried by
+mechanisms outside this proposal."* That argument is not made by
+the current materials, and would have to be made on grounds the
+empirical census does not by itself settle. As the materials stand,
+the leaning toward D is not earned by the empirical work.
+
+### What this experiment does *not* settle
+
+- The mechanism choice between A and C (the two candidates that
+  accommodate the empirical surface). The structure-vs-freeform
+  tradeoff between them is not narrowed by this census; that is a
+  downstream judgment.
+- Whether B with companion schemas per domain is preferable to
+  either A or C. That depends on adoption velocity and ecosystem
+  distribution considerations the rebuild plan flags as load-bearing
+  open questions.
+- Where the identifier-package boundary should sit. The experiment
+  reports the empirical surface as the source systems define it; a
+  follow-up proposal can choose to narrow the scope, but has to
+  argue the narrowing rather than assume it.
+
+These are inputs for the follow-up proposal, not for this PR.
 
 ## Property-set excursion (AECO and PLM)
 
