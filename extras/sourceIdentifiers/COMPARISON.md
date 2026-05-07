@@ -18,9 +18,9 @@
 >    principles. Read the scores as illustrative, not as a verdict.
 > 2. **The distribution-friction tension is unresolved.** The
 >    elevation of distribution to "the dominant cost" in
->    `details/formality_and_distribution.md` conflicts with proposal
->    proposal's original B-cons phrasing. Resolution is upstream of any
->    honest mechanism choice.
+>    `details/formality_and_distribution.md` conflicts with the
+>    proposal's original B-cons phrasing. Resolution is upstream of
+>    any honest mechanism choice.
 >
 > A prior framing of this comparison leaned toward Approach D (Labels
 > + Identity). **That leaning has been retracted** in light of the
@@ -29,6 +29,11 @@
 > verticals surveyed. The document presents the four candidates and
 > the empirical evidence symmetrically; **no mechanism leaning is
 > asserted** in this revision.
+>
+> **Share-readiness:** This document is not yet ready to recirculate
+> broadly (additional NVIDIA reviewers, Matt, or AOUSD members) until
+> the two deferred items resolve. The empirical census stands on its
+> own; the comparison framing around it does not.
 
 ---
 

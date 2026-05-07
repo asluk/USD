@@ -2,10 +2,9 @@
 
 ← [Back to COMPARISON.md](../COMPARISON.md)
 
-> **Note for agent readers.** This document is the empirical anchor for
-> the de-leaning of the surrounding comparison work. Two upstream items
-> remain unresolved and should not be treated as settled when reading
-> this:
+> **Note on standing.** This document is the empirical anchor for the
+> de-leaning of the surrounding comparison work. Two upstream items
+> remain unresolved:
 >
 > - The eight-dimension vendor-adoption scoring in
 >   `stress_tests/vendor_adoption_analysis.{py,json}` was not derived
@@ -16,7 +15,8 @@
 >   is deferred.
 >
 > The findings below are independent of those two items — they are
-> field-by-field readings of authoritative spec surfaces. Mechanism
+> field-by-field readings of authoritative spec surfaces, and the
+> empirical content is reproducible from the cited sources. Mechanism
 > choice draws from this evidence *plus* the two deferred items, and
 > is not made in this PR.
 

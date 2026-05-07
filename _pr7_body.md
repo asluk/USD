@@ -34,8 +34,11 @@
 > surveyed. The current PR is candidate-comparison + empirical census,
 > not a leaning toward any specific mechanism.
 >
-> Memory note for agent readers: the rebuild plan tracking these
-> deferrals is in `project_source_identifier_rebuild.md`.
+> **Share-readiness:** Because the two deferred items are load-bearing
+> for any conclusion drawn from the materials, this PR is not yet
+> ready to recirculate broadly (to additional NVIDIA reviewers, to
+> Matt, or to AOUSD members). The empirical census stands on its own;
+> the comparison framing around it does not until the rebuild lands.
 
 ---
 
