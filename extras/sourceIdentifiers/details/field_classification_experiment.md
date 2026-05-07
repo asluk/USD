@@ -334,13 +334,330 @@ identifier metadata, that's submodel data"). But that scope decision is
 the open question; the experimental finding is that the spec surface is
 typed.
 
+### Vertical 3 — Robotics & Simulation (ROS, URDF, SDF)
+
+**Scope of "fields that travel with the identifier" — and a scope
+ambiguity to declare up front.** Robotics has a clearer
+identifier-vs-content split than the previous two verticals, and the
+distinction matters for how the experiment reads:
+
+- **Strict interpretation.** The "source identifier" is the package
+  URI (e.g. `package://ur_description/urdf/ur10e.urdf`), the model
+  name, the ROS distribution, and the source format (`URDF` vs `SDF`).
+  These are strings. The bundled metadata is small.
+- **Expanded interpretation.** Once you ingest the asset URDF/SDF
+  defines, the description format itself is heavily numeric (mass,
+  inertia tensors, joint limits, dynamics). Authors who want to
+  preserve provenance back to URDF/SDF often want the originating
+  field values to round-trip too — at which point those numerics
+  become metadata that travels with the identifier.
+
+The strict interpretation is what the existing comparison's
+[industry_scenarios.md §4.3](industry_scenarios.md#43-robotics--simulation)
+tests; the expanded interpretation is closer to what an
+ingestion-and-re-export workflow actually needs to round-trip.
+
+This census reports both, with each field labelled `[strict]` or
+`[expanded]`.
+
+#### ROS package / model identifier surface
+
+Sources: [REP 127 (Package manifest format two)](https://www.ros.org/reps/rep-0127.html),
+[REP 144 (ROS Package Naming)](https://www.ros.org/reps/rep-0144.html),
+[std_msgs/Header documentation](https://docs.ros.org/en/melodic/api/std_msgs/html/msg/Header.html).
+
+| Field | Native type | What it carries | Bucket | Strict / expanded |
+|---|---|---|---|---|
+| Package URI (`package://<package>/<path>`) | string | The opaque pointer back into the ROS package system | **Identity** | strict |
+| Package name (e.g. `ur_description`) | string (regex per REP 144) | ROS package name | **Identity-adjacent** | strict |
+| Package version (e.g. `2.4.1`) | string (semver-ish) | Version of the package the description came from | **Identity-adjacent** | strict |
+| Source format (`URDF`, `SDF`, `MJCF`) | enum (controlled vocab) | Which description format originated this model | **Classification — token-array fit** | strict |
+| ROS distribution (e.g. `jazzy`, `humble`, `iron`) | enum (controlled vocab) | ROS distro the package targets | **Classification — token-array fit** | strict |
+| Maintainer name / email | strings | Provenance, not identity | **Identity-adjacent** | strict |
+| `std_msgs/Header.frame_id` | string | TF frame name the data is in | **Identity** | strict (it's a TF identifier) |
+| `std_msgs/Header.stamp` | `time` (uint32 sec + uint32 nsec) | Timestamp paired with the frame_id | **Non-token-array typed structure** (numeric pair, semantically a timestamp) | strict |
+| `std_msgs/Header.seq` | uint32 | Monotonic counter | **Non-token-array typed structure** (numeric) | strict |
+| Topic name (`/scan`, `/cmd_vel`) | string (controlled by package convention) | Pub/sub channel name | **Identity** (round-trips back into ROS as a topic key) | strict |
+| Service name | string | Service endpoint name | **Identity** | strict |
+
+`std_msgs/Header` is the canonical "metadata that travels alongside ROS
+data" — it's appended to most ROS messages — and its `stamp` is
+explicitly a structured time pair (`uint32 sec + uint32 nsec`), not a
+string token. `seq` is a uint32. These are non-token-array typed
+**already in the strict interpretation**.
+
+#### URDF link / joint surface (expanded interpretation — round-trip-back-to-URDF)
+
+Sources: [URDF link XML reference (ROS wiki)](https://wiki.ros.org/urdf/XML/link),
+[URDF joint XML reference](https://wiki.ros.org/urdf/XML/joint),
+[urdfdom C++ headers](https://github.com/ros/urdfdom_headers/tree/master/include/urdf_model)
+(`JointDynamics::damping/friction` parsed via `strToDouble`, per [urdfdom joint.cpp](https://github.com/ros/urdfdom/blob/master/urdf_parser/src/joint.cpp)).
+
+| Field | Native type | What it carries | Bucket |
+|---|---|---|---|
+| `<link name="">` | string | Link name (the identifier within the URDF) | **Identity** |
+| `<inertial><mass value="">` | double (kg) | Link mass | **Non-token-array typed structure** (decimal with unit) |
+| `<inertial><inertia ixx ixy ixz iyy iyz izz>` | 6 × double (kg·m²) | Inertia tensor (symmetric 3×3, 6 components) | **Non-token-array typed structure** (numeric tensor) |
+| `<inertial><origin xyz="" rpy="">` | 3 doubles (m) + 3 doubles (rad) | Pose of the inertial frame | **Non-token-array typed structure** (numeric pose) |
+| `<visual>/<collision><geometry><box size="x y z">` | 3 × double (m) | Box dimensions | **Non-token-array typed structure** (numeric tuple) |
+| `<geometry><cylinder radius="" length="">` | 2 × double (m) | Cylinder dimensions | **Non-token-array typed structure** (numeric pair) |
+| `<geometry><sphere radius="">` | double (m) | Sphere radius | **Non-token-array typed structure** (numeric) |
+| `<geometry><mesh filename="" scale="">` | string + 3 × double | Mesh file URI + scale | mixed: URI is identity, scale is numeric |
+| `<joint name="">` | string | Joint name | **Identity** |
+| `<joint type="">` | enum (`revolute`, `continuous`, `prismatic`, `fixed`, `floating`, `planar`) | Joint kinematic type | **Classification — token-array fit** |
+| `<joint><parent link=""> / <child link="">` | strings (link-name references) | Joint topology | **Non-token-array typed structure** (typed reference into the link namespace) |
+| `<joint><origin xyz rpy>` | 3 + 3 doubles | Joint frame pose | **Non-token-array typed structure** (numeric pose) |
+| `<joint><axis xyz>` | 3 × double (unit vector) | Rotation/translation axis | **Non-token-array typed structure** (numeric vector) |
+| `<joint><limit lower upper effort velocity>` | 4 × double (rad / m / N·m / rad·s⁻¹ / m·s⁻¹) | Joint limits | **Non-token-array typed structure** (numeric, with units) |
+| `<joint><dynamics damping friction>` | 2 × double (per [urdfdom joint.cpp `parseJointDynamics`](https://github.com/ros/urdfdom/blob/master/urdf_parser/src/joint.cpp)) | Joint dynamics | **Non-token-array typed structure** (numeric, with units — N·s/m or N·m·s/rad) |
+| `<joint><mimic joint multiplier offset>` | string + 2 × double | Joint mimic relationship | **Non-token-array typed structure** (composite: reference + numeric) |
+| `<joint><safety_controller>` `soft_lower_limit`, `soft_upper_limit`, `k_position`, `k_velocity` | 4 × double | Safety controller settings | **Non-token-array typed structure** (numeric) |
+
+#### SDF (Gazebo Simulation Description Format)
+
+Source: [gazebosim SDF spec](http://sdformat.org/spec) — SDF is a
+superset of URDF's value set, adding pose mode (`degrees="true"`), more
+joint types (gear, screw), and physics-engine knobs (CFM, ERP, slip).
+The numeric / non-token-array typed structure pattern is the same.
+Notably, SDF adds explicit unit handling (`<pose degrees="true">`) and
+quaternion-as-4-double options — both still numeric, not tokens.
+
+#### Robotics bucket counts (26 fields surveyed; strict = 11, expanded URDF/SDF = 15)
+
+| Bucket | Strict (11) | Expanded URDF (15) |
+|---|---|---|
+| Identity | 4 (package URI, frame_id, topic, service) | 2 (link name, joint name) |
+| Identity-adjacent | 3 (package name, version, maintainer) | 0 |
+| Classification — token-array fit | 2 (source format, ROS distro) | 1 (joint type) |
+| **Non-token-array typed structure** | **2** (`Header.stamp`, `Header.seq`) | **12** (everything physical: mass, inertia, origins, axes, geometry params, limits, dynamics, mimic, safety, parent/child references) |
+
+**Headline robotics finding:**
+
+- **Strict interpretation:** the identifier-package metadata is mostly
+  string/token-friendly, with the notable exception of `std_msgs/Header.stamp`
+  (timestamp pair) and `seq` (uint32). The token-array+identifier-string claim
+  *holds for the package-URI surface itself* but **fails for the canonical
+  bundled `Header` metadata.**
+- **Expanded interpretation:** the URDF/SDF source format is *predominantly*
+  numeric. If preserving round-trip provenance into URDF/SDF is part of what
+  "source identifier" means in robotics — and several explicit round-trip
+  scenarios in the existing comparison materials assume it is
+  ([industry_scenarios.md §4.3 round-trip scenario](industry_scenarios.md))
+  — then the token-array claim does not survive contact with this vertical's
+  authoritative format definitions.
+
+### Vertical 4 — Media & Entertainment (OpenAssetIO, MovieLabs OMC, Autodesk Flow)
+
+**Scope of "fields that travel with the identifier."** M&E asset
+identifiers are typically:
+
+- An asset DB ID (string, often UUID-shaped or sequential).
+- A version number / increment.
+- A path or URL to the asset on disk / cloud storage.
+- Status / approval state.
+- A few link references (project, sequence, shot, parent asset).
+
+The existing comparison flagged M&E as "the lightest case" for D
+because the metadata bundle is sparse. The census below tests whether
+"sparse" is the same as "purely token-array." Three sources:
+
+1. **OpenAssetIO** — the open-source foundation API for asset
+   management interop, built originally to abstract over ftrack /
+   ShotGrid / Katana / Maya asset systems.
+2. **MovieLabs Ontology for Media Creation (OMC)** — an open data model
+   defining standard concepts (Asset, Task, Participant) and the
+   identifier conventions for sharing them.
+3. **Autodesk Flow Production Tracking (formerly ShotGrid)** — the
+   dominant production-tracking system whose REST API is the de facto
+   M&E asset-DB surface.
+
+Sources:
+[OpenAssetIO](https://openassetio.org/),
+[MovieLabs OMC](https://movielabs.com/production-technology/ontology-for-media-creation/),
+[ShotGrid REST API entity reference](https://developer.shotgridsoftware.com/rest-api/).
+
+#### OpenAssetIO trait surface
+
+OpenAssetIO doesn't define typed identifier fields itself — it
+abstracts over a manager's identifier ("entityReference") which is a
+string. Around the reference, traits are typed dictionaries
+(`openassetio.trait.TraitsData`) carrying named typed properties:
+
+| Field | Native type | What it carries | Bucket |
+|---|---|---|---|
+| `entityReference` | string (URI-shaped, manager-defined) | The opaque identifier | **Identity** |
+| Manager identifier (`org.foundry.examplemanager`) | reverse-DNS string | Which asset manager the reference belongs to | **Classification — token-array fit** |
+| Trait IDs (e.g. `openassetio-mediacreation:content.LocatableContent`) | reverse-DNS string | Which trait is being communicated | **Classification — token-array fit** |
+| Trait property values | typed: `bool`, `int`, `float`, `str`, `dict<str, value>` (per [TraitsData spec](https://docs.openassetio.org/OpenAssetIO/classopenassetio_1_1trait_1_1_traits_data.html)) | Trait property values are polymorphic | **Non-token-array typed structure** for any non-string trait property |
+
+OpenAssetIO traits are explicitly typed (the spec lists `bool`, `int`,
+`float`, `str`, `dict` as the value type taxonomy). Examples in the
+[mediacreation traits library](https://docs.openassetio.org/OpenAssetIO-MediaCreation/)
+include `content.image.dimensions` (int width/height), `lifecycle.Version`
+(int + bool stable flag), `timeline.FrameRanged` (int range).
+
+#### MovieLabs OMC
+
+OMC defines typed identifier-surface concepts: `Asset` has
+`identifier`, `name`, `description`, `assetType` (enum), `version`,
+`status` (enum), `participants` (relationships), `creationContext`,
+`lifecycleEvents` (timestamped events).
+
+| Field | Native type | What it carries | Bucket |
+|---|---|---|---|
+| `Asset.identifier` | string (URI/UUID, manager-defined) | The asset identifier | **Identity** |
+| `Asset.assetType` | enum (`SceneAsset`, `CharacterAsset`, `PropAsset`, `EnvironmentAsset`, …) | Asset taxonomy | **Classification — token-array fit** |
+| `Asset.status` | enum | Lifecycle state | **Classification — token-array fit** |
+| `Asset.version` | int (or string per implementation) | Version increment | **Non-token-array typed structure** when int (per OMC schema) |
+| `Asset.participants` | list of Participant references | Who created/edited the asset | **Non-token-array typed structure** (composite reference list) |
+| `Asset.creationContext` | structured (creator, application, time) | When/by whom/with what | **Non-token-array typed structure** (composite) |
+| `Asset.lifecycleEvents` | list of (event-type, timestamp) | Asset history | **Non-token-array typed structure** (composite) |
+
+#### ShotGrid REST API — Asset entity
+
+The ShotGrid REST API exposes an `Asset` entity with attributes whose
+types follow the manager's field-type system:
+
+| Field | Native type | What it carries | Bucket |
+|---|---|---|---|
+| `id` | integer | ShotGrid internal asset ID | **Identity** |
+| `code` | string | Human-readable asset name | **Identity-adjacent** |
+| `sg_status_list` | controlled vocabulary string (e.g. `act`, `omt`, `cmpt`) | Status code | **Classification — token-array fit** |
+| `sg_asset_type` | controlled vocabulary string | Asset type | **Classification — token-array fit** |
+| `created_at`, `updated_at` | datetime | Timestamps | **Non-token-array typed structure** (datetime) |
+| `created_by`, `updated_by` | entity reference (typed: `HumanUser` link) | Authorship | **Non-token-array typed structure** (composite reference) |
+| `project` | entity reference (typed: `Project` link) | Project membership | **Non-token-array typed structure** (composite reference) |
+| `parents`, `assets` | list of entity references | Assembly relationships | **Non-token-array typed structure** (composite reference list) |
+| `image` (thumbnail) | URL string | Thumbnail | **Identity-adjacent** (URL) |
+
+#### M&E bucket counts (16 fields surveyed)
+
+| Bucket | Count |
+|---|---|
+| Identity | 3 (OpenAssetIO `entityReference`, OMC `Asset.identifier`, ShotGrid `id`) |
+| Identity-adjacent | 2 (ShotGrid `code`, `image`) |
+| Classification — token-array fit | 6 (manager id, trait id, OMC `assetType` & `status`, ShotGrid `sg_status_list` & `sg_asset_type`) |
+| **Non-token-array typed structure** | **6** (OpenAssetIO trait values when non-string; OMC `version` int, `participants`, `creationContext`, `lifecycleEvents`; ShotGrid `created_at`/`updated_at`, `created_by`/`updated_by`/`project`/`parents`/`assets`) |
+
+**Headline M&E finding:** even in the "lightest" vertical the
+identifier-bundle includes datetimes (created_at/updated_at) and
+typed entity-reference relationships (project, parent, created_by).
+These are not token-array shaped — they're structured datetimes and
+typed cross-entity references. The token-array+identifier-string claim
+is closest to holding here, but does not hold cleanly.
+
 ## Cross-vertical synthesis
 
-*[To be filled in after Robotics and M&E.]*
+Field census totals across the four verticals (counting each *kind*
+of field once per system; not weighting by frequency in real stages):
+
+| Vertical | Identity | Identity-adjacent | Classification — token-array fit | **Non-token-array typed structure** |
+|---|---|---|---|---|
+| AECO (12 main + 6 OwnerHistory) | 3 | 4 | 9 | 6 (Revit relationships; IFC timestamps + composite refs) |
+| Manufacturing/PLM (33) | 4 | 5 | 9 | 15+ (AAS Property/Range/Reference/Relationship; Windchill DateTimeOffset; SAP DATS/QUAN) |
+| Robotics — strict (11) | 4 | 3 | 2 | 2 (`Header.stamp`, `seq`) |
+| Robotics — expanded URDF (15) | 2 | 0 | 1 | 12 (mass, inertia, origins, axes, limits, dynamics, mimic, safety, parent/child refs) |
+| M&E (16) | 3 | 2 | 6 | 6 (datetimes; OMC version/participants; ShotGrid entity refs) |
+
+**Recurring kinds of non-token-array typed structure across verticals:**
+
+1. **Timestamps** — IFC `IfcTimeStamp`, Windchill `Edm.DateTimeOffset`,
+   SAP `DATS`, ROS `Header.stamp`, OMC `lifecycleEvents.timestamp`,
+   ShotGrid `created_at`/`updated_at`. Present in **every vertical
+   surveyed.**
+2. **Numeric measures with units** — IFC `IfcMeasureValue` family
+   (`IfcLengthMeasure`, `IfcMassMeasure`, etc.), SAP `QUAN(n,m)`
+   (`NTGEW`, `BRGEW`, `VOLUM`), URDF/SDF mass/inertia/limits/dynamics.
+   Present in AECO, PLM, Robotics.
+3. **Composite typed references** — IFC `IfcPersonAndOrganization` /
+   `IfcApplication`, AAS `Reference` / `RelationshipElement`, Revit
+   `ElementId`-typed relationships, ShotGrid entity-link fields.
+   Present in **every vertical surveyed.**
+4. **Polymorphic typed values** — AAS `Property.value` (XSD type set),
+   AAS `Range.min`/`.max`, OpenAssetIO trait property values. Present
+   especially in PLM (where it is the *standard surface* for extension
+   metadata).
+5. **Recursive composites** — AAS `AnnotatedRelationshipElement.annotations`,
+   `Operation.input/output/inoutputVariables`, OMC
+   `creationContext`/`lifecycleEvents`, URDF mimic relations.
+   Present in PLM, Robotics, M&E.
 
 ## Effect on the load-bearing assertion
 
-*[To be filled in after the synthesis.]*
+The asserted form, from
+[formality_and_distribution.md](formality_and_distribution.md):
+
+> *"No domain-specific field surfaced that required typed
+> non-token-array structure."*
+> *"Token arrays + identifier strings carried every metadata case
+> tested."*
+
+What the field census shows:
+
+- **The assertion does not hold** as written across the four
+  verticals. Authoritative spec surfaces in *every* vertical surveyed
+  surface non-token-array typed fields — most uniformly timestamps and
+  composite typed references.
+- **The asymmetry between verticals matters.** AECO and M&E surface
+  non-token-array typed structure *modestly*, with the token-array
+  claim holding strongly for the canonical
+  what-kind-of-thing-is-this classification work. **Manufacturing/PLM
+  surfaces it heavily** — the AAS metamodel makes polymorphic XSD
+  typing the *standard* surface for identifier-bundled metadata.
+  **Robotics splits on interpretation** — the strict identifier-only
+  reading is mostly token-friendly; the expanded
+  preserve-round-trip-to-URDF reading is mostly numeric.
+- **The previous comparison's claim of "no field" was made against a
+  synthesized field set, not the spec surface.** The fields that
+  surfaced in the existing
+  [industry_scenarios.md](industry_scenarios.md) — IFC type/objectType,
+  Revit category/familyType/mark/level, UniClass code, Windchill
+  state/lifecyclePhase, ROS topic name — *are* the fields that fit
+  token arrays cleanly. The fields that don't (timestamps, numeric
+  measures, composite references, polymorphic AAS Properties) were
+  excluded from that field set on grounds (mostly implicit) that
+  they're "the asset's content, not its identifier metadata."
+
+That excluding judgment is a *scope* call, not an empirical finding.
+A solution proposal that scopes "source identifier metadata" to the
+classification axis (entity types, status codes, classification
+codes, format/distro tokens) can reasonably claim token-array fit
+for that scope. A solution proposal that scopes it to "everything
+the source format makes you carry alongside the identifier"
+(`IfcOwnerHistory`, AAS submodel `Property`s, URDF physical fields)
+cannot.
+
+The doc's leaning relies on the broader-scope claim. The narrower,
+defensible version is something like:
+
+> *"For the controlled-vocabulary classification axis surveyed
+> across the four verticals — entity types, predefined-type enums,
+> status codes, classification system codes, format/distro tokens
+> — token-array shape was sufficient. Non-token-array typed shapes
+> (timestamps, numeric measures with units, composite typed
+> references, polymorphic-XSD AAS submodel values) surface in every
+> vertical surveyed and are scope decisions, not absent
+> requirements."*
+
+That narrower form preserves the empirical observation that token
+arrays carry the classification axis cleanly, while not asserting an
+absence the spec surfaces refute.
+
+### What this experiment does *not* answer
+
+- Whether the identifier-package scope *should* be drawn at the
+  classification axis (D's premise) or expanded to include
+  non-token-array typed metadata (B/C's surface). That's a downstream
+  judgment about what the source-identifier mechanism is for.
+- Whether `UsdSemanticsLabelsAPI` plus an `assetInfo` identity tier
+  is the right mechanism for the classification scope. The
+  experiment doesn't compare mechanisms; it reports field surfaces.
+- Whether the leaning toward Approach D survives the narrower
+  formulation. That requires Aaron's judgment on the
+  identifier-vs-content scope question, and the
+  distribution-friction tension noted in the rebuild plan.
+
+These are inputs for the next session, not for this experiment.
 
 ## Property-set excursion (AECO and PLM)
 
