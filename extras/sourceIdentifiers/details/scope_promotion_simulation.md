@@ -2,17 +2,19 @@
 
 ← [Back to COMPARISON.md](../COMPARISON.md)
 
-> **Scope under D vs. C.** Under Approach D, a field like `scope` is a
-> classification facet from day one — it lives at
-> `SemanticsLabelsAPI:aas:scope`. "Promotion" reduces to a registry-level
-> facet addition (a GitHub PR adding `scope` to the registered facets for
-> the `aas` system, then optionally to other systems' facet lists as
-> adoption broadens). No schema property to ratify, no codegen, no plugin
-> distribution. The five-phase lifecycle in this document is the
-> Approach-C path — preserved here as illustrative of the harder
-> graduation a future field would face if it needs typed structure
-> beyond what `SemanticsLabelsAPI` supports. For D-aware planning, see
-> COMPARISON.md "Open Questions" §2 on AAS scoping.
+> **Scope of this simulation.** `scope` (type-vs-instance) happens to
+> be a controlled-vocabulary value (`type` / `instance`), so under
+> Approach D it could ride `SemanticsLabelsAPI:aas:scope` as a single
+> classification facet, with "promotion" reducing to a registry-level
+> facet addition. Many of the heterogeneous typed fields the field
+> experiment surfaces would not have that option — AAS `Property.value`
+> is XSD-typed across numerics, dates, booleans and binary, and AAS
+> `RelationshipElement.first/.second` are composite References — and
+> their promotion lifecycle would follow the C-tier path documented
+> here. The five-phase C lifecycle below is therefore one of two
+> graduation paths a real domain may take depending on whether its
+> field is a controlled-vocabulary token or a heterogeneously typed
+> value.
 
 ## Overview
 

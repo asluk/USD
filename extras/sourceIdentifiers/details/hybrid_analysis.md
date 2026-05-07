@@ -2,16 +2,28 @@
 
 ← [Back to COMPARISON.md](../COMPARISON.md)
 
-This document is the design reference for **Approach C** — a refinement of
-B that adds an `assetInfo` overflow dictionary (borrowed from A) to B's
-multi-apply schema, closing B's heterogeneity gap. COMPARISON.md notes
-that the data leans toward D (a different refinement of B that reuses the
-existing `UsdSemanticsLabelsAPI`); C is the natural fallback for the case
-where a domain surfaces classification fields needing typed
-non-token-array structure that `UsdSemanticsLabelsAPI` cannot represent.
-The migration discussion in §7.6 is also useful for pipelines moving off
-of `customData` toward any mechanism; its schema-property half maps to D's
-`assetInfo["source"]` identity tier with minor adjustment.
+This document is the design reference for **Approach C** — a refinement
+of B that adds an `assetInfo` overflow dictionary (borrowed from A) to
+B's multi-apply schema, closing B's heterogeneity gap.
+
+The earlier draft of this document positioned C as "the natural
+fallback if a domain surfaces classification fields needing typed
+non-token-array structure that `UsdSemanticsLabelsAPI` cannot
+represent." That framing has been retracted. The field census in
+[`field_classification_experiment.md`](field_classification_experiment.md)
+shows that heterogeneous typed fields (timestamps, numeric measures
+with units, composite typed references, polymorphic XSD-typed values)
+surface in **every vertical surveyed** — AECO, Manufacturing/PLM,
+Robotics, M&E. C is therefore a present-day fit for the empirical
+heterogeneity surface, not a fallback for hypothetical future domains.
+
+C and Approach A are the two candidates that accommodate the empirical
+heterogeneity surface; the structure-vs-freeform tradeoff between them
+is downstream of this document and is one of the open questions for
+AOUSD review.
+
+The migration discussion in §7.6 is also useful for pipelines moving
+off of `customData` toward any of the four mechanisms.
 
 ### 7.1 The case against either approach alone
 

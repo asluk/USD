@@ -207,16 +207,39 @@ four approaches.
   domain-specific fields) and pays distribution friction without D's
   per-facet discoverability gain.
 
-After symmetric treatment of governance and composition, the schema-derived
-advantages that remain narrow to discoverability and validator-
-implementability ergonomics. On those, the scoring leans toward D —
-because D exposes facet structure on the `apiSchemas` list without
-requiring a new schema to ship.
+**Retraction of the "scoring leans toward D" finding.** Earlier drafts
+of this section concluded that the scoring "leans toward D" because D
+exposes facet structure on the `apiSchemas` list without ratifying a
+new schema. That conclusion is retracted, for two reasons that the
+field experiment (`field_classification_experiment.md`) makes
+visible:
 
-**Caveat.** These scores are illustrative, not objective. Different
-weights (or different dimension choices) would produce different totals.
-The scoring's value is identifying *which dimensions each approach
-leans on*, not declaring a winner by arithmetic.
+1. **D's "Metadata heterogeneity" score of 4 is not supported by the
+   spec surface.** Heterogeneity is the question the proposal asked
+   AOUSD to weigh in B's cons (*"the more heterogeneous the contents,
+   the more this tension favors dictionaries or a family of
+   domain-specific schemas"*). The empirical census documents that
+   identifier packages bundle heterogeneous typed fields (timestamps,
+   numeric measures with units, composite typed references,
+   polymorphic AAS Property values) in every vertical surveyed.
+   D's `token[]` label surface + identifier string `assetInfo` cannot
+   carry those shapes; the score should reflect that gap.
+
+2. **The "Distribution friction" weighting is itself a load-bearing
+   open question.** The comparison materials elevate distribution to
+   the dominant cost; the proposal's original B-cons phrasing
+   downplays it. Resolving that tension is upstream of any honest
+   scoring along this dimension.
+
+A re-derivation of dimensions from the proposal's eight authorized
+principles is part of the rebuild plan and is deferred to a session
+that can also resolve the distribution-friction call.
+
+**Caveat preserved.** These scores are illustrative, not objective.
+Different weights or different dimension choices would produce
+different totals. The scoring's value is identifying *which
+dimensions each approach trades against which others*, not declaring
+a winner by arithmetic.
 
 ## 5.4 Three-tier model for Approach C
 

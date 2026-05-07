@@ -208,26 +208,40 @@ std::vector<TfToken> instances = UsdSourceIdSchemaAPI::GetAll(prim);
 **See:** [hybrid_analysis.md](hybrid_analysis.md) for the full design rationale,
 trade-offs, and migration path.
 
-C is a refinement of B: same multi-apply schema for the four common fields,
-plus A's `assetInfo` overflow dictionary for fields the schema cannot carry,
-keyed by matching the schema instance name to the `assetInfo["sourceIds"]`
-dictionary key. C's role is the natural fallback for the case where D's
-classification-via-`SemanticsLabelsAPI` cut surfaces fields that need typed
-non-token-array structure — see hybrid_analysis.md for the design rationale.
+C is a refinement of B: same multi-apply schema for the four common
+fields, plus A's `assetInfo` overflow dictionary for fields the schema
+cannot carry, keyed by matching the schema instance name to the
+`assetInfo["sourceIds"]` dictionary key. The overflow tier carries
+heterogeneous typed fields (timestamps, numeric measures with units,
+composite refs, polymorphic typed values) that the four common
+schema-typed fields and `token[]` label values cannot represent.
 
 ---
 
 ## Approach D: Refinement of B (Labels + Identity using existing schema)
 
-**Schema type:** No new applied schema. Uses `UsdSemanticsLabelsAPI` (shipping
-in OpenUSD 24.11) plus `assetInfo` conventions.
+**Schema type:** No new applied schema. Uses `UsdSemanticsLabelsAPI`
+(shipping in OpenUSD 24.11) plus `assetInfo` conventions.
 **Precedent:** `UsdSemanticsLabelsAPI` for classification facets;
 `UsdModelAPI` for the `assetInfo`-only identity tier.
 
-D is a refinement of B that takes a different cut at the same gap C closes
-with overflow: rather than introduce a new multi-apply schema, reuse the
-existing `UsdSemanticsLabelsAPI` for classification facets and route
-identifier strings to `assetInfo`.
+D is a refinement of B that takes a different cut at the same gap C
+closes with overflow: rather than introduce a new multi-apply schema,
+reuse the existing `UsdSemanticsLabelsAPI` for classification facets
+and route identifier strings to `assetInfo`.
+
+**Provenance note.** D was constructed downstream of the proposal
+during this comparison work, *not* a peer candidate the proposal
+itself authorized. The proposal explicitly authorized A and B and
+hinted at C as a "hybrid or alternative." D is included as an
+explored idea so its tradeoffs can be evaluated alongside the
+authorized candidates. The earlier draft of this document presented
+D conclusorily, and earlier drafts of the comparison materials
+narrated a leaning toward D; both have been retracted in light of
+the empirical field census, which shows D's `token[]`-only label
+surface cannot carry the heterogeneous typed fields that surface in
+every vertical surveyed (see
+[field_classification_experiment.md](field_classification_experiment.md)).
 
 **Mechanism.** Decomposes the source-identifiers problem along its natural
 seams:
