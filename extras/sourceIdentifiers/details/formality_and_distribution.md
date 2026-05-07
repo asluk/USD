@@ -130,9 +130,31 @@ Codeless schemas reduce but do not eliminate this cost: they avoid
 C++ ABI drift but still need plugin discovery, distribution channels,
 versioning, and consumer-side support across the matrix.
 
-The dominant cost of ratifying a new applied schema is this recurring
-distribution-and-maintenance load, not the local codegen step that
-`governance.md §6.7` quantifies in lines and files.
+The recurring distribution-and-maintenance load is the substantial
+cost of ratifying a new applied schema today, materially larger than
+the local codegen step that `governance.md §6.7` quantifies in lines
+and files.
+
+> **Aaron's call (2026-05-07) on how heavily this weighs.** Earlier
+> drafts of this document called the recurring distribution load
+> *"the dominant cost"* unconditionally. That phrasing is retracted
+> in favor of a conditional reading: the matrix burden is **currently
+> elevated** — fragmented across vendors who ship USD binaries today
+> — and is **trending lighter** as the AOUSD Build IG initiatives
+> land (hosted binaries via the parent epic
+> [`aousd/build-ig-initiatives#28`](https://github.com/aousd/build-ig-initiatives/issues/28),
+> plugin registration via importlib, conda-forge / PyPI distribution,
+> CI infrastructure). Proposal 105's original B-cons phrasing flagged
+> the cost (*"requires distributing schema plugins"*) but read it as
+> manageable in the current ecosystem; the difference between the
+> proposal's framing and the elaboration in this document is one of
+> articulation — the proposal flagged the burden, this document
+> describes what the burden looks like operationally as a build
+> matrix. Both framings are honest; the rebuilt scoring in
+> `stress_tests/vendor_adoption_analysis.{py,json}` reflects the
+> conditional weight directly in the Minimal disruption score (B and
+> C scored at the elevated weight today, with the trajectory expected
+> to lighten).
 
 ## Where each approach lands on the tradeoff
 
