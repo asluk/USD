@@ -3,16 +3,24 @@
 RETRACTED. PRESERVED FOR REGRESSION INSPECTION ONLY.
 
 This file scores Approaches A, B, C, and D along eight dimensions
-that Claude (acting as the AI assistant during this PR's development)
-invented while the comparison work was in flight. These dimensions
-were NOT derived from proposal 105's eight authorized design
-principles (separation of concerns, industry agnosticism, vendor
-extensibility, composability, discoverability, external queryability,
-round-trip fidelity, minimal disruption). They were constructed
-post-hoc, during the same window that a leaning toward Approach D
-had already taken shape, and they biased toward D along axes D
-happens to lead on by construction (per-facet discoverability,
-distribution friction with "no new schema = higher" framing).
+that Claude (acting as the AI assistant) invented across the
+comparison work. Those dimensions were NOT derived from proposal
+105's eight authorized design principles (separation of concerns,
+industry agnosticism, vendor extensibility, composability,
+discoverability, external queryability, round-trip fidelity, minimal
+disruption). The lineage of ad-hoc Claude-invented scoring spans the
+whole comparison arc: the original April-2026 A/B/C work on the
+`aluk/source-identifiers-comparison` base branch used an earlier
+ad-hoc dimension set (reachable via `git show
+aluk/source-identifiers-comparison:extras/sourceIdentifiers/stress_tests/vendor_adoption_analysis.py`);
+this file is the immediately-previous D-augmented version, captured
+right before the 2026-05-07 principle-derived rebuild.
+
+The dimensions in this file were constructed post-hoc, during the
+same window that a leaning toward Approach D had already taken
+shape, and they biased toward D along axes D happens to lead on by
+construction (per-facet discoverability; distribution friction with
+"no new schema = higher" framing).
 
 The principle-derived rebuild is in `vendor_adoption_analysis.py`.
 

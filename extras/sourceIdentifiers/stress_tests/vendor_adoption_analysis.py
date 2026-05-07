@@ -9,13 +9,15 @@ plus the explicit risks (uncurated proliferation, premature
 standardization, adoption fragmentation, scope creep).
 
 Earlier scoring (preserved as `vendor_adoption_analysis_legacy.py`)
-used eight dimensions that Claude invented during PR development
-*after* a leaning toward Approach D had already taken shape. Those
-dimensions did not derive from proposal 105's authorized principles
-and biased toward D along axes D happens to lead on by construction.
-That scoring is retracted in favor of this re-derivation from the
-proposal's authorized framing. The header of
-`vendor_adoption_analysis_legacy.py` documents the regression in
+used eight dimensions that Claude invented across the comparison
+work — initially on the `aluk/source-identifiers-comparison` base
+branch (April 2026 A/B/C) and subsequently augmented for D on
+`aluk/source-identifiers-rev2`. Those dimensions did not derive from
+proposal 105's authorized principles, and the D-augmented version
+biased toward D along axes D happens to lead on by construction.
+This re-derivation replaces the entire ad-hoc lineage in favor of
+dimensions drawn from the proposal's authorized framing. The header
+of `vendor_adoption_analysis_legacy.py` documents the regression in
 detail.
 
 Aaron's 2026-05-07 call on the distribution-friction tension: scored
