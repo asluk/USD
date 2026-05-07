@@ -2,3 +2,14 @@
 .DS_Store
 .AppleDouble
 
+# Local PR working files (PR body source, methodology comment source,
+# Matt-review draft, etc.). These are scratch files used to author
+# GitHub PR descriptions and comments via `gh pr edit --body-file` /
+# `gh pr comment --body-file`; they shouldn't be in the source tree.
+_pr*
+
+# Build artifacts
+__pycache__/
+_build_log.txt
+_install/
+
