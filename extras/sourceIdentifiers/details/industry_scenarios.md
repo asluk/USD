@@ -8,13 +8,34 @@ A / B / C / D scenarios in `extras/sourceIdentifiers/examples/` and
 `vendor_simulation/`. This section summarizes the key findings from each
 vertical.
 
-**Approach D (Labels + Identity)** splits each domain's metadata along
-the identity vs. classification seam: opaque identifier strings and
-identity-adjacent fields (those that must round-trip exactly into the
-source system) live in `assetInfo["source"][<system>]`; controlled-vocabulary
-terms (drawn from each system's published namespace) ride
-`SemanticsLabelsAPI:<system>:<facet>` instances. The split test in each
-vertical below evaluates whether D's working rule produces a clean fit.
+> **Note on the field set used here.** This document was originally
+> written against a synthesized field set per vertical — fields the
+> earlier draft of the comparison work picked as representative of each
+> domain's identifier surface. That synthesized field set covers the
+> controlled-vocabulary classification axis cleanly, and the
+> per-vertical narratives below describe how each mechanism handles
+> *those* fields.
+>
+> The full identifier-package surface as defined by the source systems'
+> authoritative specs (IFC4x3, Revit API, AAS metamodel, Windchill
+> REST, SAP MARA, ROS/URDF/SDF, OpenAssetIO/MovieLabs OMC/ShotGrid) is
+> documented in
+> [`field_classification_experiment.md`](field_classification_experiment.md)
+> under pre-registered classification criteria. The field experiment
+> finds that identifier packages are **heterogeneously typed across
+> all four verticals** — including timestamps, numeric measures with
+> units, composite typed references, and polymorphic XSD-typed values
+> that the synthesized set in this document does not represent.
+>
+> Where the per-vertical narratives below assert *"D fits cleanly"* or
+> *"7 of 8 fields fit"*, those claims hold for the synthesized set
+> only. Reading them against the spec-surface census gives the
+> asymmetric picture: D and B-alone fit the controlled-vocabulary
+> axis cleanly but cannot carry the heterogeneous typed surface; A
+> and C carry both. The leaning toward Approach D that earlier drafts
+> of this document narrated has been retracted — see
+> [COMPARISON.md](../COMPARISON.md) and the field experiment for the
+> updated framing.
 
 ## 4.1 Architecture, Engineering, Construction & Operations (AECO)
 
@@ -46,16 +67,28 @@ SAP + OPC UA + BACnet + IFC), and rooms with purely numeric identifiers.
   telemetry metadata (nodeClass, dataType, engineeringUnits) is again
   natural in A and absent in B's base schema.
 
-**Approach D fit:** AECO classification metadata (`ifcType`, `ifcSchema`,
-Revit `category`/`familyType`/`mark`/`level`, UniClass and OmniClass codes)
-is *all* drawn from controlled vocabularies, so it routes cleanly to
-`SemanticsLabelsAPI:<system>:<facet>` instances. The opaque identifier strings
-(IFC GlobalId, Revit ElementId, classification codes) sit in
-`assetInfo["source"][<system>]`. The canonical column example
+**Approach D fit (synthesized field set only):** AECO classification
+metadata as represented by the synthesized set (`ifcType`, `ifcSchema`,
+Revit `category`/`familyType`/`mark`/`level`, UniClass and OmniClass
+codes) is *all* drawn from controlled vocabularies, so it routes cleanly
+to `SemanticsLabelsAPI:<system>:<facet>` instances. The opaque
+identifier strings (IFC GlobalId, Revit ElementId, classification codes)
+sit in `assetInfo["source"][<system>]`. The canonical column example
 (`examples/column_d.usda`) shows the full pattern in 32 lines, no new
-schema. Per-facet `apiSchemas` instances (`SemanticsLabelsAPI:revit:familyType`,
-`SemanticsLabelsAPI:revit:mark`) make consumer queries like "which Revit
-facets does this prim carry?" answerable from the apiSchemas list directly.
+schema.
+
+**The wider AECO identifier surface that D does not cover.** Beyond
+the synthesized set, IFC's authoritative surface includes
+`IfcOwnerHistory` (timestamps as `IfcTimeStamp`, composite
+`IfcPersonAndOrganization`/`IfcApplication` references) attached to
+every `IfcRoot`, plus property-set values typed via `IfcValue`
+(numeric measures with units, dates, booleans). Revit's surface
+includes `LevelId`/`GroupId`/`OwnerViewId`/`AssemblyInstanceId`/
+`DesignOption` as `ElementId`-typed relationships into other
+elements. None of these flatten to `token[]` — see the AECO section
+of [field_classification_experiment.md](field_classification_experiment.md).
+A and C carry these natively; B and D do not without auxiliary
+mechanisms.
 
 ## 4.2 Manufacturing, Product Lifecycle & Digital Engineering
 
@@ -105,35 +138,48 @@ identifiers, and Mercedes-Benz-style part numbering with extension codes.
   `AmtFeatureIdentifierAPI` schema - exactly the kind of per-domain
   schema proliferation the proposal warns about.
 
-**Approach D fit (the hardest test):** Manufacturing has the most
-heterogeneous metadata of any vertical, and the identity-vs-classification
-split test surfaces several borderline calls.
+**Approach D fit (synthesized field set only):** the synthesized
+manufacturing field set surfaces several borderline calls between
+identity and classification.
 
 - **Identity (in `assetInfo`):** Windchill OID and SAP material number
   (opaque pointers); `displayNumber` (round-trips to the human-readable
-  part number); `serialNumber` (the unique-instance string); `navigationType`
-  (an opaque PTC filter object); Mercedes `basePartNumber` and
-  `extensionCode` (round-trip exactly into the part-number system);
-  feature-level identifiers like `FID:ENG-BLK-6068:BORE:CYL1` and their
-  numeric `diameter_mm` / `tolerance` strings.
-- **Classification (on `SemanticsLabelsAPI`):** `state` ("Released",
-  "In Work" — controlled vocab); `lifecyclePhase` ("Production", "EOL");
-  `organization` (reverse-DNS-style published vocab); `configContext`
-  ("North America", "Tier 4 Final"); supplier `identifierType` ("OEM Part
-  Number", "Service Part Number"); supplier `equivalence`
-  ("form-fit-function"); supplier `supplier` name; STEP `entityType`
-  and `standard`; AMT `featureType`, `manufacturingOp`, `machineId`;
-  Mercedes `colorCode` and `identifierSystem`.
+  part number); `serialNumber` (the unique-instance string);
+  `navigationType` (an opaque PTC filter object); Mercedes
+  `basePartNumber` and `extensionCode` (round-trip exactly into the
+  part-number system); feature-level identifiers like
+  `FID:ENG-BLK-6068:BORE:CYL1`. Numeric `diameter_mm`/`tolerance` are
+  *strings* in this synthesized set — but in their authoritative source
+  (STEP entities, AMT feature definitions) they are `IfcReal`-style
+  numeric measures, not strings; this synthesis loses that information.
+- **Classification (on `SemanticsLabelsAPI`):** `state`, `lifecyclePhase`,
+  `organization`, `configContext`, supplier `identifierType` /
+  `equivalence` / `supplier`; STEP `entityType` / `standard`; AMT
+  `featureType` / `manufacturingOp` / `machineId`; Mercedes `colorCode`
+  / `identifierSystem`. These are controlled-vocabulary; routing them to
+  `SemanticsLabelsAPI` instances is clean.
 
-The runnable scenario (`examples/manufacturing_d.usda`) shows all of these
-in the same tractor assembly used for A/B comparisons. 7 of 8 simulated
-PLM/ERP fields fit cleanly under the working rule. The borderline case
-flagged for TAC validation is `displayNumber` — it is identity-adjacent
-(round-trips to the human-readable part number) but also functions as a
-display label in some pipelines. The doc treats it as identity in the
-default mapping; pipelines that prefer to surface it as a label can author
-both an `assetInfo["source"][windchill]["displayNumber"]` and a
-`SemanticsLabelsAPI:windchill:displayNumber` without conflict.
+The runnable scenario (`examples/manufacturing_d.usda`) shows the
+synthesized set in the same tractor assembly used for A/B comparisons.
+The earlier "7 of 8 fit cleanly" claim is correct *for the synthesized
+set under D's working rule.*
+
+**The wider Manufacturing/PLM identifier surface that D does not
+cover.** AAS — the standard the proposal explicitly cites in its
+emerging-consensus list — defines `Property.value` as polymorphic
+across `xs:string`/`xs:int`/`xs:long`/`xs:decimal`/`xs:double`/
+`xs:float`/`xs:boolean`/`xs:date`/`xs:dateTime`/`xs:duration`/
+`xs:anyURI`/`xs:base64Binary`. AAS `Range`, `Reference`,
+`RelationshipElement`, `AnnotatedRelationshipElement`, `Operation`,
+`BasicEventElement`, and `SpecificAssetId.externalSubjectId`/
+`semanticId` are structured composites. SAP MARA carries `DATS` dates
+(`ERSDA`, `LAEDA`, `MSTDE`) and `QUAN(13,3)` decimals (`NTGEW`,
+`BRGEW`, `VOLUM`). Windchill exposes `Edm.DateTimeOffset` for
+`CreatedOn`/`LastModified`. The Manufacturing/PLM section of
+[field_classification_experiment.md](field_classification_experiment.md)
+itemizes 15+ heterogeneous typed kinds against the spec surfaces.
+None of these flatten to `token[]`. A and C carry them natively; B and
+D do not.
 
 ## 4.3 Robotics & Simulation
 
@@ -195,11 +241,18 @@ package URI and uses the overflow metadata to restore the URDF structure.
   `token[] semantics:labels:ros:sourceFormat = ["URDF"]`,
   `token[] semantics:labels:ros:rosDistro = ["jazzy"]`
 
-ROS topic names and frame IDs ride additional `SemanticsLabelsAPI` instances
-(`ros:topicName`, `ros:frameId`). The URDF exporter reads the identifier
-and reconstructs structure from the labeled facets. **No new schema**, and
-per-facet apiSchemas instances let the exporter discover which ROS metadata
-is present without parsing dictionaries.
+For the strict identifier surface (package URI + naming/version/distro
+tokens), D is sufficient. Where D becomes insufficient is the
+expanded surface — round-tripping back into URDF/SDF requires
+preserving the numeric content the source format actually carries:
+mass (`double`, kg), inertia tensors (6 doubles, kg·m²), joint origins
+and axes (3+3 doubles), joint limits and dynamics (4+ doubles each
+with units like N·m or rad·s⁻¹), and `std_msgs/Header.stamp` (`time`
+= sec uint32 + nsec uint32) for any TF-bearing metadata. None of those
+flatten to `token[]`. The Robotics section of
+[field_classification_experiment.md](field_classification_experiment.md)
+itemizes the strict and expanded surfaces against the URDF and ROS
+specs. A and C carry the numeric surface; B and D do not.
 
 ## 4.4 Media & Entertainment
 
@@ -218,24 +271,33 @@ already covers the M&E model-level case), the analysis confirms:
   DB) is the same multi-domain pattern demonstrated in the other
   scenarios.
 
-**Approach D fit:** M&E identifiers are typically just an asset-DB ID +
-version + sometimes a tracker URL. Identity sits in `assetInfo["source"]`;
-classification metadata is sparse, so `apiSchemas` stays small (often
-empty for M&E-only prims). This is D's lightest case; it costs nothing to
-adopt and adds no friction over A.
+**Approach D fit (synthesized field set only):** M&E identifiers in
+the synthesized set are an asset-DB ID + version + sometimes a tracker
+URL. Identity sits in `assetInfo["source"]`; classification metadata
+is sparse, so `apiSchemas` stays small (often empty for M&E-only prims).
+This was the basis for calling M&E "D's lightest case."
+
+**The wider M&E identifier surface that D does not cover.** The M&E
+section of
+[field_classification_experiment.md](field_classification_experiment.md)
+shows that even M&E's lightweight surface includes `created_at` /
+`updated_at` datetimes (ShotGrid `Edm.DateTimeOffset`-shaped),
+typed entity-reference relationships (project, parent, created_by —
+each a typed entity-link, not a string), and OMC's structured
+`creationContext` / `lifecycleEvents`. OpenAssetIO trait property
+values are typed polymorphically (`bool` / `int` / `float` / `str`
+/ `dict`). These do not flatten to `token[]`. A and C carry them; B
+and D do not.
 
 ## 4.5 Three-tier scenario: IFC codeless companion + AAS overflow graduation (Approach C)
 
 This scenario demonstrates the three-tier graduation model under Approach C
-and is preserved here for reference. **Under D's refinement (where the data
-is leaning), the three-tier graduation path becomes much simpler:** stable
-classification facets simply join the AOUSD Domains Registry as recognized
-facets under their system; no codeless companion schema is required because
-`SemanticsLabelsAPI` already provides the typed, discoverable,
-schema-validated container. The C three-tier model below remains the
-fallback design if a domain emerges that needs typed non-token-array
-structure (e.g., a numeric tolerance or date range) which
-`SemanticsLabelsAPI` cannot represent.
+and is preserved here for reference. The earlier draft of this document
+positioned C's three-tier path as a fallback "if a domain emerges that
+needs typed non-token-array structure"; the field experiment shows that
+*every* vertical surveyed surfaces such fields (numeric measures with
+units, dates, composite typed references, polymorphic AAS Property
+values), so the three-tier C path is a present-day fit, not a fallback.
 
 **Setup:** A building chiller prim carries both IFC and AAS/DPP identifiers.
 IFC has three stable metadata fields that have been promoted to a codeless
@@ -346,15 +408,23 @@ The pattern across all four verticals is consistent:
 | Discoverability for stable fields | ❌ Parse | ✅ Schema registry | ✅ Companion | ✅ Per-facet `apiSchemas` |
 | **No new schema required?** | **✅** | ❌ | ❌ | **✅** |
 
-**The cross-vertical finding:** D's identity-vs-classification split test
-produces a clean fit in every vertical without forcing companion schemas
-on stakeholders and without requiring AOUSD to ratify a new applied schema.
-A handles the same content as well as D for what it expresses, but lacks
-D's per-facet discoverability. B alone is structurally insufficient for
-verticals with rich classification metadata (manufacturing, AECO, robotics).
-C absorbs B's gap into overflow but at the cost of carrying both mechanisms
-and shipping a new schema.
+**The cross-vertical finding (against the synthesized field set):**
+D's identity-vs-classification split produces a clean fit in every
+vertical *for the controlled-vocabulary classification axis as
+represented by the synthesized field set,* without forcing companion
+schemas on stakeholders and without requiring AOUSD to ratify a new
+applied schema for that axis. A handles the same content as D for what
+it expresses, but lacks D's per-facet discoverability. B alone is
+structurally insufficient for verticals with rich classification
+metadata (manufacturing, AECO, robotics).
 
-The three-tier model in §4.5 remains the fallback if a future domain surfaces
-classification fields that genuinely need typed non-token-array structure.
-Across the four verticals tested, no such field has been identified.
+**Cross-vertical finding when read against the spec-surface census:**
+identifier packages are heterogeneously typed across all four verticals
+— heterogeneous typed fields (timestamps, numeric measures with units,
+composite typed references, polymorphic XSD-typed values) surface in
+each. The synthesized set above does not represent these; the spec
+surfaces require them. A and C accommodate the wider surface; B-alone
+and D do not. The three-tier C model in §4.5 is therefore a present-day
+fit for verticals that surface heterogeneous typed fields — which the
+field experiment shows is every vertical surveyed — not a fallback for
+hypothetical future domains.
