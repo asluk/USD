@@ -34,11 +34,17 @@ schemas or falls back to `customData`.
 (borrowed from A) for fields the four common properties cannot carry.
 Closes B's heterogeneity gap by carrying both mechanisms.
 
-**D — Refinement of B.** Use the existing `UsdSemanticsLabelsAPI` (shipping
-in 24.11) per facet rather than introducing a new multi-apply schema.
-Identifier strings live in `assetInfo["source"][<system>]`; classification
-facets ride `SemanticsLabelsAPI:<system>:<facet>` instances with values in
-`token[]` properties. **No new applied schema required.**
+**D — Refinement of B (Labels + Identity).** Operationalizes the
+proposal's separation-of-concerns framing by routing two distinct
+concerns to two places already designed for them. **Identity** — the
+opaque string that round-trips back into the source system (IFC's
+`2O2Fr$t4X7Zf8NOew3FNr2`, Windchill's `VR:wt.part.WTPart:23639563`,
+Revit's `847562`) — lives in `assetInfo["source"][<system>]`.
+**Classification** — controlled-vocabulary terms each system publishes
+alongside the identifier (`IfcColumn`, `Structural Columns`, `W14x90`,
+`Ss_25_10_30`) — is expressed as `UsdSemanticsLabelsAPI:<system>:<facet>`
+instances with values in `token[]` properties. The labels API ships in
+OpenUSD 24.11+; **no new applied schema required.**
 
 A and B are the two foundations; C and D are different cuts at B's gap on
 domain-specific metadata.
@@ -47,13 +53,16 @@ domain-specific metadata.
 
 The data leans toward **D** — the refinement of B that uses the existing
 `UsdSemanticsLabelsAPI` rather than introducing a new multi-apply schema.
-D decomposes the problem along its natural seams (identity vs.
-classification) and exposes finer-grained structure via per-facet
-`apiSchemas` instances than B or C. The case for a new multi-apply schema
-(B/C) rested on type safety, fallback values, GUI integration, and
-structural governance hooks; once `SemanticsLabelsAPI` carries the
-classification work, those benefits are available without a new ratified
-schema to distribute.
+D operationalizes the proposal's separation-of-concerns framing along the
+identity vs. classification seam: identity strings (the opaque round-trip
+pointers back into the source system) live in `assetInfo`; classification
+facets (the controlled-vocabulary terms each system publishes alongside
+the identifier) are expressed via existing semantic-labels machinery. D
+also exposes finer-grained structure via per-facet `apiSchemas` instances
+than B or C. The case for a new multi-apply schema (B/C) rested on type
+safety, fallback values, GUI integration, and structural governance hooks;
+once `UsdSemanticsLabelsAPI` carries the classification work, those
+benefits are available without a new ratified schema to distribute.
 
 The schema-distribution side of this lean isn't a friction-margin
 observation. Schemas provide eight real formality benefits (type
