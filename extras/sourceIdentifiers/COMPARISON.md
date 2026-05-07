@@ -571,7 +571,11 @@ All implementations and test data live in this repository under
 pxr/usd/
 ├── usdSourceId/           # Approach A — non-applied schema wrapping assetInfo
 ├── usdSourceIdSchema/     # Approach B — multi-apply schema with typed properties
-└── usdSourceIdHybrid/     # Approach C — hybrid (kept as reference implementation)
+├── usdSourceIdHybrid/     # Approach C — hybrid (kept as reference implementation)
+                           # Approach D — no module by design: reuses
+                           #   UsdSemanticsLabelsAPI (already in OpenUSD 24.11+)
+                           #   plus assetInfo conventions; see examples/column_d.usda
+                           #   and verify_column_d.py
 
 extras/sourceIdentifiers/
 ├── COMPARISON.md                    ← this document
