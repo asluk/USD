@@ -175,9 +175,168 @@ this?" classification work cleanly — entity types, predefined-type enums,
 classification codes, family/type names. The token-array claim is
 strongest there.
 
+### Vertical 2 — Manufacturing / PLM (AAS, Windchill, SAP)
+
+**Scope of "fields that travel with the identifier."** Manufacturing
+is the vertical the existing comparison flagged as "the hardest test"
+for D's classification fit. Three sources of authority were exercised:
+
+1. **AAS (Asset Administration Shell)** — the IDTA-01001 metamodel
+   ([v3.1.1 / v3.2](https://industrialdigitaltwin.io/aas-specifications/IDTA-01001/v3.2/spec-metamodel/overview.html))
+   is the explicit Industry 4.0 standard for digital-twin identifier
+   bundles. Its identifier-package surface is defined formally — every
+   field has a typed metamodel slot.
+2. **Windchill** — PTC's PLM. WTPart is the canonical part record;
+   surfaced via Windchill REST Services (OData v4, with Edm.* primitives).
+   Authoritative spec: PTC's [Windchill REST Services 1.5 User Guide](https://community.ptc.com/sejnu66972/attachments/sejnu66972/Windchill/59859/1/Windchill%20REST%20Services%201.5.pdf).
+3. **SAP** — MARA is the General Material Data table that holds the
+   MATNR (Material Number) identifier and the closest-bound master-data
+   fields. ABAP DDIC types are authoritative: CHAR, DATS, QUAN, etc.
+
+#### AAS — AssetInformation, SpecificAssetId, AdministrativeInformation, Submodel Property/Range
+
+| Field | Native AAS / XSD type | What it carries | Bucket |
+|---|---|---|---|
+| `AssetInformation.globalAssetId` ([overview](https://industrialdigitaltwin.io/aas-specifications/IDTA-01001/v3.1.2/spec-metamodel/overview.html)) | `Identifier` (string IRI) | The opaque round-trip pointer to the asset | **Identity** |
+| `AssetInformation.assetKind` | `AssetKind` enumeration (`Type`, `Instance`, `NotApplicable`) | Whether this AAS describes a type or an instance | **Classification — token-array fit** |
+| `AssetInformation.assetType` | `Identifier` (string) | Classification or taxonomy reference | **Classification — token-array fit** (it's a reference *string*, not a typed Reference) |
+| `AssetInformation.specificAssetIds` | `List<SpecificAssetId>` (composite) | Domain-specific identifiers (each is a structured triple) | **Non-token-array typed structure** (list of structured records) |
+| `SpecificAssetId.name` | `LabelType` (string, max 64) | Label naming the identifier kind | **Classification — token-array fit** (paired with `value`) |
+| `SpecificAssetId.value` | `IdentifierType` (string) | The identifier value itself | **Identity** |
+| `SpecificAssetId.externalSubjectId` | `Reference` (composite — see below) | Subject/tenant context | **Non-token-array typed structure** (composite reference) |
+| `SpecificAssetId.semanticId` | `Reference` | Semantic definition pointer | **Non-token-array typed structure** (composite reference) |
+| `Identifiable.administration` (`AdministrativeInformation`) | composite: `version`, `revision`, `creator: Reference`, `templateId: Identifier` | Administrative metadata; `creator` is a typed Reference | **Non-token-array typed structure** (composite, contains a Reference) |
+| `Submodel.kind` (`ModellingKind`) | enum (`Template`, `Instance`) | Whether the submodel is a template or instance | **Classification — token-array fit** |
+| `Submodel.semanticId` | `Reference` | What concept this submodel realizes (e.g. `urn:idta:dpp:battery:1.0`) | **Non-token-array typed structure** (composite reference) |
+
+**The submodel element catalog** (the AAS extensible-metadata surface
+that travels under each AAS identifier — sourced from the
+[IDTA Submodel Element Types overview](https://industrialdigitaltwin.io/aas-specifications/IDTA-01001/v3.1.1/spec-metamodel/submodel-elements.html)):
+
+| Submodel element | Native typing | Bucket |
+|---|---|---|
+| `Property.value` | XSD-typed: `xs:string`, `xs:int`, `xs:long`, `xs:decimal`, `xs:double`, `xs:float`, `xs:boolean`, `xs:date`, `xs:dateTime`, `xs:time`, `xs:duration`, `xs:anyURI`, `xs:base64Binary` | **Non-token-array typed structure** for any numeric, date, boolean, or binary case (token-array fit only when `valueType == xs:string`) |
+| `MultiLanguageProperty.value` | `MultiLanguageTextType` (list of `LangStringTextType` pairs) | **Non-token-array typed structure** (multilingual record list) |
+| `Range.min` / `Range.max` | Pair of XSD-typed values, same type set as `Property.value` | **Non-token-array typed structure** (a pair, with numeric/date possible) |
+| `ReferenceElement.value` | `Reference` (composite — list of `Key`s) | **Non-token-array typed structure** (composite reference) |
+| `RelationshipElement.first` / `.second` | Pair of `Reference`s | **Non-token-array typed structure** (composite reference pair) |
+| `AnnotatedRelationshipElement.annotations` | List of `DataElement` (recursive) | **Non-token-array typed structure** (recursive composite) |
+| `File.value` / `File.contentType` | URI string + MIME content-type token | Mixed: identity-adjacent (URI) + classification (content-type token) |
+| `Blob.value` / `Blob.contentType` | `xs:base64Binary` + MIME content-type token | **Non-token-array typed structure** (binary value) |
+| `Entity.entityType` | `EntityType` enum (`CoManagedEntity`, `SelfManagedEntity`) | Classification — token-array fit |
+| `Entity.globalAssetId` | `Identifier` | Identity |
+| `Entity.specificAssetIds` | `List<SpecificAssetId>` | Non-token-array typed structure (same as above) |
+| `Capability` | (placeholder, no value) | n/a |
+| `Operation.inputVariables` / `outputVariables` / `inoutputVariables` | Lists of `OperationVariable` (each wrapping a `SubmodelElement`) | **Non-token-array typed structure** (recursive composite) |
+| `BasicEventElement.observed` | `Reference` | **Non-token-array typed structure** (composite reference) |
+
+This is decisive. The AAS metamodel — the standard explicitly named
+in the source-identifier proposal's emerging-consensus list and in the
+asluk/OpenUSD-proposals#2 proof-of-concept — defines its
+identifier-bundled metadata surface to *include* numeric, date,
+boolean, binary, and composite-reference shapes, on purpose, with
+typed metamodel slots. These do not flatten to token arrays without
+losing the structural type. The proposal doc cites AAS feedback for
+the "explicit identifier typing" emerging consensus — and AAS's own
+typing system is polymorphic XSD, not strings.
+
+#### Windchill — WTPart (PLM)
+
+| Field | Native OData / Edm type | What it carries | Bucket |
+|---|---|---|---|
+| `ID` (`VR:wt.part.WTPart:23639563`) | string OID | Object identity in Windchill | **Identity** |
+| `Number` (`CH-7500-A`) | `Edm.String` (length 40) | Human-readable part number — also unique within the org | **Identity-adjacent** (round-trips as a key into PLM, but a different ID space than ID) |
+| `Name` | `Edm.String` (length 60) | Part name | **Identity-adjacent** (display) |
+| `Revision` (`Rev.C`) | `Edm.String` | Revision designator | **Identity-adjacent** (the revision is part of the round-trip identity tuple in PLM lookups) |
+| `Version` | `Edm.String` (e.g. `A.2`) | Version below revision | **Identity-adjacent** |
+| `State` (`Released`) | structured — `Value` token + `Display` string (per [PTC docs](https://www.ptc.com/en/support/article/CS304928)) | Lifecycle state | **Classification — token-array fit** (the `Value` is a controlled token) |
+| `Type` (`Part`, `Subassembly`) | `Edm.String` (controlled vocabulary) | Part type | **Classification — token-array fit** |
+| `OrganizationId` / `Organization.Name` | `Edm.String` | Organization owning the part | **Classification — token-array fit** |
+| `CreatedOn` | `Edm.DateTimeOffset` | When the part record was created | **Non-token-array typed structure** (timestamp) |
+| `LastModified` | `Edm.DateTimeOffset` | Last modification time | **Non-token-array typed structure** (timestamp) |
+
+Windchill custom-attribute (IBA — Instance-Based Attribute) values are
+typed: `String`, `Integer`, `Real` (with units), `Boolean`,
+`Timestamp`, `Reference`. Custom attributes are accessed via the same
+OData surface and routinely travel with the WTPart identifier.
+
+#### SAP — MARA (Material Master, S/4HANA)
+
+Sources: [SAP Datasheet — MARA](https://www.sapdatasheet.org/abap/tabl/mara.html),
+[se80.co.uk — MARA-MATNR](https://www.se80.co.uk/sap-table-fields/?tabname=mara&fieldname=matnr),
+[sapdatasheet — NTGEW data element](https://www.sapdatasheet.org/abap/dtel/ntgew.html).
+
+| Field | ABAP DDIC type | What it carries | Bucket |
+|---|---|---|---|
+| `MATNR` | `CHAR(18)` (data element MATNR) | Material number — the SAP identifier | **Identity** |
+| `MTART` | `CHAR(4)` (Material Type, controlled vocab) | Material type code (`FERT`, `HALB`, `ROH`, …) | **Classification — token-array fit** |
+| `MATKL` | `CHAR(9)` (Material Group, controlled vocab) | Material group code | **Classification — token-array fit** |
+| `MEINS` | `UNIT(3)` (base unit of measure) | Unit-of-measure code (controlled vocab) | **Classification — token-array fit** |
+| `ERSDA` | `DATS(8)` | Date the material record was created | **Non-token-array typed structure** (date) |
+| `LAEDA` | `DATS(8)` | Date of last change | **Non-token-array typed structure** (date) |
+| `ERNAM` | `CHAR(12)` | Username of creator | **Identity-adjacent** |
+| `NTGEW` | `QUAN(13,3)` (numeric, 3 decimals) | Net weight | **Non-token-array typed structure** (decimal with unit) |
+| `BRGEW` | `QUAN(13,3)` | Gross weight | **Non-token-array typed structure** (decimal with unit) |
+| `GEWEI` | `UNIT(3)` | Weight-unit code (controlled vocab — `KG`, `LB`, …) | **Classification — token-array fit** |
+| `VOLUM` | `QUAN(13,3)` | Volume | **Non-token-array typed structure** (decimal with unit) |
+| `MSTAE` | `CHAR(2)` (cross-plant material status, controlled) | Cross-plant material status code | **Classification — token-array fit** |
+| `MSTDE` | `DATS(8)` | Date from which the material status applies | **Non-token-array typed structure** (date) |
+
+`NTGEW`/`BRGEW`/`VOLUM` carry their unit via a paired field
+(`GEWEI`, `VOLEH`); the full quantity is a (number, unit) pair —
+structurally a typed measure, not a string.
+
+#### Manufacturing/PLM bucket counts (33 fields surveyed across AAS / Windchill / SAP)
+
+| Bucket | Count |
+|---|---|
+| Identity | 4 (AAS `globalAssetId`, AAS `SpecificAssetId.value`, Windchill `ID`, SAP `MATNR`) |
+| Identity-adjacent | 5 (Windchill `Number`, `Name`, `Revision`, `Version`; SAP `ERNAM`) |
+| Classification — token-array fit | 9 (AAS `assetKind`, `assetType`, `SpecificAssetId.name`, `Submodel.kind`; Windchill `State`, `Type`, `OrganizationId`; SAP `MTART`, `MATKL`, `MEINS`, `GEWEI`, `MSTAE` — counted as 9 distinct kinds, with the unit codes counted once) |
+| **Non-token-array typed structure** | **15+** — see breakdown below |
+
+**The non-token-array typed fields explicitly:**
+
+| Field | Native shape |
+|---|---|
+| AAS `Property.value` (when `valueType ≠ xs:string`) | XSD numeric / date / boolean / binary |
+| AAS `Range.min/.max` (any non-string XSD type) | typed pair |
+| AAS `MultiLanguageProperty.value` | list of `LangString` records |
+| AAS `ReferenceElement.value` | composite Reference |
+| AAS `RelationshipElement.first/.second` | composite Reference pair |
+| AAS `AnnotatedRelationshipElement.annotations` | recursive composite |
+| AAS `Blob.value` | base64Binary |
+| AAS `Operation.input/output/inoutputVariables` | recursive composite |
+| AAS `Entity.specificAssetIds` | list of structured records |
+| AAS `BasicEventElement.observed` | composite Reference |
+| AAS `SpecificAssetId.externalSubjectId` | composite Reference |
+| AAS `SpecificAssetId.semanticId` | composite Reference |
+| AAS `Identifiable.administration.creator` | composite Reference inside composite |
+| Windchill `CreatedOn`, `LastModified` | `Edm.DateTimeOffset` |
+| SAP `ERSDA`, `LAEDA`, `MSTDE` | `DATS` (date) |
+| SAP `NTGEW`, `BRGEW`, `VOLUM` | `QUAN(n,m)` (decimal with unit) |
+
+**Headline manufacturing finding:** the existing comparison's claim that
+"7 of 8 simulated PLM/ERP fields fit cleanly" was conducted against a
+synthesized 8-field set (industry_scenarios.md §4.2). The actual
+manufacturing identifier surface defined by IDTA, PTC, and SAP is
+explicitly polymorphically-typed and includes numeric, date, and
+composite-reference fields. **The load-bearing assertion that "no
+field surfaced needing typed non-token-array structure" does not
+hold against the Manufacturing/PLM surface as defined by its
+authoritative specs.**
+
+Whether this should change the doc's leaning depends on judgment that
+isn't this experiment's to make: a follow-up proposal could choose to
+*scope down* identifier metadata to the parts that fit token arrays,
+treating numeric/date/composite-reference content as out-of-scope ("not
+identifier metadata, that's submodel data"). But that scope decision is
+the open question; the experimental finding is that the spec surface is
+typed.
+
 ## Cross-vertical synthesis
 
-*[To be filled in after all four verticals are enumerated.]*
+*[To be filled in after Robotics and M&E.]*
 
 ## Effect on the load-bearing assertion
 
