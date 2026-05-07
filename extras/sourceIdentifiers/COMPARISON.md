@@ -375,14 +375,14 @@ gives validators something to check against.
 
 ### 3.4 Industry Scenarios
 
-Four verticals were exercised across the four mechanisms. The
-synthesized scenarios in `details/industry_scenarios.md` covered fields
-the comparison's earlier draft selected as representative; the
-authoritative-spec field census in
-`details/field_classification_experiment.md` covered the broader
-identifier-package surface as the source systems define it. The two
-together give an asymmetric picture, and the asymmetry is what the
-AOUSD review weighs.
+Four verticals were exercised across the four mechanisms. Runnable
+USD encodings of synthesized scenarios live in
+`details/industry_scenarios.md` (an example index pointing to the
+files under `examples/`); the authoritative-spec field census in
+`details/field_classification_experiment.md` covers the full
+identifier-package surface as the source systems define it. The
+per-vertical findings below summarize how each mechanism handles each
+vertical's surface.
 
 - **AECO.** The canonical "what kind of thing is this?" classification
   (IFC type/objectType, Revit category/familyType/mark/level,
@@ -418,8 +418,7 @@ That framing does not by itself answer where the heterogeneous typed
 surface goes — that is the scope question listed in
 [Open questions for AOUSD review](#open-questions-for-aousd-review).
 
-→ Deep dives: [details/industry_scenarios.md](details/industry_scenarios.md),
-[details/field_classification_experiment.md](details/field_classification_experiment.md)
+→ Per-vertical analytical findings: [details/field_classification_experiment.md](details/field_classification_experiment.md). Runnable USD scenarios per mechanism: [details/industry_scenarios.md](details/industry_scenarios.md).
 
 ### 3.5 File Size & Namespace Footprint
 

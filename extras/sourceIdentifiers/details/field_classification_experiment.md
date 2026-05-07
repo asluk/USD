@@ -353,10 +353,12 @@ structurally a typed measure, not a string.
 | SAP `ERSDA`, `LAEDA`, `MSTDE` | `DATS` (date) |
 | SAP `NTGEW`, `BRGEW`, `VOLUM` | `QUAN(n,m)` (decimal with unit) |
 
-**Headline manufacturing finding:** the existing comparison's claim that
-"7 of 8 simulated PLM/ERP fields fit cleanly" was conducted against a
-synthesized 8-field set (industry_scenarios.md §4.2). The actual
-manufacturing identifier surface defined by IDTA, PTC, and SAP is
+**Headline manufacturing finding:** an earlier draft of the comparison
+made the claim that "7 of 8 simulated PLM/ERP fields fit cleanly" — a
+claim conducted against a synthesized 8-field set used by an earlier
+version of `industry_scenarios.md` (the doc has since been trimmed to
+an example index). The actual manufacturing identifier surface defined
+by IDTA, PTC, and SAP is
 explicitly polymorphically-typed and includes numeric, date, and
 composite-reference fields. **The load-bearing assertion that "no
 field surfaced needing typed non-token-array structure" does not
@@ -389,10 +391,10 @@ distinction matters for how the experiment reads:
   field values to round-trip too — at which point those numerics
   become metadata that travels with the identifier.
 
-The strict interpretation is what the existing comparison's
-[industry_scenarios.md §4.3](industry_scenarios.md#43-robotics--simulation)
-tests; the expanded interpretation is closer to what an
-ingestion-and-re-export workflow actually needs to round-trip.
+The strict interpretation is what the synthesized robotics scenarios
+in `examples/robotics_{a,b,d}.usda` exercise; the expanded
+interpretation is closer to what an ingestion-and-re-export workflow
+actually needs to round-trip.
 
 This census reports both, with each field labelled `[strict]` or
 `[expanded]`.
@@ -477,11 +479,10 @@ quaternion-as-4-double options — both still numeric, not tokens.
   for the canonical bundled `Header` metadata.**
 - **Expanded interpretation:** the URDF/SDF source format is *predominantly*
   numeric. If preserving round-trip provenance into URDF/SDF is part of what
-  "source identifier" means in robotics — and several explicit round-trip
-  scenarios in the existing comparison materials assume it is
-  ([industry_scenarios.md §4.3 round-trip scenario](industry_scenarios.md))
-  — then the strings-and-classification framing does not survive contact
-  with this vertical's authoritative format definitions.
+  "source identifier" means in robotics — and a URDF → USD → modify → URDF
+  workflow assumes it is — then the strings-and-classification framing
+  does not survive contact with this vertical's authoritative format
+  definitions.
 
 ### Vertical 4 — Media & Entertainment (OpenAssetIO, MovieLabs OMC, Autodesk Flow)
 
