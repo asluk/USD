@@ -642,14 +642,21 @@ verticals, that **identifier packages are heterogeneously typed.**
   heterogeneity that the proposal anticipated.
 - **AAS — the standard the proposal already cites in its
   emerging-consensus list and proof-of-concept (asluk/OpenUSD-proposals#2)
-  — is the most strongly typed identifier-package surface of any
-  spec surveyed.** AAS `Property.value` is polymorphic across the XSD
-  type set by design, including numerics, dates, booleans, and
+  — surfaces typed shapes systematically across its submodel-element
+  taxonomy.** AAS `Property.value` is polymorphic across the XSD type
+  set by design, including numerics, dates, booleans, and
   base64-binary. AAS `Range`, `Reference`, `RelationshipElement`,
   `Operation`, and `BasicEventElement` are all structured composites.
   The proposal's *"explicit identifier typing"* emerging-consensus
   point traces back to AAS feedback; the typing AAS itself uses is
-  XSD-polymorphic, not flat tokens.
+  XSD-polymorphic, not flat tokens. **IFC is comparably strongly
+  typed** through different machinery — `IfcValue` polymorphic SELECT
+  (15 simple types + IfcMeasureValue / IfcDerivedMeasureValue
+  taxonomies with explicit units), property sets, `IfcOwnerHistory`
+  composite references on every entity. AAS's typing is more
+  *systematically organized* into a clean submodel-element taxonomy;
+  IFC's is richer on measure-value semantics. Both refute the
+  labels-only premise.
 
 ## What this means for the comparison's previous claim
 
