@@ -195,7 +195,7 @@ that heterogeneous typed fields surface in every vertical surveyed:
   `IfcPersonAndOrganization`/`IfcApplication`, AAS `Reference`/
   `RelationshipElement`, Revit `ElementId`-typed relations, ShotGrid
   entity-link fields, OMC `participants`/`creationContext`.
-- **Polymorphic XSD-typed values are the standard surface in AAS.**
+- **Polymorphic XSD-typed values appear systematically in AAS** (`Property.value`, `Range`).
   `Property.value` is typed across `xs:string`/`xs:int`/`xs:long`/
   `xs:decimal`/`xs:double`/`xs:float`/`xs:boolean`/`xs:date`/
   `xs:dateTime`/`xs:duration`/`xs:anyURI`/`xs:base64Binary` by design.
@@ -254,8 +254,9 @@ What the experiment supports:
 
 2. **Which domains' members are affected by which buckets?** A member
    working primarily in AECO/M&E may see the heterogeneity surface as
-   modest; a member working in Manufacturing/PLM (where AAS makes
-   typed `Property` values the standard surface) sees it as central.
+   modest; a member working in Manufacturing/PLM (where AAS centers
+   typed `Property` values in its submodel-element model) sees it as
+   central.
    The mechanism choice that works across members may need to admit
    the heterogeneous surface even if some members do not feel it.
 

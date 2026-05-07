@@ -615,8 +615,8 @@ of field once per system; not weighting by frequency in real stages):
    Present in **every vertical surveyed.**
 4. **Polymorphic typed values** — AAS `Property.value` (XSD type set),
    AAS `Range.min`/`.max`, OpenAssetIO trait property values. Present
-   especially in PLM (where it is the *standard surface* for extension
-   metadata).
+   especially in PLM (where AAS `Property` is *the primary submodel
+   extension mechanism* and carries XSD-polymorphic values).
 5. **Recursive composites** — AAS `AnnotatedRelationshipElement.annotations`,
    `Operation.input/output/inoutputVariables`, OMC
    `creationContext`/`lifecycleEvents`, URDF mimic relations.

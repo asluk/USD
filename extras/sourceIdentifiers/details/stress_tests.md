@@ -214,7 +214,7 @@ re-derives the scores from the published rubric.
 **Source:** `stress_tests/vendor_adoption_analysis.{py,json}`
 (re-runnable via `python3 vendor_adoption_analysis.py`).
 
-**How to read these.** A, C, and D are within scoring noise (3-point
+**How to read these.** A, C, and D are within scoring noise (1-point
 spread). B trails meaningfully because the four-property fixed
 surface admits only a common subset; everything outside requires
 per-domain companion schemas that compound the ratification cost

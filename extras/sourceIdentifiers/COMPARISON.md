@@ -62,7 +62,7 @@ ROS/URDF/SDF, OpenAssetIO/MovieLabs OMC/ShotGrid). Bucket totals:
 **The empirical finding:** identifier packages are heterogeneously typed in
 every vertical surveyed — timestamps are universal; numeric measures with
 units appear in AECO, PLM, and Robotics; composite typed references are
-universal; polymorphic XSD-typed values are the standard surface in AAS.
+universal; polymorphic XSD-typed values appear systematically in AAS (`Property.value`, `Range`).
 
 This is the heterogeneity tension proposal 105 already framed in B's cons:
 *"the more heterogeneous the contents, the more this tension favors
@@ -470,7 +470,7 @@ reading.
 | Minimal disruption | 5 | 2 | 2 | 4 |
 | **Total (max 40)** | **32** | **26** | **32** | **33** |
 
-**Reading the totals.** A, C, and D are within scoring noise (3-point
+**Reading the totals.** A, C, and D are within scoring noise (1-point
 spread); B trails meaningfully. The principles do not pick a single
 winner among A/C/D — each leads on different dimensions:
 
