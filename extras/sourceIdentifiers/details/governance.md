@@ -439,22 +439,26 @@ are sufficient.
 | Compiled schema | 16+ | ~1,150+ | Yes | B/C with convenience API |
 | assetInfo only | 0 | 0 | No | A, or C metadata overflow |
 
-**Distribution across the ecosystem matrix is the dominant cost.** The
-codegen and plugin-distribution mechanics above describe the local cost
-per consumer cell. The ecosystem-level cost — distributing and
-maintaining a new applied schema across every USD-consuming runtime
-that pins its own USD/Python/OS/runtime config (DCC integrations,
-game-engine importers, web/cloud viewers, AR/VR runtimes, CI/validation
-pipelines) — is multiplicative across that matrix and recurring across
-releases. Codeless schemas reduce but do not eliminate this; they avoid
-C++ ABI drift but still need plugin discovery, distribution channels,
-versioning, and consumer-side support across every cell. The AOUSD
-Build Interest Group coordinates the substrate this depends on; see
-[`aousd/build-ig-initiatives#28`](https://github.com/aousd/build-ig-initiatives/issues/28)
-for the live binary-distribution epic and
-[formality_and_distribution.md](formality_and_distribution.md) for the
-tradeoff analysis weighing this cost against the formality benefits a
-new applied schema provides.
+**Distribution across the ecosystem matrix is a substantial cost
+(currently elevated; trending lighter).** The codegen and
+plugin-distribution mechanics above describe the local cost per
+consumer cell. The ecosystem-level cost — distributing and maintaining
+a new applied schema across every USD-consuming runtime that pins its
+own USD/Python/OS/runtime config (DCC integrations, game-engine
+importers, web/cloud viewers, AR/VR runtimes, CI/validation pipelines)
+— is multiplicative across that matrix and recurring across releases.
+Codeless schemas reduce but do not eliminate this; they avoid C++ ABI
+drift but still need plugin discovery, distribution channels,
+versioning, and consumer-side support across every cell.
+
+Per Aaron's 2026-05-07 call: the matrix burden is currently elevated —
+fragmented across vendors who ship USD binaries today — but trending
+lighter as the AOUSD Build Interest Group epic
+([`aousd/build-ig-initiatives#28`](https://github.com/aousd/build-ig-initiatives/issues/28))
+lands (hosted binaries, plugin registration via importlib, conda-forge
+/ PyPI distribution, CI infrastructure). See
+[`formality_and_distribution.md`](formality_and_distribution.md) for
+the tradeoff analysis and the conditional weighting framing.
 
 **Note on prototype fidelity:** All three schema implementations have
 been processed through `usdGenSchema`, producing full generated output
@@ -472,18 +476,19 @@ initial adoption. The hybrid's `assetInfo` overflow lets them ship
 immediately; a schema plugin can come later if their metadata fields
 stabilize and warrant formal typing.
 
-## 6.8 Why Approach D collapses most of this section
+## 6.8 What Approach D collapses (and what it does not)
 
-Most of §6.5–§6.7 wrestles with the cost of producing schemas for domain
-extensions: codegen, plugin distribution, the `usdGenSchema` barrier,
-codeless schemas as a partial fix. **Approach D sidesteps the entire
-discussion** for classification metadata: domains use
-`UsdSemanticsLabelsAPI` (already shipping), so there is no per-domain
-schema to produce, distribute, or maintain. Stakeholders register a
-system key and a list of facets in the AOUSD Domains Registry — a
-GitHub PR against a Markdown file — and start authoring.
+Most of §6.5–§6.7 wrestles with the cost of producing schemas for
+domain extensions: codegen, plugin distribution, the `usdGenSchema`
+barrier, codeless schemas as a partial fix. **For controlled-vocabulary
+classification facets, Approach D sidesteps the entire discussion**:
+domains use `UsdSemanticsLabelsAPI` (already shipping), so there is
+no per-domain schema to produce, distribute, or maintain. Stakeholders
+register a system key and a list of facets in the AOUSD Domains
+Registry — a GitHub PR against a Markdown file — and start authoring.
 
-What remains for D is:
+What remains for D, when the scope is limited to the classification
+axis, is:
 
 1. **An AOUSD Domains Registry.** Same shape as the registry that any
    of A/B/C also needs. The registry recommendation in §6.2 is
@@ -496,9 +501,21 @@ What remains for D is:
    their own validator, regardless of mechanism. D doesn't help or
    hurt this case.
 
-The codeless companion schema path (§6.7) becomes a fallback for the
-rare domain that surfaces classification fields requiring typed
-non-token-array structure (numeric tolerances, date ranges, structured
-records) which `SemanticsLabelsAPI` cannot represent. Across the four
-verticals exercised in §3.4 of COMPARISON.md, no such field has been
-identified.
+**What D does *not* collapse.** The field census in
+[`field_classification_experiment.md`](field_classification_experiment.md)
+shows that identifier packages are heterogeneously typed in every
+vertical surveyed — timestamps, numeric measures with units, composite
+typed references, polymorphic XSD-typed values. `UsdSemanticsLabelsAPI`'s
+`token[]` value type cannot represent those shapes. For the
+heterogeneous typed surface, D leaves the schema-production cost on
+the table; a workflow that wants to carry that surface under D has to
+overflow it into `assetInfo` or `customData` (mixing content types) or
+ratify a per-domain companion schema after all (re-introducing the
+costs §6.5–§6.7 catalog).
+
+Approach C's three-tier model (core schema + codeless companion
+schemas + overflow dicts) carries the heterogeneous typed surface
+without that overflow gap; the costs §6.5–§6.7 catalog are then real
+costs C accepts in exchange for that coverage. The choice between D
+and C on this dimension is governed by the scope question (where the
+identifier-package boundary sits), not by the codegen costs alone.
