@@ -473,43 +473,75 @@ differentiator.
 
 → Deep dive: [details/stress_tests.md](details/stress_tests.md)
 
-### 3.6 Vendor Adoption Scoring (caveat)
+### 3.6 Principle-derived scoring
 
-`stress_tests/vendor_adoption_analysis.{py,json}` produces eight-dimension
-scores. The original framing presented these as a synthesizing verdict.
-**That framing has been retracted under this PR.** The eight dimensions
-were constructed after the leaning toward D had already taken shape; they
-have not been re-derived from the proposal's eight authorized principles
-(separation of concerns, industry agnosticism, vendor extensibility,
-composability, discoverability, external queryability, round-trip
-fidelity, minimal disruption) and explicit risks. The scores are
-preserved below as illustrative of the per-mechanism contrasts the
-experiments surfaced, not as an independent verdict:
+`stress_tests/vendor_adoption_analysis.{py,json}` scores A/B/C/D against
+eight dimensions derived from proposal 105's eight authorized design
+principles. Each dimension carries a published 1–5 anchor and a
+per-mechanism justification (full text in the JSON output). The
+numerical totals are illustrative of how the mechanisms trade off
+across principles; the anchors and justifications are the primary
+reading.
 
-| Dimension | A | B | C | D |
+> **History.** An earlier draft of this section presented an
+> eight-dimension scoring constructed *after* a leaning toward
+> Approach D had already taken shape. That scoring is preserved as
+> `stress_tests/vendor_adoption_analysis_legacy.py` and is retracted.
+> The dimensions below derive from the proposal's authorized
+> principles, not from the candidate profiles.
+
+| Dimension (principle) | A | B | C | D |
 |---|---|---|---|---|
-| Initial adoption friction (fewer steps = higher) | 5 | 4 | 4 | 4 |
-| Distribution friction (no new schema = higher) | 5 | 2 | 2 | 5 |
-| Per-prim discoverability (what systems on this prim) | 2 | 4 | 4 | 5 |
-| Per-facet discoverability (what facet of which system) | 2 | 2 | 3 | 5 |
-| Metadata heterogeneity (carries arbitrary domain data) | 5 | 2 | 5 | 4 |
-| Validator implementability (registry-spec compliance) | 2 | 4 | 4 | 5 |
-| Composition for typical edits (non-timevarying strings) | 4 | 4 | 4 | 4 |
-| File size cost (smaller = higher) | 4 | 5 | 3 | 4 |
-| **Total (max 40)** | **29** | **27** | **29** | **36** |
+| Separation of concerns | 3 | 3 | 4 | 3 |
+| Industry agnosticism | 5 | 2 | 5 | 3 |
+| Vendor extensibility | 5 | 2 | 4 | 5 |
+| Composability | 4 | 4 | 4 | 4 |
+| Discoverability | 2 | 4 | 4 | 5 |
+| External queryability | 3 | 4 | 4 | 4 |
+| Round-trip fidelity | 5 | 5 | 5 | 5 |
+| Minimal disruption | 5 | 2 | 2 | 4 |
+| **Total (max 40)** | **32** | **26** | **32** | **33** |
 
-A re-derivation of dimensions from the authorized principles is part of
-the rebuild plan. Two specific dimensions have known issues against the
-field experiment: D's "Metadata heterogeneity" score of 4 cannot be
-reconciled with the `token[]`-only label surface failing to carry
-heterogeneous typed fields (timestamps, numeric measures with units,
-composite refs, polymorphic AAS Properties); and the "Distribution
-friction" weighting reflects a position on the distribution-friction
-tension that is itself a load-bearing open question (see
-`details/formality_and_distribution.md`).
+**Reading the totals.** A, C, and D are within scoring noise (3-point
+spread); B trails meaningfully. The principles do not pick a single
+winner among A/C/D — each leads on different dimensions:
 
-→ Methodology and weight rationale (carrying the same caveat):
-[details/stress_tests.md §5.3](details/stress_tests.md)
+- **A leads on no-coordination axes** (industry agnosticism, vendor
+  extensibility, minimal disruption). Pays for it on discoverability
+  (parse-based) and on the absence of slot-level separation by content
+  type.
+- **C leads on industry agnosticism** (overflow accommodates the
+  heterogeneity surface) and matches A on vendor extensibility for
+  overflow fields. Pays for it on minimal disruption (new ratified
+  schema, full plugin-distribution matrix).
+- **D leads on discoverability** (per-facet `apiSchemas` instances)
+  and ties A on vendor extensibility. Pays for it on industry
+  agnosticism — the labels-only surface cannot carry the heterogeneous
+  typed surface (timestamps, numeric measures, composite refs,
+  polymorphic AAS Properties) that surfaces in every vertical
+  surveyed.
+- **B trails** because the four-property fixed surface admits only a
+  common subset; everything outside requires per-domain companion
+  schemas that compound the ratification cost without the heterogeneity
+  payoff.
+
+**Conditional weighting on Minimal disruption.** Per Aaron's
+2026-05-07 call on the distribution-friction tension, B and C's
+"Minimal disruption" score reflects the *current* schema-distribution
+matrix burden — DCC × USD release × Python × OS × runtime × build
+flavor, fragmented across vendors who ship USD binaries today. The
+AOUSD Build Interest Group's parent epic
+([`aousd/build-ig-initiatives#28`](https://github.com/aousd/build-ig-initiatives/issues/28))
+is actively scoping work to reduce this burden (hosted binaries,
+plugin registration via importlib, conda-forge / PyPI distribution).
+The score is expected to trend lighter for B and C as those
+initiatives land. The trajectory is noted in
+[`details/formality_and_distribution.md`](details/formality_and_distribution.md)
+and in the scoring script's methodology block.
+
+→ Full per-mechanism justifications and dimension anchors:
+`stress_tests/vendor_adoption_analysis.json`. Methodology in
+[details/stress_tests.md §5.3](details/stress_tests.md).
 
 ---
 

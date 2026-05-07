@@ -171,75 +171,81 @@ do (A and C-overflow and D-identity via dictionary key iteration; B and
 C-schema and D-labels via property name pattern matching or `apiSchemas`
 list filtering).
 
-## 5.3 Vendor adoption scoring
+## 5.3 Principle-derived scoring
 
-**Methodology:** Eight dimensions scored 1–5 from the multi-vendor
-simulation, stress test results, and composition analysis. Dimensions
-deliberately do not credit any mechanism for collision detection,
-governance enforceability, or composition for non-timevarying strings as
-schema-only advantages — those properties hold symmetrically across all
-four approaches.
+**Methodology.** Scoring dimensions are derived from proposal 105's
+eight authorized design principles (separation of concerns, industry
+agnosticism, vendor extensibility, composability, discoverability,
+external queryability, round-trip fidelity, minimal disruption). Each
+dimension carries a published 1–5 anchor and a per-mechanism
+justification grounded in evidence from the field census, stress
+tests, and composition experiments. Full anchors and justifications
+are in `stress_tests/vendor_adoption_analysis.json`; the script
+re-derives the scores from the published rubric.
 
-| Dimension | A | B | C | D |
+> **Earlier scoring retracted.** A previous version of this section
+> presented eight dimensions constructed *after* a leaning toward
+> Approach D had already taken shape. That scoring is preserved as
+> `stress_tests/vendor_adoption_analysis_legacy.py` so the regression
+> from it is inspectable. The dimensions below derive from the
+> proposal's authorized principles, not from the candidate profiles.
+
+| Dimension (principle) | A | B | C | D |
 |-----------|---|---|---|---|
-| Initial adoption friction (fewer steps = higher) | 5 | 4 | 4 | 4 |
-| Distribution friction (no new schema = higher) | 5 | 2 | 2 | 5 |
-| Per-prim discoverability (which systems on this prim) | 2 | 4 | 4 | 5 |
-| Per-facet discoverability (which facet of which system) | 2 | 2 | 3 | 5 |
-| Metadata heterogeneity (carries arbitrary domain data) | 5 | 2 | 5 | 4 |
-| Validator implementability (registry-spec compliance) | 2 | 4 | 4 | 5 |
-| Composition for typical edits (non-timevarying strings) | 4 | 4 | 4 | 4 |
-| File size cost (smaller = higher) | 4 | 5 | 3 | 4 |
-| **Total (max 40)** | **29** | **27** | **29** | **36** |
+| Separation of concerns | 3 | 3 | 4 | 3 |
+| Industry agnosticism | 5 | 2 | 5 | 3 |
+| Vendor extensibility | 5 | 2 | 4 | 5 |
+| Composability | 4 | 4 | 4 | 4 |
+| Discoverability | 2 | 4 | 4 | 5 |
+| External queryability | 3 | 4 | 4 | 4 |
+| Round-trip fidelity | 5 | 5 | 5 | 5 |
+| Minimal disruption | 5 | 2 | 2 | 4 |
+| **Total (max 40)** | **32** | **26** | **32** | **33** |
 
-**Source:** `stress_tests/vendor_adoption_analysis.json` (re-runnable via
-`python3 vendor_adoption_analysis.py`).
+**Source:** `stress_tests/vendor_adoption_analysis.{py,json}`
+(re-runnable via `python3 vendor_adoption_analysis.py`).
 
-**Where each approach lands.**
+**How to read these.** A, C, and D are within scoring noise (3-point
+spread). B trails meaningfully because the four-property fixed
+surface admits only a common subset; everything outside requires
+per-domain companion schemas that compound the ratification cost
+without the heterogeneity payoff. The principles do not pick a single
+winner among A/C/D — each leads on different dimensions, and the
+choice depends on which principles AOUSD weights most heavily:
 
-- **D** leads on discoverability and distribution: per-facet `apiSchemas`
-  instances + no new schema to ratify or distribute.
-- **A** leads on initial-adoption and heterogeneity: zero coordination,
-  freeform dicts.
-- **C** matches A on heterogeneity but pays distribution friction for the
-  schema and carries both mechanisms (largest file size).
-- **B** is smallest on disk but trails on heterogeneity (no place for
-  domain-specific fields) and pays distribution friction without D's
-  per-facet discoverability gain.
+- **A** leads on industry agnosticism, vendor extensibility, and
+  minimal disruption (no coordination, no new core surface). Pays for
+  it on discoverability (parse-based) and on the absence of slot-level
+  separation by content type.
+- **C** leads on industry agnosticism (overflow accommodates the
+  heterogeneity surface) and matches A on extensibility for overflow
+  fields. Pays for it on minimal disruption (new ratified schema, full
+  plugin-distribution matrix).
+- **D** leads on discoverability (per-facet `apiSchemas` instances)
+  and ties A on vendor extensibility. Pays for it on industry
+  agnosticism — the labels-only surface cannot carry the
+  heterogeneous typed surface (timestamps, numeric measures with
+  units, composite typed references, polymorphic AAS Property values)
+  that surfaces in every vertical surveyed.
 
-**Retraction of the "scoring leans toward D" finding.** Earlier drafts
-of this section concluded that the scoring "leans toward D" because D
-exposes facet structure on the `apiSchemas` list without ratifying a
-new schema. That conclusion is retracted, for two reasons that the
-field experiment (`field_classification_experiment.md`) makes
-visible:
+**Conditional weighting on Minimal disruption.** Per Aaron's
+2026-05-07 call on the schema-distribution friction tension, B and
+C's score on this dimension reflects the *current* matrix burden —
+DCC × USD release × Python × OS × runtime × build flavor, fragmented
+across vendors who ship USD binaries today. The AOUSD Build Interest
+Group's parent epic
+([`aousd/build-ig-initiatives#28`](https://github.com/aousd/build-ig-initiatives/issues/28))
+is actively scoping work to reduce this burden (hosted binaries,
+plugin registration via importlib, conda-forge / PyPI distribution).
+B and C's score on Minimal disruption is expected to trend lighter
+as those initiatives land. The trajectory is detailed in
+[`formality_and_distribution.md`](formality_and_distribution.md).
 
-1. **D's "Metadata heterogeneity" score of 4 is not supported by the
-   spec surface.** Heterogeneity is the question the proposal asked
-   AOUSD to weigh in B's cons (*"the more heterogeneous the contents,
-   the more this tension favors dictionaries or a family of
-   domain-specific schemas"*). The empirical census documents that
-   identifier packages bundle heterogeneous typed fields (timestamps,
-   numeric measures with units, composite typed references,
-   polymorphic AAS Property values) in every vertical surveyed.
-   D's `token[]` label surface + identifier string `assetInfo` cannot
-   carry those shapes; the score should reflect that gap.
-
-2. **The "Distribution friction" weighting is itself a load-bearing
-   open question.** The comparison materials elevate distribution to
-   the dominant cost; the proposal's original B-cons phrasing
-   downplays it. Resolving that tension is upstream of any honest
-   scoring along this dimension.
-
-A re-derivation of dimensions from the proposal's eight authorized
-principles is part of the rebuild plan and is deferred to a session
-that can also resolve the distribution-friction call.
-
-**Caveat preserved.** These scores are illustrative, not objective.
-Different weights or different dimension choices would produce
-different totals. The scoring's value is identifying *which
-dimensions each approach trades against which others*, not declaring
-a winner by arithmetic.
+**Caveat preserved.** Numerical totals are illustrative of how the
+mechanisms trade off across principles, not a verdict. Different
+principle weights would produce different totals. The published
+1–5 anchors and the per-mechanism justifications are the primary
+reading.
 
 ## 5.4 Three-tier model for Approach C
 
