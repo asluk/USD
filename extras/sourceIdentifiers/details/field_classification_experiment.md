@@ -3,22 +3,23 @@
 ← [Back to COMPARISON.md](../COMPARISON.md)
 
 > **Note on standing.** This document is the empirical anchor for the
-> de-leaning of the surrounding comparison work. Two upstream items
-> remain unresolved:
+> de-leaning of the surrounding comparison work. The two items
+> previously listed as deferred upstream of this experiment landed in
+> the 2026-05-07 rebuild:
 >
-> - The eight-dimension vendor-adoption scoring in
->   `stress_tests/vendor_adoption_analysis.{py,json}` was not derived
->   from the proposal's eight authorized principles; re-derivation is
->   deferred.
-> - The distribution-friction framing in `formality_and_distribution.md`
->   conflicts with proposal 105's original B-cons phrasing; resolution
->   is deferred.
+> - The vendor-adoption scoring in
+>   `stress_tests/vendor_adoption_analysis.{py,json}` is now derived
+>   from proposal 105's eight authorized principles (legacy script
+>   preserved as `vendor_adoption_analysis_legacy.py`).
+> - The schema-distribution friction tension is resolved as
+>   conditional — currently elevated, trending lighter as the AOUSD
+>   Build IG epic lands.
 >
-> The findings below are independent of those two items — they are
-> field-by-field readings of authoritative spec surfaces, and the
-> empirical content is reproducible from the cited sources. Mechanism
-> choice draws from this evidence *plus* the two deferred items, and
-> is not made in this PR.
+> The findings below remain independent of those resolutions — they
+> are field-by-field readings of authoritative spec surfaces,
+> reproducible from the cited sources. Mechanism choice draws from
+> this evidence *plus* the principle-derived scoring; the comparison
+> as a whole does not assert a single mechanism leaning.
 
 ## Why this experiment
 

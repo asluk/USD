@@ -6,21 +6,7 @@
 
 ---
 
-> ## Caveats for readers (including agents)
->
-> Two items are **deferred to a follow-up session** and are
-> load-bearing for any conclusion drawn from this document:
->
-> 1. **The eight-dimension vendor-adoption scoring** in §3.6 (and the
->    methodology in `details/stress_tests.md` §5.3) was constructed
->    *after* a prior leaning toward Approach D had already taken shape.
->    It has not been re-derived from the proposal's eight authorized
->    principles. Read the scores as illustrative, not as a verdict.
-> 2. **The distribution-friction tension is unresolved.** The
->    elevation of distribution to "the dominant cost" in
->    `details/formality_and_distribution.md` conflicts with the
->    proposal's original B-cons phrasing. Resolution is upstream of
->    any honest mechanism choice.
+> ## Reader's note
 >
 > A prior framing of this comparison leaned toward Approach D (Labels
 > + Identity). **That leaning has been retracted** in light of the
@@ -30,10 +16,24 @@
 > the empirical evidence symmetrically; **no mechanism leaning is
 > asserted** in this revision.
 >
-> **Share-readiness:** This document is not yet ready to recirculate
-> broadly (additional NVIDIA reviewers, Matt, or AOUSD members) until
-> the two deferred items resolve. The empirical census stands on its
-> own; the comparison framing around it does not.
+> Two items previously listed as deferred — re-derivation of the
+> vendor-adoption scoring against the authorized principles, and
+> resolution of the schema-distribution friction tension — landed in
+> the 2026-05-07 rebuild:
+>
+> - §3.6 carries the principle-derived scoring; the legacy ad-hoc
+>   scoring is preserved as
+>   `stress_tests/vendor_adoption_analysis_legacy.py`.
+> - `details/formality_and_distribution.md` carries the
+>   conditional-weighting framing (currently elevated, trending
+>   lighter as the AOUSD Build IG epic lands) per Aaron's call.
+>
+> Rebuilt scoring totals (max 40): **A=32, B=26, C=32, D=33** —
+> A/C/D within scoring noise; B trails meaningfully. The principles
+> do not pick a single winner among A/C/D.
+>
+> **Share-readiness:** With both rebuild items resolved, this
+> document is ready for renewed review and recirculation.
 
 ---
 
