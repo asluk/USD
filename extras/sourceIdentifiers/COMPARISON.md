@@ -19,7 +19,7 @@
 > 2. **The distribution-friction tension is unresolved.** The
 >    elevation of distribution to "the dominant cost" in
 >    `details/formality_and_distribution.md` conflicts with proposal
->    #105's original B-cons phrasing. Resolution is upstream of any
+>    proposal's original B-cons phrasing. Resolution is upstream of any
 >    honest mechanism choice.
 >
 > A prior framing of this comparison leaned toward Approach D (Labels
@@ -48,17 +48,17 @@ what new infrastructure (if any) they require.
 **A — `assetInfo` dictionaries.** Status quo, refined. Identifiers and any
 surrounding metadata nested under `assetInfo["sourceIds"]`. A non-applied API
 schema (`UsdSourceIdAPI`) provides convenience access. No new applied schema.
-*Authorized in proposal #105 as Approach A.*
+*Authorized in proposal 105 as Approach A.*
 
 **B — Multi-apply schema with typed properties.** Each external system is one
 schema instance (`SourceIdSchemaAPI:windchill`), carrying typed properties
 `primaryId`, `revision`, `domain`, `label`. Domain-specific metadata requires
-companion schemas or falls back to `customData`. *Authorized in proposal #105
+companion schemas or falls back to `customData`. *Authorized in proposal 105
 as Approach B.*
 
 **C — Refinement of B.** Same multi-apply schema, plus `assetInfo` overflow
 (borrowed from A) for fields the four common properties cannot carry.
-*Hinted at in proposal #105 as a "hybrid or alternative."*
+*Hinted at in proposal 105 as a "hybrid or alternative."*
 
 **D — Refinement of B (Labels + Identity).** Reuses the existing
 `UsdSemanticsLabelsAPI` for controlled-vocabulary classification facets and
@@ -90,7 +90,7 @@ every vertical surveyed — timestamps are universal; numeric measures with
 units appear in AECO, PLM, and Robotics; composite typed references are
 universal; polymorphic XSD-typed values are the standard surface in AAS.
 
-This is the heterogeneity tension proposal #105 already framed in B's cons:
+This is the heterogeneity tension proposal 105 already framed in B's cons:
 *"the more heterogeneous the contents, the more this tension favors
 dictionaries or a family of domain-specific schemas."* The empirical
 surface confirms that tension is real; it does not by itself pick a

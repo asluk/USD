@@ -12,7 +12,7 @@
 >   from the proposal's eight authorized principles; re-derivation is
 >   deferred.
 > - The distribution-friction framing in `formality_and_distribution.md`
->   conflicts with proposal #105's original B-cons phrasing; resolution
+>   conflicts with proposal 105's original B-cons phrasing; resolution
 >   is deferred.
 >
 > The findings below are independent of those two items — they are
@@ -629,7 +629,7 @@ verticals, that **identifier packages are heterogeneously typed.**
   mandatory or commonly-authored identifier surface in their source
   systems.
 - **The proposal's heterogeneity tension is real, not empty.**
-  Proposal #105 framed the heterogeneity question as a tension AOUSD
+  Proposal 105 framed the heterogeneity question as a tension AOUSD
   would have to weigh: *"the more heterogeneous the contents, the
   more this tension favors dictionaries or a family of domain-specific
   schemas"* (B's cons, ¶1). The empirical surface confirms the

@@ -20,7 +20,7 @@
 > 2. **The distribution-friction tension is unresolved.** The comparison
 >    materials elevate schema distribution to *the dominant cost* of
 >    ratifying a new applied schema (`formality_and_distribution.md`).
->    Proposal #105's original B-cons phrasing downplays it (*"tools
+>    [Proposal 105](https://github.com/PixarAnimationStudios/OpenUSD-proposals/pull/105)'s original B-cons phrasing downplays it (*"tools
 >    already ship their own domain plugins and unrecognized schema data
 >    roundtrips without loss"*). These two framings are at variance.
 >    Resolution requires Aaron's call and is upstream of any honest
