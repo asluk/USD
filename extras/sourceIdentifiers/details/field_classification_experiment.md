@@ -9,8 +9,11 @@
 >
 > - The vendor-adoption scoring in
 >   `stress_tests/vendor_adoption_analysis.{py,json}` is now derived
->   from proposal 105's eight authorized principles (legacy script
->   preserved as `vendor_adoption_analysis_legacy.py`).
+>   from proposal 105's eight authorized principles. The earlier
+>   scoring (eight dimensions Claude invented during PR development,
+>   not derived from the proposal's principles, biased toward
+>   Approach D by construction) is preserved as
+>   `vendor_adoption_analysis_legacy.py` for regression inspection.
 > - The schema-distribution friction tension is resolved as
 >   conditional — currently elevated, trending lighter as the AOUSD
 >   Build IG epic lands.

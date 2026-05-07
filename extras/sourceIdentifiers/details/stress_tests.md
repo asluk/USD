@@ -184,11 +184,16 @@ are in `stress_tests/vendor_adoption_analysis.json`; the script
 re-derives the scores from the published rubric.
 
 > **Earlier scoring retracted.** A previous version of this section
-> presented eight dimensions constructed *after* a leaning toward
-> Approach D had already taken shape. That scoring is preserved as
+> presented eight dimensions Claude invented during PR development.
+> Those dimensions did not derive from proposal 105's authorized
+> principles; they were constructed in service of a leaning toward
+> Approach D that had already taken shape, and they biased toward D
+> along axes D happens to lead on by construction (per-facet
+> discoverability; "no new schema = higher" distribution-friction
+> framing). That scoring is preserved as
 > `stress_tests/vendor_adoption_analysis_legacy.py` so the regression
 > from it is inspectable. The dimensions below derive from the
-> proposal's authorized principles, not from the candidate profiles.
+> proposal's authorized principles.
 
 | Dimension (principle) | A | B | C | D |
 |-----------|---|---|---|---|

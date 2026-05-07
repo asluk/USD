@@ -21,9 +21,11 @@
 > resolution of the schema-distribution friction tension — landed in
 > the 2026-05-07 rebuild:
 >
-> - §3.6 carries the principle-derived scoring; the legacy ad-hoc
->   scoring is preserved as
->   `stress_tests/vendor_adoption_analysis_legacy.py`.
+> - §3.6 carries the principle-derived scoring. The earlier scoring
+>   (eight dimensions Claude invented during PR development, not
+>   derived from proposal 105's principles, biased toward D by
+>   construction) is preserved as
+>   `stress_tests/vendor_adoption_analysis_legacy.py` for inspection.
 > - `details/formality_and_distribution.md` carries the
 >   conditional-weighting framing (currently elevated, trending
 >   lighter as the AOUSD Build IG epic lands) per Aaron's call.
@@ -483,12 +485,17 @@ numerical totals are illustrative of how the mechanisms trade off
 across principles; the anchors and justifications are the primary
 reading.
 
-> **History.** An earlier draft of this section presented an
-> eight-dimension scoring constructed *after* a leaning toward
-> Approach D had already taken shape. That scoring is preserved as
-> `stress_tests/vendor_adoption_analysis_legacy.py` and is retracted.
-> The dimensions below derive from the proposal's authorized
-> principles, not from the candidate profiles.
+> **History.** An earlier draft of this section presented eight
+> scoring dimensions Claude invented during PR development. Those
+> dimensions did not derive from proposal 105's authorized
+> principles; they were constructed in service of a leaning toward
+> Approach D that had already taken shape, and they biased toward D
+> along axes D happens to lead on by construction (per-facet
+> discoverability; "no new schema = higher" distribution-friction
+> framing). That scoring is preserved as
+> `stress_tests/vendor_adoption_analysis_legacy.py` so the regression
+> from it is inspectable, and is retracted. The dimensions below
+> derive from the proposal's authorized principles.
 
 | Dimension (principle) | A | B | C | D |
 |---|---|---|---|---|

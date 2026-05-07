@@ -1,34 +1,3 @@
-> ## Reader's note
->
-> A prior framing of this PR leaned toward Approach D (Labels +
-> Identity using `UsdSemanticsLabelsAPI` + `assetInfo`). **That
-> leaning has been retracted** in light of the field census
-> documented in `details/field_classification_experiment.md`, which
-> shows identifier packages are heterogeneously typed across all four
-> verticals surveyed. The current PR is candidate-comparison +
-> empirical census, not a leaning toward any specific mechanism.
->
-> Two items previously listed as deferred — re-derivation of the
-> vendor-adoption scoring against the proposal's authorized
-> principles, and resolution of the schema-distribution friction
-> tension — **landed in this PR** (commits dated 2026-05-07):
->
-> - The scoring is rebuilt against [proposal 105](https://github.com/PixarAnimationStudios/OpenUSD-proposals/pull/105)'s eight authorized principles in `stress_tests/vendor_adoption_analysis.{py,json}`, `COMPARISON.md` §3.6, and `stress_tests.md` §5.3. The legacy ad-hoc scoring is preserved as `stress_tests/vendor_adoption_analysis_legacy.py` for inspection.
-> - The schema-distribution friction is resolved as **conditional** — currently elevated (the matrix-burden articulation is operationally accurate today), trending lighter as the AOUSD Build IG epic ([`aousd/build-ig-initiatives#28`](https://github.com/aousd/build-ig-initiatives/issues/28)) lands. Reflected in the rebuilt Minimal-disruption scoring for B and C, and elaborated in `formality_and_distribution.md`.
->
-> Rebuilt scoring totals (max 40): **A=32, B=26, C=32, D=33** —
-> A/C/D within scoring noise (3-point spread); B trails meaningfully.
-> The principles do not pick a single winner among A/C/D; the choice
-> depends on which principles AOUSD weights most heavily.
->
-> **Share-readiness:** With both rebuild items resolved, the PR is
-> ready for renewed review and recirculation. The next step is the
-> follow-up proposal that takes the candidate-comparison evidence and
-> the AOUSD review's prioritization of the principles into a
-> mechanism choice.
-
----
-
 ## Summary
 
 The source-identifier proposal ([`PixarAnimationStudios/OpenUSD-proposals#105`](https://github.com/PixarAnimationStudios/OpenUSD-proposals/pull/105)) calls for a shared mechanism to carry external source identifiers — IFC GlobalIds, Revit ElementIds, Windchill OIDs, ROS frame IDs — that travel with USD prims. Current practice is unscoped `customData`: fragmented per vendor, no shared discovery story.
@@ -77,7 +46,7 @@ Updated under this PR to remove the verdict-shaped framing and report the candid
 - `details/industry_scenarios.md` — "Approach D fit" verdict per vertical removed; per-vertical findings reported symmetrically.
 - `details/hybrid_analysis.md` — C is no longer framed as "the natural fallback if D doesn't fit"; it's described on its own merits.
 - `details/approach_descriptions.md` — D's section is descriptive, not conclusory; provenance noted (D was constructed downstream of the proposal's authorized A/B/C; it is included as an explored idea, not a peer candidate the proposal authorized).
-- `details/stress_tests.md` §5.3 vendor-adoption scoring rebuilt against the proposal's eight authorized principles (2026-05-07); legacy ad-hoc scoring preserved as `stress_tests/vendor_adoption_analysis_legacy.py`.
+- `details/stress_tests.md` §5.3 vendor-adoption scoring rebuilt against the proposal's eight authorized principles (2026-05-07). The earlier scoring (eight dimensions Claude invented during PR development, not derived from the proposal's principles, biased toward Approach D by construction) is preserved as `stress_tests/vendor_adoption_analysis_legacy.py` for inspection.
 
 ### Mechanisms — symmetric description
 
@@ -101,7 +70,7 @@ A and B are the two foundations the proposal authorized. C and D are different c
 | `vendor_simulation/approach_*_vendors.usda` | 8-vendor ecosystem simulations |
 | `stress_tests/generate_approach_*.py`, `stress_test_results.json` | Deterministic 100K-prim generators + measurements |
 | `stress_tests/vendor_adoption_analysis.{py,json}` | Principle-derived scoring (rebuilt 2026-05-07 from proposal 105's eight authorized principles) |
-| `stress_tests/vendor_adoption_analysis_legacy.py` | Retracted ad-hoc scoring; preserved for inspection |
+| `stress_tests/vendor_adoption_analysis_legacy.py` | Retracted scoring (Claude-invented dimensions, not derived from the proposal's principles, biased toward D); preserved for regression inspection |
 | `details/field_classification_experiment.md` | **NEW** — pre-registered field census |
 
 ## Empirical measurements
@@ -169,5 +138,5 @@ These findings inform a follow-up proposal. They do not back-edit [`PixarAnimati
 
 - [x] `examples/verify_column_d.py` — verifies `column_d.usda` parses against built USD with `UsdSemantics.LabelsAPI` (0 failures).
 - [x] `stress_tests/generate_approach_{a,b,c,d}.py` — 100K-prim deterministic generators; reproducible.
-- [x] `stress_tests/vendor_adoption_analysis.py` — principle-derived scoring (rebuilt 2026-05-07) reproducible across A/B/C/D; legacy ad-hoc scoring preserved as `vendor_adoption_analysis_legacy.py`.
+- [x] `stress_tests/vendor_adoption_analysis.py` — principle-derived scoring (rebuilt 2026-05-07) reproducible across A/B/C/D; the retracted scoring it replaces (Claude-invented dimensions, biased toward D by construction) is preserved as `vendor_adoption_analysis_legacy.py` for inspection.
 - [x] `details/field_classification_experiment.md` — pre-registered field census across the four verticals' authoritative specs; classification criteria and field-source rules committed before enumeration; cross-vertical bucket totals reproducible from the cited spec sections.

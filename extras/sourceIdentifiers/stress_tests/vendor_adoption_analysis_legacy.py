@@ -1,25 +1,45 @@
 #!/usr/bin/env python3
 """
-Vendor Adoption Analysis for Source Identifier Approaches A, B, C, and D.
+RETRACTED. PRESERVED FOR REGRESSION INSPECTION ONLY.
 
-Measures the friction of adding a new vendor's identifier scheme to each
-approach, simulating the experience of a standards body or vendor team
-integrating with OpenUSD.
+This file scores Approaches A, B, C, and D along eight dimensions
+that Claude (acting as the AI assistant during this PR's development)
+invented while the comparison work was in flight. These dimensions
+were NOT derived from proposal 105's eight authorized design
+principles (separation of concerns, industry agnosticism, vendor
+extensibility, composability, discoverability, external queryability,
+round-trip fidelity, minimal disruption). They were constructed
+post-hoc, during the same window that a leaning toward Approach D
+had already taken shape, and they biased toward D along axes D
+happens to lead on by construction (per-facet discoverability,
+distribution friction with "no new schema = higher" framing).
 
-Scoring dimensions match COMPARISON.md §3.6:
+The principle-derived rebuild is in `vendor_adoption_analysis.py`.
+
+The eight invented dimensions in this file:
   - Initial adoption friction
   - Distribution friction (no new schema = higher)
-  - Per-prim discoverability (what systems on this prim)
-  - Per-facet discoverability (what facet of which system)
+  - Per-prim discoverability (which systems on this prim)
+  - Per-facet discoverability (which facet of which system)
   - Metadata heterogeneity (carries arbitrary domain data)
   - Validator implementability
   - Composition for typical edits (non-timevarying strings)
   - File size cost (smaller = higher)
 
-Collision detection, governance enforceability, and composition behavior
-for non-timevarying strings are treated as symmetric across mechanisms;
-the dimensions deliberately do not credit any approach for those
-properties as schema-only advantages.
+The two specific issues that the field experiment surfaced against
+this scoring (and that the rebuild addresses):
+
+  1. "Metadata heterogeneity" scored D=4 despite D's `token[]`
+     label values + identifier strings being unable to carry the
+     heterogeneous typed surface (timestamps, numeric measures with
+     units, composite typed references, polymorphic XSD-typed AAS
+     Property values) that the field census documents in every
+     vertical surveyed.
+  2. "Distribution friction" was scored unconditionally on the "no
+     new schema = higher" framing. Whether and how heavily that
+     should weigh is itself a load-bearing call, resolved in the
+     rebuild as conditional (currently elevated, trending lighter
+     as the AOUSD Build IG epic lands).
 """
 
 import json

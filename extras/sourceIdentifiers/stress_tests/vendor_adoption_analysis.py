@@ -9,9 +9,14 @@ plus the explicit risks (uncurated proliferation, premature
 standardization, adoption fragmentation, scope creep).
 
 Earlier scoring (preserved as `vendor_adoption_analysis_legacy.py`)
-used eight dimensions constructed *after* a leaning toward Approach D
-had already taken shape. That scoring has been retracted in favor of
-this re-derivation from the proposal's authorized framing.
+used eight dimensions that Claude invented during PR development
+*after* a leaning toward Approach D had already taken shape. Those
+dimensions did not derive from proposal 105's authorized principles
+and biased toward D along axes D happens to lead on by construction.
+That scoring is retracted in favor of this re-derivation from the
+proposal's authorized framing. The header of
+`vendor_adoption_analysis_legacy.py` documents the regression in
+detail.
 
 Aaron's 2026-05-07 call on the distribution-friction tension: scored
 as conditional — currently heavy because schema-distribution depends
