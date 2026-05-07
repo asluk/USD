@@ -17,57 +17,84 @@ All four preserve **round-trip fidelity** for opaque identifier strings; they
 differ in where the identifier sits, how surrounding metadata is carried, and
 what new infrastructure (if any) they require.
 
-### The four approaches
+### Two foundations and two refinements
 
-**A — `assetInfo` dictionaries.** Identifiers and any surrounding metadata
-nested under `assetInfo["sourceIds"]`. A non-applied API schema
-(`UsdSourceIdAPI`) provides convenience access. No new applied schema.
+**A — `assetInfo` dictionaries.** The status quo, refined. Identifiers and
+any surrounding metadata nested under `assetInfo["sourceIds"]`. A
+non-applied API schema (`UsdSourceIdAPI`) provides convenience access.
+No new applied schema.
 
-**B — Multi-apply schema with typed properties.** Each external system is one
-schema instance (`SourceIdSchemaAPI:windchill`), carrying typed properties
-`primaryId`, `revision`, `domain`, `label`. Domain-specific metadata requires
-companion schemas or falls back to `customData`.
+**B — Multi-apply schema with typed properties.** The schema-based mechanism
+in its purest form. Each external system is one schema instance
+(`SourceIdSchemaAPI:windchill`), carrying typed properties `primaryId`,
+`revision`, `domain`, `label`. Domain-specific metadata requires companion
+schemas or falls back to `customData`.
 
-**C — Hybrid (B + assetInfo overflow).** Multi-apply schema for the four common
-fields plus `assetInfo` overflow dictionaries for domain-specific metadata.
+**C — Refinement of B.** Same multi-apply schema, plus `assetInfo` overflow
+(borrowed from A) for fields the four common properties cannot carry.
+Closes B's heterogeneity gap by carrying both mechanisms.
 
-**D — Labels + Identity.** `SemanticsLabelsAPI` (shipping in 24.11) for
-classification facets (IFC type, Revit category/familyType/mark/level, UniClass
-codes); `assetInfo["source"][<system>]` for the opaque identifier string and
-optional version. **No new applied schema.**
+**D — Refinement of B.** Use the existing `UsdSemanticsLabelsAPI` (shipping
+in 24.11) per facet rather than introducing a new multi-apply schema.
+Identifier strings live in `assetInfo["source"][<system>]`; classification
+facets ride `SemanticsLabelsAPI:<system>:<facet>` instances with values in
+`token[]` properties. **No new applied schema required.**
 
-### Recommendation: Adopt D
+A and B are the two foundations; C and D are different cuts at B's gap on
+domain-specific metadata.
 
-D uses only schemas that ship today, decomposes the problem along its natural
-seams (identity vs. classification), and provides finer-grained discoverability
-via per-facet `apiSchemas` instances than B or C can offer. The case for a new
-multi-apply schema (B/C) was that schemas give type safety, fallback values,
-GUI integration, and structural governance hooks. Once `SemanticsLabelsAPI`
-carries the classification work, the residual case for B/C over D is
-insufficient to justify the schema-distribution friction of a new ratified
-multi-apply schema.
+### Where the data leans
 
-The remainder of this document presents the same prim in all four forms,
-honestly compares composition / discoverability / governance / industry
-scenarios, and identifies the open questions D still leaves on the table.
+The data leans toward **D** — the refinement of B that uses the existing
+`UsdSemanticsLabelsAPI` rather than introducing a new multi-apply schema.
+D decomposes the problem along its natural seams (identity vs.
+classification) and exposes finer-grained structure via per-facet
+`apiSchemas` instances than B or C. The case for a new multi-apply schema
+(B/C) rested on type safety, fallback values, GUI integration, and
+structural governance hooks; once `SemanticsLabelsAPI` carries the
+classification work, those benefits are available without a new ratified
+schema to distribute.
+
+The schema-distribution side of this lean isn't a friction-margin
+observation. Schemas provide eight real formality benefits (type
+validation, fallbacks, GUI integration, discoverability, typed
+accessors, versioning hooks, validator targeting, schema-driven
+property metadata); a new applied schema commits the ecosystem to a
+recurring distribution-and-maintenance matrix the AOUSD Build Interest
+Group coordinates. Reusing `UsdSemanticsLabelsAPI` delivers six of
+those eight without that commitment; what a new schema adds beyond
+reuse (domain-calibrated fallbacks, domain-specific schema versioning)
+didn't show up as decisive across the four verticals tested. Both
+sides set out, with the AOUSD-member input the leaning still wants,
+in [details/formality_and_distribution.md](details/formality_and_distribution.md).
+
+A final mechanism choice belongs to the AOUSD review process and an
+eventual follow-up proposal, not to this exploratory work. The remainder
+of this document presents the same prim in all four forms, compares
+composition / discoverability / governance / industry scenarios, and
+identifies the open questions the leaning still leaves on the table.
 
 ---
 
-## Decisions for TAC
+## Open questions for AOUSD review
 
-1. **Mechanism choice.** Adopt D, B/C, or status quo (A / `customData`)?
+1. **Mechanism choice.** Does the leaning toward D (refinement of B via
+   `UsdSemanticsLabelsAPI`) hold against the verticals AOUSD members
+   prioritize? B, C, and the status quo (A / `customData`) all remain
+   on the table for cases where D's classification fit is awkward.
    → Evidence: §3 below.
 
-2. **Domains Registry.** Establish an AOUSD Domains Registry (modeled on
-   Khronos glTF prefix reservation and W3C Community Group creation) for
-   vendor namespace coordination, regardless of mechanism choice?
+2. **Domains Registry.** Whatever mechanism is adopted, does an AOUSD
+   Domains Registry — modeled on Khronos glTF prefix reservation and
+   W3C Community Group creation — for vendor namespace coordination
+   make sense?
    → Evidence: §3.3 Governance.
 
 3. **Borderline fields.** Where do fields that sit between identity and
    classification go (e.g., Windchill `displayNumber`, `state`,
-   `lifecyclePhase`)? D's working rule: identity strings → `assetInfo`;
-   controlled-vocabulary terms → `SemanticsLabelsAPI`. The TAC should
-   validate this split.
+   `lifecyclePhase`)? Working rule under D: identity strings →
+   `assetInfo`; controlled-vocabulary terms → `SemanticsLabelsAPI`.
+   Worth pressure-testing against AOUSD members' source systems.
 
 ---
 
@@ -346,7 +373,7 @@ The split test — does this field belong to identity or classification? —
 turns out to be tractable in every vertical. **Identifier strings and
 versions are identity. Type names, categories, lifecycle states, and
 classification codes are labels.** Borderline fields are listed in
-[Decisions for TAC](#decisions-for-tac).
+[Open questions for AOUSD review](#open-questions-for-aousd-review).
 
 → Deep dive: [details/industry_scenarios.md](details/industry_scenarios.md)
 
@@ -366,7 +393,7 @@ D sits between A and C: smaller than C (no per-system schema instances inflating
 `apiSchemas`), larger than B (token arrays + per-facet apiSchema instances
 add roughly the same overhead as C's overflow dictionaries). In binary `.usdc`
 the relative ordering is preserved but absolute differences narrow substantially
-(3–5× compression on attribute-heavy content). File size is not a load-bearing
+(3–5× compression on attribute-heavy content). File size is not a deciding
 differentiator.
 
 → Deep dive: [details/stress_tests.md](details/stress_tests.md)
@@ -403,17 +430,17 @@ methodology and weight rationale)
 
 ---
 
-## Why D Over C
+## Where the data leans toward D's refinement over C's
 
-C — a multi-apply schema with `assetInfo` overflow — is a defensible synthesis
-on its own terms: schemas give type safety, fallback values, GUI integration,
-and structural governance hooks; freeform dictionaries give flexibility for
-domain metadata; the hybrid takes both.
+C and D are both refinements of B. Both close B's heterogeneity gap; they
+differ in *how*. C keeps the new multi-apply schema and adds `assetInfo`
+overflow (borrowed from A). D drops the new schema in favor of the
+existing `UsdSemanticsLabelsAPI` and routes identifier strings to
+`assetInfo`.
 
-The case for D rather than C turns on what `SemanticsLabelsAPI` already
-provides:
+Where the data leans toward D's cut:
 
-1. **The "schemas give type safety" case applies to D too.** D uses
+1. **The "schemas give type safety" benefit applies to D too.** D uses
    `SemanticsLabelsAPI` token arrays — typed, schema-validated,
    GUI-discoverable. Identifier strings sit in `assetInfo`, but those are
    strings either way (a typed `string sourceIdentifier:revit:primaryId`
@@ -429,23 +456,22 @@ provides:
    - `primaryId` is the `identifier` dict key in `assetInfo`.
    None of these need a new schema.
 
-3. **No new ratification path.** B/C require AOUSD to ratify a new
+3. **No new ratification path.** C still requires AOUSD to ratify a new
    multi-apply schema, codegen it, distribute the plugin, and manage its
-   versioning forever. D ratifies a Domains Registry — a spec document —
-   and reuses an applied schema that already ships.
+   versioning forever. D's refinement reuses an applied schema that
+   already ships and adds a Domains Registry — a spec document — instead.
 
-4. **Per-facet granularity is finer than per-system.** B/C's
-   `SourceIdSchemaAPI:revit` instance is opaque about *which* Revit
+4. **Per-facet granularity is finer than per-system.** C's
+   `SourceIdHybridAPI:revit` instance is opaque about *which* Revit
    metadata is present; D's `SemanticsLabelsAPI:revit:familyType` /
    `SemanticsLabelsAPI:revit:mark` instances tell the consumer exactly
    which facets are authored, queryable from `apiSchemas` alone.
 
-C remains documented in `pxr/usd/usdSourceIdHybrid/` as a reference
-implementation. If experience with D surfaces classification fields that
-genuinely need typed structured shape (a numeric tolerance, a date range)
-rather than token-array labels, C's overflow pattern remains the obvious
-fallback — but no such field has been identified across the four verticals
-tested.
+C's reference implementation lives in `pxr/usd/usdSourceIdHybrid/`. If
+experience with D surfaces classification fields that genuinely need typed
+structured shape (a numeric tolerance, a date range) rather than
+token-array labels, C's overflow pattern is the natural fallback — but
+no such field has been identified across the four verticals tested.
 
 ---
 
@@ -455,7 +481,7 @@ tested.
    identity (in `assetInfo`) or classification (in labels)? Working rule:
    "if a tool needs the exact string to round-trip into the source system,
    it's identity; if it's a controlled-vocabulary term meaningful to
-   humans, it's a label." TAC validation requested.
+   humans, it's a label." Worth pressure-testing in AOUSD review.
 
 2. **AAS type-vs-instance scoping.** AAS `globalAssetId` (type-level)
    vs. `specificAssetIds` (instance-level) maps cleanly under D as two
@@ -481,6 +507,19 @@ tested.
 
 ---
 
+## Status of this work
+
+The findings here are early and still being refined. They are intended to
+feed back into [PixarAnimationStudios/OpenUSD-proposals#105](https://github.com/PixarAnimationStudios/OpenUSD-proposals/pull/105)
+as use-case refinement, not to back-edit it; a final mechanism choice
+belongs to AOUSD review of an eventual follow-up proposal that adopts the
+framing the data is leaning toward. The empirical-first methodology
+itself — running each candidate through the same battery of reproducible
+tests — is a contribution this work intends to carry forward to other
+standards decisions in this space.
+
+---
+
 ## Repository Map
 
 All implementations and test data live in this repository under
@@ -496,7 +535,8 @@ pxr/usd/
 extras/sourceIdentifiers/
 ├── COMPARISON.md                    ← this document
 ├── details/                         ← deep dives (composition, scenarios, stress tests,
-│                                      governance, hybrid analysis, scope promotion)
+│                                      governance, hybrid analysis, scope promotion,
+│                                      formality and distribution)
 ├── examples/
 │   ├── approach_a_assetinfo.usda    # AECO building (A)
 │   ├── approach_b_schema.usda       # AECO building (B)

@@ -226,15 +226,15 @@ adopt and adds no friction over A.
 
 ## 4.5 Three-tier scenario: IFC codeless companion + AAS overflow graduation (Approach C)
 
-This scenario originally demonstrated the three-tier model under the prior
-recommendation (Approach C) and is preserved here for reference. **Under the
-revised recommendation (Approach D), the three-tier graduation path becomes
-much simpler:** stable classification facets simply join the AOUSD Domains
-Registry as recognized facets under their system; no codeless companion
-schema is required because `SemanticsLabelsAPI` already provides the typed,
-discoverable, schema-validated container. The C three-tier model below
-remains the fallback design if a domain emerges that needs typed
-non-token-array structure (e.g., a numeric tolerance or date range) which
+This scenario demonstrates the three-tier graduation model under Approach C
+and is preserved here for reference. **Under D's refinement (where the data
+is leaning), the three-tier graduation path becomes much simpler:** stable
+classification facets simply join the AOUSD Domains Registry as recognized
+facets under their system; no codeless companion schema is required because
+`SemanticsLabelsAPI` already provides the typed, discoverable,
+schema-validated container. The C three-tier model below remains the
+fallback design if a domain emerges that needs typed non-token-array
+structure (e.g., a numeric tolerance or date range) which
 `SemanticsLabelsAPI` cannot represent.
 
 **Setup:** A building chiller prim carries both IFC and AAS/DPP identifiers.

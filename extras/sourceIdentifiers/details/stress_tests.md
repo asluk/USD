@@ -195,28 +195,28 @@ four approaches.
 **Source:** `stress_tests/vendor_adoption_analysis.json` (re-runnable via
 `python3 vendor_adoption_analysis.py`).
 
-**Why D ≫ A/C ≫ B.**
+**Where each approach lands.**
 
-- **D** wins discoverability and distribution: per-facet `apiSchemas`
+- **D** leads on discoverability and distribution: per-facet `apiSchemas`
   instances + no new schema to ratify or distribute.
-- **A** wins initial-adoption and heterogeneity: zero coordination,
+- **A** leads on initial-adoption and heterogeneity: zero coordination,
   freeform dicts.
 - **C** matches A on heterogeneity but pays distribution friction for the
   schema and carries both mechanisms (largest file size).
-- **B** is smallest on disk but loses on heterogeneity (no place for
+- **B** is smallest on disk but trails on heterogeneity (no place for
   domain-specific fields) and pays distribution friction without D's
   per-facet discoverability gain.
 
-The schema-derived advantages that remain after symmetric treatment of
-governance and composition narrow to discoverability and
-validator-implementability ergonomics — both of which favor D, because
-D exposes facet structure on the `apiSchemas` list without requiring a
-new schema to ship.
+After symmetric treatment of governance and composition, the schema-derived
+advantages that remain narrow to discoverability and validator-
+implementability ergonomics. On those, the scoring leans toward D —
+because D exposes facet structure on the `apiSchemas` list without
+requiring a new schema to ship.
 
 **Caveat.** These scores are illustrative, not objective. Different
 weights (or different dimension choices) would produce different totals.
-The scoring's value is identifying *which dimensions each approach wins
-on*, not declaring a winner by arithmetic.
+The scoring's value is identifying *which dimensions each approach
+leans on*, not declaring a winner by arithmetic.
 
 ## 5.4 Three-tier model for Approach C
 

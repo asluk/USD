@@ -201,26 +201,33 @@ api.GetPrimaryIdAttr().Get(&id);
 std::vector<TfToken> instances = UsdSourceIdSchemaAPI::GetAll(prim);
 ```
 
-## Approach C: Hybrid (B + assetInfo overflow)
+## Approach C: Refinement of B (B + assetInfo overflow)
 
 **Module:** `pxr/usd/usdSourceIdHybrid/`
 **Schema type:** Multi-apply API schema (`UsdSourceIdHybridAPI`)
 **See:** [hybrid_analysis.md](hybrid_analysis.md) for the full design rationale,
 trade-offs, and migration path.
 
-C combines B's typed common fields with A's freeform overflow dictionary,
+C is a refinement of B: same multi-apply schema for the four common fields,
+plus A's `assetInfo` overflow dictionary for fields the schema cannot carry,
 keyed by matching the schema instance name to the `assetInfo["sourceIds"]`
-dictionary key. Documented as a **fallback if D-gaps emerge** — see
-hybrid_analysis.md for the design rationale.
+dictionary key. C's role is the natural fallback for the case where D's
+classification-via-`SemanticsLabelsAPI` cut surfaces fields that need typed
+non-token-array structure — see hybrid_analysis.md for the design rationale.
 
 ---
 
-## Approach D: Labels + Identity
+## Approach D: Refinement of B (Labels + Identity using existing schema)
 
 **Schema type:** No new applied schema. Uses `UsdSemanticsLabelsAPI` (shipping
 in OpenUSD 24.11) plus `assetInfo` conventions.
 **Precedent:** `UsdSemanticsLabelsAPI` for classification facets;
 `UsdModelAPI` for the `assetInfo`-only identity tier.
+
+D is a refinement of B that takes a different cut at the same gap C closes
+with overflow: rather than introduce a new multi-apply schema, reuse the
+existing `UsdSemanticsLabelsAPI` for classification facets and route
+identifier strings to `assetInfo`.
 
 **Mechanism.** Decomposes the source-identifiers problem along its natural
 seams:
@@ -284,7 +291,7 @@ def Mesh "Column_C14" (
   exactly into the source system) go in `assetInfo`. Controlled-vocabulary
   terms (anything drawn from a published namespace) ride
   `SemanticsLabelsAPI`. Borderline fields (e.g., Windchill `displayNumber`,
-  Mercedes `extensionCode`) need TAC validation — see COMPARISON.md
+  Mercedes `extensionCode`) are open in AOUSD review — see COMPARISON.md
   Open Questions.
 
 - **Composition** is per-property for label arrays (token arrays, finer

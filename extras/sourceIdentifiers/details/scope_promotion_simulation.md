@@ -342,7 +342,7 @@ continued to work. The overflow dict provided a **zero-friction onramp**
 for AAS-specific metadata, and the promotion path provided a **governed
 escalation** when the field proved universally useful.
 
-### Why this matters for the Hybrid C recommendation
+### Why this matters for Approach C
 
 1. **The overflow dict answers the "what if we need more fields" objection.**
    Stakeholders can ship immediately without schema work. Fields that prove

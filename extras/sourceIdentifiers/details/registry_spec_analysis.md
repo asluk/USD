@@ -4,7 +4,7 @@
 
 ## 1. The Claim Under Examination
 
-The hybrid recommendation (§7.1) makes the following assertion about Approach A:
+The hybrid analysis (§7.1) makes the following assertion about Approach A:
 
 > **Approach A alone** repeats the `customData` pattern: technically capable,
 > but practically un-interoperable because every consumer must know every
@@ -273,6 +273,6 @@ than undermining it:
 |----------|--------|
 | Could a registry-spec mechanism close Approach A's validation gap? | **Partially.** Offline/CI validation: yes. Runtime validation: requires new infra. |
 | Could it close the GUI discoverability gap? | **Only with significant new infrastructure** that would need adoption across all major USD consumers. |
-| Does this invalidate the recommendation for schemas (B/C)? | **No.** Schemas provide these capabilities today, for free, through existing USD tooling. |
-| Does this change anything about Hybrid C? | **Yes — positively.** It shows the overflow dict has a path to becoming less opaque over time, strengthening the hybrid's long-term viability. |
+| Does this invalidate the schema-based candidates (B/C/D)? | **No.** Schemas provide these capabilities today, for free, through existing USD tooling. |
+| Does this change anything about Hybrid C? | **Yes — positively.** It shows the overflow dict has a path to becoming less opaque over time, strengthening C's long-term viability if it is adopted. |
 | Should the claim language be revised? | **Yes.** "Practically un-interoperable" overstates the case. The gap is real but is a tooling gap, not an architectural impossibility. |

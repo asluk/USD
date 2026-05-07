@@ -408,7 +408,7 @@ Option 3 is why the hybrid (Approach C) exists: it eliminates the
 schema registration burden for domain-specific metadata while
 preserving schema-backed validation for the common fields.
 
-**Important correction: codeless schemas change the calculus.**
+**Important correction: codeless schemas change the picture.**
 OpenUSD supports `skipCodeGeneration = true` in `usdGenSchema`,
 producing **codeless schemas** that require only:
 
@@ -438,6 +438,23 @@ are sufficient.
 | Codeless schema | 3 | ~80 | No | B/C domain extension |
 | Compiled schema | 16+ | ~1,150+ | Yes | B/C with convenience API |
 | assetInfo only | 0 | 0 | No | A, or C metadata overflow |
+
+**Distribution across the ecosystem matrix is the dominant cost.** The
+codegen and plugin-distribution mechanics above describe the local cost
+per consumer cell. The ecosystem-level cost — distributing and
+maintaining a new applied schema across every USD-consuming runtime
+that pins its own USD/Python/OS/runtime config (DCC integrations,
+game-engine importers, web/cloud viewers, AR/VR runtimes, CI/validation
+pipelines) — is multiplicative across that matrix and recurring across
+releases. Codeless schemas reduce but do not eliminate this; they avoid
+C++ ABI drift but still need plugin discovery, distribution channels,
+versioning, and consumer-side support across every cell. The AOUSD
+Build Interest Group coordinates the substrate this depends on; see
+[`aousd/build-ig-initiatives#28`](https://github.com/aousd/build-ig-initiatives/issues/28)
+for the live binary-distribution epic and
+[formality_and_distribution.md](formality_and_distribution.md) for the
+tradeoff analysis weighing this cost against the formality benefits a
+new applied schema provides.
 
 **Note on prototype fidelity:** All three schema implementations have
 been processed through `usdGenSchema`, producing full generated output

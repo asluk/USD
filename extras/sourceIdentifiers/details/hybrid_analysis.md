@@ -2,11 +2,13 @@
 
 ← [Back to COMPARISON.md](../COMPARISON.md)
 
-This document is the design reference for **Approach C** — multi-apply
-schema with `assetInfo` overflow. The recommended mechanism in COMPARISON.md
-is Approach D (Labels + Identity). C is documented here as the fallback if
-a domain surfaces classification fields that genuinely need typed
-non-token-array structure which `UsdSemanticsLabelsAPI` cannot represent.
+This document is the design reference for **Approach C** — a refinement of
+B that adds an `assetInfo` overflow dictionary (borrowed from A) to B's
+multi-apply schema, closing B's heterogeneity gap. COMPARISON.md notes
+that the data leans toward D (a different refinement of B that reuses the
+existing `UsdSemanticsLabelsAPI`); C is the natural fallback for the case
+where a domain surfaces classification fields needing typed
+non-token-array structure that `UsdSemanticsLabelsAPI` cannot represent.
 The migration discussion in §7.6 is also useful for pipelines moving off
 of `customData` toward any mechanism; its schema-property half maps to D's
 `assetInfo["source"]` identity tier with minor adjustment.
@@ -28,10 +30,10 @@ a companion schema for their domain-specific fields would either:
 (b) push metadata into `customData` - recreating exactly the
 fragmentation problem the proposal aims to solve.
 
-### 7.2 Recommended hybrid: Approach B + metadata overflow dictionary
+### 7.2 Hybrid mechanism: B + metadata overflow dictionary
 
-The recommended approach combines Approach B's structural advantages
-with Approach A's metadata flexibility:
+C combines Approach B's structural advantages with Approach A's metadata
+flexibility:
 
 **Use the multi-apply schema (Approach B) as the base**, providing
 typed, schema-backed common fields that all tools can discover and
