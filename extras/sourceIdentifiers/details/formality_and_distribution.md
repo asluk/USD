@@ -136,67 +136,121 @@ distribution-and-maintenance load, not the local codegen step that
 
 ## Where each approach lands on the tradeoff
 
-| Approach | Formality benefits delivered | Distribution cost incurred |
-|---|---|---|
-| A — `assetInfo` dictionaries | None of the schema benefits (no schema involved) — relies on registry-as-spec for offline validation only | Zero — no schema to ship |
-| B — New multi-apply schema | All eight benefits, with bespoke types and accessors | Full distribution matrix per ratified version, recurring across releases |
-| C — Refinement of B (schema + `assetInfo` overflow) | All eight for the four common fields; `assetInfo` overflow inherits A's profile | Full matrix (same as B) plus the dict-overflow A carries |
-| D — Refinement of B (existing `UsdSemanticsLabelsAPI` + `assetInfo`) | Six of eight via reuse; bespoke fallbacks and domain-specific schema versioning are what a new schema would add | None new — `UsdSemanticsLabelsAPI` already shipped in 24.11; the existing distribution carries it |
+| Approach | Formality benefits delivered | Distribution cost incurred | Carries heterogeneous typed fields? |
+|---|---|---|---|
+| A — `assetInfo` dictionaries | None of the schema benefits (no schema involved) — relies on registry-as-spec for offline validation only | Zero — no schema to ship | Yes (freeform dicts) |
+| B — New multi-apply schema | All eight benefits, with bespoke types and accessors *for the four common fields* | Full distribution matrix per ratified version, recurring across releases | No (fixed four-property surface) |
+| C — Refinement of B (schema + `assetInfo` overflow) | All eight for the four common fields; `assetInfo` overflow inherits A's profile | Full matrix (same as B) plus the dict-overflow A carries | Yes (overflow tier) |
+| D — Refinement of B (existing `UsdSemanticsLabelsAPI` + `assetInfo`) | Six of eight via reuse, *for the controlled-vocabulary classification axis only*; bespoke fallbacks and domain-specific schema versioning are what a new schema would add | None new — `UsdSemanticsLabelsAPI` already shipped in 24.11; the existing distribution carries it | No (`token[]` label values + `string` identifiers cannot represent typed numerics, dates, composite refs, or polymorphic XSD values) |
 
-The tradeoff is sharpest between B/C and D: B and C deliver the
-remaining two-of-eight benefits (domain-calibrated fallbacks,
-domain-specific versioning hooks) at the cost of committing the
-ecosystem to a recurring distribution matrix. D delivers six-of-eight
-at no incremental cost.
+The tradeoff has three dimensions, not two: formality benefits,
+distribution cost, **and** whether the mechanism carries the
+heterogeneous typed surface real source systems bundle. Earlier
+drafts of this document collapsed the third dimension by asserting
+the surface was empty; the field experiment shows it is not. Among
+the four candidates, A and C carry it; B-alone and D do not.
 
-## Where the data leans across the four verticals
+## What the field experiment shows about the heterogeneity surface
 
-Whether what a new schema adds justifies the distribution cost depends
-on whether the verticals AOUSD members care about surface fields that
-*require* the new-schema-only benefits. Across the four verticals
-exercised in this work (AECO, Manufacturing, Robotics, M&E):
+Earlier drafts of this section asserted that *"no domain-specific field
+surfaced that required typed non-token-array structure"* across the four
+verticals tested, and used that assertion as the empirical basis for a
+leaning toward Approach D. **That assertion is retracted.** The
+field-by-field census documented in
+[`field_classification_experiment.md`](field_classification_experiment.md)
+draws fields from authoritative spec surfaces (IFC4x3, Revit API, AAS
+metamodel, Windchill REST, SAP MARA, ROS/URDF/SDF, OpenAssetIO/MovieLabs
+OMC/ShotGrid) under pre-registered classification criteria, and shows
+that heterogeneous typed fields surface in every vertical surveyed:
 
-- **No domain-specific field surfaced that required typed non-token-array
-  structure.** Token arrays + identifier strings carried every metadata
-  case tested.
-- **No identifier domain surfaced where bespoke fallback values were
-  necessary.** Empty token arrays / absent identifier strings communicate
-  "unauthored" cleanly across all four verticals.
-- **No identifier domain surfaced where domain-specific schema versioning
-  was necessary in a way the AOUSD Domains Registry couldn't track.**
-  The registry-level promotion path captured the lifecycle pattern the
-  verticals showed.
+- **Timestamps are universal.** IFC `IfcTimeStamp`, Windchill
+  `Edm.DateTimeOffset`, SAP `DATS`, ROS `std_msgs/Header.stamp`,
+  ShotGrid `created_at`/`updated_at`, OMC `lifecycleEvents`.
+- **Numeric measures with units appear in AECO, PLM, and Robotics.**
+  IFC `IfcMeasureValue` family, SAP `QUAN(13,3)` (`NTGEW`/`BRGEW`/
+  `VOLUM`), URDF/SDF mass/inertia/joint limits/dynamics.
+- **Composite typed references are universal.** IFC
+  `IfcPersonAndOrganization`/`IfcApplication`, AAS `Reference`/
+  `RelationshipElement`, Revit `ElementId`-typed relations, ShotGrid
+  entity-link fields, OMC `participants`/`creationContext`.
+- **Polymorphic XSD-typed values are the standard surface in AAS.**
+  `Property.value` is typed across `xs:string`/`xs:int`/`xs:long`/
+  `xs:decimal`/`xs:double`/`xs:float`/`xs:boolean`/`xs:date`/
+  `xs:dateTime`/`xs:duration`/`xs:anyURI`/`xs:base64Binary` by design.
+  AAS is the standard the proposal already cites in its
+  emerging-consensus list.
 
-This is the empirical basis of the doc's leaning toward D. It is not a
-verdict: AOUSD review may surface domains where what a new schema adds
-becomes decisive — numeric tolerances with units, structured records
-that don't fit into token arrays, lifecycle states that need typed
-transitions. The leaning says *"in the verticals tested, the
-distribution cost outweighs what a new schema would add;"* the AOUSD
-review weighs whether the verticals tested are representative of the
-verticals that matter most.
+These shapes do not flatten to `token[]` without losing structural
+type. Whether they belong inside the source-identifier mechanism's
+scope or outside it is the open question above; what the experiment
+shows is that the spec surfaces include them.
+
+## What this means for the formality/distribution tradeoff
+
+The previous version of this section concluded that the formality
+benefits a new applied schema adds *beyond reuse of
+`UsdSemanticsLabelsAPI`* (domain-calibrated fallbacks, domain-specific
+versioning hooks) "didn't show up as decisive across the four
+verticals tested" — which was true *for the synthesized field set* the
+earlier industry_scenarios document used, but does not generalize to
+the spec-surface heterogeneity the field experiment documents.
+
+The retracted form: *"in the verticals tested, the distribution cost
+outweighs what a new schema would add."*
+
+What the experiment supports:
+
+- Reuse of `UsdSemanticsLabelsAPI` carries the controlled-vocabulary
+  classification axis cleanly across all four verticals — that part of
+  the prior reading holds.
+- The heterogeneity surface (heterogeneous typed fields, recurring
+  across all four verticals) is not carried by `UsdSemanticsLabelsAPI`
+  at all — its `token[]` value type cannot represent timestamps,
+  numeric measures with units, composite references, or polymorphic
+  XSD-typed values.
+- A solution proposal that wants to carry the heterogeneity surface
+  needs either freeform `assetInfo` dictionaries (Approach A's tier),
+  a typed multi-apply schema with overflow (Approach C), or
+  per-domain companion schemas (Approach B's natural extension).
+- Whether the heterogeneity surface *should* be carried by the
+  source-identifier mechanism, or excluded by scope and carried by a
+  separate mechanism, is the load-bearing scope question. The
+  comparison materials cannot answer it on their own — it is
+  ultimately a member judgment about what counts as identifier
+  metadata and what counts as the asset's content.
 
 ## Open questions where AOUSD member input would help
 
-1. **Which domain-specific fields, if any, surface non-token-array typed
-   structure that `UsdSemanticsLabelsAPI` cannot represent in the
-   verticals each member operates in?** The four verticals tested are
-   not exhaustive; a member working in (e.g.) chemistry, automotive, or
-   aerospace metadata may surface fields that change the answer.
+1. **Where should the identifier-package boundary sit?** Authoritative
+   spec surfaces include heterogeneous typed fields (timestamps,
+   numeric measures, composite refs, polymorphic AAS Properties) in
+   the metadata bundles real source systems carry alongside their
+   identifiers. Are those fields *part of* source-identifier metadata
+   for AOUSD's purposes, or *the asset's content*, carried by a
+   separate mechanism? This is the load-bearing scope question for
+   any mechanism choice that follows.
 
-2. **Do any identifier domains need bespoke fallback values?** Empty
-   defaults worked in the tested verticals; a domain where "unspecified"
-   must default to a specific non-empty value would shift the analysis.
+2. **Which domains' members are affected by which buckets?** A member
+   working primarily in AECO/M&E may see the heterogeneity surface as
+   modest; a member working in Manufacturing/PLM (where AAS makes
+   typed `Property` values the standard surface) sees it as central.
+   The mechanism choice that works across members may need to admit
+   the heterogeneous surface even if some members do not feel it.
 
-3. **Is the distribution cost felt differently across member contexts?**
-   Members who currently maintain large slices of the matrix may have
-   sharper pictures of the recurring cost than members who consume
-   binaries from upstream.
+3. **Do any identifier domains need bespoke fallback values?** Empty
+   defaults worked in the tested verticals; a domain where
+   "unspecified" must default to a specific non-empty value would
+   shift the analysis.
 
-4. **Does the existing `UsdSemanticsLabelsAPI` versioning approach work
-   for the identifier domains AOUSD prioritizes?** A new schema's
-   versioning is what would be added; whether it matters depends on
-   what evolution the prioritized domains expect.
+4. **Is the distribution cost felt differently across member
+   contexts?** Members who currently maintain large slices of the USD
+   distribution matrix may have sharper pictures of the recurring
+   cost than members who consume binaries from upstream. The
+   comparison materials elevate distribution to the dominant cost
+   under D's framing; the proposal's original B-cons phrasing
+   downplays it (*"tools already ship their own domain plugins and
+   unrecognized schema data roundtrips without loss"*). Resolution
+   here is itself load-bearing.
 
 These questions are open — the doc does not answer them. They are
 inputs the AOUSD review process is positioned to gather.
