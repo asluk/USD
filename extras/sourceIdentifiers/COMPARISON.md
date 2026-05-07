@@ -6,39 +6,6 @@
 
 ---
 
-> ## Reader's note
->
-> A prior framing of this comparison leaned toward Approach D (Labels
-> + Identity). **That leaning has been retracted** in light of the
-> field census in `details/field_classification_experiment.md`, which
-> shows identifier packages are heterogeneously typed across all four
-> verticals surveyed. The document presents the four candidates and
-> the empirical evidence symmetrically; **no mechanism leaning is
-> asserted** in this revision.
->
-> Two items previously listed as deferred — re-derivation of the
-> vendor-adoption scoring against the authorized principles, and
-> resolution of the schema-distribution friction tension — landed in
-> the 2026-05-07 rebuild:
->
-> - §3.6 carries the principle-derived scoring. The earlier scoring
->   (eight dimensions Claude invented during PR development, not
->   derived from proposal 105's principles, biased toward D by
->   construction) is preserved as
->   `stress_tests/vendor_adoption_analysis_legacy.py` for inspection.
-> - `details/formality_and_distribution.md` carries the
->   conditional-weighting framing (currently elevated, trending
->   lighter as the AOUSD Build IG epic lands) per Aaron's call.
->
-> Rebuilt scoring totals (max 40): **A=32, B=26, C=32, D=33** —
-> A/C/D within scoring noise; B trails meaningfully. The principles
-> do not pick a single winner among A/C/D.
->
-> **Share-readiness:** With both rebuild items resolved, this
-> document is ready for renewed review and recirculation.
-
----
-
 ## Executive Summary
 
 OpenUSD has no shared mechanism for carrying external source identifiers — IFC
@@ -485,17 +452,12 @@ numerical totals are illustrative of how the mechanisms trade off
 across principles; the anchors and justifications are the primary
 reading.
 
-> **History.** An earlier draft of this section presented eight
-> scoring dimensions Claude invented during PR development. Those
-> dimensions did not derive from proposal 105's authorized
-> principles; they were constructed in service of a leaning toward
-> Approach D that had already taken shape, and they biased toward D
-> along axes D happens to lead on by construction (per-facet
-> discoverability; "no new schema = higher" distribution-friction
-> framing). That scoring is preserved as
-> `stress_tests/vendor_adoption_analysis_legacy.py` so the regression
-> from it is inspectable, and is retracted. The dimensions below
-> derive from the proposal's authorized principles.
+> An earlier draft presented eight ad-hoc dimensions that did not
+> derive from the proposal's principles and biased toward Approach D
+> by construction. That scoring is retracted; it is preserved as
+> `stress_tests/vendor_adoption_analysis_legacy.py` for inspection.
+> The PR's [methodology comment](https://github.com/asluk/USD/pull/7#issuecomment-4399081816)
+> documents the regression in detail.
 
 | Dimension (principle) | A | B | C | D |
 |---|---|---|---|---|
