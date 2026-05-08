@@ -182,90 +182,113 @@ list filtering).
 eight authorized design principles (separation of concerns, industry
 agnosticism, vendor extensibility, composability, discoverability,
 external queryability, round-trip fidelity, minimal disruption). Each
-dimension carries a published 1–5 anchor and a per-mechanism
-justification grounded in evidence from the field census, stress
-tests, and composition experiments. Full anchors and justifications
-are in `stress_tests/vendor_adoption_analysis.json`; the script
-re-derives the scores from the published rubric.
+per-dimension question rubric is anchored to its principle's literal
+text without broadening; each per-mechanism score is derived from
+primitive-level inspection of that candidate's mechanism (schema
+definitions, example files, AOUSD Core Spec primitives, the field
+census). Implementation-level concerns (schema-ratification cost,
+schema-distribution cost, spec-text-formalization track record,
+per-vertical conditionality) are surfaced separately in the script's
+`IMPLEMENTATION_CONSIDERATIONS` block — not baked into principle-
+derived scores. Full anchors, justifications, and implementation
+notes are in `stress_tests/vendor_adoption_analysis.json`.
 
-> **Earlier scoring retracted.** Previous versions of this section —
-> spanning both the original April-2026 A/B/C scoring on the
-> `aluk/source-identifiers-comparison` base branch and the
-> D-augmented version on `aluk/source-identifiers-rev2` — presented
-> eight ad-hoc dimensions Claude invented across the comparison work.
-> Those dimensions did not derive from proposal 105's authorized
-> principles; the D-augmented version was constructed in service of a
-> leaning toward Approach D that had already taken shape and biased
-> toward D along axes D happens to lead on by construction (per-facet
-> discoverability; "no new schema = higher" distribution-friction
-> framing). The D-augmented snapshot is preserved as
-> `stress_tests/vendor_adoption_analysis_legacy.py` so the regression
-> from it is inspectable; the earlier April-2026 ad-hoc version is
-> reachable via git history. The dimensions below derive from the
-> proposal's authorized principles.
+> **Earlier scoring retracted.** Previous versions of this section
+> carried interpretive broadenings of several principle texts
+> (notably Minimal disruption, broadened to include schema
+> ratification and plugin distribution) and incomplete primitive-
+> grounding of the per-mechanism rationales. Those are retracted in
+> this revision; the earlier eight-dimension snapshot is preserved
+> as `stress_tests/vendor_adoption_analysis_legacy.py` for
+> regression inspection. The current dimensions derive from the
+> proposal's authorized principles, narrowed to the principles'
+> literal text.
 
 | Dimension (principle) | A | B | C | D |
 |-----------|---|---|---|---|
-| Separation of concerns | 3 | 3 | 4 | 3 |
-| Industry agnosticism | 5 | 2 | 5 | 5 |
+| Separation of concerns | 5 | 5 | 5 | 5 |
+| Industry agnosticism | 5 | 3 | 5 | 5 |
 | Vendor extensibility | 5 | 2 | 4 | 5 |
-| Composability | 4 | 4 | 4 | 4 |
-| Discoverability | 2 | 4 | 4 | 5 |
-| External queryability | 3 | 4 | 4 | 4 |
+| Composability | 5 | 5 | 5 | 5 |
+| Discoverability | 3 | 4 | 4 | 4 |
+| External queryability | 3 | 5 | 4 | 4 |
 | Round-trip fidelity | 5 | 5 | 5 | 5 |
-| Minimal disruption | 5 | 2 | 2 | 5 |
-| **Total (max 40)** | **32** | **26** | **32** | **36** |
+| Minimal disruption | 5 | 5 | 5 | 5 |
+| **Total (max 40)** | **36** | **34** | **37** | **38** |
 
 **Source:** `stress_tests/vendor_adoption_analysis.{py,json}`
 (re-runnable via `python3 vendor_adoption_analysis.py`).
 
-**How to read these.** B trails meaningfully because its four-property
-fixed surface admits only a common subset; everything outside requires
-per-domain companion schemas that compound the ratification cost
-without the heterogeneity payoff. A, C, and D cluster in the 32–36
-band. D's lead over A is structural — *D = A's mechanism +
-`UsdSemanticsLabelsAPI` for classification facets* — and its
-magnitude scales with classification richness per vertical (high in
-AECO, near-zero in PLM and Robotics-numeric, modest in M&E). It is
-not a re-injection of the prior leaning toward D, which was
-constructed downstream of the proposal on a scoring framework that
-post-dated D's introduction. Each candidate's profile across
-dimensions:
+**How to read these.** Four of the eight principles produce check-pass
+scores across all four candidates at the literal-text reading
+(Separation of concerns, Composability, Round-trip fidelity, Minimal
+disruption). The differentiating dimensions are Industry agnosticism,
+Vendor extensibility, Discoverability, and External queryability.
+The four candidates cluster within a 4-point spread (B=34, A=36,
+C=37, D=38). Each candidate's profile:
 
-- **A** leads on industry agnosticism, vendor extensibility, and
-  minimal disruption (no coordination, no new core surface). Pays for
-  it on discoverability (parse-based on `assetInfo`) and on the
-  absence of slot-level separation by content type.
-- **C** ties A on industry agnosticism (overflow accommodates the
-  heterogeneity surface) and matches A on extensibility for overflow
-  fields. Pays for it on minimal disruption (new ratified schema, full
-  plugin-distribution matrix).
-- **D** ties A on industry agnosticism, vendor extensibility, and
-  minimal disruption (D inherits A's `assetInfo` overflow tier — same
-  `VtDictionary` value-type set; same spec-text-formalization
-  promotion path; no new schema beyond the already-shipped
-  `UsdSemanticsLabelsAPI`). D leads on discoverability for the
-  classification slice (per-facet `apiSchemas` instances); the
-  non-classification surface inherits A's parse-cost.
+- **A** leads on industry agnosticism (full `assetInfo` value-type set
+  carries any package shape) and vendor extensibility (ship today via
+  dict overflow, no AOUSD-level approval at the data-model level).
+  Trails on discoverability (parse-based on the standardized
+  `sourceIds` key — not pipeline-specific, but parse-based) and
+  external queryability (full-stage parse).
+- **B** leads on external queryability (schema-targeted across the
+  full surface — B has no overflow tier). Trails on industry
+  agnosticism (the four typed common properties admit only a fixed
+  subset; the heterogeneous typed surface from the field census
+  requires per-domain companion schemas) and vendor extensibility
+  (schema must be ratified at the AOUSD level before any vendor can
+  adopt the mechanism).
+- **C** combines B's typed common-fields tier with A's `assetInfo`
+  overflow tier. Industry agnosticism = A; vendor extensibility = 4
+  (ship today via overflow as fallback; canonical typed tier requires
+  schema ratification). Mixed surface on discoverability and external
+  queryability (schema-targeted for typed; parse-based for overflow).
+- **D** uses existing `UsdSemanticsLabelsAPI` for classification
+  facets + `assetInfo["source"]` overflow for identity / heterogeneous
+  typed (same overflow tier as A). Industry agnosticism = A; vendor
+  extensibility = A (ship today, spec-text formalization path); per-
+  (system, facet) signal in `apiSchemas` for the classification slice.
 
-**Conditional weighting on Minimal disruption.** Per Aaron's
-2026-05-07 call on the schema-distribution friction tension, B and
-C's score on this dimension reflects the *current* matrix burden —
-DCC × USD release × Python × OS × runtime × build flavor, fragmented
-across vendors who ship USD binaries today. The AOUSD Build Interest
-Group's parent epic
-([`aousd/build-ig-initiatives#28`](https://github.com/aousd/build-ig-initiatives/issues/28))
-is actively scoping work to reduce this burden (hosted binaries,
-plugin registration via importlib, conda-forge / PyPI distribution).
-B and C's score on Minimal disruption is expected to trend lighter
-as those initiatives land. The trajectory is detailed in
+**Implementation-level considerations** (surfaced separately in
+`vendor_adoption_analysis.json` `IMPLEMENTATION_CONSIDERATIONS`,
+*not* baked into principle-derived scores per PR 105 #3, which
+distinguishes vendor extensions at the data-model level from runtime
+plugin implementation):
+
+- **Schema-ratification cost** affects B and C: each introduces a new
+  applied schema that must be ratified at the AOUSD level. A and D
+  introduce no new schema (A's wrapper is non-applied convenience
+  over an existing core metadata field; D uses existing
+  `UsdSemanticsLabelsAPI` + existing `assetInfo`).
+- **Schema-distribution cost** affects B and C: ratified schemas must
+  be distributed across the matrix the AOUSD Build Interest Group is
+  scoping (DCC × USD release × Python × OS × runtime × build flavor).
+  Per Aaron Luk's 2026-05-07 call, this is elevated currently — the
+  Build IG epic ([`aousd/build-ig-initiatives#28`](https://github.com/aousd/build-ig-initiatives/issues/28))
+  is scoping the substrate (hosted binaries, plugin registration via
+  importlib, conda-forge / PyPI distribution); the cost is expected
+  to lighten as those initiatives land. A and D require no new
+  plugin distribution.
+- **Spec-text-formalization track record** affects A and D: their
+  promotion path (AOUSD spec text formalizing dict-key conventions /
+  Labels facet vocabulary) is a valid AOUSD-level lifecycle vehicle
+  but newer in AOUSD practice than schema ratification.
+- **Per-vertical conditionality of D's classification advantage**: D's
+  per-(system, facet) discoverability scales with classification
+  richness — meaningful in AECO (7-9 facets per asset), thin in
+  PLM/Robotics/M&E.
+
+The trajectory of the schema-distribution cost as the Build IG
+initiatives land is detailed in
 [`formality_and_distribution.md`](formality_and_distribution.md).
 
 **Caveat preserved.** Numerical totals are illustrative of how the
 mechanisms trade off across principles, not a verdict. Different
-principle weights would produce different totals. The published
-1–5 anchors and the per-mechanism justifications are the primary
-reading.
+principle weights would produce different totals. The published 1–5
+anchors, per-mechanism justifications, and implementation
+considerations are the primary reading.
 
 ## 5.4 Three-tier model for Approach C
 

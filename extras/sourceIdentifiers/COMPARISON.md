@@ -120,12 +120,19 @@ still depends on.
    arguing for it; a follow-up proposal has to argue the boundary.
    → Evidence: `details/field_classification_experiment.md`.
 
-2. **Mechanism choice.** A and C accommodate the heterogeneity surface;
-   B-with-companion-schemas remains a third possibility the proposal
-   authorized. The structure-vs-freeform tradeoff between A and C is
-   downstream of this experiment and depends on the AOUSD review's
-   judgment about adoption velocity, discoverability, and the
-   distribution-and-maintenance cost of any schema ratification.
+2. **Mechanism choice.** A, C, and D all accommodate the heterogeneity
+   surface via dict tiers; B-alone trails because its fixed four-property
+   surface admits only a common subset. Within A/C/D, the trade-offs
+   the AOUSD review weighs are (i) whether to ratify a new applied
+   schema for the typed common-fields tier (C) or rely on dict
+   conventions formalized via spec text (A and D); (ii) whether to
+   carry the controlled-vocabulary classification axis as Labels
+   apiSchema instances for per-(system, facet) discoverability (D) or
+   keep it in `assetInfo` like everything else (A and C). The
+   structure-vs-freeform tradeoff is downstream of this experiment
+   and depends on judgment about adoption velocity, discoverability,
+   and implementation-level rollout cost (schema-distribution matrix
+   for B and C; spec-text-formalization track record for A and D).
    → Evidence: §3 below; `details/formality_and_distribution.md`.
 
 3. **Domains Registry.** Whatever mechanism is adopted, does an AOUSD
@@ -488,87 +495,149 @@ differentiator.
 
 `stress_tests/vendor_adoption_analysis.{py,json}` scores A/B/C/D against
 eight dimensions derived from proposal 105's eight authorized design
-principles. Each dimension carries a published 1–5 anchor and a
-per-mechanism justification (full text in the JSON output). The
-numerical totals are illustrative of how the mechanisms trade off
-across principles; the anchors and justifications are the primary
-reading.
+principles. Each per-dimension question rubric is anchored to its
+principle's literal text without broadening; each per-mechanism score
+is derived from primitive-level inspection of that candidate's
+mechanism (schema definitions, example files, AOUSD Core Spec
+primitives, the field census). Implementation-level concerns
+(schema-ratification cost, schema-distribution cost, spec-text-
+formalization track record, per-vertical conditionality) are
+surfaced separately in the script's `IMPLEMENTATION_CONSIDERATIONS`
+block and in the prose below — *not* baked into principle-derived
+scores. This avoids double-counting across principles and conflating
+standard-level concerns (the principles' scope) with implementation-
+level rollout cost.
 
-> An earlier draft presented eight ad-hoc dimensions that did not
-> derive from the proposal's principles and biased toward Approach D
-> by construction. That scoring is retracted; it is preserved as
+> Earlier scoring iterations carried interpretive broadenings of
+> several principle texts (notably Minimal disruption, broadened to
+> include schema ratification and plugin distribution) and incomplete
+> primitive-grounding of the per-mechanism rationales. Those are
+> retracted in this revision and preserved as
 > `stress_tests/vendor_adoption_analysis_legacy.py` for inspection.
-> The PR's [methodology comment](https://github.com/asluk/USD/pull/7#issuecomment-4399081816)
-> documents the regression in detail.
 
 | Dimension (principle) | A | B | C | D |
 |---|---|---|---|---|
-| Separation of concerns | 3 | 3 | 4 | 3 |
-| Industry agnosticism | 5 | 2 | 5 | 5 |
+| Separation of concerns | 5 | 5 | 5 | 5 |
+| Industry agnosticism | 5 | 3 | 5 | 5 |
 | Vendor extensibility | 5 | 2 | 4 | 5 |
-| Composability | 4 | 4 | 4 | 4 |
-| Discoverability | 2 | 4 | 4 | 5 |
-| External queryability | 3 | 4 | 4 | 4 |
+| Composability | 5 | 5 | 5 | 5 |
+| Discoverability | 3 | 4 | 4 | 4 |
+| External queryability | 3 | 5 | 4 | 4 |
 | Round-trip fidelity | 5 | 5 | 5 | 5 |
-| Minimal disruption | 5 | 2 | 2 | 5 |
-| **Total (max 40)** | **32** | **26** | **32** | **36** |
+| Minimal disruption | 5 | 5 | 5 | 5 |
+| **Total (max 40)** | **36** | **34** | **37** | **38** |
 
-**Reading the totals.** B trails meaningfully because its four-property
-fixed surface admits only a common subset and per-domain companion
-schemas compound the ratification cost without the heterogeneity payoff.
-A, C, and D cluster in the 32–36 band. D's lead over A and C is a
-structural fact about D's relationship to A — *D's mechanism is A's
-mechanism + `UsdSemanticsLabelsAPI` for classification facets* — and is
-not a re-injection of the prior leaning toward D. Several caveats:
+**Reading the table.** Four of the eight principles produce check-pass
+scores across all four candidates at the literal-text reading
+(Separation of concerns, Composability, Round-trip fidelity, Minimal
+disruption). All four candidates separate identifier metadata from
+USD path semantics; all four have well-defined composition behavior
+under the AOUSD Core Spec (per-property for typed properties,
+element-wise for `dictionary` metadata); all four preserve UTF-8
+strings verbatim; none touches the composition engine or namespace
+path semantics.
 
-- **The lead's magnitude scales with classification richness per
-  vertical.** D's `apiSchemas`-per-facet discoverability and `Labels`
-  composition kick in for controlled-vocabulary classification; D
-  inherits A's properties on the non-classification surface. AECO has
-  10+ classification facets per asset (D's value-add is concentrated
-  here); PLM has comparatively few classification facets and a large
-  heterogeneous-typed surface (D's value-add is small); robotics-
-  expanded-URDF is dominantly numeric (D's value-add is near-zero);
-  M&E is sparse (D's value-add is modest).
-- **The Discoverability score for D reflects per-facet `apiSchemas` for
-  the classification slice.** Non-classification content (identity,
-  identity-adjacent fields, heterogeneous typed fields) lives in
-  `assetInfo["source"]` and inherits A's parse-cost on that surface.
-- **The Vendor extensibility score for D matches A's mechanism property
-  (5).** D's promotion path for `assetInfo`-tier content is AOUSD
-  spec-text formalization of the dict shape — same path as A.
-  Promoting `assetInfo` conventions through AOUSD spec text alone is
-  newer in AOUSD practice than ratifying a new USD schema plugin
-  (B/C's path); the relative track records of the two paths are part
-  of what AOUSD ratification reasonably weighs alongside the
-  principle's letter, noted in the per-mechanism justification.
-- **A leads on no-coordination axes** (industry agnosticism, vendor
-  extensibility, minimal disruption) and trades discoverability for
-  no per-facet schema surface.
-- **C leads on industry agnosticism** (overflow accommodates the
-  heterogeneity surface) and matches A on vendor extensibility for
-  overflow fields. Pays for it on minimal disruption (new ratified
-  schema, full plugin-distribution matrix).
-- **D ties A on industry agnosticism, vendor extensibility, and minimal
-  disruption** (same `assetInfo` overflow tier; same spec-text
-  promotion path; same no-new-schema posture) and adds Labels-derived
-  discoverability for the classification slice.
+The differentiating dimensions are **Industry agnosticism**, **Vendor
+extensibility**, **Discoverability**, and **External queryability**:
 
-**Conditional weighting on Minimal disruption.** Per Aaron's
-2026-05-07 call on the distribution-friction tension, B and C's
-"Minimal disruption" score reflects the *current* schema-distribution
-matrix burden — DCC × USD release × Python × OS × runtime × build
-flavor, fragmented across vendors who ship USD binaries today. The
-AOUSD Build Interest Group's parent epic
-([`aousd/build-ig-initiatives#28`](https://github.com/aousd/build-ig-initiatives/issues/28))
-is actively scoping work to reduce this burden (hosted binaries,
-plugin registration via importlib, conda-forge / PyPI distribution).
-The score is expected to trend lighter for B and C as those
-initiatives land. The trajectory is noted in
-[`details/formality_and_distribution.md`](details/formality_and_distribution.md)
-and in the scoring script's methodology block.
+- **Industry agnosticism (A=5, B=3, C=5, D=5).** A, C, and D admit
+  the full identifier-package shape the field census surfaces
+  (identity strings, controlled-vocabulary classification facets,
+  heterogeneous typed fields including timestamps, decimal-with-unit
+  measures, composite references, polymorphic XSD-typed values) via
+  the `assetInfo` dictionary tier. B's four typed common properties
+  carry the *primary* identifier from any industry's scheme cleanly
+  (the literal "IFC GUIDs, PLM part numbers, M&E asset IDs" of the
+  principle text fit `primaryId`); the heterogeneous typed surface
+  beyond that requires per-domain companion schemas. The principle's
+  open-world clause ("schemes not yet envisioned") penalizes B for
+  unforeseen package shapes — score 3 rather than 5.
+- **Vendor extensibility (A=5, B=2, C=4, D=5).** A and D let a
+  vendor ship today without AOUSD-level approval at the data-model
+  level — `assetInfo` overflow on top of an existing core metadata
+  field (A) or `assetInfo` overflow + existing `UsdSemanticsLabelsAPI`
+  (D). Tiered lifecycle is spec-text formalization of dict-key
+  conventions (a spec document, not a re-author at each tier). C
+  permits ship-today via `assetInfo` overflow as a fallback; the
+  canonical typed tier requires `UsdSourceIdHybridAPI` to be ratified.
+  B requires `UsdSourceIdSchemaAPI` to be ratified at the AOUSD level
+  before any vendor can adopt the mechanism, and per-domain
+  extensions beyond the four common properties require companion
+  schemas (their own ratification).
+- **Discoverability (A=3, B=4, C=4, D=4).** B, C, and D all surface
+  per-system presence from the `apiSchemas` list (per-system instance
+  for B/C; per-(system, facet) instance for D's classification
+  surface). A is parse-based: a tool reads `assetInfo` and checks
+  for the standardized `sourceIds` key — that's a *standardized*
+  convention name (set by the AOUSD spec text), not pipeline-
+  specific, so A clears the principle text but with parse-based
+  detection. D's per-(system, facet) granularity on the
+  classification slice is finer than B/C's per-system signal but the
+  principle text caps at per-prim discoverability — captured in the
+  rationale, not the score.
+- **External queryability (A=3, B=5, C=4, D=4).** B's full surface is
+  schema-targeted via `plugInfo.json schemaTypes` (filter by
+  `SourceIdSchemaAPI:*`); index construction is narrow-targeted
+  across all of B's content. C is schema-targeted for the typed
+  tier and parse-based for overflow (mixed). D is schema-targeted
+  for the classification axis (`SemanticsLabelsAPI:*` instances) and
+  parse-based for the identity axis on `assetInfo["source"]`
+  (mixed, same surface as A on the identity tier). A is parse-based
+  across the full surface.
 
-→ Full per-mechanism justifications and dimension anchors:
+**Implementation-level considerations** (out of scope for the
+principles per PR 105 #3, but real for the AOUSD ratification
+decision):
+
+- **Schema-ratification cost** affects B and C: each introduces a
+  new applied schema that must be ratified at the AOUSD level. A
+  introduces no new schema (its convenience wrapper is non-applied
+  over an existing core metadata field). D introduces no new schema
+  (it composes the existing `UsdSemanticsLabelsAPI` with the
+  existing `assetInfo` core metadata field).
+- **Schema-distribution cost** affects B and C: once ratified, the
+  schema plugins must be distributed across the matrix the AOUSD
+  Build Interest Group is scoping (DCC × USD release × Python × OS ×
+  runtime × build flavor). Per Aaron Luk's 2026-05-07 call: this is
+  elevated currently — the Build IG epic
+  ([`aousd/build-ig-initiatives#28`](https://github.com/aousd/build-ig-initiatives/issues/28))
+  is actively scoping the substrate (hosted binaries, plugin
+  registration via importlib, conda-forge / PyPI distribution); the
+  cost is expected to lighten as those initiatives land. A and D
+  require no new plugin distribution.
+- **Spec-text-formalization track record** affects A and D: their
+  promotion path (AOUSD spec text formalizing dict-key conventions
+  / Labels facet vocabulary) is a valid AOUSD-level lifecycle
+  vehicle but newer in AOUSD practice than schema ratification
+  (B/C's path). A TAC member evaluating against established
+  patterns may weigh schema ratification as more familiar. Not a
+  principle-derived score adjustment; the principles themselves
+  don't privilege one path over the other.
+- **Per-vertical conditionality of D's classification advantage**:
+  D's per-(system, facet) discoverability via
+  `SemanticsLabelsAPI:<system>:<facet>` scales with the
+  classification richness of each vertical's identifier package.
+  AECO carries 7-9 classification facets per asset — D's per-facet
+  capability has the most per-prim value here. PLM/Manufacturing
+  has 9 classification facets but is dominated by 15+ heterogeneous
+  typed fields that D handles via the `assetInfo` overflow tier
+  (same as A) — D's classification advantage is a smaller fraction
+  of the surface. Robotics and M&E have sparse classification —
+  D's classification advantage is thin.
+
+**Standard-vs-implementation framing for the TAC discussion.** AOUSD
+Core Spec is the standard; OpenUSD is currently the only
+implementation but isn't the standard itself. Costs that are real for
+current OpenUSD (schema-distribution matrix, runtime mechanism
+specifics) should be weighed as implementation-level concerns rather
+than standard-level constraints. The TAC question's actual shape is:
+*"What should AOUSD ratify as the standard for source identifiers,
+recognizing that implementations are free to vary in how they realize
+it?"* — not "which mechanism does current OpenUSD support best?"
+This framing is load-bearing for any of the four candidates.
+
+→ Full per-mechanism justifications, dimension anchors, and
+implementation considerations:
 `stress_tests/vendor_adoption_analysis.json`. Methodology in
 [details/stress_tests.md §5.3](details/stress_tests.md).
 

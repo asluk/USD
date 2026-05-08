@@ -150,11 +150,28 @@ and files.
 > proposal's framing and the elaboration in this document is one of
 > articulation — the proposal flagged the burden, this document
 > describes what the burden looks like operationally as a build
-> matrix. Both framings are honest; the rebuilt scoring in
-> `stress_tests/vendor_adoption_analysis.{py,json}` reflects the
-> conditional weight directly in the Minimal disruption score (B and
-> C scored at the elevated weight today, with the trajectory expected
-> to lighten).
+> matrix. Both framings are honest.
+>
+> **Where this lives in the comparison.** Per PR 105 #3
+> (vendor extensions are at the data-model level, distinct from
+> OpenUSD plugins as a runtime implementation detail), schema-
+> distribution cost is implementation-level rather than principle-
+> level. The 2026-05-07 rerun of the principle-derived scoring
+> in `stress_tests/vendor_adoption_analysis.{py,json}` accordingly
+> surfaces schema-ratification cost and schema-distribution cost in
+> the script's `IMPLEMENTATION_CONSIDERATIONS` block — a separate
+> reading from the principle-derived totals — rather than baking
+> them into the Minimal disruption score. The earlier scoring
+> revision baked the cost into Minimal disruption (B and C scored 2),
+> which conflated standard-level disruption (the principle text's
+> scope) with implementation-level rollout cost and double-counted
+> with Vendor extensibility (which already captures schema-
+> ratification cost as a barrier to ship-today). The new scoring
+> reads B and C at 5 on Minimal disruption (no changes to composition
+> engine or namespace path semantics — the principle's literal text)
+> and surfaces the implementation cost separately. The conditional
+> trajectory described above remains unchanged; only its location in
+> the analysis has shifted.
 
 ## Where each approach lands on the tradeoff
 

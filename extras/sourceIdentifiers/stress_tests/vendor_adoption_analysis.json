@@ -1,79 +1,85 @@
 {
   "methodology": {
-    "framing": "Scoring dimensions derived from the eight authorized design principles in proposal 105. Earlier scoring constructed eight ad-hoc dimensions after a leaning toward Approach D had taken shape; that scoring is preserved in `vendor_adoption_analysis_legacy.py` and is retracted. The current per-mechanism justifications for D were re-grounded on 2026-05-08 after a structured synthesis review surfaced that earlier drafts collapsed D onto its labels tier — D = A's mechanism + Labels for classification facets, structurally; `assetInfo[\"source\"][<system>]` is a full overflow tier accepting the broad USD `VtDictionary` value-type set the same way A's mechanism does.",
-    "scoring_anchors": "Per-dimension 1-5 anchors are published in DIMENSIONS below; per-mechanism justifications cite evidence from the field census and stress tests.",
-    "distribution_friction_call": "Aaron's 2026-05-07 call on schema-distribution cost: currently elevated as the AOUSD Build IG epic is scoping the substrate (hosted binaries, plugin registration, conda-forge/PyPI), trending lighter as those initiatives land. Reflected in Minimal disruption scoring for B and C.",
-    "what_the_totals_mean": "Numerical totals are illustrative of how the mechanisms trade off across principles, not a verdict. The anchors and per-mechanism justifications are the primary reading."
+    "framing": "Scoring dimensions derived from the eight authorized design principles in proposal 105. Per-dimension question rubrics anchor to each principle's literal text without broadening. Per-mechanism scores derived from primitive-level inspection of each candidate's actual mechanism (schema definitions, example files, AOUSD Core Spec primitives, the field census). Earlier scoring iterations are preserved as `vendor_adoption_analysis_legacy.py` for the original ad-hoc lineage and a prior principle-derived rebuild that this rerun supersedes — both are retracted.",
+    "scoring_anchors": "Per-dimension 1-5 anchors are published in DIMENSIONS below; per-mechanism justifications cite primitive-level evidence and the field census.",
+    "implementation_vs_principle": "Implementation-level concerns (schema-ratification cost, schema-distribution cost, spec-text-formalization track record, per-vertical conditionality) are surfaced in IMPLEMENTATION_CONSIDERATIONS, not baked into principle-derived scores. This avoids double-counting across principles and conflating standard-level (the principles' scope) with implementation-level rollout cost.",
+    "what_the_totals_mean": "Numerical totals are illustrative of how the four mechanisms trade off across the principles, not a verdict. The anchors, per-mechanism justifications, and implementation considerations are the primary reading. Four of the eight principles produce check-pass scores across all candidates at the literal-text reading (Separation of concerns, Composability, Round-trip fidelity, Minimal disruption); the differentiating dimensions are Industry agnosticism, Vendor extensibility, Discoverability, and External queryability."
   },
   "dimensions": [
     {
       "principle": "Separation of concerns",
       "principle_id": 1,
-      "question": "Does the mechanism keep identifier metadata distinct from USD path semantics, and within the identifier package does it cleanly separate the content types real source systems bundle (identity strings, controlled-vocabulary classification facets, heterogeneous typed fields)?",
+      "principle_text": "USD namespace paths and external source identifiers serve different purposes. They should be stored and accessed through distinct mechanisms, even if they sometimes carry the same value.",
+      "question": "Does the mechanism keep external source identifier metadata distinct from USD namespace paths and other USD machinery?",
       "anchors": {
-        "5": "Clean separation of all three content types into distinct slots; nothing overflows into a non-segregated container.",
-        "4": "Two of three content types separated; the third has a clean fallback within the same mechanism.",
-        "3": "Two-way separation; the third content type either has no slot or must overflow to a non-segregated container.",
-        "2": "One container holds everything, or the separation is misaligned with how source systems actually bundle.",
-        "1": "Identifier metadata bleeds into USD path semantics or other un-related machinery."
+        "5": "External identifier metadata is stored and accessed through a mechanism distinct from USD namespace paths; nothing about identifier content leaks into prim names or path semantics.",
+        "4": "Mostly distinct; minor overlap with USD path semantics (e.g. some content surfaces in prim names by convention).",
+        "3": "Identifier metadata coexists with USD path content in shared machinery; tools must distinguish them by parsing.",
+        "2": "Identifier metadata is encoded into prim names or other path-bearing surfaces.",
+        "1": "Identifier metadata bleeds into USD path semantics or composition machinery."
       }
     },
     {
       "principle": "Industry agnosticism",
       "principle_id": 2,
-      "question": "Does the mechanism admit any industry's full identifier-package shape (identity + classification + heterogeneous typed fields, per the field census) without per-industry engineering?",
+      "principle_text": "The mechanism should not be specific to any one industry's identifier scheme. It should be flexible enough to carry IFC GUIDs, PLM part numbers, M&E asset database IDs, and schemes not yet envisioned. This follows from the open world assumption: the set of external systems that may need to identify a prim is not closed.",
+      "question": "Does the mechanism carry the full identifier-package shape real systems bundle (per the field census: identity strings, controlled-vocabulary classification facets, and heterogeneous typed fields like timestamps, numeric measures with units, composite references, polymorphic XSD-typed values) without per-industry engineering, accommodating schemes not yet envisioned?",
       "anchors": {
-        "5": "Admits any package shape across the four verticals surveyed; no per-industry engineering required.",
-        "4": "Admits the surface in three of four verticals; the fourth requires modest accommodation.",
-        "3": "Admits identity + one of the other two content types; the missing one has to be carried by an unrelated mechanism.",
-        "2": "Admits a fixed common subset; per-industry engineering required to carry anything else.",
+        "5": "Mechanism carries the full identifier-package shape across the field census (identity + classification + heterogeneous typed) without per-industry engineering. Open-world: new schemes accommodated by adding instances/dict-keys.",
+        "4": "Carries identity + classification + most heterogeneous typed shapes; rare per-industry accommodation needed for edge cases.",
+        "3": "Carries the primary identifier for any industry's scheme cleanly; per-industry engineering required for the heterogeneous-typed surface beyond a fixed common subset.",
+        "2": "Carries a fixed common subset; per-industry engineering required to carry beyond.",
         "1": "Industry-specific."
       }
     },
     {
       "principle": "Vendor extensibility",
       "principle_id": 3,
-      "question": "Can a vendor, standards body, or consortium declare its own identifier scheme without central approval before deployment? Does the mechanism support a tiered lifecycle (vendor → multi-vendor → core) without requiring re-authoring at each stage?",
+      "principle_text": "Any vendor, standards body, or consortium should declare its own identifier scheme without central approval before deployment. Identifiers may be opaque. Tiered lifecycle (vendor -> multi-vendor -> core) at the data-model level (per PR 105 #3: 'A vendor extension is not the same thing as an OpenUSD plugin -- the latter is a runtime implementation detail.').",
+      "question": "Can a vendor declare its own identifier scheme without central approval before deployment? Does the mechanism support a tiered lifecycle (vendor -> multi-vendor -> core) at the data-model level?",
       "anchors": {
-        "5": "Ship today, no approval. Tiered lifecycle is registry-level (a spec document) rather than a re-authoring pass.",
-        "4": "Ship today, no approval, but promotion to a multi-vendor or core tier requires re-authoring.",
-        "3": "Ship today via a fallback path; the canonical path requires central approval.",
-        "2": "Central approval (schema ratification, plugin distribution) required to ship at all.",
+        "5": "Vendor ships today, no central approval needed at the data-model level. Tiered lifecycle is a registry-level promotion (a spec document or vocabulary addition), not a re-author at each tier.",
+        "4": "Vendor ships today via a fallback path (e.g. dict overflow); promotion to a canonical typed tier requires central approval at the data-model level (schema versioning bump).",
+        "3": "Vendor ships today via a fallback path; canonical path requires central approval.",
+        "2": "Central approval at the data-model level required to ship at all (e.g. ratification of a typed schema before the mechanism can be used).",
         "1": "Single-vendor lock-in."
       }
     },
     {
       "principle": "Composability",
       "principle_id": 4,
-      "question": "Does the mechanism participate in USD's composition model with the granularity authors expect — overrides of single fields without disturbing siblings?",
+      "principle_text": "External identifiers should participate in USD's composition model in a well-defined way. It should be clear how source identifiers are resolved when a prim is referenced, inherited, or specialized.",
+      "question": "Does the mechanism participate in USD's composition model with well-defined behavior under reference, inherit, specialize?",
       "anchors": {
-        "5": "Per-field composition with no shadowing or naive-tool hazards.",
-        "4": "Effectively equivalent to per-field for non-timevarying strings, which is the regime identifier metadata lives in (per the composition_test experiments).",
-        "3": "Per-field for some content types; element-wise dictionary semantics for others.",
-        "2": "Element-wise only, with shadowing hazards for tools that rewrite whole containers.",
-        "1": "Composition is unpredictable or undefined."
+        "5": "Composition behavior is well-defined under reference/inherit/specialize per the AOUSD Core Spec (per-property for typed properties; element-wise for dictionary metadata).",
+        "4": "Composition behavior is well-defined for the primary tier; minor edge cases require pipeline-specific handling.",
+        "3": "Composition behavior is well-defined for some content types; others require pipeline-specific handling.",
+        "2": "Composition behavior is partially specified; tool-side conventions fill gaps.",
+        "1": "Composition behavior is undefined."
       }
     },
     {
       "principle": "Discoverability",
       "principle_id": 5,
-      "question": "Can tools discover that a prim carries source identifiers and at what granularity, without parsing metadata dictionaries or having prior knowledge of a pipeline-specific convention?",
+      "principle_text": "Tools should be able to discover that a prim carries source identifiers without prior knowledge of a pipeline-specific convention. This argues for a schema-based approach rather than ad-hoc customData usage.",
+      "question": "Can tools discover that a prim carries source identifiers without prior knowledge of a pipeline-specific convention?",
       "anchors": {
-        "5": "Per-facet discovery from `apiSchemas` alone — consumer can answer `which facets of which systems are present?` without parsing.",
-        "4": "Per-system discovery from `apiSchemas`; per-facet requires a parse.",
-        "3": "Discovery is possible from `apiSchemas` for some content types and parse-based for others.",
-        "2": "Discovery requires parsing metadata dictionaries; no schema surface exposes presence.",
+        "5": "Per-(system, facet) presence discoverable from the schema surface (apiSchemas) alone, across all content types — no parsing of metadata dictionaries needed.",
+        "4": "Per-system presence discoverable from the schema surface (apiSchemas) alone; per-facet structure or per-content-type granularity requires parse.",
+        "3": "Per-prim presence inferable from a *standardized* (not pipeline-specific) metadata key; per-system or per-facet detail requires parse.",
+        "2": "Presence requires parsing metadata dictionaries with a known but non-standardized key; without the convention, tools cannot reliably discover.",
         "1": "Discovery requires prior knowledge of pipeline-specific conventions."
       }
     },
     {
       "principle": "External queryability",
       "principle_id": 6,
-      "question": "Does the mechanism support tractable external indexes for `given external identifier, find prim` queries without forcing full-stage scans?",
+      "principle_text": "Storing a source identifier on a prim is necessary but not sufficient. Real-world workflows also need to resolve the reverse question: given an external identifier, which USD layers and prims reference it? The source identifier mechanism should make it tractable for consumers to build external indexes over USD content.",
+      "question": "Does the mechanism make it tractable for consumers to build external indexes for 'given external identifier X, find prim' queries?",
       "anchors": {
-        "5": "Schema-targeted validators + per-facet structure enables narrow validator targeting; external index construction is straightforward.",
-        "4": "Schema-targeted validators (`plugInfo.json schemaTypes`) work; index construction requires schema-aware traversal.",
-        "3": "Stage traversal with parse-based dictionary inspection; tractable but requires walking every prim.",
+        "5": "Schema-targeted validators / iterators (`plugInfo.json` `schemaTypes`) cover the full identifier surface; index construction is narrow-targeted across all content types.",
+        "4": "Schema-targeted for one tier (typed properties or per-facet schemas); parse-based for the other tier (overflow dict). Mixed surface.",
+        "3": "Stage traversal with metadata parse at each prim. Tractable but parse-based.",
         "2": "Stage traversal plus per-prim convention checks; index construction is per-domain.",
         "1": "External indexes are intractable without out-of-band metadata."
       }
@@ -81,180 +87,230 @@
     {
       "principle": "Round-trip fidelity",
       "principle_id": 7,
+      "principle_text": "Source identifiers should survive a round-trip through USD without loss, even if the characters they contain are not valid in USD prim names.",
       "question": "Do source identifier strings (including characters not valid in USD prim names) survive a round-trip through USD without loss?",
       "anchors": {
-        "5": "Identifier strings are stored verbatim as UTF-8 strings; any character set survives.",
-        "4": "Identifier strings survive but require an explicit container choice (e.g. `assetInfo` vs property).",
+        "5": "Identifier strings are stored verbatim as UTF-8 strings (string property values, dict string values, or token-array element strings); any character set survives.",
+        "4": "Identifier strings survive but require an explicit container choice to avoid loss.",
         "3": "Most characters survive; some require transcoding.",
-        "2": "Identifier strings undergo transformation that has to be inverted on read.",
+        "2": "Strings undergo transformation that has to be inverted on read.",
         "1": "Identifiers can be lost or silently corrupted on round-trip."
       }
     },
     {
       "principle": "Minimal disruption",
       "principle_id": 8,
-      "question": "Does the mechanism build on USD's existing strengths without new core surface, schema ratification, or plugin-architecture changes? Schema-distribution cost is scored conditionally per Aaron's 2026-05-07 call — currently elevated as the AOUSD Build IG epic is scoping the substrate, trending lighter as those initiatives land.",
+      "principle_text": "The solution should build on USD's existing strengths. It should not require fundamental changes to the composition engine or namespace path semantics.",
+      "question": "Does the mechanism avoid fundamental changes to the composition engine or namespace path semantics?",
       "anchors": {
-        "5": "No new core surface, no schema ratification, no plugin distribution. Pure convention on existing USD machinery.",
-        "4": "Reuses an existing core schema in an extended use case; no new plugin distribution but the reuse stretches the original schema's intent.",
-        "3": "New core surface or new ratified schema, but distribution piggybacks on existing OpenUSD-core distribution.",
-        "2": "New ratified schema requiring full plugin-distribution matrix (DCC × USD release × Python × OS × runtime × build flavor) — currently elevated; trajectory expected to lighten as the AOUSD Build IG epic lands.",
-        "1": "New ratified schema plus composition-engine or USD-core changes."
-      }
+        "5": "No changes to the composition engine or namespace path semantics; uses existing AOUSD Core Spec mechanisms (assetInfo metadata field, applied schemas) as specified.",
+        "4": "No changes to composition or namespace; minor extension of existing mechanisms within their specified envelope.",
+        "3": "Slight extension of composition or namespace path semantics, but not fundamental.",
+        "2": "Fundamental changes to composition engine or namespace path semantics required.",
+        "1": "Major rework of composition engine or namespace path semantics."
+      },
+      "note": "Schema-distribution cost and plugin-mechanism cost are implementation-level concerns per PR 105 #3 and are surfaced in IMPLEMENTATION_CONSIDERATIONS below, not scored here. Including them in Minimal disruption double-counted with Vendor extensibility (which already captures schema-ratification cost as a barrier to ship-today) and conflated standard-level disruption (the principle's literal scope) with implementation-level rollout cost (out of scope per the principle text)."
     }
   ],
   "approaches": [
     {
-      "name": "A — assetInfo dictionaries",
+      "name": "A - assetInfo dictionaries (non-applied convenience API)",
+      "primitives": "Non-applied API schema (`UsdSourceIdAPI`); no apiSchemas entry. Data lives in `assetInfo[\"sourceIds\"][<domain>]` as a nested dictionary with keys `primaryId` (string), `revision` (string), `metadata` (nested dict). Schema provides convenience access only; data's presence in assetInfo IS the discovery signal.",
       "scores": {
         "Separation of concerns": [
-          3,
-          "One assetInfo dict container holds identity + classification + any heterogeneous typed fields together; no slot-level separation by content type."
+          5,
+          "Identifier metadata in `assetInfo[\"sourceIds\"][<domain>]`. Not in prim name; not in path semantics; not in any USD-internal machinery."
         ],
         "Industry agnosticism": [
           5,
-          "Freeform dicts admit any package shape without per-industry engineering."
+          "`assetInfo` dictionary metadata accepts the broad foundational value-type set per the AOUSD Core Spec (string, int, double, bool, asset, arrays, nested dictionaries; no specialized types). All four content types from the field census fit: identity strings, identity-adjacent labels, controlled-vocabulary classification, heterogeneous typed (timestamps stored as int/double, numeric measures, composite references stored as nested dicts). Open-world: new schemes accommodated by adding a sub-dict key today."
         ],
         "Vendor extensibility": [
           5,
-          "Vendor adds a sub-dict key today; no central approval. Tiered lifecycle is convention promotion in the AOUSD Domains Registry — a spec document, not a re-author."
+          "Vendor adds `assetInfo[\"sourceIds\"][<vendor>]` today; no AOUSD-level approval required at the data-model level. Tiered lifecycle: spec-text formalization of dict-key conventions in an AOUSD Domains Registry — a spec document, not a re-author. Track-record note: spec-text formalization as a primary lifecycle vehicle is newer in AOUSD practice than schema ratification (B/C's path); see IMPLEMENTATION_CONSIDERATIONS."
         ],
         "Composability": [
-          4,
-          "Element-wise dict composition; effectively equivalent to per-field for non-timevarying strings (per composition_test experiments). Tools that rewrite the whole dict can shadow base-layer keys."
+          5,
+          "`assetInfo` dictionary metadata composes element-wise per the AOUSD Core Spec (advisory dict metadata composes element-wise across composition arcs). Composition_test experiments show stable per-key behavior for non-timevarying string values. Well-defined under reference/inherit/specialize."
         ],
         "Discoverability": [
-          2,
-          "No `apiSchemas` instance announces presence; consumers must parse `assetInfo` for the `sourceIds` key."
+          3,
+          "Non-applied schema; no apiSchemas instance. Discovery requires reading `assetInfo` and checking for the standardized `sourceIds` key. The convention key is standardized at the AOUSD level — not pipeline-specific (which would mean each pipeline names its own key). Parse-based detection on a standardized key clears the principle text but is the lowest-cost-of-discovery in this comparison."
         ],
         "External queryability": [
           3,
-          "Stage traversal with dict inspection at each prim; tractable but parse-based."
+          "Stage traversal with `assetInfo` dict parse at each prim. Tractable but parse-based. Consumers building per-system indexes pay the parse cost on every prim."
         ],
         "Round-trip fidelity": [
           5,
-          "Identifier strings stored verbatim; any UTF-8 survives."
+          "Identifier strings stored as `string` values in dict; UTF-8 survives. Any characters survive."
         ],
         "Minimal disruption": [
           5,
-          "No new core surface; no schema ratification; no plugin distribution. Convenience API is optional and follows the `UsdModelAPI` precedent."
-        ]
-      },
-      "total": 32
-    },
-    {
-      "name": "B — Multi-apply schema (typed common fields)",
-      "scores": {
-        "Separation of concerns": [
-          3,
-          "Typed properties separate identity-flavored fields from USD path, but classification and heterogeneous typed metadata have no slot — they default to companion schemas or `customData`, which is a non-segregated container."
-        ],
-        "Industry agnosticism": [
-          2,
-          "Fixed four-property surface (`primaryId`, `revision`, `domain`, `label`) admits a common subset only; everything outside requires per-industry companion schemas."
-        ],
-        "Vendor extensibility": [
-          2,
-          "Schema ratification + plugin distribution are required for a vendor's domain-specific fields; the `domain` token can be added today, but the carrying schema cannot ship without a ratification path."
-        ],
-        "Composability": [
-          4,
-          "Per-property composition is the cleanest available mechanism; effectively equivalent to A/C/D for non-timevarying strings."
-        ],
-        "Discoverability": [
-          4,
-          "`apiSchemas` surfaces per-system instances (`SourceIdSchemaAPI:windchill`); per-facet structure is not exposed because there are no per-facet typed properties."
-        ],
-        "External queryability": [
-          4,
-          "Schema-targeted validators work via `plugInfo.json schemaTypes`. Index construction is straightforward for the four common fields."
-        ],
-        "Round-trip fidelity": [
-          5,
-          "Schema property values are strings; any UTF-8 survives."
-        ],
-        "Minimal disruption": [
-          2,
-          "New ratified schema + plugin distribution across the AOUSD Build IG matrix. Currently elevated; trajectory expected to lighten as the IG epic lands."
-        ]
-      },
-      "total": 26
-    },
-    {
-      "name": "C — Refinement of B (B + assetInfo overflow)",
-      "scores": {
-        "Separation of concerns": [
-          4,
-          "Typed properties for the four common fields + freeform dict overflow for everything else. Two-way separation; the heterogeneous typed surface is admitted via overflow rather than a typed slot, but no content type bleeds into a non-segregated container."
-        ],
-        "Industry agnosticism": [
-          5,
-          "Overflow tier admits any package shape, including the heterogeneous typed surface AAS / IFC / SAP / URDF / ShotGrid bundle."
-        ],
-        "Vendor extensibility": [
-          4,
-          "Overflow tier is zero-coordination ship-today; promotion of a stable field to a typed schema property requires central approval (schema versioning bump + redistribution)."
-        ],
-        "Composability": [
-          4,
-          "Per-property composition for typed fields + element-wise dict for overflow; effectively equivalent to A/B/D for non-timevarying strings."
-        ],
-        "Discoverability": [
-          4,
-          "`apiSchemas` surfaces per-system instances; overflow contents require a parse."
-        ],
-        "External queryability": [
-          4,
-          "Schema-targeted validators + parse for overflow; same shape as B/D for the typed tier."
-        ],
-        "Round-trip fidelity": [
-          5,
-          "Schema property + dict values are strings; any UTF-8 survives."
-        ],
-        "Minimal disruption": [
-          2,
-          "New ratified schema + plugin distribution across the AOUSD Build IG matrix, same as B; carries dict overflow on top. Currently elevated; trajectory expected to lighten as the IG epic lands."
-        ]
-      },
-      "total": 32
-    },
-    {
-      "name": "D — A's mechanism + Labels for classification facets",
-      "scores": {
-        "Separation of concerns": [
-          3,
-          "Classification facets cleanly separated to `SemanticsLabelsAPI`; identity and heterogeneous typed fields share the `assetInfo[\"source\"][<system>]` overflow tier same as A. Two-way separation (classification vs. everything-else); the within-`assetInfo` content types (identity, identity-adjacent, heterogeneous typed) are not slot-separated."
-        ],
-        "Industry agnosticism": [
-          5,
-          "D's `assetInfo[\"source\"][<system>]` overflow accepts the broad USD `VtDictionary` value-type set (string, int, double, bool, asset, list, nested dict, etc.) — the same shape as A's mechanism. Admits any package shape across the four verticals surveyed; D inherits A's industry agnosticism for non-classification content and adds Labels for classification facets."
-        ],
-        "Vendor extensibility": [
-          5,
-          "Vendor applies `SemanticsLabelsAPI:<system>:<facet>` for classification and ships `assetInfo` overflow for everything else today; no central approval. Tiered lifecycle is registry-level (facet vocabulary additions for Labels; AOUSD spec-text formalization of `assetInfo` dict shape for overflow content) — a spec document, not a re-author. *Track-record note:* spec-text formalization as a primary lifecycle vehicle is newer in AOUSD practice than schema ratification (B's/C's path); the relative track records of the two promotion paths are part of what AOUSD ratification reasonably weighs alongside the principle's letter."
-        ],
-        "Composability": [
-          4,
-          "Per-property composition for label token arrays + element-wise dict for `assetInfo` overflow; effectively equivalent to A/B/C for non-timevarying strings."
-        ],
-        "Discoverability": [
-          5,
-          "For the classification slice: `apiSchemas` surfaces per-facet instances (`SemanticsLabelsAPI:revit:familyType`, `SemanticsLabelsAPI:revit:mark`); consumers answer `which facets of which systems are present` from the apiSchemas list directly. For non-classification content (identity, identity-adjacent, heterogeneous typed): D inherits A's parse-cost on `assetInfo[\"source\"]`. Score reflects the per-facet upper-end capability; the non-classification surface still requires a parse."
-        ],
-        "External queryability": [
-          4,
-          "Schema-targeted validators over `SemanticsLabelsAPI` instances + per-facet structure enables narrow validator targeting for classification; non-classification index construction over `assetInfo[\"source\"]` is parse-based, same as A."
-        ],
-        "Round-trip fidelity": [
-          5,
-          "Identifier strings + heterogeneous values in `assetInfo` + label token arrays all preserve UTF-8 / VtDictionary value-type fidelity; any character set survives."
-        ],
-        "Minimal disruption": [
-          5,
-          "No new core surface, no schema ratification, no plugin distribution. Uses `UsdSemanticsLabelsAPI` (already in OpenUSD 24.11+) for what it was designed for — labeling — and follows the `UsdModelAPI` precedent for the `assetInfo` convention. Pure convention on existing USD machinery, same as A on the assetInfo side."
+          "Builds on existing `assetInfo` core metadata field. No changes to composition engine or namespace path semantics."
         ]
       },
       "total": 36
+    },
+    {
+      "name": "B - Multi-apply schema (typed common fields)",
+      "primitives": "Multi-apply API schema (`UsdSourceIdSchemaAPI`); `propertyNamespacePrefix = \"sourceIdentifier\"`. Four typed properties per instance: `primaryId` (string), `revision` (string), `domain` (token), `label` (string). All have empty-string fallbacks. Each external system is a multi-apply instance: `SourceIdSchemaAPI:<system>`. No overflow path: domain-specific fields beyond the four common have no slot in the schema.",
+      "scores": {
+        "Separation of concerns": [
+          5,
+          "Identifier metadata in typed schema properties under the `sourceIdentifier:<system>:` namespace. Not in prim name; not in path semantics."
+        ],
+        "Industry agnosticism": [
+          3,
+          "The four typed common properties carry the *primary* identifier from any industry's scheme cleanly (`primaryId` admits IFC GUIDs, PLM part numbers, M&E asset IDs as opaque strings). The heterogeneous typed surface the field census quantifies (AAS `Property.value` polymorphic XSD types; IFC `IfcOwnerHistory.LastModifiedDate` timestamps; SAP `NTGEW`/`BRGEW` decimal-with-unit measures; AAS composite References) has no slot in B's fixed surface — per-industry companion schemas required to carry it. The principle's open-world clause penalizes this for unforeseen package shapes."
+        ],
+        "Vendor extensibility": [
+          2,
+          "A vendor cannot ship until `UsdSourceIdSchemaAPI` is ratified at the AOUSD level. Even after ratification, vendors needing fields beyond the four common must ship companion schemas, which require their own ratification. Central approval at the data-model level is required to ship at all."
+        ],
+        "Composability": [
+          5,
+          "Typed schema properties compose per-property under USD's standard property composition model. Well-defined under reference/inherit/specialize per the Core Spec; no dict-tier element-wise composition."
+        ],
+        "Discoverability": [
+          4,
+          "Per-system instance in `apiSchemas` (`SourceIdSchemaAPI:<system>`). Tools answer 'does this prim carry source identifiers, and from which systems?' from the apiSchemas list alone. Per-facet structure not exposed (no per-facet typed properties)."
+        ],
+        "External queryability": [
+          5,
+          "Schema-targeted validators via `plugInfo.json` `schemaTypes` (filter by `SourceIdSchemaAPI:*`). Per-instance properties typed and queryable. Index construction is narrow-targeted across the full B surface (because B's full surface IS the typed properties)."
+        ],
+        "Round-trip fidelity": [
+          5,
+          "Identifier strings stored as `string` schema property values; UTF-8 survives."
+        ],
+        "Minimal disruption": [
+          5,
+          "Introduces a new applied schema. Applied schemas are existing AOUSD Core Spec machinery (specified in `schemas/README.md`); no changes to composition engine or namespace path semantics. Schema-distribution and ratification cost are implementation-level concerns per PR 105 #3 and are surfaced in IMPLEMENTATION_CONSIDERATIONS."
+        ]
+      },
+      "total": 34
+    },
+    {
+      "name": "C - Hybrid (typed common fields + assetInfo overflow)",
+      "primitives": "Multi-apply API schema (`UsdSourceIdHybridAPI`) with the same four typed properties as B per instance. Plus, by convention, `assetInfo[\"sourceIds\"][<instance_name>]` carries domain-specific overflow as a freeform dictionary; the instance name links the typed schema and the overflow dict. The overflow convention is documented but not enforced by the schema (C's `schema.usda` defines only the four typed properties).",
+      "scores": {
+        "Separation of concerns": [
+          5,
+          "Identifier metadata in typed schema properties under `sourceIdentifier:<system>:` + `assetInfo[\"sourceIds\"][<instance>]` overflow. Not in prim name; not in path semantics."
+        ],
+        "Industry agnosticism": [
+          5,
+          "Typed properties carry primary IDs (same as B); overflow dict tier accepts the broad foundational value-type set (same as A). All four content types from the field census fit. Open-world: new schemes accommodated by adding instances + overflow keys today."
+        ],
+        "Vendor extensibility": [
+          4,
+          "Vendor ships `assetInfo[\"sourceIds\"][<instance>]` overflow today via the convention — fallback path. The typed common-fields tier requires `UsdSourceIdHybridAPI` to be ratified at the AOUSD level. Promotion of stable overflow fields to typed schema properties requires schema versioning + re-ratification. Ship-today exists via overflow; canonical typed path requires central approval."
+        ],
+        "Composability": [
+          5,
+          "Typed properties per-property; overflow dict element-wise. Both well-defined under reference/inherit/specialize per the Core Spec."
+        ],
+        "Discoverability": [
+          4,
+          "Per-system instance in `apiSchemas` (`SourceIdHybridAPI:<system>`). Per-system presence from apiSchemas alone, same as B. Per-facet detail in overflow dict requires parse."
+        ],
+        "External queryability": [
+          4,
+          "Schema-targeted for the typed tier (same as B); parse-based for the overflow tier. Mixed surface — primary-ID indexing is schema-targeted, full-package indexing requires the parse."
+        ],
+        "Round-trip fidelity": [
+          5,
+          "Identifier strings stored as `string` schema properties + `string` overflow values; UTF-8 survives."
+        ],
+        "Minimal disruption": [
+          5,
+          "Same as B — new applied schema, no changes to composition engine or namespace path semantics. Implementation-level concerns surfaced in IMPLEMENTATION_CONSIDERATIONS."
+        ]
+      },
+      "total": 37
+    },
+    {
+      "name": "D - Labels + assetInfo (existing schemas; no new ratification)",
+      "primitives": "No new schema introduced. Uses existing `UsdSemanticsLabelsAPI` (in OpenUSD 24.11+) for classification facets, applied as `SemanticsLabelsAPI:<system>:<facet>` (multi-apply instance name encodes both system and facet). Plus `assetInfo[\"source\"][<system>]` as a freeform dict for identity (the opaque pointer back into each source system) and any heterogeneous-typed overflow. The `assetInfo[\"source\"]` tier is structurally the same as A's overflow tier — both are `assetInfo` dict metadata accepting the broad foundational value-type set. The `column_d.usda` example demonstrates 10 Labels-API instances on a single column for IFC + Revit + UniClass + OmniClass facets.",
+      "scores": {
+        "Separation of concerns": [
+          5,
+          "Identity in `assetInfo[\"source\"][<system>]`; classification facets via `SemanticsLabelsAPI:<system>:<facet>`. Not in prim name; not in path semantics."
+        ],
+        "Industry agnosticism": [
+          5,
+          "`assetInfo[\"source\"]` overflow accepts the broad foundational value-type set (same as A's mechanism). Plus existing `UsdSemanticsLabelsAPI` for classification facets. Identity, identity-adjacent, and heterogeneous typed all fit in overflow; classification gets the typed Labels surface. Open-world: new schemes accommodated by adding sub-dict keys + applying Labels facets today."
+        ],
+        "Vendor extensibility": [
+          5,
+          "Vendor ships `assetInfo[\"source\"][<vendor>]` overflow today + applies `SemanticsLabelsAPI:<vendor>:<facet>` for classification facets today. No AOUSD-level approval at the data-model level — Labels is in OpenUSD 24.11+ and vendor-named instances are open to vendor authoring. Tiered lifecycle: spec-text formalization of dict-key conventions + Labels facet vocabulary additions. Same track-record note as A — see IMPLEMENTATION_CONSIDERATIONS."
+        ],
+        "Composability": [
+          5,
+          "Labels token-array attributes compose per-property (per-facet); `assetInfo[\"source\"]` overflow dict composes element-wise. Both well-defined under reference/inherit/specialize per the Core Spec."
+        ],
+        "Discoverability": [
+          4,
+          "Per-(system, facet) instance in `apiSchemas` (`SemanticsLabelsAPI:<system>:<facet>`) for the classification slice — finest granularity available in this comparison; tools can answer 'which facets of which systems are present?' from apiSchemas alone for classification. For non-classification content (identity, identity-adjacent, heterogeneous typed), D inherits A's parse-based path on `assetInfo[\"source\"]`. Per-prim 'does this prim carry source identifiers?' is answerable from apiSchemas for any classification-bearing prim. Per-vertical conditionality: D's classification advantage is meaningful for AECO (7-9 facets per asset) and thinner for PLM/Robotics/M&E (where classification is sparse) — see IMPLEMENTATION_CONSIDERATIONS."
+        ],
+        "External queryability": [
+          4,
+          "Schema-targeted validators for `SemanticsLabelsAPI:*` instances enable narrow targeting for classification-axis indexing (e.g. 'find all prims with `revit:familyType` = `W14x90`'). Identity-axis indexing on `assetInfo[\"source\"]` is parse-based, same as A. Mixed surface."
+        ],
+        "Round-trip fidelity": [
+          5,
+          "Identifier strings stored as `string` values in `assetInfo[\"source\"]` dict; classification facet values stored as `token[]` arrays (each token is a UTF-8 string). UTF-8 survives across both surfaces."
+        ],
+        "Minimal disruption": [
+          5,
+          "Builds on existing `UsdSemanticsLabelsAPI` (in OpenUSD 24.11+) and existing `assetInfo` core metadata field. No new schema introduced. No changes to composition engine or namespace path semantics."
+        ]
+      },
+      "total": 38
     }
-  ]
+  ],
+  "implementation_considerations": {
+    "preface": "Per PR 105 #3, vendor extensions operate at the data-model level and are independent of any particular plugin architecture: 'A vendor extension... is not the same thing as an OpenUSD plugin -- the latter is a runtime implementation detail.' The following items are real considerations for the AOUSD ratification decision, but they are implementation-level — out of scope of the eight authorized principles. They are surfaced here so the comparison reflects them honestly without baking them into principle-derived scores (which would conflate standard-level with implementation-level concerns and double-count them across principles).",
+    "items": [
+      {
+        "name": "Schema-ratification cost",
+        "applies_to": [
+          "B",
+          "C"
+        ],
+        "detail": "B and C introduce new applied schemas (`UsdSourceIdSchemaAPI`, `UsdSourceIdHybridAPI`) that must be ratified at the AOUSD level before vendors can adopt the mechanism. A and D introduce no new schemas (A's wrapper is non-applied convenience over an existing core metadata field; D uses existing `UsdSemanticsLabelsAPI` + existing `assetInfo`). This cost is captured in Vendor extensibility (where the ship-today vs ratification-blocking is the principle-derived signal) but the *scale* of the cost — multi-month AOUSD ratification process per schema — is implementation-level."
+      },
+      {
+        "name": "Schema-distribution cost (conditional)",
+        "applies_to": [
+          "B",
+          "C"
+        ],
+        "detail": "B and C, once ratified, must distribute their schema plugins across the matrix the AOUSD Build Interest Group is scoping (DCC x USD release x Python x OS x runtime x build flavor). Per Aaron Luk's 2026-05-07 call: this is elevated currently — the Build IG epic [`aousd/build-ig-initiatives#28`] is actively scoping the substrate (hosted binaries, plugin registration via importlib, conda-forge / PyPI distribution); the cost is expected to lighten as those initiatives land. A and D require no new plugin distribution because they introduce no new schemas."
+      },
+      {
+        "name": "Spec-text-formalization track record",
+        "applies_to": [
+          "A",
+          "D"
+        ],
+        "detail": "A's and D's promotion path (vendor convention -> AOUSD spec-text formalization of dict-key conventions / Labels facet vocabulary) is a valid AOUSD-level lifecycle vehicle, but it is newer in AOUSD practice than schema ratification (B/C's path). The latter has more precedent in AOUSD's standards production. This is a TAC-perception consideration: a TAC member evaluating against established patterns may weigh schema ratification as more 'familiar' than spec-text formalization. Not a principle-derived score adjustment; the principles themselves don't privilege one path over the other."
+      },
+      {
+        "name": "Per-vertical conditionality of D's classification advantage",
+        "applies_to": [
+          "D"
+        ],
+        "detail": "D's per-(system, facet) discoverability via `SemanticsLabelsAPI:<system>:<facet>` is meaningful in proportion to the classification richness of each vertical's identifier package. From the field census: AECO carries 7-9 classification facets per asset (IFC entity type, PredefinedType, ObjectType; Revit Category, Type Mark, family/type names; UniClass code, OmniClass code) — D's per-facet capability has the most per-prim value here. PLM/Manufacturing has 9 classification facets across AAS/Windchill/SAP but is dominated by 15+ heterogeneous typed fields (timestamps, decimal-with-unit measures, composite References) that D handles via the `assetInfo` overflow tier (same as A) — D's classification advantage is a smaller fraction of the surface. Robotics and M&E have sparse classification surfaces — D's classification advantage is thin."
+      },
+      {
+        "name": "Standard-vs-implementation framing for the TAC discussion",
+        "applies_to": [
+          "all"
+        ],
+        "detail": "AOUSD Core Spec is the standard; OpenUSD is currently the only implementation but isn't the standard itself. Costs that are real for current OpenUSD (schema-distribution matrix, runtime mechanism specifics) should be weighed as implementation-level concerns rather than standard-level constraints. The TAC question's actual shape is: 'What should AOUSD ratify as the standard for source identifiers, recognizing that implementations are free to vary in how they realize it?' — not 'which mechanism does current OpenUSD support best?' This framing is load-bearing for any of the four candidates and is treated as foreground in the TAC discussion."
+      }
+    ]
+  }
 }
