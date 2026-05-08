@@ -506,16 +506,25 @@ axis, is:
 shows that identifier packages are heterogeneously typed in every
 vertical surveyed — timestamps, numeric measures with units, composite
 typed references, polymorphic XSD-typed values. `UsdSemanticsLabelsAPI`'s
-`token[]` value type cannot represent those shapes. For the
-heterogeneous typed surface, D leaves the schema-production cost on
-the table; a workflow that wants to carry that surface under D has to
-overflow it into `assetInfo` or `customData` (mixing content types) or
-ratify a per-domain companion schema after all (re-introducing the
-costs §6.5–§6.7 catalog).
+`token[]` value type cannot represent those shapes; D carries them in
+the same `assetInfo["source"][<system>]` overflow tier that Approach A
+uses (the broad USD `VtDictionary` value-type set — string, int,
+double, bool, asset, list, nested dict). D = A's mechanism + Labels
+for classification facets; D inherits A's heterogeneity coverage and
+A's lack of schema-side typing on the heterogeneous surface. A
+workflow that wants strongly-typed schema validation for the
+heterogeneous surface (rather than spec-text/registry-validator
+formalization of the dict shape) has to ratify a per-domain companion
+schema, re-introducing the costs §6.5–§6.7 catalog — same call A faces.
 
 Approach C's three-tier model (core schema + codeless companion
-schemas + overflow dicts) carries the heterogeneous typed surface
-without that overflow gap; the costs §6.5–§6.7 catalog are then real
-costs C accepts in exchange for that coverage. The choice between D
-and C on this dimension is governed by the scope question (where the
-identifier-package boundary sits), not by the codegen costs alone.
+schemas + overflow dicts) does the schema-side typing for the four
+common fields *and* carries heterogeneous overflow; the costs
+§6.5–§6.7 catalog are real costs C accepts in exchange for that
+coverage. The choice between A/D and C on this dimension is whether the four
+typed common fields ride a new USD schema plugin (with its runtime
+properties — typed validation, `UsdPrimDefinition` fallbacks,
+`apiSchemas` discoverability) or stay in `assetInfo` formalized in
+AOUSD spec text alongside the rest of the package. AOUSD spec text
+ratifies the standard in either case; the difference is what runtime
+machinery the typed common fields ride on.

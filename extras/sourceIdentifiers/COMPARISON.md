@@ -34,15 +34,20 @@ as Approach B.*
 (borrowed from A) for fields the four common properties cannot carry.
 *Hinted at in proposal 105 as a "hybrid or alternative."*
 
-**D — Refinement of B (Labels + Identity).** Reuses the existing
-`UsdSemanticsLabelsAPI` for controlled-vocabulary classification facets and
-routes identifier strings to `assetInfo["source"][<system>]`. **No new
-applied schema required.** *Constructed downstream of the proposal during
-the comparison work; included as an explored idea, not a peer candidate the
-proposal itself authorized.*
+**D — Refinement of A (A + Labels for classification facets).** Same
+`assetInfo` overflow mechanism A uses, plus `UsdSemanticsLabelsAPI`
+applied per controlled-vocabulary classification facet for per-facet
+discoverability and composition. The convenience wrapper for the
+`assetInfo` tier is `UsdSourceIdAPI` — the same non-applied API schema
+A uses; D inherits it because D inherits A's overflow mechanism.
+**No new applied schema required.** *Constructed downstream of the
+proposal during the comparison work; included as an explored idea, not
+a peer candidate the proposal itself authorized.*
 
-A and B are the two foundations the proposal authorized. C and D are
-different cuts at B's gap on domain-specific metadata.
+A and B are the two foundations the proposal authorized. C is a refinement
+of B (B's typed common fields + `assetInfo` overflow). D is a refinement
+of A (A's mechanism + Labels for the controlled-vocabulary classification
+slice).
 
 ### What the empirical work shows about identifier-package shape
 
@@ -74,20 +79,33 @@ mechanism.
 
 | Mechanism | Carries heterogeneous typed fields? |
 |---|---|
-| **A — `assetInfo` dictionaries** | Yes — freeform dicts admit any typed shape, at the cost of no schema-side typing or discoverability. |
+| **A — `assetInfo` dictionaries** | Yes — freeform dicts admit any typed shape (the `VtDictionary` value-type set: string, int, double, bool, asset, list, nested dict, etc.), at the cost of no schema-side typing or per-facet discoverability. |
 | **B — Four-property typed schema** | No — the fixed surface cannot carry domain-specific typed fields without companion schemas per domain. |
 | **C — B + `assetInfo` overflow** | Yes — typed schema for the common fields, freeform-dict overflow for everything heterogeneous. |
-| **D — `UsdSemanticsLabelsAPI` + `assetInfo` identity strings** | No — labels carry `token[]`; identifier strings are `string`; numeric, date, composite-reference, and polymorphic typed shapes have no slot. |
+| **D — A's mechanism + Labels for classification** | Yes — `assetInfo["source"][<system>]` is a full overflow tier, same `VtDictionary` value-type set as A; `UsdSemanticsLabelsAPI` carries the controlled-vocabulary classification facets on top. |
 
-**A and C accommodate the empirical heterogeneity surface. D and B-alone do
-not, as complete answers.** Earlier framings of this comparison leaned toward
-D on the assertion that *"no domain-specific field surfaced needing typed
-non-token-array structure"* across the four verticals. The field census does
-not support that assertion. **No mechanism leaning is asserted in this
-revision of the comparison.** The remainder of this document presents the
-same prim in all four forms, compares composition / discoverability /
-governance / industry scenarios, and identifies the open questions
-mechanism choice still depends on.
+**A, C, and D all accommodate the empirical heterogeneity surface via dict
+mechanisms** (A's `assetInfo` dict, D's `assetInfo["source"]` overflow,
+C's overflow on top of typed common fields). **B-alone does not** — the
+four-property fixed surface admits only a common subset.
+
+The A-vs-D differentiator is not heterogeneity coverage (they share that)
+but **whether the controlled-vocabulary classification facets ride
+`UsdSemanticsLabelsAPI` (D) or live in `assetInfo` like everything else
+(A)**. D's value-add over A scales with classification richness per
+vertical: high in AECO (10+ facets per column from IFC entity types,
+Revit categories/families/marks/levels, UniClass/OmniClass codes);
+near-zero in PLM and Robotics-expanded-URDF where typed heterogeneity
+or numeric content dominates; modest in M&E.
+
+Earlier framings of this comparison leaned toward D on the assertion that
+*"no domain-specific field surfaced needing typed non-token-array
+structure"* across the four verticals. The field census does not support
+that assertion. **No mechanism leaning is asserted in this revision of
+the comparison.** The remainder of this document presents the same prim
+in all four forms, compares composition / discoverability / governance /
+industry scenarios, and identifies the open questions mechanism choice
+still depends on.
 
 ---
 
@@ -282,14 +300,20 @@ def Mesh "Column_C14" (
 }
 ```
 
-D decomposes the problem into two axes: **identity** (the opaque pointer back
-into the source system, in `assetInfo`) and **classification** (taxonomic
-terms drawn from controlled vocabularies, on `SemanticsLabelsAPI` instances).
+D decomposes the problem into two axes: **classification** (taxonomic terms
+drawn from controlled vocabularies, on `SemanticsLabelsAPI` instances) and
+**everything else** (identity, identity-adjacent fields, heterogeneous typed
+fields, composite references — all in `assetInfo["source"][<system>]`).
 The `apiSchemas` list reads as the human-meaningful inventory of which
-external classifications this prim carries — finer-grained than B/C's
-per-system instances. Note: D's surface (`token[]` label values + identifier
-strings in `assetInfo`) cannot carry the heterogeneous typed fields the field
-experiment surfaces — see §3.4 and `details/field_classification_experiment.md`.
+classification facets this prim carries — finer-grained than B/C's
+per-system instances. The `assetInfo["source"]` overflow accepts the broad
+USD `VtDictionary` value-type set (string, int, double, bool, asset, list,
+nested dict, etc.) — same shape as Approach A's mechanism, so D inherits A's
+heterogeneity coverage. The example above shows only identity strings under
+`assetInfo["source"]` for brevity; in a vertical with heterogeneous typed
+fields (IFC `OwnerHistory` timestamps, AAS `Property.value`, etc.), those
+fields live in the same overflow tier — see §3.4 and
+`details/field_classification_experiment.md`.
 
 → Runnable: [examples/column_d.usda](examples/column_d.usda)
 
@@ -389,15 +413,25 @@ vertical's surface.
   UniClass/OmniClass codes) is controlled-vocabulary and fits any
   mechanism. The full IFC identifier surface also includes
   `IfcOwnerHistory` (timestamps, composite person/organization/application
-  references) and IFC schema-version metadata; A and C carry these natively,
-  B and D do not without auxiliary mechanisms.
+  references) and IFC schema-version metadata; A, C, and D carry these
+  natively (A and D via `assetInfo` dict; C via overflow on top of typed
+  common fields); B does not without auxiliary mechanisms. The
+  10+ classification facets per column — IFC entity type/objectType,
+  Revit category/familyType/mark/level, UniClass code/title/system,
+  OmniClass code/title — are where D's per-facet `apiSchemas` instances
+  add per-facet discoverability over A's flat `assetInfo` dict.
 - **Manufacturing/PLM.** Windchill `ID`/`Number`/`State`/`Type`/`Organization`
   fit any mechanism cleanly; AAS `globalAssetId` and `assetType` likewise.
   The heterogeneous-typed surface — Windchill `CreatedOn`/`LastModified`
   (`Edm.DateTimeOffset`), SAP `ERSDA`/`LAEDA`/`MSTDE` (`DATS`) and
   `NTGEW`/`BRGEW`/`VOLUM` (`QUAN(13,3)`), AAS `Property.value`
   (polymorphic XSD), AAS `Range`/`Reference`/`RelationshipElement`
-  composites — fits A or C; B-alone and D do not carry it.
+  composites — fits A, C, or D's `assetInfo` overflow; B-alone does
+  not carry it. PLM has comparatively few classification facets per
+  asset (material type, material group, lifecycle state); D's
+  per-facet labels-discoverability gain over A is small, while the
+  heterogeneous-typed surface is large and lives in the same
+  `assetInfo` dict for both A and D.
 - **Robotics.** Strict identifier surface (package URI, frame_id, topic,
   source format, ROS distro) is mostly strings; `std_msgs/Header.stamp`
   (`time`) and `seq` (`uint32`) are heterogeneous typed already in the
@@ -461,37 +495,55 @@ reading.
 | Dimension (principle) | A | B | C | D |
 |---|---|---|---|---|
 | Separation of concerns | 3 | 3 | 4 | 3 |
-| Industry agnosticism | 5 | 2 | 5 | 3 |
+| Industry agnosticism | 5 | 2 | 5 | 5 |
 | Vendor extensibility | 5 | 2 | 4 | 5 |
 | Composability | 4 | 4 | 4 | 4 |
 | Discoverability | 2 | 4 | 4 | 5 |
 | External queryability | 3 | 4 | 4 | 4 |
 | Round-trip fidelity | 5 | 5 | 5 | 5 |
-| Minimal disruption | 5 | 2 | 2 | 4 |
-| **Total (max 40)** | **32** | **26** | **32** | **33** |
+| Minimal disruption | 5 | 2 | 2 | 5 |
+| **Total (max 40)** | **32** | **26** | **32** | **36** |
 
-**Reading the totals.** A, C, and D are within scoring noise (1-point
-spread); B trails meaningfully. The principles do not pick a single
-winner among A/C/D — each leads on different dimensions:
+**Reading the totals.** B trails meaningfully because its four-property
+fixed surface admits only a common subset and per-domain companion
+schemas compound the ratification cost without the heterogeneity payoff.
+A, C, and D cluster in the 32–36 band. D's lead over A and C is a
+structural fact about D's relationship to A — *D's mechanism is A's
+mechanism + `UsdSemanticsLabelsAPI` for classification facets* — and is
+not a re-injection of the prior leaning toward D. Several caveats:
 
+- **The lead's magnitude scales with classification richness per
+  vertical.** D's `apiSchemas`-per-facet discoverability and `Labels`
+  composition kick in for controlled-vocabulary classification; D
+  inherits A's properties on the non-classification surface. AECO has
+  10+ classification facets per asset (D's value-add is concentrated
+  here); PLM has comparatively few classification facets and a large
+  heterogeneous-typed surface (D's value-add is small); robotics-
+  expanded-URDF is dominantly numeric (D's value-add is near-zero);
+  M&E is sparse (D's value-add is modest).
+- **The Discoverability score for D reflects per-facet `apiSchemas` for
+  the classification slice.** Non-classification content (identity,
+  identity-adjacent fields, heterogeneous typed fields) lives in
+  `assetInfo["source"]` and inherits A's parse-cost on that surface.
+- **The Vendor extensibility score for D matches A's mechanism property
+  (5).** D's promotion path for `assetInfo`-tier content is AOUSD
+  spec-text formalization of the dict shape — same path as A.
+  Promoting `assetInfo` conventions through AOUSD spec text alone is
+  newer in AOUSD practice than ratifying a new USD schema plugin
+  (B/C's path); the relative track records of the two paths are part
+  of what AOUSD ratification reasonably weighs alongside the
+  principle's letter, noted in the per-mechanism justification.
 - **A leads on no-coordination axes** (industry agnosticism, vendor
-  extensibility, minimal disruption). Pays for it on discoverability
-  (parse-based) and on the absence of slot-level separation by content
-  type.
+  extensibility, minimal disruption) and trades discoverability for
+  no per-facet schema surface.
 - **C leads on industry agnosticism** (overflow accommodates the
   heterogeneity surface) and matches A on vendor extensibility for
   overflow fields. Pays for it on minimal disruption (new ratified
   schema, full plugin-distribution matrix).
-- **D leads on discoverability** (per-facet `apiSchemas` instances)
-  and ties A on vendor extensibility. Pays for it on industry
-  agnosticism — the labels-only surface cannot carry the heterogeneous
-  typed surface (timestamps, numeric measures, composite refs,
-  polymorphic AAS Properties) that surfaces in every vertical
-  surveyed.
-- **B trails** because the four-property fixed surface admits only a
-  common subset; everything outside requires per-domain companion
-  schemas that compound the ratification cost without the heterogeneity
-  payoff.
+- **D ties A on industry agnosticism, vendor extensibility, and minimal
+  disruption** (same `assetInfo` overflow tier; same spec-text
+  promotion path; same no-new-schema posture) and adds Labels-derived
+  discoverability for the classification slice.
 
 **Conditional weighting on Minimal disruption.** Per Aaron's
 2026-05-07 call on the distribution-friction tension, B and C's
@@ -532,10 +584,12 @@ and in the scoring script's methodology block.
 
 3. **AAS type-vs-instance scoping.** AAS `globalAssetId` (type-level)
    vs. `specificAssetIds` (instance-level, list of structured records)
-   need carrying. Under A or C the structured-record list rides
-   `assetInfo` overflow; under B it requires a companion schema; under
-   D the `specificAssetIds` *list of typed records* has no slot in
-   the labels surface and needs an `assetInfo` channel.
+   need carrying. Under A, C, or D the structured-record list rides
+   `assetInfo` overflow (D inherits A's overflow tier on the
+   non-classification surface); under B it requires a companion
+   schema. The labels surface in D carries the controlled-vocabulary
+   classification facets; the structured-record list lives alongside
+   it in `assetInfo["source"]`.
 
 4. **Are opaque IDs compatible with `assetInfo` long-term?** Mechanisms
    that rely on `assetInfo` for the identifier string (A and D) would
@@ -569,13 +623,17 @@ All implementations and test data live in this repository under
 
 ```
 pxr/usd/
-├── usdSourceId/           # Approach A — non-applied schema wrapping assetInfo
+├── usdSourceId/           # Approach A and Approach D — non-applied
+                           #   convenience schema wrapping the assetInfo
+                           #   identifier tier. D = A's mechanism +
+                           #   UsdSemanticsLabelsAPI for classification, so
+                           #   the same wrapper applies under both.
 ├── usdSourceIdSchema/     # Approach B — multi-apply schema with typed properties
 ├── usdSourceIdHybrid/     # Approach C — hybrid (kept as reference implementation)
-                           # Approach D — no module by design: reuses
-                           #   UsdSemanticsLabelsAPI (already in OpenUSD 24.11+)
-                           #   plus assetInfo conventions; see examples/column_d.usda
-                           #   and verify_column_d.py
+                           # Approach D layers UsdSemanticsLabelsAPI (in
+                           #   OpenUSD 24.11+) on top of A's mechanism; no
+                           #   new schema module needed beyond usdSourceId.
+                           #   See examples/column_d.usda and verify_column_d.py.
 
 extras/sourceIdentifiers/
 ├── COMPARISON.md                    ← this document
@@ -599,8 +657,15 @@ extras/sourceIdentifiers/
 └── stress_tests/                    # 100K-prim generator + measurements
 ```
 
-D requires no new schema library — it composes `UsdSemanticsLabelsAPI` (in
-OpenUSD as of 24.11) with `assetInfo` conventions. `examples/column_d.usda`
-demonstrates the full pattern with no build step required;
-`examples/verify_column_d.py` validates that it parses, applies the schemas,
-and round-trips through the `UsdSemantics.LabelsAPI` Python API.
+D requires no new schema library — it layers `UsdSemanticsLabelsAPI` (in
+OpenUSD as of 24.11) on top of Approach A's `assetInfo` mechanism. Because
+D inherits A's mechanism, D inherits A's convenience wrapper: the
+`UsdSourceIdAPI` non-applied API schema in `pxr/usd/usdSourceId/` is part
+of D as much as it is part of A. The current example files happen to use
+different dict keys (`assetInfo["sourceIds"]` in A's examples,
+`assetInfo["source"]` in D's) but the underlying mechanism is the same
+overflow tier; the AOUSD spec text would settle on a single dict-key
+convention. `examples/column_d.usda` demonstrates the full pattern with
+no build step required; `examples/verify_column_d.py` validates that it
+parses, applies the schemas, and round-trips through the
+`UsdSemantics.LabelsAPI` Python API.

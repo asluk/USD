@@ -235,18 +235,18 @@ def score_c():
 
 
 def score_d():
-    """Approach D: refinement of B (UsdSemanticsLabelsAPI + assetInfo identity)."""
+    """Approach D: A's mechanism + UsdSemanticsLabelsAPI for classification facets."""
     return {
-        "name": "D — Refinement of B (Labels + Identity, no new schema)",
+        "name": "D — A's mechanism + Labels for classification facets",
         "scores": {
-            "Separation of concerns": (3, "Identity strings in `assetInfo` + classification facets in `SemanticsLabelsAPI` token arrays = clean two-way separation. The third content type (heterogeneous typed fields) has no slot; in practice it overflows to `assetInfo` or `customData`, which mixes content types."),
-            "Industry agnosticism": (3, "Carries identity + classification cleanly across all four verticals; misses the heterogeneous typed surface (timestamps, numeric measures with units, composite typed references, polymorphic AAS Property values) that surfaces in every vertical surveyed."),
-            "Vendor extensibility": (5, "Vendor applies `SemanticsLabelsAPI:<system>:<facet>` today; no central approval. Tiered lifecycle is registry-level facet addition — a spec document."),
-            "Composability": (4, "Per-property composition for label token arrays + element-wise dict for `assetInfo` identity; effectively equivalent to A/B/C for non-timevarying strings."),
-            "Discoverability": (5, "`apiSchemas` surfaces per-facet instances (`SemanticsLabelsAPI:revit:familyType`, `SemanticsLabelsAPI:revit:mark`); consumers can answer `which facets of which systems are present` from the apiSchemas list directly."),
-            "External queryability": (4, "Schema-targeted validators + per-facet structure enables narrow validator targeting; index construction over labels is straightforward."),
-            "Round-trip fidelity": (5, "Identifier strings in `assetInfo` + label token arrays both UTF-8; any character set survives."),
-            "Minimal disruption": (4, "Reuses `UsdSemanticsLabelsAPI` (already in OpenUSD 24.11+); no new schema ratification, no new plugin distribution. The reuse extends `SemanticsLabelsAPI` beyond its original semantic-labels intent, which is a stretch worth flagging but does not commit the AOUSD Build IG matrix."),
+            "Separation of concerns": (3, "Classification facets cleanly separated to `SemanticsLabelsAPI`; identity and heterogeneous typed fields share the `assetInfo[\"source\"][<system>]` overflow tier same as A. Two-way separation (classification vs. everything-else); the within-`assetInfo` content types (identity, identity-adjacent, heterogeneous typed) are not slot-separated."),
+            "Industry agnosticism": (5, "D's `assetInfo[\"source\"][<system>]` overflow accepts the broad USD `VtDictionary` value-type set (string, int, double, bool, asset, list, nested dict, etc.) — the same shape as A's mechanism. Admits any package shape across the four verticals surveyed; D inherits A's industry agnosticism for non-classification content and adds Labels for classification facets."),
+            "Vendor extensibility": (5, "Vendor applies `SemanticsLabelsAPI:<system>:<facet>` for classification and ships `assetInfo` overflow for everything else today; no central approval. Tiered lifecycle is registry-level (facet vocabulary additions for Labels; AOUSD spec-text formalization of `assetInfo` dict shape for overflow content) — a spec document, not a re-author. *Track-record note:* spec-text formalization as a primary lifecycle vehicle is newer in AOUSD practice than schema ratification (B's/C's path); the relative track records of the two promotion paths are part of what AOUSD ratification reasonably weighs alongside the principle's letter."),
+            "Composability": (4, "Per-property composition for label token arrays + element-wise dict for `assetInfo` overflow; effectively equivalent to A/B/C for non-timevarying strings."),
+            "Discoverability": (5, "For the classification slice: `apiSchemas` surfaces per-facet instances (`SemanticsLabelsAPI:revit:familyType`, `SemanticsLabelsAPI:revit:mark`); consumers answer `which facets of which systems are present` from the apiSchemas list directly. For non-classification content (identity, identity-adjacent, heterogeneous typed): D inherits A's parse-cost on `assetInfo[\"source\"]`. Score reflects the per-facet upper-end capability; the non-classification surface still requires a parse."),
+            "External queryability": (4, "Schema-targeted validators over `SemanticsLabelsAPI` instances + per-facet structure enables narrow validator targeting for classification; non-classification index construction over `assetInfo[\"source\"]` is parse-based, same as A."),
+            "Round-trip fidelity": (5, "Identifier strings + heterogeneous values in `assetInfo` + label token arrays all preserve UTF-8 / VtDictionary value-type fidelity; any character set survives."),
+            "Minimal disruption": (5, "No new core surface, no schema ratification, no plugin distribution. Uses `UsdSemanticsLabelsAPI` (already in OpenUSD 24.11+) for what it was designed for — labeling — and follows the `UsdModelAPI` precedent for the `assetInfo` convention. Pure convention on existing USD machinery, same as A on the assetInfo side."),
         },
     }
 
@@ -261,7 +261,14 @@ def main():
                 "constructed eight ad-hoc dimensions after a leaning "
                 "toward Approach D had taken shape; that scoring is "
                 "preserved in `vendor_adoption_analysis_legacy.py` and "
-                "is retracted."
+                "is retracted. The current per-mechanism justifications "
+                "for D were re-grounded on 2026-05-08 after a structured "
+                "synthesis review surfaced that earlier drafts collapsed "
+                "D onto its labels tier — D = A's mechanism + Labels for "
+                "classification facets, structurally; "
+                "`assetInfo[\"source\"][<system>]` is a full overflow "
+                "tier accepting the broad USD `VtDictionary` value-type "
+                "set the same way A's mechanism does."
             ),
             "scoring_anchors": "Per-dimension 1-5 anchors are published in DIMENSIONS below; per-mechanism justifications cite evidence from the field census and stress tests.",
             "distribution_friction_call": (

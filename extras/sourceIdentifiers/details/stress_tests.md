@@ -202,40 +202,46 @@ re-derives the scores from the published rubric.
 | Dimension (principle) | A | B | C | D |
 |-----------|---|---|---|---|
 | Separation of concerns | 3 | 3 | 4 | 3 |
-| Industry agnosticism | 5 | 2 | 5 | 3 |
+| Industry agnosticism | 5 | 2 | 5 | 5 |
 | Vendor extensibility | 5 | 2 | 4 | 5 |
 | Composability | 4 | 4 | 4 | 4 |
 | Discoverability | 2 | 4 | 4 | 5 |
 | External queryability | 3 | 4 | 4 | 4 |
 | Round-trip fidelity | 5 | 5 | 5 | 5 |
-| Minimal disruption | 5 | 2 | 2 | 4 |
-| **Total (max 40)** | **32** | **26** | **32** | **33** |
+| Minimal disruption | 5 | 2 | 2 | 5 |
+| **Total (max 40)** | **32** | **26** | **32** | **36** |
 
 **Source:** `stress_tests/vendor_adoption_analysis.{py,json}`
 (re-runnable via `python3 vendor_adoption_analysis.py`).
 
-**How to read these.** A, C, and D are within scoring noise (1-point
-spread). B trails meaningfully because the four-property fixed
-surface admits only a common subset; everything outside requires
+**How to read these.** B trails meaningfully because its four-property
+fixed surface admits only a common subset; everything outside requires
 per-domain companion schemas that compound the ratification cost
-without the heterogeneity payoff. The principles do not pick a single
-winner among A/C/D — each leads on different dimensions, and the
-choice depends on which principles AOUSD weights most heavily:
+without the heterogeneity payoff. A, C, and D cluster in the 32–36
+band. D's lead over A is structural — *D = A's mechanism +
+`UsdSemanticsLabelsAPI` for classification facets* — and its
+magnitude scales with classification richness per vertical (high in
+AECO, near-zero in PLM and Robotics-numeric, modest in M&E). It is
+not a re-injection of the prior leaning toward D, which was
+constructed downstream of the proposal on a scoring framework that
+post-dated D's introduction. Each candidate's profile across
+dimensions:
 
 - **A** leads on industry agnosticism, vendor extensibility, and
   minimal disruption (no coordination, no new core surface). Pays for
-  it on discoverability (parse-based) and on the absence of slot-level
-  separation by content type.
-- **C** leads on industry agnosticism (overflow accommodates the
+  it on discoverability (parse-based on `assetInfo`) and on the
+  absence of slot-level separation by content type.
+- **C** ties A on industry agnosticism (overflow accommodates the
   heterogeneity surface) and matches A on extensibility for overflow
   fields. Pays for it on minimal disruption (new ratified schema, full
   plugin-distribution matrix).
-- **D** leads on discoverability (per-facet `apiSchemas` instances)
-  and ties A on vendor extensibility. Pays for it on industry
-  agnosticism — the labels-only surface cannot carry the
-  heterogeneous typed surface (timestamps, numeric measures with
-  units, composite typed references, polymorphic AAS Property values)
-  that surfaces in every vertical surveyed.
+- **D** ties A on industry agnosticism, vendor extensibility, and
+  minimal disruption (D inherits A's `assetInfo` overflow tier — same
+  `VtDictionary` value-type set; same spec-text-formalization
+  promotion path; no new schema beyond the already-shipped
+  `UsdSemanticsLabelsAPI`). D leads on discoverability for the
+  classification slice (per-facet `apiSchemas` instances); the
+  non-classification surface inherits A's parse-cost.
 
 **Conditional weighting on Minimal disruption.** Per Aaron's
 2026-05-07 call on the schema-distribution friction tension, B and

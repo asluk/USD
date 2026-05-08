@@ -656,7 +656,7 @@ verticals, that **identifier packages are heterogeneously typed.**
   composite references on every entity. AAS's typing is more
   *systematically organized* into a clean submodel-element taxonomy;
   IFC's is richer on measure-value semantics. Both refute the
-  labels-only premise.
+  labels-only-scope premise the earlier comparison built leverage on.
 
 ## What this means for the comparison's previous claim
 
@@ -683,35 +683,40 @@ The four candidates carry typed heterogeneity differently:
 
 | Mechanism | Carries heterogeneous typed fields? |
 |---|---|
-| A — `assetInfo` dictionaries | Yes — freeform dicts admit any typed shape (subject to USD's value-type set), at the cost of no schema-side typing or discoverability. |
+| A — `assetInfo` dictionaries | Yes — freeform dicts admit any typed shape the `VtDictionary` value-type set covers (string, int, double, bool, asset, list, nested dict), at the cost of no schema-side typing and parse-based discoverability. |
 | B — Multi-apply schema, four common typed properties | No — the four-property fixed surface cannot carry domain-specific typed fields without companion schemas per domain. |
 | C — Refinement of B (B + `assetInfo` overflow) | Yes — typed schema for the common fields, freeform-dict overflow for everything heterogeneous, including typed shapes. |
-| D — Refinement of B (`UsdSemanticsLabelsAPI` + `assetInfo` identity strings) | No — labels carry `token[]` and identifier strings; numeric, date, composite-reference, and polymorphic typed shapes have no slot. |
+| D — A's mechanism + `UsdSemanticsLabelsAPI` for classification | Yes — `assetInfo["source"][<system>]` is a full overflow tier, same `VtDictionary` value-type set as A; D inherits A's heterogeneity coverage and adds Labels for the controlled-vocabulary classification facets. |
 
 Two implications, neither of which this experiment by itself decides
 but both of which it constrains:
 
-1. **A and C accommodate the empirical heterogeneity.** D and B do
-   not. A solution proposal that wants to carry the typed
-   heterogeneity surface that real source systems bundle has to use a
-   mechanism with a freeform-dict tier or a per-domain typed-schema
-   tier (or both).
-2. **D's premise depends on a scope-narrowing the data does not
-   support.** D works for the controlled-vocabulary classification
-   axis cleanly, and the previous comparison's leaning toward D rested
-   on the assumption that the classification axis is *all that
-   matters* for source-identifier metadata. The empirical surface does
-   not show that axis to be all that matters — it shows it to be one
-   of four buckets, and not the largest in two of the four verticals.
+1. **A, C, and D all accommodate the empirical heterogeneity via
+   their `assetInfo` dict tiers.** B-alone does not — its
+   four-property fixed surface admits only a common subset. A solution
+   proposal that wants to carry the typed heterogeneity surface real
+   source systems bundle has to use a mechanism with a freeform-dict
+   tier or per-domain typed-schema tier (or both).
+2. **The A-vs-D differentiator is Labels-for-classification, not
+   heterogeneity coverage.** D = A's mechanism + Labels for the
+   controlled-vocabulary classification facets. D's value-add over A
+   scales with classification richness per vertical: high in AECO
+   (10+ facets per asset from IFC entity types, Revit
+   categories/families/marks, UniClass/OmniClass codes); near-zero in
+   PLM and Robotics-expanded-URDF where typed heterogeneity or
+   numeric content dominates; modest in M&E where classification is
+   sparse. The previous comparison's leaning toward D was constructed
+   from a "no field surfaced needing typed structure" framing that
+   the census refutes; the structural relationship D = A + Labels
+   stands independently and is per-vertical-conditional, not a single
+   "D wins" verdict.
 
-A follow-up proposal could still argue for D *with* an explicit
-scope-narrowing — i.e. *"source identifiers are identity strings +
-classification facets, and everything else (timestamps, numeric
-measures, composite refs) is the asset's content, carried by
-mechanisms outside this proposal."* That argument is not made by
-the current materials, and would have to be made on grounds the
-empirical census does not by itself settle. As the materials stand,
-the leaning toward D is not earned by the empirical work.
+A follow-up proposal could still argue for any of A/C/D depending on
+which proposal-105 principles AOUSD weights most heavily and how the
+scope question (where the identifier-package boundary sits) is
+resolved. The empirical census is not by itself a mechanism
+recommendation; it constrains which mechanisms remain viable under
+which scope-narrowings.
 
 ### What this experiment does *not* settle
 

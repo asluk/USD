@@ -17,10 +17,16 @@ surface in **every vertical surveyed** — AECO, Manufacturing/PLM,
 Robotics, M&E. C is therefore a present-day fit for the empirical
 heterogeneity surface, not a fallback for hypothetical future domains.
 
-C and Approach A are the two candidates that accommodate the empirical
-heterogeneity surface; the structure-vs-freeform tradeoff between them
-is downstream of this document and is one of the open questions for
-AOUSD review.
+C, Approach A, and Approach D all accommodate the empirical
+heterogeneity surface via dict tiers (A's flat `assetInfo`, C's
+overflow on top of typed common fields, D's `assetInfo["source"]`
+overflow alongside `UsdSemanticsLabelsAPI`-for-classification). The
+tradeoff among the three is whether the typed common fields ride a
+new USD schema plugin (C — with its runtime properties on top of the
+spec-text ratification) or stay in `assetInfo` formalized in AOUSD
+spec text alongside the rest of the package (A and D); and where the
+controlled-vocabulary classification facets ride. These are
+downstream of this document and are open questions for AOUSD review.
 
 The migration discussion in §7.6 is also useful for pipelines moving
 off of `customData` toward any of the four mechanisms.

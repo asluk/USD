@@ -214,21 +214,31 @@ cannot carry, keyed by matching the schema instance name to the
 `assetInfo["sourceIds"]` dictionary key. The overflow tier carries
 heterogeneous typed fields (timestamps, numeric measures with units,
 composite refs, polymorphic typed values) that the four common
-schema-typed fields and `token[]` label values cannot represent.
+schema-typed fields cannot carry on their own.
 
 ---
 
-## Approach D: Refinement of B (Labels + Identity using existing schema)
+## Approach D: Refinement of A (A + Labels for classification facets)
 
-**Schema type:** No new applied schema. Uses `UsdSemanticsLabelsAPI`
-(shipping in OpenUSD 24.11) plus `assetInfo` conventions.
-**Precedent:** `UsdSemanticsLabelsAPI` for classification facets;
-`UsdModelAPI` for the `assetInfo`-only identity tier.
+**Module:** `pxr/usd/usdSourceId/` — the same module as Approach A.
+D inherits A's mechanism, so it inherits A's convenience wrapper.
+**Schema type:** Non-applied API schema (`UsdSourceIdAPI`) wrapping
+the `assetInfo` identifier tier; plus `UsdSemanticsLabelsAPI` (shipping
+in OpenUSD 24.11) applied per controlled-vocabulary classification facet.
+No new applied schema is introduced.
+**Precedent:** `UsdModelAPI` for the non-applied `assetInfo` wrapper
+(same as Approach A); `UsdSemanticsLabelsAPI` for the classification
+facets.
 
-D is a refinement of B that takes a different cut at the same gap C
-closes with overflow: rather than introduce a new multi-apply schema,
-reuse the existing `UsdSemanticsLabelsAPI` for classification facets
-and route identifier strings to `assetInfo`.
+D is structurally a refinement of A: take A's `assetInfo` overflow
+mechanism for identity, identity-adjacent fields, and the heterogeneous
+typed surface, and add `UsdSemanticsLabelsAPI` applied per classification
+facet for per-facet discoverability and composition on the
+controlled-vocabulary axis. Earlier framings positioned D as a
+"refinement of B" (treating Labels as an alternative to B's typed common
+fields); structurally that's a comparison-level positioning, not a
+mechanism relationship — D shares no mechanism with B beyond the
+`apiSchemas` list, and shares the entire `assetInfo` tier with A.
 
 **Provenance note.** D was constructed downstream of the proposal
 during this comparison work, *not* a peer candidate the proposal
@@ -237,11 +247,20 @@ hinted at C as a "hybrid or alternative." D is included as an
 explored idea so its tradeoffs can be evaluated alongside the
 authorized candidates. The earlier draft of this document presented
 D conclusorily, and earlier drafts of the comparison materials
-narrated a leaning toward D; both have been retracted in light of
-the empirical field census, which shows D's `token[]`-only label
-surface cannot carry the heterogeneous typed fields that surface in
-every vertical surveyed (see
-[field_classification_experiment.md](field_classification_experiment.md)).
+narrated a leaning toward D; both have been retracted. The retraction
+isn't grounded in *D being unable to carry the heterogeneous typed
+surface* — `assetInfo["source"][<system>]` is a full overflow tier
+(same `VtDictionary` value-type set as Approach A's
+`assetInfo["sourceIds"]`), so D inherits A's heterogeneity coverage.
+What the retraction is grounded in is the methodological problem
+upstream of the comparison itself: the leaning was constructed from a
+scoring framework built after D was already in mind, the framework's
+dimensions weren't derived from the proposal's authorized principles,
+and the empirical census surfaces typed heterogeneity the earlier
+"no field surfaced needing typed structure" framing was about to
+build leverage on. Structurally, D = A's mechanism + Labels for
+classification facets; the comparison treats D symmetrically with
+A/B/C and reports per-mechanism trade-offs rather than a leaning.
 
 **Mechanism.** Decomposes the source-identifiers problem along its natural
 seams:

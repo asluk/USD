@@ -160,17 +160,21 @@ and files.
 
 | Approach | Formality benefits delivered | Distribution cost incurred | Carries heterogeneous typed fields? |
 |---|---|---|---|
-| A — `assetInfo` dictionaries | None of the schema benefits (no schema involved) — relies on registry-as-spec for offline validation only | Zero — no schema to ship | Yes (freeform dicts) |
+| A — `assetInfo` dictionaries | None of the schema benefits (no schema involved) — relies on registry-as-spec for offline validation only | Zero — no schema to ship | Yes (freeform dicts admit the `VtDictionary` value-type set) |
 | B — New multi-apply schema | All eight benefits, with bespoke types and accessors *for the four common fields* | Full distribution matrix per ratified version, recurring across releases | No (fixed four-property surface) |
 | C — Refinement of B (schema + `assetInfo` overflow) | All eight for the four common fields; `assetInfo` overflow inherits A's profile | Full matrix (same as B) plus the dict-overflow A carries | Yes (overflow tier) |
-| D — Refinement of B (existing `UsdSemanticsLabelsAPI` + `assetInfo`) | Six of eight via reuse, *for the controlled-vocabulary classification axis only*; bespoke fallbacks and domain-specific schema versioning are what a new schema would add | None new — `UsdSemanticsLabelsAPI` already shipped in 24.11; the existing distribution carries it | No (`token[]` label values + `string` identifiers cannot represent typed numerics, dates, composite refs, or polymorphic XSD values) |
+| D — A's mechanism + existing `UsdSemanticsLabelsAPI` for classification | Six of eight via reuse, *for the controlled-vocabulary classification axis*; for non-classification content, D inherits A's profile (no schema benefits beyond `UsdModelAPI`-style convenience accessors); bespoke fallbacks and domain-specific schema versioning are what a new schema would add | None new — `UsdSemanticsLabelsAPI` already shipped in 24.11; existing OpenUSD distribution carries it | Yes — `assetInfo["source"][<system>]` is a full overflow tier accepting the same `VtDictionary` value-type set as A; D inherits A's heterogeneity coverage |
 
 The tradeoff has three dimensions, not two: formality benefits,
 distribution cost, **and** whether the mechanism carries the
 heterogeneous typed surface real source systems bundle. Earlier
 drafts of this document collapsed the third dimension by asserting
 the surface was empty; the field experiment shows it is not. Among
-the four candidates, A and C carry it; B-alone and D do not.
+the four candidates, **A, C, and D carry it via their dict tiers**
+(A's flat `assetInfo`, C's overflow on top of typed common fields,
+D's `assetInfo["source"]` overflow alongside Labels-for-classification);
+**B-alone does not** because its four-property fixed surface admits
+only a common subset.
 
 ## What the field experiment shows about the heterogeneity surface
 
@@ -227,13 +231,18 @@ What the experiment supports:
   the prior reading holds.
 - The heterogeneity surface (heterogeneous typed fields, recurring
   across all four verticals) is not carried by `UsdSemanticsLabelsAPI`
-  at all — its `token[]` value type cannot represent timestamps,
+  itself — its `token[]` value type cannot represent timestamps,
   numeric measures with units, composite references, or polymorphic
-  XSD-typed values.
+  XSD-typed values. **In Approach D the heterogeneity surface lives
+  alongside Labels in `assetInfo["source"][<system>]`**, which accepts
+  the broad USD `VtDictionary` value-type set the same way Approach A's
+  `assetInfo["sourceIds"]` does. D = A's mechanism + Labels-for-
+  classification; D inherits A's heterogeneity coverage.
 - A solution proposal that wants to carry the heterogeneity surface
-  needs either freeform `assetInfo` dictionaries (Approach A's tier),
-  a typed multi-apply schema with overflow (Approach C), or
-  per-domain companion schemas (Approach B's natural extension).
+  needs a dict tier — either freeform `assetInfo` dictionaries
+  (Approach A or D), a typed multi-apply schema with overflow
+  (Approach C), or per-domain companion schemas (Approach B's natural
+  extension).
 - Whether the heterogeneity surface *should* be carried by the
   source-identifier mechanism, or excluded by scope and carried by a
   separate mechanism, is the load-bearing scope question. The
@@ -269,11 +278,12 @@ What the experiment supports:
    contexts?** Members who currently maintain large slices of the USD
    distribution matrix may have sharper pictures of the recurring
    cost than members who consume binaries from upstream. The
-   comparison materials elevate distribution to the dominant cost
-   under D's framing; the proposal's original B-cons phrasing
+   comparison materials elevate distribution to a substantial cost in
+   the current ecosystem; the proposal's original B-cons phrasing
    downplays it (*"tools already ship their own domain plugins and
    unrecognized schema data roundtrips without loss"*). Resolution
-   here is itself load-bearing.
+   here is itself load-bearing — and conditional on the AOUSD Build IG
+   substrate trajectory.
 
 These questions are open — the doc does not answer them. They are
 inputs the AOUSD review process is positioned to gather.
