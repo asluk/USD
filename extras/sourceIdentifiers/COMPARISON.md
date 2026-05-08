@@ -353,13 +353,18 @@ Both differences favor schemas over dictionaries — but D gets them via
 
 | Question | A | B | C | D |
 |---|---|---|---|---|
-| What external systems are on this prim? | Parse `assetInfo` | Read `apiSchemas` (per-system) | Read `apiSchemas` (per-system) | Read `apiSchemas` (per-facet) |
+| What external systems are on this prim? | Parse `assetInfo` | Read `apiSchemas` (per-system) | Read `apiSchemas` (per-system) | Read `apiSchemas` per-facet for classification-bearing systems + parse `assetInfo["source"]` (same as A) for identity-only systems |
 | Does this prim have a Revit category? | Parse `assetInfo` | N/A (no companion schema) | Parse `assetInfo` overflow | Read `apiSchemas`, filter `revit:category` |
 | What classification facets does Revit carry? | Parse `assetInfo` | N/A | Parse `assetInfo` overflow | Read `apiSchemas`, filter `revit:*` |
 
-D's per-facet `apiSchemas` instances answer classification queries from the
-schemas list alone. B and C's per-system instances require parsing into the
-dict (C) or are silent on classification (B).
+For the classification axis, D's per-facet `apiSchemas` instances answer
+queries from the schemas list alone. B and C's per-system instances require
+parsing into the dict (C) or are silent on classification (B). For the
+non-classification axis (identity, identity-adjacent fields, heterogeneous
+typed fields), D inherits A's parse-based access on `assetInfo["source"]` —
+D = A's mechanism + `UsdSemanticsLabelsAPI` for classification facets, so
+the discoverability gain is concentrated on the classification slice and
+the non-classification surface carries A's profile.
 
 A caveat from physics workflows: the unified `apiSchemas` list mixes all
 applied schemas (collections, light linking, identifiers, labels) without a
@@ -378,14 +383,18 @@ difference is what a registry-spec validator has to parse.**
 
 | Validator task | A | B | C | D |
 |---|---|---|---|---|
-| Enumerate identifiers | Walk `assetInfo` | `GetAll()` | `GetAll()` + walk overflow | `GetAll()` per facet |
-| Verify domain is registered | Check dict key | Check `domain` token | Check `domain` token | Check apiSchema instance system |
-| Verify facet is registered | Same | N/A | Walk overflow keys | Check apiSchema instance facet |
-| Detect colliding domain claims | Compare dict keys | Compare `domain` tokens | Compare both | Compare apiSchema instance names |
+| Enumerate identifiers | Walk `assetInfo` | `GetAll()` | `GetAll()` + walk overflow | Walk `assetInfo["source"]` (same as A) + `GetAll()` per Labels facet |
+| Verify domain is registered | Check dict key | Check `domain` token | Check `domain` token | Check `assetInfo["source"]` dict key (same as A) and the system component of the apiSchema instance |
+| Verify facet is registered | N/A (no facet surface) | N/A | Walk overflow keys | Check facet component of the apiSchema instance |
+| Detect colliding domain claims | Compare dict keys | Compare `domain` tokens | Compare both | Compare `assetInfo["source"]` dict keys (same as A) and apiSchema instance system names |
 
 All four are buildable as CI validators against an AOUSD Domains Registry.
-D's structure exposes both system and facet on the schemas list, which
-simplifies the validator implementation.
+D inherits A's `assetInfo`-walking work for the identity / identity-adjacent
+/ heterogeneous-typed surface (D = A's mechanism + `UsdSemanticsLabelsAPI`
+for classification facets) and adds per-facet apiSchema-instance checks
+for the classification axis; the apiSchema-instance surface exposes both
+system and facet, which simplifies the validator implementation on that
+slice without removing the `assetInfo`-tier validation work.
 
 **The Domains Registry recommendation stands regardless of mechanism choice.**
 A three-tier model (vendor → multi-vendor → AOUSD-standard) modeled on

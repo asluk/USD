@@ -57,9 +57,14 @@ under any approach. What differs is *where* the validator looks:
 - **B/C:** validator iterates the `apiSchemas` list, checks instance prefix
   against the registry, and reads the `domain` token for secondary
   disambiguation.
-- **D:** validator iterates the `apiSchemas` list and checks both system
-  prefix (`revit`) and facet suffix (`familyType`) against the registry —
-  arguably the easiest validator to implement.
+- **D:** validator does both A's work (iterate `assetInfo["source"]` keys
+  per prim and check each against the registry) and per-facet
+  apiSchema-instance work (iterate the `apiSchemas` list and check both
+  system prefix (`revit`) and facet suffix (`familyType`) against the
+  registry). D = A's mechanism + `UsdSemanticsLabelsAPI` for classification
+  facets, so the validator covers both surfaces; the apiSchema-instance
+  surface gives easier per-facet checks for the classification slice on
+  top of A's `assetInfo`-walking work.
 
 In all four cases, two vendors who both pick `"tracker"` produce a silent
 collision until the registry catches it. The mechanism does not prevent the
