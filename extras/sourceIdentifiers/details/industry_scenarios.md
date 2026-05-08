@@ -1,172 +1,91 @@
-# Industry Scenario Analysis
+# Industry Scenarios — runnable USD examples per vertical
 
 ← [Back to COMPARISON.md](../COMPARISON.md)
 
-Both approaches were exercised across four industry verticals using realistic
-identifier data. The examples are available as matching A/B pairs in
-`extras/sourceIdentifiers/examples/`. This section summarizes the key
-findings from each scenario.
+This document is an index of the runnable USD scenarios authored
+across the four industry verticals, with brief descriptions of what
+each scenario exercises. The scenarios are concrete, illustrative
+encodings of synthesized identifier packages — one prim composition
+per vertical per mechanism.
+
+For the **per-vertical analytical findings** (which fields surface in
+each domain's authoritative spec, what shapes they take, which
+mechanisms can carry them) see
+[`field_classification_experiment.md`](field_classification_experiment.md).
+The field experiment is the empirical source of truth for the
+mechanism-vs-shape question; this document is the example anchor.
+
+§4.5 below — the three-tier scenario for Approach C — is the
+exception. It illustrates a graduation lifecycle (core schema
++ codeless companion + overflow dict) that is C-specific design depth
+and does not appear elsewhere in the comparison materials.
 
 ## 4.1 Architecture, Engineering, Construction & Operations (AECO)
 
-**Files:** `approach_a_assetinfo.usda`, `approach_b_schema.usda`
+**Scenario:** A building with structural columns (IFC + Revit +
+UniClass + OmniClass), an HVAC chiller with PLM and operational
+telemetry (Windchill + SAP + OPC UA + BACnet + IFC), and rooms with
+purely numeric identifiers.
 
-**Scenario:** A building with structural columns (IFC + Revit + Uniclass +
-OmniClass), an HVAC chiller with PLM and operational telemetry (Windchill +
-SAP + OPC UA + BACnet + IFC), and rooms with purely numeric identifiers.
-
-**Findings:**
-
-- **Both approaches handle the core use case well.** A structural column
-  carrying identifiers from four external systems is expressible in both
-  approaches without difficulty.
-
-- **Approach A handles AECO's rich metadata naturally.** IFC metadata
-  (ifcType, schema, objectType), Revit metadata (category, familyType,
-  mark, level), and classification system metadata all fit naturally as
-  key-value pairs in freeform dictionaries.
-
-- **Approach B requires omitting or encoding AECO metadata.** The four
-  fixed properties capture the linkage keys (GlobalId, ElementId,
-  classification code) but cannot express the surrounding context
-  (ifcType, category, level) without companion schemas or custom
-  attributes.
-
-- **Operational telemetry bindings** (OPC UA NodeIds, BACnet object IDs)
-  work equally well in both approaches for the primary identifier. But
-  telemetry metadata (nodeClass, dataType, engineeringUnits) is again
-  natural in A and absent in B's base schema.
+**Files:**
+- `examples/approach_a_assetinfo.usda` — A encoding
+- `examples/approach_b_schema.usda` — B encoding
+- `examples/approach_c_hybrid.usda` — C encoding
+- `examples/column_d.usda` — D encoding (canonical column)
+- `examples/verify_column_d.py` — schema-aware verifier for the D scenario
 
 ## 4.2 Manufacturing, Product Lifecycle & Digital Engineering
 
-**Files:** `manufacturing_a.usda`, `manufacturing_b.usda`
+**Scenario:** A tractor assembly inspired by PTC/Windchill workflows,
+with configurable products, alternative/equivalent identifiers,
+feature-level identifiers, and Mercedes-Benz-style part numbering with
+extension codes. References the AAS Digital Battery Passport
+proof-of-concept ([asluk/OpenUSD-proposals#2](https://github.com/asluk/OpenUSD-proposals/pull/2))
+for AAS structure.
 
-**Scenario:** A tractor assembly (inspired by PTC/Windchill workflows) with
-configurable products, alternative/equivalent identifiers, feature-level
-identifiers, and Mercedes-Benz-style part numbering with extension codes.
-
-**Findings:**
-
-- **Approach A excels at manufacturing's heterogeneous metadata.**
-  Manufacturing identifiers are rarely just a string - they're composite
-  packages. A Windchill part carries displayNumber, navigationType
-  (an opaque filter object), organization, state, lifecyclePhase, and
-  serialNumber. These fit naturally as dictionary entries.
-
-- **Approach B's fixed schema is most strained here.** The four properties
-  (primaryId, revision, domain, label) capture the linkage key and
-  version, but manufacturing workflows *require* the surrounding metadata:
-  - `navigationType` determines which configuration of a product is
-    resolved - without it, the identifier is ambiguous for configurable
-    products
-  - `serialNumber` distinguishes instances of the same part design
-  - `displayNumber` is the human-readable part number vs. the opaque
-    system OID in `primaryId`
-  - Mercedes-Benz extension codes (ES1, ES2) encode color and variant
-    information as structured suffixes - they're not just strings
-
-- **Alternative identifiers** (OEM part number, service/replacement part
-  number) work in both approaches - each gets its own domain/instance.
-  But the *relationship* between alternatives (form-fit-function
-  equivalence) is metadata that only Approach A can express in-line.
-
-- **AAS `specificAssetIds` pattern.** The AAS practice of attaching a
-  typed list of instance-level identifiers (serial number, batch ID,
-  deployed unit ID) per asset directly parallels the multi-identifier-per-prim
-  requirement analyzed above: each entry needs a type label and a scope
-  (type-level vs. instance-level). The AAS Digital Battery
-  Passport ↔ OpenUSD proof-of-concept (asluk/OpenUSD-proposals#2) confirms
-  that Approach C's `assetInfo` overflow handles this list pattern without
-  requiring additional schemas.
-
-- **Feature-level identifiers** (cylinder bores, datum faces) carry
-  manufacturing-critical metadata: diameter, tolerance, surface finish,
-  machine ID. Approach B cannot express any of this without a companion
-  `AmtFeatureIdentifierAPI` schema - exactly the kind of per-domain
-  schema proliferation the proposal warns about.
+**Files:**
+- `examples/manufacturing_a.usda` — A encoding
+- `examples/manufacturing_b.usda` — B encoding
+- `examples/manufacturing_d.usda` — D encoding
 
 ## 4.3 Robotics & Simulation
 
-**Files:** `robotics_a.usda`, `robotics_b.usda`
+**Scenario:** A multi-robot warehouse fleet with URDF/SDF source
+provenance, ROS package identity, fleet assignment, sensor catalog
+identifiers, and operational telemetry binding. Includes a concrete
+URDF → USD → modify → URDF round-trip workflow.
 
-**Scenario:** Multi-robot warehouse fleet with URDF/SDF provenance, ROS
-package identity, fleet assignment, sensor catalog identifiers, and
-operational telemetry binding.
-
-**Findings:**
-
-- **Source format provenance** requires metadata beyond a primary ID:
-  package name, model name, source format (URDF vs SDF), ROS distro.
-  Approach A carries this naturally; Approach B cannot without extension.
-
-- **Shared design ID vs. per-instance fleet assignment** works well in
-  both approaches. The ROS package URI is shared across robot instances;
-  the fleet assignment ID is per-instance. Both mechanisms support this
-  distinction.
-
-- **Sensor catalog identifiers** need manufacturer, part number, datasheet
-  revision - again, metadata that only fits in A's freeform dicts without
-  a companion schema.
-
-- **ROS topic names and frame IDs** are critical operational metadata that
-  bind a sensor prim to its ROS data stream. These are domain-specific
-  fields that B's base schema cannot carry.
-
-**Round-trip scenario: URDF → USD → modify → URDF.**
-
-Consider a concrete round-trip workflow:
-
-1. A UR10e robot is authored in URDF as `package://ur_description/urdf/ur10e.urdf`
-2. An ingestion pipeline converts it to USD, creating `/World/UR10e`
-3. An artist in Omniverse adds visual materials and adjusts joint limits
-4. The modified asset is exported back to URDF for simulation in Gazebo
-
-**Without source identifiers (today):** The originating package URI
-(`package://ur_description/urdf/ur10e.urdf`), model name (`UR10e`), and
-source format (`URDF`) are lost on ingest — or stored in ad-hoc `customData`
-that the URDF exporter doesn't know to look for. The export pipeline must
-either require manual annotation or guess the output package structure.
-
-**With the hybrid:** The ingestion pipeline writes:
-- `sourceIdentifier:ros:primaryId = "package://ur_description/urdf/ur10e.urdf"`
-- `sourceIdentifier:ros:domain = "org.ros"`
-- Overflow: `{packageName: "ur_description", modelName: "UR10e", sourceFormat: "URDF"}`
-
-The URDF exporter reads `sourceIdentifier:ros:primaryId` to reconstruct the
-package URI and uses the overflow metadata to restore the URDF structure.
-The round-trip preserves provenance without the exporter needing to know
-about ad-hoc `customData` conventions.
+**Files:**
+- `examples/robotics_a.usda` — A encoding
+- `examples/robotics_b.usda` — B encoding
+- `examples/robotics_d.usda` — D encoding
 
 ## 4.4 Media & Entertainment
 
-While not separately implemented as a test file (USD's existing `assetInfo`
-already covers the M&E model-level case), the analysis confirms:
+**Scenario:** Model-level asset tracking (asset DB IDs, versions,
+approvals), sub-model identifiers (props/lights/materials with their
+own tracking IDs), and multi-system tracking (Flow Production
+Tracking + ftrack + internal asset DBs). Not separately implemented
+as a runnable file — USD's existing `assetInfo` already covers the
+M&E model-level case across A and D, and the surface is light enough
+that the AECO and manufacturing scenarios cover the structural cases.
 
-- **Model-level asset tracking** (asset management DB IDs, versions,
-  approvals) maps to both approaches equally well, since the metadata
-  package is typically just an ID + version.
+## 4.5 Three-tier scenario: IFC codeless companion + AAS overflow graduation (Approach C)
 
-- **Sub-model identification** (individual props, lights, materials with
-  their own tracking IDs) benefits from the schema being applicable to
-  any prim (both approaches support this).
+This scenario illustrates the three-tier graduation model under
+Approach C: a core schema, codeless companion schemas published by
+domain stewards, and freeform `assetInfo` overflow for fields not yet
+typed.
 
-- **Multi-system tracking** (Flow Production Tracking + ftrack + internal
-  DB) is the same multi-domain pattern demonstrated in the other
-  scenarios.
-
-## 4.5 Three-tier scenario: IFC codeless companion + AAS overflow graduation
-
-This scenario demonstrates the three-tier model from §6 of COMPARISON.md using
-two domains at different maturity levels on the same prim.
-
-**Setup:** A building chiller prim carries both IFC and AAS/DPP identifiers.
-IFC has three stable metadata fields that have been promoted to a codeless
-companion schema; AAS has a mix of stable identifier fields in a companion
-schema and broader DPP fields (lifecycle, compliance, sustainability) in
-overflow. Note: AAS community review confirmed that a Digital Product
-Passport encompasses information beyond identity — those overflow fields
-depend on source identifiers as a foundation but are out of scope for this
-mechanism. They appear here to illustrate overflow's role as a staging area.
+**Setup.** A building chiller prim carries both IFC and AAS/DPP
+identifiers. IFC has stable metadata fields promoted to a codeless
+companion schema published by buildingSMART. AAS has a mix of stable
+identifier fields in an IDTA-published companion schema and broader
+DPP fields (lifecycle, compliance, sustainability) in overflow. AAS
+community review confirms a Digital Product Passport encompasses
+information beyond identity; those overflow fields depend on source
+identifiers as a foundation but are out of scope for this mechanism —
+they appear here to illustrate overflow's role as a staging area.
 
 ```usda
 def Xform "Chiller_01" (
@@ -216,69 +135,32 @@ def Xform "Chiller_01" (
 
 **What this demonstrates:**
 
-1. **Three tiers coexist cleanly.** Core schema properties, codeless companion
-   properties, and overflow dicts all compose on the same prim without
-   conflict. Each tier has its own namespace.
-
-2. **Maturity maps to tier.** IFC's `ifcType` and `ifcSchema` are in the
-   companion schema because they've been stable since IFC2x (20+ years).
-   IFC property set values stay in overflow because they're
-   project/country-specific. AAS's `assetKind` (formerly `scope`) has
-   graduated from overflow to the IDTA companion schema; DPP-specific
-   lifecycle and compliance fields remain in overflow as they are beyond
-   the identity scope of this mechanism.
-
-3. **Per-property vs. element-wise composition.** The companion schema
-   properties (`ifcType`, `assetKind`) compose per-property — an override
-   layer can change `ifcType` without affecting `ifcSchema`. The overflow
-   dict entries compose element-wise — overriding one key in the `ifc`
-   dict doesn't discard the others, but the composition semantics are
-   coarser.
-
+1. **Three tiers coexist cleanly.** Core schema properties, codeless
+   companion properties, and overflow dicts all compose on the same
+   prim without conflict; each tier has its own namespace.
+2. **Maturity maps to tier.** IFC's `ifcType` / `ifcSchema` are in the
+   companion schema because they've been stable since IFC2x (20+
+   years). IFC property set values stay in overflow because they're
+   project/country-specific. AAS's `assetKind` graduated from overflow
+   to the IDTA companion schema; DPP-specific lifecycle and compliance
+   fields remain in overflow as they are beyond the identity scope of
+   this mechanism.
+3. **Per-property vs. element-wise composition.** Companion schema
+   properties (`ifcType`, `assetKind`) compose per-property — an
+   override layer can change `ifcType` without affecting `ifcSchema`.
+   Overflow dict entries compose element-wise — overriding one key in
+   the `ifc` dict doesn't discard the others, but the composition
+   semantics are coarser.
 4. **Independent domain evolution.** buildingSMART can update their
-   companion schema (add `ifcPredefinedType`) without coordinating with
-   IDTA or AOUSD. IDTA can promote `idShort` from overflow to companion
-   schema on their own schedule.
+   companion schema (add `ifcPredefinedType`) without coordinating
+   with IDTA or AOUSD. IDTA can promote `idShort` from overflow to
+   companion schema on their own schedule.
 
 **Distribution model for this scenario:**
 
 | Schema | Publisher | Distribution |
 |--------|-----------|-------------|
 | `SourceIdHybridAPI` (core) | AOUSD | Ships with OpenUSD |
-| `SourceIdIfcAPI` (companion) | buildingSMART | Bundled with IFC↔USD converter tools |
+| `SourceIdIfcAPI` (companion) | buildingSMART | Bundled with IFC ↔ USD converter tools |
 | `SourceIdAasAPI` (companion) | IDTA | Published as standalone plugin, bundled with AAS tooling |
 | Overflow dict conventions | Each domain | Documented in AOUSD Domains Registry |
-
-## Cross-industry synthesis
-
-The pattern across all four verticals is consistent:
-
-| Dimension | Approach A | Approach B | Approach C (three-tier) |
-|-----------|-----------|------------|------------------------|
-| Primary identifier (linkage key) | ✅ Adequate | ✅ Adequate | ✅ Schema property |
-| Revision/version | ✅ Adequate | ✅ Adequate | ✅ Schema property |
-| Domain-specific metadata (stable) | ✅ Natural (dict) | ❌ Requires companion schema | ✅ Codeless companion schema |
-| Domain-specific metadata (experimental) | ✅ Natural (dict) | ❌ Requires companion schema | ✅ Overflow dict |
-| Multi-domain on single prim | ✅ Natural | ✅ Natural | ✅ Natural |
-| Shared identity across instances | ✅ Natural | ✅ Natural | ✅ Natural |
-| Composite keys (configurable products) | ✅ Natural | ❌ Cannot express without extension | ✅ Companion or overflow |
-| Alternative/equivalent identifiers | ✅ Natural | ✅ Natural (each gets an instance) | ✅ Natural |
-| Relationship between alternatives | ✅ Metadata in dict | ❌ No mechanism | ✅ Companion or overflow |
-| Type safety for stable fields | ❌ Untyped dict | ✅ Schema-validated | ✅ Companion schema |
-| Discoverability for stable fields | ❌ No schema registry | ✅ Full registry | ✅ Companion in registry |
-
-**The critical finding:** For industries with simple identifier schemes
-(a string ID + optional version), both approaches are equivalent. For
-industries with rich, heterogeneous identifier metadata — which includes
-manufacturing, AECO, and robotics — Approach A's freeform dictionaries
-handle all tested scenarios without requiring per-domain schema work.
-
-**The three-tier refinement** addresses the gap: domains with stable
-metadata fields (IFC's `ifcType`, AAS's `assetKind`) gain type safety
-and discoverability through codeless companion schemas, while
-experimental fields retain the zero-friction overflow path. This
-resolves the tension between Approach A's flexibility and Approach B's
-governance without requiring all domains to do schema work on day 1.
-
-This is the central tension driving the hybrid recommendation in
-[hybrid_analysis.md](hybrid_analysis.md).

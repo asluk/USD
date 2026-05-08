@@ -201,18 +201,156 @@ api.GetPrimaryIdAttr().Get(&id);
 std::vector<TfToken> instances = UsdSourceIdSchemaAPI::GetAll(prim);
 ```
 
+## Approach C: Refinement of B (B + assetInfo overflow)
+
+**Module:** `pxr/usd/usdSourceIdHybrid/`
+**Schema type:** Multi-apply API schema (`UsdSourceIdHybridAPI`)
+**See:** [hybrid_analysis.md](hybrid_analysis.md) for the full design rationale,
+trade-offs, and migration path.
+
+C is a refinement of B: same multi-apply schema for the four common
+fields, plus A's `assetInfo` overflow dictionary for fields the schema
+cannot carry, keyed by matching the schema instance name to the
+`assetInfo["sourceIds"]` dictionary key. The overflow tier carries
+heterogeneous typed fields (timestamps, numeric measures with units,
+composite refs, polymorphic typed values) that the four common
+schema-typed fields cannot carry on their own.
+
+---
+
+## Approach D: Refinement of A (A + Labels for classification facets)
+
+**Module:** `pxr/usd/usdSourceId/` — the same module as Approach A.
+D inherits A's mechanism, so it inherits A's convenience wrapper.
+**Schema type:** Non-applied API schema (`UsdSourceIdAPI`) wrapping
+the `assetInfo` identifier tier; plus `UsdSemanticsLabelsAPI` (shipping
+in OpenUSD 24.11) applied per controlled-vocabulary classification facet.
+No new applied schema is introduced.
+**Precedent:** `UsdModelAPI` for the non-applied `assetInfo` wrapper
+(same as Approach A); `UsdSemanticsLabelsAPI` for the classification
+facets.
+
+D is structurally a refinement of A: take A's `assetInfo` overflow
+mechanism for identity, identity-adjacent fields, and the heterogeneous
+typed surface, and add `UsdSemanticsLabelsAPI` applied per classification
+facet for per-facet discoverability and composition on the
+controlled-vocabulary axis. Earlier framings positioned D as a
+"refinement of B" (treating Labels as an alternative to B's typed common
+fields); structurally that's a comparison-level positioning, not a
+mechanism relationship — D shares no mechanism with B beyond the
+`apiSchemas` list, and shares the entire `assetInfo` tier with A.
+
+**Provenance note.** D was constructed downstream of the proposal
+during this comparison work, *not* a peer candidate the proposal
+itself authorized. The proposal explicitly authorized A and B and
+hinted at C as a "hybrid or alternative." D is included as an
+explored idea so its tradeoffs can be evaluated alongside the
+authorized candidates. The earlier draft of this document presented
+D conclusorily, and earlier drafts of the comparison materials
+narrated a leaning toward D; both have been retracted. The retraction
+isn't grounded in *D being unable to carry the heterogeneous typed
+surface* — `assetInfo["source"][<system>]` is a full overflow tier
+(same `VtDictionary` value-type set as Approach A's
+`assetInfo["sourceIds"]`), so D inherits A's heterogeneity coverage.
+What the retraction is grounded in is the methodological problem
+upstream of the comparison itself: the leaning was constructed from a
+scoring framework built after D was already in mind, the framework's
+dimensions weren't derived from the proposal's authorized principles,
+and the empirical census surfaces typed heterogeneity the earlier
+"no field surfaced needing typed structure" framing was about to
+build leverage on. Structurally, D = A's mechanism + Labels for
+classification facets; the comparison treats D symmetrically with
+A/B/C and reports per-mechanism trade-offs rather than a leaning.
+
+**Mechanism.** Decomposes the source-identifiers problem along its natural
+seams:
+
+- **Identity axis** — opaque pointers back into the source system live in
+  `assetInfo["source"][<system>]`, with conventional keys `identifier` (the
+  primary ID string), optional `version`, and any identity-adjacent strings
+  that round-trip into the system (e.g., `displayNumber`, `serialNumber`,
+  `navigationType`).
+- **Classification axis** — controlled-vocabulary terms drawn from each
+  system's published namespace ride `SemanticsLabelsAPI:<system>:<facet>`
+  instances, with values in `token[] semantics:labels:<system>:<facet>`
+  properties. Each facet is its own apiSchema instance — finer-grained than
+  B/C's per-system instances.
+
+```usda
+def Mesh "Column_C14" (
+    apiSchemas = ["SemanticsLabelsAPI:ifc:type",       "SemanticsLabelsAPI:ifc:objectType",
+                  "SemanticsLabelsAPI:revit:category", "SemanticsLabelsAPI:revit:familyType",
+                  "SemanticsLabelsAPI:revit:mark",     "SemanticsLabelsAPI:revit:level"]
+    assetInfo = {
+        dictionary source = {
+            dictionary ifc   = { string identifier = "2O2Fr$t4X7Zf8NOew3FNr2" }
+            dictionary revit = { string identifier = "847562"
+                                 string version = "2026.1" }
+        }
+    }
+)
+{
+    token[] semantics:labels:ifc:type         = ["IfcColumn"]
+    token[] semantics:labels:ifc:objectType   = ["W14x90"]
+    token[] semantics:labels:revit:category   = ["Structural Columns"]
+    token[] semantics:labels:revit:familyType = ["W14x90"]
+    token[] semantics:labels:revit:mark       = ["C-14"]
+    token[] semantics:labels:revit:level      = ["Level 3"]
+}
+```
+
+**Key characteristics:**
+
+- **No new applied schema.** D requires no ratification, no codegen, no
+  plugin distribution. The applied schema (`UsdSemanticsLabelsAPI`) is
+  already in OpenUSD core. Vendors and standards bodies can adopt D the
+  day the AOUSD Domains Registry publishes their system key.
+
+- **The four "common fields" of B/C dissolve.**
+  - `domain` ≡ apiSchema instance system name (`revit`).
+  - `label` ≡ apiSchema instance facet (`revit:familyType`) plus the
+    registered domain's display label.
+  - `revision` is per-system in `assetInfo` (because not every system has
+    a revision concept).
+  - `primaryId` is the `identifier` dict key in `assetInfo`.
+
+- **Per-facet apiSchema instances expose structure.** A consumer asking
+  "what facets does Revit carry on this prim?" answers from the apiSchemas
+  list directly, without parsing properties or dictionaries — finer-grained
+  than B/C's per-system instances.
+
+- **The identity vs. classification split is the working rule.** Identifier
+  strings and identity-adjacent fields (anything that must round-trip
+  exactly into the source system) go in `assetInfo`. Controlled-vocabulary
+  terms (anything drawn from a published namespace) ride
+  `SemanticsLabelsAPI`. Borderline fields (e.g., Windchill `displayNumber`,
+  Mercedes `extensionCode`) are open in AOUSD review — see COMPARISON.md
+  Open Questions.
+
+- **Composition** is per-property for label arrays (token arrays, finer
+  than B/C's per-system instance) and per-key for `assetInfo` strings
+  (same as A and the overflow tier of C). For non-timevarying strings —
+  which describes nearly all identifier and label values — composition
+  behavior is effectively equivalent to A/B/C at the granularity authors
+  actually use.
+
+**No C++ API required.** Authors and consumers use the existing
+`UsdSemanticsLabelsAPI` and `UsdPrim::GetAssetInfo()` APIs. No
+identifier-specific class or wrapper is needed.
+
+---
+
 ## Side-by-side summary
 
-| Aspect | Approach A | Approach B |
-|--------|-----------|------------|
-| Data location | `assetInfo` metadata | Prim properties |
-| Schema type | Non-applied | Multi-apply |
-| Properties defined | None | 4 per instance |
-| Domain metadata | Freeform dictionary | Fixed set (extensible via companion schemas) |
-| Discoverability | Must check `assetInfo["sourceIds"]` exists | `apiSchemas` list + `HasAPI<>()` |
-| Fallback values | None | Empty strings |
-| GUI presentation | Requires custom code | Automatic |
-| Composition | Per dict key (element-wise) | Per property (independent) |
+| Aspect | Approach A | Approach B | Approach C | Approach D |
+|--------|-----------|------------|------------|------------|
+| Identity location | `assetInfo` metadata | Prim properties | Prim properties | `assetInfo` metadata |
+| Classification location | `assetInfo` metadata | Prim properties | `assetInfo` overflow | `SemanticsLabelsAPI` token arrays |
+| New applied schema needed? | No | Yes | Yes | **No** |
+| `apiSchemas` granularity | None | Per-system | Per-system | **Per-facet** |
+| Domain metadata | Freeform dictionary | Fixed 4 fields | Fixed 4 + overflow | Token labels + identity dict |
+| Discoverability | Parse `assetInfo` | `apiSchemas` + `HasAPI<>()` | `apiSchemas` + parse overflow | `apiSchemas` (per-facet) |
+| Composition (non-timevarying) | Per dict key | Per property | Per property + per key | Per property + per key |
 
 ## Terminology note: `metadata` sub-dictionary key
 

@@ -1,5 +1,16 @@
 # Convergence Scenario: Competing Identifier Schemes Over Time
 
+> **Why no Approach D scenario.** This simulation is a *schema-promotion
+> lifecycle* (vendor scheme → multi-vendor convention → AOUSD-standard
+> ratified schema). It applies to A, B, and C because each involves a
+> schema or registered convention that gets promoted as it matures.
+> Approach D has no new schema to ratify or promote — vendors apply
+> `UsdSemanticsLabelsAPI:<system>:<facet>` from day one, and "convergence"
+> reduces to a registry-level facet addition (a GitHub PR against the
+> AOUSD Domains Registry markdown). The convergence narrative below
+> therefore covers A / B / C only; D's lighter-weight equivalent is
+> documented in `details/scope_promotion_simulation.md`.
+
 ## The Setup
 
 Two companies independently build USD pipelines for digital twin workflows.

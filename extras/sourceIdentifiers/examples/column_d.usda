@@ -1,0 +1,53 @@
+#usda 1.0
+(
+    doc = """Approach D — Labels + Identity.
+
+    The same structural column shown in COMPARISON.md §"The Four Approaches".
+    Identity (the opaque pointer back into each source system) lives in
+    assetInfo["source"][<system>]; classification facets ride
+    UsdSemanticsLabelsAPI instances keyed as <system>:<facet>.
+
+    Distinct apiSchema instances for each classification facet make
+    per-facet discoverability cheap from the apiSchemas list alone."""
+)
+
+def Mesh "Column_C14" (
+    apiSchemas = ["SemanticsLabelsAPI:ifc:type",
+                  "SemanticsLabelsAPI:ifc:objectType",
+                  "SemanticsLabelsAPI:revit:category",
+                  "SemanticsLabelsAPI:revit:familyType",
+                  "SemanticsLabelsAPI:revit:mark",
+                  "SemanticsLabelsAPI:revit:level",
+                  "SemanticsLabelsAPI:uniclass:system",
+                  "SemanticsLabelsAPI:uniclass:title",
+                  "SemanticsLabelsAPI:omniclass:system",
+                  "SemanticsLabelsAPI:omniclass:title"]
+    assetInfo = {
+        dictionary source = {
+            dictionary ifc = {
+                string identifier = "2O2Fr$t4X7Zf8NOew3FNr2"
+            }
+            dictionary revit = {
+                string identifier = "847562"
+                string version = "2026.1"
+            }
+            dictionary uniclass = {
+                string identifier = "Ss_25_10_30"
+            }
+            dictionary omniclass = {
+            }
+        }
+    }
+)
+{
+    token[] semantics:labels:ifc:type         = ["IfcColumn"]
+    token[] semantics:labels:ifc:objectType   = ["W14x90"]
+    token[] semantics:labels:revit:category   = ["Structural Columns"]
+    token[] semantics:labels:revit:familyType = ["W14x90"]
+    token[] semantics:labels:revit:mark       = ["C-14"]
+    token[] semantics:labels:revit:level      = ["Level 3"]
+    token[] semantics:labels:uniclass:system  = ["Uniclass 2015"]
+    token[] semantics:labels:uniclass:title   = ["Column systems"]
+    token[] semantics:labels:omniclass:system = ["OmniClass"]
+    token[] semantics:labels:omniclass:title  = ["Structural Steel Columns"]
+}

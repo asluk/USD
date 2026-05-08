@@ -2,6 +2,18 @@
 
 *A retrospective on building a technical analysis document with an AI agent.*
 
+> **Note on currency.** This retrospective documents the April 7–8,
+> 2026 work that produced the original three-approach comparison
+> (A / B / C) with a recommendation toward Approach C. The work was
+> subsequently expanded to four approaches (adding D), then re-anchored
+> in 2026-05-06→07 around an empirical field census and a
+> principle-derived scoring rebuild that retracted any single-mechanism
+> leaning. The PR-level methodology retrospective at
+> `https://github.com/asluk/USD/pull/7` (issue comment) covers that
+> later journey. The references below to "the recommended approach"
+> describe the state of the comparison at the time this document was
+> written, not the current state.
+
 ## 1. Project Scope
 
 This document was produced through human-agent collaboration over approximately

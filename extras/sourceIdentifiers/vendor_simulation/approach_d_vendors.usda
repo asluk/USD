@@ -1,0 +1,225 @@
+#usda 1.0
+(
+    """
+    Approach D (Labels + Identity): Multi-vendor ecosystem simulation.
+
+    Same eight vendors / standards bodies as approach_a/b/c_vendors.usda.
+
+    Identity → assetInfo["source"][<system>]: opaque pointers (URNs, GlobalIds,
+    file IDs, Nucleus paths) that round-trip into the originating system, plus
+    versioning where the system carries one.
+
+    Classification → SemanticsLabelsAPI:<system>:<facet>: controlled-vocabulary
+    terms drawn from each system's published namespace (e.g. ifc:type from
+    IfcRoot subclasses, sidefx:assetType, ashrae:representationSpec).
+
+    Demonstrates:
+      - Per-facet apiSchemas instances make discoverability finer-grained than
+        per-system schema instances (B/C). A consumer asking "what facets does
+        Revit carry on this prim?" reads the apiSchemas list directly.
+      - No new applied schema. Uses UsdSemanticsLabelsAPI (shipping in 24.11).
+      - Collision and promotion lifecycles still work — see the demo prims at
+        the bottom of this file.
+    """
+    defaultPrim = "Assembly"
+    metersPerUnit = 1.0
+)
+
+def Xform "Assembly" (
+    kind = "assembly"
+)
+{
+    # Turbine blade with identifiers from 8 different systems.
+    def Mesh "TurbineBlade_001" (
+        prepend apiSchemas = [
+            "SemanticsLabelsAPI:nvidia:assetType",
+            "SemanticsLabelsAPI:nvidia:checkpoint",
+            "SemanticsLabelsAPI:adobe:collection",
+            "SemanticsLabelsAPI:apple:assetCategory",
+            "SemanticsLabelsAPI:sidefx:assetType",
+            "SemanticsLabelsAPI:autodesk:productLine",
+            "SemanticsLabelsAPI:ifc:type",
+            "SemanticsLabelsAPI:ifc:schema",
+            "SemanticsLabelsAPI:ashrae:representationSpec",
+            "SemanticsLabelsAPI:step:entityType",
+            "SemanticsLabelsAPI:step:standard"
+        ]
+        assetInfo = {
+            dictionary source = {
+                dictionary nvidia = {
+                    string identifier = "omniverse://nucleus.nvidia.com/assets/turbine/blade_v3"
+                    string version = "3.2.1"
+                }
+                dictionary adobe = {
+                    string identifier = "urn:adobe:sub3d:a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    string version = "v2"
+                }
+                dictionary apple = {
+                    string identifier = "com.apple.realitykit.asset.TB-001"
+                    string version = "1.0"
+                }
+                dictionary sidefx = {
+                    string identifier = "SideFX::turbine_blade::3.0"
+                    string version = "3.0"
+                }
+                dictionary autodesk = {
+                    string identifier = "urn:adsk.wipprod:dm.lineage:7Rf2wvPxSEeHmBq-XqFD_g"
+                    string version = "v47"
+                }
+                dictionary ifc = {
+                    string identifier = "2O2Fr$t4X7Zf8NOew3FL02"
+                }
+                dictionary ashrae = {
+                    string identifier = "ASHRAE205:RS0004:CompressorSystem"
+                    string version = "1.39.0"
+                }
+                dictionary step = {
+                    string identifier = "STEP-FILE-ID:#4782"
+                    string version = "AP242-ED3"
+                }
+            }
+        }
+    )
+    {
+        token[] semantics:labels:nvidia:assetType            = ["TurbineBlade"]
+        token[] semantics:labels:nvidia:checkpoint           = ["cp_20260214_v32"]
+        token[] semantics:labels:adobe:collection            = ["Aerospace"]
+        token[] semantics:labels:apple:assetCategory         = ["MechanicalPart"]
+        token[] semantics:labels:sidefx:assetType            = ["DigitalAsset"]
+        token[] semantics:labels:autodesk:productLine        = ["Fusion 360"]
+        token[] semantics:labels:ifc:type                    = ["IfcMechanicalFastener"]
+        token[] semantics:labels:ifc:schema                  = ["IFC4x3"]
+        token[] semantics:labels:ashrae:representationSpec   = ["RS0004"]
+        token[] semantics:labels:step:entityType             = ["PRODUCT_DEFINITION"]
+        token[] semantics:labels:step:standard               = ["ISO 10303-242:2022"]
+    }
+
+    def Xform "Fasteners"
+    {
+        # Identical bolts share the same Windchill identity (different instance paths).
+        # No classification labels needed at this scale of detail.
+        def Mesh "Bolt_001" (
+            assetInfo = {
+                dictionary source = {
+                    dictionary windchill = {
+                        string identifier = "VR:wt.part.WTPart:55012001"
+                        string version = "Rev.A"
+                        string displayNumber = "BLT-M12x35-GR8.8"
+                    }
+                }
+            }
+        )
+        {
+        }
+
+        def Mesh "Bolt_002" (
+            assetInfo = {
+                dictionary source = {
+                    dictionary windchill = {
+                        string identifier = "VR:wt.part.WTPart:55012001"
+                        string version = "Rev.A"
+                        string displayNumber = "BLT-M12x35-GR8.8"
+                    }
+                }
+            }
+        )
+        {
+        }
+        # ... (28 more bolts share the same identity)
+    }
+
+    # =========================================================================
+    # COLLISION SCENARIO: Two vendors pick the same system key
+    # =========================================================================
+    #
+    # Same dynamic as A/B/C: two vendors picking "tracker" as their system key
+    # collide. Detection is symmetric across mechanisms — a registry-spec
+    # validator must check the apiSchemas instance name (or assetInfo dict key)
+    # against the AOUSD Domains Registry. The visibility differs from B in
+    # that D's apiSchemas list shows facets, not just systems, so a validator
+    # can also check facet registration.
+    def Mesh "CollisionDemo" (
+        prepend apiSchemas = ["SemanticsLabelsAPI:tracker:assetType"]
+        assetInfo = {
+            dictionary source = {
+                dictionary tracker = {
+                    string identifier = "TRACK-001-V1"
+                    string registeredOwner = "com.vendor1.tracker"
+                }
+            }
+        }
+    )
+    {
+        token[] semantics:labels:tracker:assetType = ["AssetTrackerEntry"]
+        # If a second vendor also wanted "tracker" as their system key,
+        # they would need to coordinate via the AOUSD Domains Registry —
+        # the same governance step required under A/B/C. The mechanism
+        # itself does not enforce uniqueness; the registry does.
+    }
+
+    # =========================================================================
+    # PROMOTION LIFECYCLE: Vendor identifier promoted to multi-vendor
+    # =========================================================================
+    #
+    # In Approach D, promotion is lighter than B/C because there is no schema
+    # property to migrate. The system key in assetInfo (e.g. "nvidia_simready")
+    # and the apiSchemas instance prefix (e.g. SemanticsLabelsAPI:nvidia_simready:*)
+    # are renamed together. Optionally, a registry-level alias maps the old
+    # name to the new one for transition.
+    def Mesh "PromotionDemo" (
+        prepend apiSchemas = [
+            "SemanticsLabelsAPI:nvidia_simready:certificationLevel",
+            "SemanticsLabelsAPI:nvidia_simready:assetType"
+        ]
+        assetInfo = {
+            dictionary source = {
+                dictionary nvidia_simready = {
+                    string identifier = "simready://turbine_blade_v3"
+                    string version = "3.0"
+                }
+            }
+        }
+    )
+    {
+        token[] semantics:labels:nvidia_simready:certificationLevel = ["Certified"]
+        token[] semantics:labels:nvidia_simready:assetType          = ["TurbineBlade"]
+
+        # Post-promotion, the system key migrates from "nvidia_simready" to
+        # "simready" (or "ext.simready" at the multi-vendor tier). Both the
+        # apiSchemas instance prefixes and the assetInfo dict key migrate
+        # together; no schema-property rename is required.
+    }
+
+    # =========================================================================
+    # HETEROGENEOUS METADATA: split by identity vs. classification
+    # =========================================================================
+    #
+    # Where Approach B forces "displayNumber / navigationType / organization"
+    # into companion schemas or custom attributes, D routes them by their
+    # nature: identity-adjacent strings stay in assetInfo, controlled-vocabulary
+    # terms become labels.
+    def Mesh "HeterogeneousDemo" (
+        prepend apiSchemas = [
+            "SemanticsLabelsAPI:windchill:state",
+            "SemanticsLabelsAPI:windchill:organization"
+        ]
+        assetInfo = {
+            dictionary source = {
+                dictionary windchill = {
+                    string identifier = "VR:wt.part.WTPart:23639563"
+                    string version = "Rev.C"
+                    string displayNumber = "CH-7500-A"
+                    string navigationType = "OR:wt.filter.NavigationCriteria:7608531"
+                }
+            }
+        }
+    )
+    {
+        token[] semantics:labels:windchill:state        = ["Released"]
+        token[] semantics:labels:windchill:organization = ["com.carrier.hvac"]
+        # displayNumber and navigationType stay in assetInfo because they
+        # round-trip exactly into Windchill (identity-adjacent). state and
+        # organization ride SemanticsLabelsAPI because they are
+        # controlled-vocabulary terms.
+    }
+}

@@ -1,6 +1,20 @@
-# Scope Promotion Simulation: From Overflow Dict to Schema Property
+# Scope Promotion Simulation: From Overflow Dict to Schema Property (Approach C)
 
 ← [Back to COMPARISON.md](../COMPARISON.md)
+
+> **Scope of this simulation.** `scope` (type-vs-instance) happens to
+> be a controlled-vocabulary value (`type` / `instance`), so under
+> Approach D it could ride `SemanticsLabelsAPI:aas:scope` as a single
+> classification facet, with "promotion" reducing to a registry-level
+> facet addition. Many of the heterogeneous typed fields the field
+> experiment surfaces would not have that option — AAS `Property.value`
+> is XSD-typed across numerics, dates, booleans and binary, and AAS
+> `RelationshipElement.first/.second` are composite References — and
+> their promotion lifecycle would follow the C-tier path documented
+> here. The five-phase C lifecycle below is therefore one of two
+> graduation paths a real domain may take depending on whether its
+> field is a controlled-vocabulary token or a heterogeneously typed
+> value.
 
 ## Overview
 
@@ -330,7 +344,7 @@ continued to work. The overflow dict provided a **zero-friction onramp**
 for AAS-specific metadata, and the promotion path provided a **governed
 escalation** when the field proved universally useful.
 
-### Why this matters for the Hybrid C recommendation
+### Why this matters for Approach C
 
 1. **The overflow dict answers the "what if we need more fields" objection.**
    Stakeholders can ship immediately without schema work. Fields that prove

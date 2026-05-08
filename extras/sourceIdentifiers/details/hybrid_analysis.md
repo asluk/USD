@@ -1,6 +1,35 @@
-# Hybrid Analysis & Recommendation
+# Hybrid Analysis (Approach C)
 
 ← [Back to COMPARISON.md](../COMPARISON.md)
+
+This document is the design reference for **Approach C** — a refinement
+of B that adds an `assetInfo` overflow dictionary (borrowed from A) to
+B's multi-apply schema, closing B's heterogeneity gap.
+
+The earlier draft of this document positioned C as "the natural
+fallback if a domain surfaces classification fields needing typed
+non-token-array structure that `UsdSemanticsLabelsAPI` cannot
+represent." That framing has been retracted. The field census in
+[`field_classification_experiment.md`](field_classification_experiment.md)
+shows that heterogeneous typed fields (timestamps, numeric measures
+with units, composite typed references, polymorphic XSD-typed values)
+surface in **every vertical surveyed** — AECO, Manufacturing/PLM,
+Robotics, M&E. C is therefore a present-day fit for the empirical
+heterogeneity surface, not a fallback for hypothetical future domains.
+
+C, Approach A, and Approach D all accommodate the empirical
+heterogeneity surface via dict tiers (A's flat `assetInfo`, C's
+overflow on top of typed common fields, D's `assetInfo["source"]`
+overflow alongside `UsdSemanticsLabelsAPI`-for-classification). The
+tradeoff among the three is whether the typed common fields ride a
+new USD schema plugin (C — with its runtime properties on top of the
+spec-text ratification) or stay in `assetInfo` formalized in AOUSD
+spec text alongside the rest of the package (A and D); and where the
+controlled-vocabulary classification facets ride. These are
+downstream of this document and are open questions for AOUSD review.
+
+The migration discussion in §7.6 is also useful for pipelines moving
+off of `customData` toward any of the four mechanisms.
 
 ### 7.1 The case against either approach alone
 
@@ -19,10 +48,10 @@ a companion schema for their domain-specific fields would either:
 (b) push metadata into `customData` - recreating exactly the
 fragmentation problem the proposal aims to solve.
 
-### 7.2 Recommended hybrid: Approach B + metadata overflow dictionary
+### 7.2 Hybrid mechanism: B + metadata overflow dictionary
 
-The recommended approach combines Approach B's structural advantages
-with Approach A's metadata flexibility:
+C combines Approach B's structural advantages with Approach A's metadata
+flexibility:
 
 **Use the multi-apply schema (Approach B) as the base**, providing
 typed, schema-backed common fields that all tools can discover and
@@ -367,22 +396,28 @@ mapping (asluk/OpenUSD-proposals#2) exercising both Approach A and B. The hybrid
 pattern absorbed all DPP-specific fields in the overflow dictionary, confirming that
 no companion schema is needed for this use case.
 
-### 7.7 Final recommendation
+### 7.7 Adoption shape (if C is used)
 
-> **Adopt a multi-apply schema (Approach B) with a freeform `metadata`
-> dictionary property as the fifth field.** This provides schema-backed
-> common fields for interoperability and governance, plus a freeform
-> escape hatch for the domain-specific metadata that real-world industrial
-> workflows require.
->
-> Establish an AOUSD Domains Registry informed by Khronos glTF's `Prefixes.md`
-> and W3C's WICG incubation model: low-barrier vendor registration, three-tier
-> promotion path, GitHub-based process.
->
-> The resulting mechanism addresses all eight design principles from the
-> proposal: separation of concerns, industry agnosticism, vendor
-> extensibility, composability, discoverability, external queryability,
-> round-trip fidelity, and minimal disruption.
+If a domain or pipeline ever needs the C-tier shape, the adoption profile
+is:
+
+- A multi-apply `SourceIdHybridAPI` ratified and shipped (or distributed
+  as a plugin), carrying typed `primaryId`, `revision`, `domain`, `label`
+  properties.
+- An AOUSD Domains Registry — mechanism-independent — modeled on Khronos
+  glTF's `Prefixes.md` and W3C's WICG incubation: low-barrier vendor
+  registration, three-tier promotion path (vendor → multi-vendor →
+  AOUSD-standard), GitHub-based process. The Domains Registry stands as
+  a recommendation regardless of which mechanism is adopted, including D.
+- `assetInfo["sourceIds"][<domain>]` overflow for domain-specific metadata
+  the schema does not carry.
+
+The four-common-fields schema does not appear in D, which dissolves them
+(`domain` ≡ apiSchema instance system name, `label` ≡ facet name,
+`revision` per-system in `assetInfo`, `primaryId` ≡ `identifier` dict
+key). So a pipeline that adopts D and later needs C-tier typing for a
+specific field would publish a focused codeless companion schema for that
+field rather than reintroduce all four common fields.
 
 ---
 

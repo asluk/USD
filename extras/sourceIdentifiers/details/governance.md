@@ -93,24 +93,43 @@ of identifier domain prefixes. The proposed model:
 
 ## 6.3 How each approach interacts with governance
 
+**Governance is symmetric across the four approaches: no mechanism
+enforces anything by itself; a registry-spec validator must run against
+authored content under any approach.** What differs is *where the
+validator looks* and how easily it can do its job.
+
 **Approach A:**
 - Domain keys are freeform strings in `assetInfo` dictionaries.
-- There is **no structural mechanism** to declare which domains a file
-  uses. A consumer must parse all `assetInfo["sourceIds"]` dictionaries
-  across all prims to discover the domain set.
-- Governance violations (unregistered domain key, collision) are
-  **silent** - detectable only by external validators.
-- The glTF `extensionsUsed` analog is **absent**.
+- A consumer must parse `assetInfo["sourceIds"]` on each prim to discover
+  the domain set. There is no structural inventory.
+- A validator iterates dict keys per prim and checks them against the
+  AOUSD Domains Registry. Unregistered keys are detectable, just not
+  without traversal.
 
 **Approach B:**
 - Domain instances are declared in the `apiSchemas` list.
-- A consumer can inspect `apiSchemas` on any prim (or stage metadata)
-  to discover which identifier domains are present **without parsing
-  property values**.
+- A consumer reads `apiSchemas` to discover which identifier domains are
+  present without parsing property values.
 - This is structurally analogous to glTF's `extensionsUsed` array.
-- Governance violations are **detectable** - an unregistered instance
-  name can be flagged by schema-aware tools; the `domain` property
-  provides a secondary, unambiguous resolution.
+- Governance violations are detectable from the `apiSchemas` list — but
+  detection still requires the validator to run; nothing prevents an
+  author from listing arbitrary strings in `apiSchemas`. The `domain`
+  property provides a secondary disambiguation.
+
+**Approach C:**
+- Same as B for the schema instances; same as A for overflow keys.
+- Validator combines both checks.
+
+**Approach D:**
+- Per-facet `SemanticsLabelsAPI:<system>:<facet>` instances declared in
+  the `apiSchemas` list — both the system *and* the facet are visible
+  on the schemas list itself.
+- Identity strings live in `assetInfo["source"][<system>]`; system keys
+  there should match an apiSchema instance prefix on the same prim
+  (validator rule).
+- Validators check both the system prefix and the facet suffix against
+  the Domains Registry from a single pass over `apiSchemas`. Arguably
+  the easiest validator to implement.
 
 ## 6.4 Validator designs
 
@@ -177,16 +196,56 @@ def validate_source_ids_b(stage, registry):
     return errors
 ```
 
+**Approach D validator (pseudocode):**
+
+```python
+def validate_source_ids_d(stage, registry):
+    """Validate Approach D source identifiers against a domain registry."""
+    errors = []
+    for prim in stage.Traverse():
+        # Inventory from apiSchemas list — exposes (system, facet) pairs
+        applied = prim.GetAppliedSchemas()
+        labels_instances = [
+            s.split(":", 2) for s in applied
+            if s.startswith("SemanticsLabelsAPI:")
+        ]
+        for parts in labels_instances:
+            if len(parts) != 3:
+                continue
+            _, system, facet = parts
+            if system not in registry:
+                errors.append(
+                    f"{prim.GetPath()}: unregistered system '{system}'")
+            elif facet not in registry[system].get("facets", {}):
+                errors.append(
+                    f"{prim.GetPath()}: unregistered facet '{system}:{facet}'")
+
+        # Identity strings: validate that any system key in
+        # assetInfo["source"] has at least one corresponding apiSchema instance,
+        # or is a system that registers identity-only.
+        source_dict = prim.GetAssetInfoByKey("source") or {}
+        applied_systems = {parts[1] for parts in labels_instances if len(parts) == 3}
+        for system, payload in source_dict.items():
+            if system not in registry:
+                errors.append(
+                    f"{prim.GetPath()}: unregistered system '{system}' in assetInfo")
+            if "identifier" not in payload:
+                errors.append(
+                    f"{prim.GetPath()}: source['{system}'] missing 'identifier'")
+    return errors
+```
+
 **Comparison:**
 
-| Validator Aspect | Approach A | Approach B |
-|-----------------|-----------|------------|
-| Discovery | Must parse all assetInfo dicts on all prims | `GetAll()` returns instances directly |
-| Type safety | Manual `isinstance()` checks | Schema-enforced |
-| Missing fields | Manual key-existence check | `HasAuthoredValue()` |
-| Domain resolution | Dict key only (may be ambiguous) | `domain` property (reverse-DNS, unambiguous) |
-| Lines of validation code | ~30 | ~15 |
-| Can run without USD API | Yes (dict parsing) | Requires USD schema system |
+| Validator Aspect | A | B | C | D |
+|-----------------|---|---|---|---|
+| Discovery | Parse all `assetInfo` dicts | `GetAll()` returns instances | `GetAll()` + walk overflow | `GetAppliedSchemas()` per facet |
+| Type safety | Manual `isinstance()` | Schema-enforced | Schema (common) + manual (overflow) | Schema-enforced (token arrays) |
+| Missing fields | Manual key check | `HasAuthoredValue()` | Mixed | `HasAuthoredValue()` per label property |
+| Domain resolution | Dict key only | `domain` token | `domain` token | apiSchema instance system + facet |
+| Facet resolution | Dict key | N/A (no facets) | Overflow dict key | apiSchema instance suffix |
+| Lines of validation code | ~30 | ~15 | ~25 | ~20 |
+| Can run without USD API | Yes (dict parsing) | Requires USD schema system | Requires USD schema system | Requires USD schema system |
 
 ## 6.5 Validator development and deployment per identifier extension
 
@@ -349,7 +408,7 @@ Option 3 is why the hybrid (Approach C) exists: it eliminates the
 schema registration burden for domain-specific metadata while
 preserving schema-backed validation for the common fields.
 
-**Important correction: codeless schemas change the calculus.**
+**Important correction: codeless schemas change the picture.**
 OpenUSD supports `skipCodeGeneration = true` in `usdGenSchema`,
 producing **codeless schemas** that require only:
 
@@ -380,6 +439,27 @@ are sufficient.
 | Compiled schema | 16+ | ~1,150+ | Yes | B/C with convenience API |
 | assetInfo only | 0 | 0 | No | A, or C metadata overflow |
 
+**Distribution across the ecosystem matrix is a substantial cost
+(currently elevated; trending lighter).** The codegen and
+plugin-distribution mechanics above describe the local cost per
+consumer cell. The ecosystem-level cost — distributing and maintaining
+a new applied schema across every USD-consuming runtime that pins its
+own USD/Python/OS/runtime config (DCC integrations, game-engine
+importers, web/cloud viewers, AR/VR runtimes, CI/validation pipelines)
+— is multiplicative across that matrix and recurring across releases.
+Codeless schemas reduce but do not eliminate this; they avoid C++ ABI
+drift but still need plugin discovery, distribution channels,
+versioning, and consumer-side support across every cell.
+
+Per Aaron's 2026-05-07 call: the matrix burden is currently elevated —
+fragmented across vendors who ship USD binaries today — but trending
+lighter as the AOUSD Build Interest Group epic
+([`aousd/build-ig-initiatives#28`](https://github.com/aousd/build-ig-initiatives/issues/28))
+lands (hosted binaries, plugin registration via importlib, conda-forge
+/ PyPI distribution, CI infrastructure). See
+[`formality_and_distribution.md`](formality_and_distribution.md) for
+the tradeoff analysis and the conditional weighting framing.
+
 **Note on prototype fidelity:** All three schema implementations have
 been processed through `usdGenSchema`, producing full generated output
 in `pxr/usd/<module>/generated/` directories. Codeless (runtime-only)
@@ -395,3 +475,56 @@ staff. Asking them to produce a schema plugin is a non-starter for
 initial adoption. The hybrid's `assetInfo` overflow lets them ship
 immediately; a schema plugin can come later if their metadata fields
 stabilize and warrant formal typing.
+
+## 6.8 What Approach D collapses (and what it does not)
+
+Most of §6.5–§6.7 wrestles with the cost of producing schemas for
+domain extensions: codegen, plugin distribution, the `usdGenSchema`
+barrier, codeless schemas as a partial fix. **For controlled-vocabulary
+classification facets, Approach D sidesteps the entire discussion**:
+domains use `UsdSemanticsLabelsAPI` (already shipping), so there is
+no per-domain schema to produce, distribute, or maintain. Stakeholders
+register a system key and a list of facets in the AOUSD Domains
+Registry — a GitHub PR against a Markdown file — and start authoring.
+
+What remains for D, when the scope is limited to the classification
+axis, is:
+
+1. **An AOUSD Domains Registry.** Same shape as the registry that any
+   of A/B/C also needs. The registry recommendation in §6.2 is
+   mechanism-independent.
+2. **A registry-spec validator.** Implementable in ~20 lines (see
+   pseudocode in §6.4). The same validator pattern works against
+   either an `apiSchemas` list (D) or `assetInfo` keys (A).
+3. **Per-domain identifier-content validators (optional).** A domain
+   that wants to validate "is this a valid IFC GlobalId?" still needs
+   their own validator, regardless of mechanism. D doesn't help or
+   hurt this case.
+
+**What D does *not* collapse.** The field census in
+[`field_classification_experiment.md`](field_classification_experiment.md)
+shows that identifier packages are heterogeneously typed in every
+vertical surveyed — timestamps, numeric measures with units, composite
+typed references, polymorphic XSD-typed values. `UsdSemanticsLabelsAPI`'s
+`token[]` value type cannot represent those shapes; D carries them in
+the same `assetInfo["source"][<system>]` overflow tier that Approach A
+uses (the broad USD `VtDictionary` value-type set — string, int,
+double, bool, asset, list, nested dict). D = A's mechanism + Labels
+for classification facets; D inherits A's heterogeneity coverage and
+A's lack of schema-side typing on the heterogeneous surface. A
+workflow that wants strongly-typed schema validation for the
+heterogeneous surface (rather than spec-text/registry-validator
+formalization of the dict shape) has to ratify a per-domain companion
+schema, re-introducing the costs §6.5–§6.7 catalog — same call A faces.
+
+Approach C's three-tier model (core schema + codeless companion
+schemas + overflow dicts) does the schema-side typing for the four
+common fields *and* carries heterogeneous overflow; the costs
+§6.5–§6.7 catalog are real costs C accepts in exchange for that
+coverage. The choice between A/D and C on this dimension is whether the four
+typed common fields ride a new USD schema plugin (with its runtime
+properties — typed validation, `UsdPrimDefinition` fallbacks,
+`apiSchemas` discoverability) or stay in `assetInfo` formalized in
+AOUSD spec text alongside the rest of the package. AOUSD spec text
+ratifies the standard in either case; the difference is what runtime
+machinery the typed common fields ride on.
