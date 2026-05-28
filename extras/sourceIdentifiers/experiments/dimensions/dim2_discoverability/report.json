@@ -1,0 +1,204 @@
+{
+  "A": {
+    "approach": "A",
+    "surfaces": {
+      "applied_schemas": {
+        "applied_schemas": [
+          "SourceIdentifiersAPI"
+        ],
+        "vendor_visible_in_applied_schemas": false
+      },
+      "generic_gui_walk": {
+        "applied_schemas_seen": [
+          "SourceIdentifiersAPI"
+        ],
+        "assetInfo_source_keys": [
+          "windchill"
+        ],
+        "assetInfo_source_values": {
+          "windchill": {
+            "primaryId": "OR:wt.part.WTPart:4697800"
+          }
+        },
+        "vendor_found_via_apply_schemas": false,
+        "vendor_found_via_assetInfo_source": true
+      },
+      "prim_def_metadata": {
+        "has_source_key_without_authoring": false,
+        "prim_def_assetInfo": null
+      },
+      "prim_def_properties": {
+        "SourceIdentifiersAPI": {
+          "kind": "single-apply",
+          "properties": []
+        }
+      }
+    }
+  },
+  "B": {
+    "approach": "B",
+    "surfaces": {
+      "applied_schemas": {
+        "applied_schemas": [
+          "SourceIdentifierAPI:windchill"
+        ],
+        "vendor_visible_in_applied_schemas": true
+      },
+      "generic_gui_walk": {
+        "applied_schemas_seen": [
+          "SourceIdentifierAPI:windchill"
+        ],
+        "assetInfo_source_keys": [],
+        "assetInfo_source_values": {},
+        "vendor_found_via_apply_schemas": true,
+        "vendor_found_via_assetInfo_source": false
+      },
+      "prim_def_metadata": {
+        "has_source_key_without_authoring": false,
+        "prim_def_assetInfo": null
+      },
+      "prim_def_properties": {
+        "SourceIdentifierAPI": {
+          "kind": "multi-apply",
+          "property_template": [
+            "sourceIdentifier:__INSTANCE_NAME__:domain",
+            "sourceIdentifier:__INSTANCE_NAME__:label",
+            "sourceIdentifier:__INSTANCE_NAME__:primaryId",
+            "sourceIdentifier:__INSTANCE_NAME__:revision"
+          ]
+        }
+      }
+    }
+  },
+  "Bprime": {
+    "approach": "Bprime",
+    "surfaces": {
+      "applied_schemas": {
+        "applied_schemas": [
+          "WindchillSourceIdAPI",
+          "SourceIdentifierBaseAPI"
+        ],
+        "vendor_visible_in_applied_schemas": true
+      },
+      "generic_gui_walk": {
+        "applied_schemas_seen": [
+          "WindchillSourceIdAPI",
+          "SourceIdentifierBaseAPI"
+        ],
+        "assetInfo_source_keys": [],
+        "assetInfo_source_values": {},
+        "vendor_found_via_apply_schemas": true,
+        "vendor_found_via_assetInfo_source": false
+      },
+      "prim_def_metadata": {
+        "has_source_key_without_authoring": false,
+        "prim_def_assetInfo": null
+      },
+      "prim_def_properties": {
+        "IFCSourceIdAPI": {
+          "kind": "single-apply",
+          "properties": [
+            "sourceId:ifc:ifcType",
+            "sourceId:ifc:schema",
+            "sourceId:primaryId",
+            "sourceId:revision"
+          ]
+        },
+        "SourceIdentifierBaseAPI": {
+          "kind": "single-apply",
+          "properties": [
+            "sourceId:primaryId",
+            "sourceId:revision"
+          ]
+        },
+        "WindchillSourceIdAPI": {
+          "kind": "single-apply",
+          "properties": [
+            "sourceId:primaryId",
+            "sourceId:revision",
+            "sourceId:windchill:displayNumber",
+            "sourceId:windchill:navigationCriteria"
+          ]
+        }
+      }
+    }
+  },
+  "C": {
+    "approach": "C",
+    "surfaces": {
+      "applied_schemas": {
+        "applied_schemas": [
+          "SourceIdentifierBridgeAPI:windchill"
+        ],
+        "vendor_visible_in_applied_schemas": true
+      },
+      "generic_gui_walk": {
+        "applied_schemas_seen": [
+          "SourceIdentifierBridgeAPI:windchill"
+        ],
+        "assetInfo_source_keys": [
+          "windchill"
+        ],
+        "assetInfo_source_values": {
+          "windchill": {
+            "primaryId": "OR:wt.part.WTPart:4697800"
+          }
+        },
+        "vendor_found_via_apply_schemas": true,
+        "vendor_found_via_assetInfo_source": true
+      },
+      "prim_def_metadata": {
+        "has_source_key_without_authoring": false,
+        "prim_def_assetInfo": null
+      },
+      "prim_def_properties": {
+        "SourceIdentifierBridgeAPI": {
+          "kind": "multi-apply",
+          "property_template": []
+        }
+      }
+    }
+  },
+  "D": {
+    "approach": "D",
+    "surfaces": {
+      "applied_schemas": {
+        "applied_schemas": [
+          "SourceIdentifiersAPI"
+        ],
+        "vendor_visible_in_applied_schemas": false
+      },
+      "generic_gui_walk": {
+        "applied_schemas_seen": [
+          "SourceIdentifiersAPI"
+        ],
+        "assetInfo_source_keys": [
+          "windchill"
+        ],
+        "assetInfo_source_values": {
+          "windchill": {
+            "primaryId": "OR:wt.part.WTPart:4697800"
+          }
+        },
+        "vendor_found_via_apply_schemas": false,
+        "vendor_found_via_assetInfo_source": true
+      },
+      "prim_def_metadata": {
+        "has_source_key_without_authoring": false,
+        "prim_def_assetInfo": null
+      },
+      "prim_def_properties": {
+        "SemanticLabelsAPI": {
+          "kind": "multi-apply",
+          "property_template": [
+            "semantics:labels:__INSTANCE_NAME__"
+          ]
+        },
+        "SourceIdentifiersAPI": {
+          "kind": "single-apply",
+          "properties": []
+        }
+      }
+    }
+  }
+}

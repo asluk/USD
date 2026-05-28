@@ -1,0 +1,591 @@
+{
+  "A": {
+    "approach": "A",
+    "by_value": {
+      "ascii_baseline": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "colon": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "dot": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "hyphen": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "leading_digit": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "slash": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "space": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "underscore": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "unicode_letter": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      }
+    },
+    "slot_kind": "dict_key"
+  },
+  "B": {
+    "approach": "B",
+    "by_value": {
+      "ascii_baseline": {
+        "applied_schemas": [
+          "SourceIdentifierAPI:autodesk"
+        ],
+        "apply_instance": "autodesk",
+        "apply_succeeded": true,
+        "authoring_succeeded": true,
+        "expected_prop_name": "sourceIdentifier:autodesk:primaryId",
+        "round_trip_applied_schemas": [
+          "SourceIdentifierAPI:autodesk"
+        ],
+        "round_trips": true,
+        "silent_renamespace": false,
+        "slot": "apply_instance_and_property",
+        "test_vendor": "autodesk"
+      },
+      "colon": {
+        "applied_schemas": [
+          "SourceIdentifierAPI:siemens:nx"
+        ],
+        "apply_instance": "siemens:nx",
+        "apply_succeeded": true,
+        "authoring_succeeded": true,
+        "expected_prop_name": "sourceIdentifier:siemens:nx:primaryId",
+        "round_trip_applied_schemas": [
+          "SourceIdentifierAPI:siemens:nx"
+        ],
+        "round_trips": false,
+        "silent_renamespace": true,
+        "slot": "apply_instance_and_property",
+        "test_vendor": "siemens:nx"
+      },
+      "dot": {
+        "applied_schemas": [
+          "SourceIdentifierAPI:siemens.nx"
+        ],
+        "apply_instance": "siemens.nx",
+        "apply_succeeded": true,
+        "authoring_error": "ErrorException: \n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfAttributeSpec::New' at line 55 in file C:\\git\\aarUSD\\pxr\\usd\\sdf\\attributeSpec.cpp : 'Cannot create attribute spec on </Asset> with invalid name 'sourceIdentifier:siemens.nx:primaryId''",
+        "authoring_succeeded": false,
+        "expected_prop_name": "sourceIdentifier:siemens.nx:primaryId",
+        "round_trip_applied_schemas": [
+          "SourceIdentifierAPI:siemens.nx"
+        ],
+        "round_trips": false,
+        "silent_renamespace": false,
+        "slot": "apply_instance_and_property",
+        "test_vendor": "siemens.nx"
+      },
+      "hyphen": {
+        "applied_schemas": [
+          "SourceIdentifierAPI:auto-desk"
+        ],
+        "apply_instance": "auto-desk",
+        "apply_succeeded": true,
+        "authoring_error": "ErrorException: \n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfAttributeSpec::New' at line 55 in file C:\\git\\aarUSD\\pxr\\usd\\sdf\\attributeSpec.cpp : 'Cannot create attribute spec on </Asset> with invalid name 'sourceIdentifier:auto-desk:primaryId''",
+        "authoring_succeeded": false,
+        "expected_prop_name": "sourceIdentifier:auto-desk:primaryId",
+        "round_trip_applied_schemas": [
+          "SourceIdentifierAPI:auto-desk"
+        ],
+        "round_trips": false,
+        "silent_renamespace": false,
+        "slot": "apply_instance_and_property",
+        "test_vendor": "auto-desk"
+      },
+      "leading_digit": {
+        "applied_schemas": [
+          "SourceIdentifierAPI:123industries"
+        ],
+        "apply_instance": "123industries",
+        "apply_succeeded": true,
+        "authoring_error": "ErrorException: \n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfAttributeSpec::New' at line 55 in file C:\\git\\aarUSD\\pxr\\usd\\sdf\\attributeSpec.cpp : 'Cannot create attribute spec on </Asset> with invalid name 'sourceIdentifier:123industries:primaryId''",
+        "authoring_succeeded": false,
+        "expected_prop_name": "sourceIdentifier:123industries:primaryId",
+        "round_trip_applied_schemas": [
+          "SourceIdentifierAPI:123industries"
+        ],
+        "round_trips": false,
+        "silent_renamespace": false,
+        "slot": "apply_instance_and_property",
+        "test_vendor": "123industries"
+      },
+      "slash": {
+        "applied_schemas": [
+          "SourceIdentifierAPI:siemens/nx"
+        ],
+        "apply_instance": "siemens/nx",
+        "apply_succeeded": true,
+        "authoring_error": "ErrorException: \n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfAttributeSpec::New' at line 55 in file C:\\git\\aarUSD\\pxr\\usd\\sdf\\attributeSpec.cpp : 'Cannot create attribute spec on </Asset> with invalid name 'sourceIdentifier:siemens/nx:primaryId''",
+        "authoring_succeeded": false,
+        "expected_prop_name": "sourceIdentifier:siemens/nx:primaryId",
+        "round_trip_applied_schemas": [
+          "SourceIdentifierAPI:siemens/nx"
+        ],
+        "round_trips": false,
+        "silent_renamespace": false,
+        "slot": "apply_instance_and_property",
+        "test_vendor": "siemens/nx"
+      },
+      "space": {
+        "applied_schemas": [
+          "SourceIdentifierAPI:Auto Desk"
+        ],
+        "apply_instance": "Auto Desk",
+        "apply_succeeded": true,
+        "authoring_error": "ErrorException: \n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfAttributeSpec::New' at line 55 in file C:\\git\\aarUSD\\pxr\\usd\\sdf\\attributeSpec.cpp : 'Cannot create attribute spec on </Asset> with invalid name 'sourceIdentifier:Auto Desk:primaryId''",
+        "authoring_succeeded": false,
+        "expected_prop_name": "sourceIdentifier:Auto Desk:primaryId",
+        "round_trip_applied_schemas": [
+          "SourceIdentifierAPI:Auto Desk"
+        ],
+        "round_trips": false,
+        "silent_renamespace": false,
+        "slot": "apply_instance_and_property",
+        "test_vendor": "Auto Desk"
+      },
+      "underscore": {
+        "applied_schemas": [
+          "SourceIdentifierAPI:auto_desk"
+        ],
+        "apply_instance": "auto_desk",
+        "apply_succeeded": true,
+        "authoring_succeeded": true,
+        "expected_prop_name": "sourceIdentifier:auto_desk:primaryId",
+        "round_trip_applied_schemas": [
+          "SourceIdentifierAPI:auto_desk"
+        ],
+        "round_trips": true,
+        "silent_renamespace": false,
+        "slot": "apply_instance_and_property",
+        "test_vendor": "auto_desk"
+      },
+      "unicode_letter": {
+        "applied_schemas": [
+          "SourceIdentifierAPI:\u00fcnicode"
+        ],
+        "apply_instance": "\u00fcnicode",
+        "apply_succeeded": true,
+        "authoring_succeeded": true,
+        "expected_prop_name": "sourceIdentifier:\u00fcnicode:primaryId",
+        "round_trip_applied_schemas": [
+          "SourceIdentifierAPI:\u00fcnicode"
+        ],
+        "round_trips": true,
+        "silent_renamespace": false,
+        "slot": "apply_instance_and_property",
+        "test_vendor": "\u00fcnicode"
+      }
+    },
+    "slot_kind": "apply_instance_and_property"
+  },
+  "Bprime": {
+    "approach": "Bprime",
+    "by_value": {
+      "ascii_baseline": {
+        "apply_succeeded": null,
+        "authoring_succeeded": null,
+        "class_name_under_test": "autodeskSourceIdAPI",
+        "note": "class-name validity is the gate; runtime apply not applicable until a per-vendor schema is registered",
+        "sdf_isvalid_identifier_class_name": true,
+        "slot": "schema_class_name",
+        "tf_isvalid_identifier": true
+      },
+      "colon": {
+        "apply_succeeded": null,
+        "authoring_succeeded": null,
+        "class_name_under_test": "siemens:nxSourceIdAPI",
+        "note": "class-name validity is the gate; runtime apply not applicable until a per-vendor schema is registered",
+        "sdf_isvalid_identifier_class_name": false,
+        "slot": "schema_class_name",
+        "tf_isvalid_identifier": false
+      },
+      "dot": {
+        "apply_succeeded": null,
+        "authoring_succeeded": null,
+        "class_name_under_test": "siemens.nxSourceIdAPI",
+        "note": "class-name validity is the gate; runtime apply not applicable until a per-vendor schema is registered",
+        "sdf_isvalid_identifier_class_name": false,
+        "slot": "schema_class_name",
+        "tf_isvalid_identifier": false
+      },
+      "hyphen": {
+        "apply_succeeded": null,
+        "authoring_succeeded": null,
+        "class_name_under_test": "auto-deskSourceIdAPI",
+        "note": "class-name validity is the gate; runtime apply not applicable until a per-vendor schema is registered",
+        "sdf_isvalid_identifier_class_name": false,
+        "slot": "schema_class_name",
+        "tf_isvalid_identifier": false
+      },
+      "leading_digit": {
+        "apply_succeeded": null,
+        "authoring_succeeded": null,
+        "class_name_under_test": "123industriesSourceIdAPI",
+        "note": "class-name validity is the gate; runtime apply not applicable until a per-vendor schema is registered",
+        "sdf_isvalid_identifier_class_name": false,
+        "slot": "schema_class_name",
+        "tf_isvalid_identifier": false
+      },
+      "slash": {
+        "apply_succeeded": null,
+        "authoring_succeeded": null,
+        "class_name_under_test": "siemens/nxSourceIdAPI",
+        "note": "class-name validity is the gate; runtime apply not applicable until a per-vendor schema is registered",
+        "sdf_isvalid_identifier_class_name": false,
+        "slot": "schema_class_name",
+        "tf_isvalid_identifier": false
+      },
+      "space": {
+        "apply_succeeded": null,
+        "authoring_succeeded": null,
+        "class_name_under_test": "Auto DeskSourceIdAPI",
+        "note": "class-name validity is the gate; runtime apply not applicable until a per-vendor schema is registered",
+        "sdf_isvalid_identifier_class_name": false,
+        "slot": "schema_class_name",
+        "tf_isvalid_identifier": false
+      },
+      "underscore": {
+        "apply_succeeded": null,
+        "authoring_succeeded": null,
+        "class_name_under_test": "auto_deskSourceIdAPI",
+        "note": "class-name validity is the gate; runtime apply not applicable until a per-vendor schema is registered",
+        "sdf_isvalid_identifier_class_name": true,
+        "slot": "schema_class_name",
+        "tf_isvalid_identifier": true
+      },
+      "unicode_letter": {
+        "apply_succeeded": null,
+        "authoring_succeeded": null,
+        "class_name_under_test": "\u00fcnicodeSourceIdAPI",
+        "note": "class-name validity is the gate; runtime apply not applicable until a per-vendor schema is registered",
+        "sdf_isvalid_identifier_class_name": true,
+        "slot": "schema_class_name",
+        "tf_isvalid_identifier": false
+      }
+    },
+    "slot_kind": "schema_class_name"
+  },
+  "C": {
+    "approach": "C",
+    "by_value": {
+      "ascii_baseline": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "colon": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "dot": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "hyphen": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "leading_digit": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "slash": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "space": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "underscore": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      },
+      "unicode_letter": {
+        "apply_succeeded": null,
+        "authoring_succeeded": true,
+        "round_trips": true,
+        "slot": "dict_key"
+      }
+    },
+    "slot_kind": "dict_key (apply-instance also permissive; bridge unimplemented)"
+  },
+  "D": {
+    "approach": "D",
+    "by_value": {
+      "ascii_baseline": {
+        "identifier_slot": {
+          "apply_succeeded": null,
+          "authoring_succeeded": true,
+          "round_trips": true,
+          "slot": "dict_key"
+        },
+        "label_slot": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:autodesk:material"
+          ],
+          "apply_instance": "autodesk:material",
+          "apply_succeeded": true,
+          "authoring_succeeded": true,
+          "expected_prop_name": "semantics:labels:autodesk:material:labels",
+          "round_trip_applied_schemas": [
+            "SemanticLabelsAPI:autodesk:material"
+          ],
+          "round_trips": true,
+          "silent_renamespace": false,
+          "slot": "apply_instance_and_property",
+          "test_vendor": "autodesk"
+        }
+      },
+      "colon": {
+        "identifier_slot": {
+          "apply_succeeded": null,
+          "authoring_succeeded": true,
+          "round_trips": true,
+          "slot": "dict_key"
+        },
+        "label_slot": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:siemens:nx:material"
+          ],
+          "apply_instance": "siemens:nx:material",
+          "apply_succeeded": true,
+          "authoring_succeeded": true,
+          "expected_prop_name": "semantics:labels:siemens:nx:material:labels",
+          "round_trip_applied_schemas": [
+            "SemanticLabelsAPI:siemens:nx:material"
+          ],
+          "round_trips": false,
+          "silent_renamespace": true,
+          "slot": "apply_instance_and_property",
+          "test_vendor": "siemens:nx"
+        }
+      },
+      "dot": {
+        "identifier_slot": {
+          "apply_succeeded": null,
+          "authoring_succeeded": true,
+          "round_trips": true,
+          "slot": "dict_key"
+        },
+        "label_slot": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:siemens.nx:material"
+          ],
+          "apply_instance": "siemens.nx:material",
+          "apply_succeeded": true,
+          "authoring_error": "ErrorException: \n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfAttributeSpec::New' at line 55 in file C:\\git\\aarUSD\\pxr\\usd\\sdf\\attributeSpec.cpp : 'Cannot create attribute spec on </Asset> with invalid name 'semantics:labels:siemens.nx:material:labels''",
+          "authoring_succeeded": false,
+          "expected_prop_name": "semantics:labels:siemens.nx:material:labels",
+          "round_trip_applied_schemas": [
+            "SemanticLabelsAPI:siemens.nx:material"
+          ],
+          "round_trips": false,
+          "silent_renamespace": false,
+          "slot": "apply_instance_and_property",
+          "test_vendor": "siemens.nx"
+        }
+      },
+      "hyphen": {
+        "identifier_slot": {
+          "apply_succeeded": null,
+          "authoring_succeeded": true,
+          "round_trips": true,
+          "slot": "dict_key"
+        },
+        "label_slot": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:auto-desk:material"
+          ],
+          "apply_instance": "auto-desk:material",
+          "apply_succeeded": true,
+          "authoring_error": "ErrorException: \n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfAttributeSpec::New' at line 55 in file C:\\git\\aarUSD\\pxr\\usd\\sdf\\attributeSpec.cpp : 'Cannot create attribute spec on </Asset> with invalid name 'semantics:labels:auto-desk:material:labels''",
+          "authoring_succeeded": false,
+          "expected_prop_name": "semantics:labels:auto-desk:material:labels",
+          "round_trip_applied_schemas": [
+            "SemanticLabelsAPI:auto-desk:material"
+          ],
+          "round_trips": false,
+          "silent_renamespace": false,
+          "slot": "apply_instance_and_property",
+          "test_vendor": "auto-desk"
+        }
+      },
+      "leading_digit": {
+        "identifier_slot": {
+          "apply_succeeded": null,
+          "authoring_succeeded": true,
+          "round_trips": true,
+          "slot": "dict_key"
+        },
+        "label_slot": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:123industries:material"
+          ],
+          "apply_instance": "123industries:material",
+          "apply_succeeded": true,
+          "authoring_error": "ErrorException: \n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfAttributeSpec::New' at line 55 in file C:\\git\\aarUSD\\pxr\\usd\\sdf\\attributeSpec.cpp : 'Cannot create attribute spec on </Asset> with invalid name 'semantics:labels:123industries:material:labels''",
+          "authoring_succeeded": false,
+          "expected_prop_name": "semantics:labels:123industries:material:labels",
+          "round_trip_applied_schemas": [
+            "SemanticLabelsAPI:123industries:material"
+          ],
+          "round_trips": false,
+          "silent_renamespace": false,
+          "slot": "apply_instance_and_property",
+          "test_vendor": "123industries"
+        }
+      },
+      "slash": {
+        "identifier_slot": {
+          "apply_succeeded": null,
+          "authoring_succeeded": true,
+          "round_trips": true,
+          "slot": "dict_key"
+        },
+        "label_slot": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:siemens/nx:material"
+          ],
+          "apply_instance": "siemens/nx:material",
+          "apply_succeeded": true,
+          "authoring_error": "ErrorException: \n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfAttributeSpec::New' at line 55 in file C:\\git\\aarUSD\\pxr\\usd\\sdf\\attributeSpec.cpp : 'Cannot create attribute spec on </Asset> with invalid name 'semantics:labels:siemens/nx:material:labels''",
+          "authoring_succeeded": false,
+          "expected_prop_name": "semantics:labels:siemens/nx:material:labels",
+          "round_trip_applied_schemas": [
+            "SemanticLabelsAPI:siemens/nx:material"
+          ],
+          "round_trips": false,
+          "silent_renamespace": false,
+          "slot": "apply_instance_and_property",
+          "test_vendor": "siemens/nx"
+        }
+      },
+      "space": {
+        "identifier_slot": {
+          "apply_succeeded": null,
+          "authoring_succeeded": true,
+          "round_trips": true,
+          "slot": "dict_key"
+        },
+        "label_slot": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:Auto Desk:material"
+          ],
+          "apply_instance": "Auto Desk:material",
+          "apply_succeeded": true,
+          "authoring_error": "ErrorException: \n\tError in 'pxrInternal_v0_26_8__pxrReserved__::SdfAttributeSpec::New' at line 55 in file C:\\git\\aarUSD\\pxr\\usd\\sdf\\attributeSpec.cpp : 'Cannot create attribute spec on </Asset> with invalid name 'semantics:labels:Auto Desk:material:labels''",
+          "authoring_succeeded": false,
+          "expected_prop_name": "semantics:labels:Auto Desk:material:labels",
+          "round_trip_applied_schemas": [
+            "SemanticLabelsAPI:Auto Desk:material"
+          ],
+          "round_trips": false,
+          "silent_renamespace": false,
+          "slot": "apply_instance_and_property",
+          "test_vendor": "Auto Desk"
+        }
+      },
+      "underscore": {
+        "identifier_slot": {
+          "apply_succeeded": null,
+          "authoring_succeeded": true,
+          "round_trips": true,
+          "slot": "dict_key"
+        },
+        "label_slot": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:auto_desk:material"
+          ],
+          "apply_instance": "auto_desk:material",
+          "apply_succeeded": true,
+          "authoring_succeeded": true,
+          "expected_prop_name": "semantics:labels:auto_desk:material:labels",
+          "round_trip_applied_schemas": [
+            "SemanticLabelsAPI:auto_desk:material"
+          ],
+          "round_trips": true,
+          "silent_renamespace": false,
+          "slot": "apply_instance_and_property",
+          "test_vendor": "auto_desk"
+        }
+      },
+      "unicode_letter": {
+        "identifier_slot": {
+          "apply_succeeded": null,
+          "authoring_succeeded": true,
+          "round_trips": true,
+          "slot": "dict_key"
+        },
+        "label_slot": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:\u00fcnicode:material"
+          ],
+          "apply_instance": "\u00fcnicode:material",
+          "apply_succeeded": true,
+          "authoring_succeeded": true,
+          "expected_prop_name": "semantics:labels:\u00fcnicode:material:labels",
+          "round_trip_applied_schemas": [
+            "SemanticLabelsAPI:\u00fcnicode:material"
+          ],
+          "round_trips": true,
+          "silent_renamespace": false,
+          "slot": "apply_instance_and_property",
+          "test_vendor": "\u00fcnicode"
+        }
+      }
+    },
+    "slot_kind": "split (identifier: dict_key; labels: apply_instance_and_property)"
+  }
+}

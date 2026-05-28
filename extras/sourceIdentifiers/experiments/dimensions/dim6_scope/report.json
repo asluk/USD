@@ -1,0 +1,230 @@
+{
+  "A": {
+    "approach": "A",
+    "by_prim_type": {
+      "Mesh_leaf": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifiersAPI"
+        ]
+      },
+      "Over_typeless": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifiersAPI"
+        ]
+      },
+      "Scope": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifiersAPI"
+        ]
+      },
+      "Xform": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifiersAPI"
+        ]
+      },
+      "Xform_kind_component": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifiersAPI"
+        ]
+      }
+    },
+    "can_only_apply_to": {
+      "SourceIdentifiersAPI": []
+    },
+    "cost_per_prim": {
+      "bytes_per_prim": 208.0,
+      "delta_bytes": 2080,
+      "empty_bytes_for_10_prims": 221,
+      "with_identifier_bytes_for_10_prims": 2301
+    }
+  },
+  "B": {
+    "approach": "B",
+    "by_prim_type": {
+      "Mesh_leaf": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifierAPI:windchill"
+        ]
+      },
+      "Over_typeless": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifierAPI:windchill"
+        ]
+      },
+      "Scope": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifierAPI:windchill"
+        ]
+      },
+      "Xform": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifierAPI:windchill"
+        ]
+      },
+      "Xform_kind_component": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifierAPI:windchill"
+        ]
+      }
+    },
+    "can_only_apply_to": {
+      "SourceIdentifierAPI": []
+    },
+    "cost_per_prim": {
+      "bytes_per_prim": 117.0,
+      "delta_bytes": 1170,
+      "empty_bytes_for_10_prims": 221,
+      "with_identifier_bytes_for_10_prims": 1391
+    }
+  },
+  "Bprime": {
+    "approach": "Bprime",
+    "by_prim_type": {
+      "Mesh_leaf": {
+        "applied": true,
+        "applied_schemas": [
+          "WindchillSourceIdAPI",
+          "SourceIdentifierBaseAPI"
+        ]
+      },
+      "Over_typeless": {
+        "applied": true,
+        "applied_schemas": [
+          "WindchillSourceIdAPI",
+          "SourceIdentifierBaseAPI"
+        ]
+      },
+      "Scope": {
+        "applied": true,
+        "applied_schemas": [
+          "WindchillSourceIdAPI",
+          "SourceIdentifierBaseAPI"
+        ]
+      },
+      "Xform": {
+        "applied": true,
+        "applied_schemas": [
+          "WindchillSourceIdAPI",
+          "SourceIdentifierBaseAPI"
+        ]
+      },
+      "Xform_kind_component": {
+        "applied": true,
+        "applied_schemas": [
+          "WindchillSourceIdAPI",
+          "SourceIdentifierBaseAPI"
+        ]
+      }
+    },
+    "can_only_apply_to": {
+      "IFCSourceIdAPI": [],
+      "SourceIdentifierBaseAPI": [],
+      "WindchillSourceIdAPI": []
+    },
+    "cost_per_prim": {
+      "bytes_per_prim": 90.0,
+      "delta_bytes": 900,
+      "empty_bytes_for_10_prims": 221,
+      "with_identifier_bytes_for_10_prims": 1121
+    }
+  },
+  "C": {
+    "approach": "C",
+    "by_prim_type": {
+      "Mesh_leaf": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifierBridgeAPI:windchill"
+        ]
+      },
+      "Over_typeless": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifierBridgeAPI:windchill"
+        ]
+      },
+      "Scope": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifierBridgeAPI:windchill"
+        ]
+      },
+      "Xform": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifierBridgeAPI:windchill"
+        ]
+      },
+      "Xform_kind_component": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifierBridgeAPI:windchill"
+        ]
+      }
+    },
+    "can_only_apply_to": {
+      "SourceIdentifierBridgeAPI": []
+    },
+    "cost_per_prim": {
+      "bytes_per_prim": 223.0,
+      "delta_bytes": 2230,
+      "empty_bytes_for_10_prims": 221,
+      "with_identifier_bytes_for_10_prims": 2451
+    }
+  },
+  "D": {
+    "approach": "D",
+    "by_prim_type": {
+      "Mesh_leaf": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifiersAPI"
+        ]
+      },
+      "Over_typeless": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifiersAPI"
+        ]
+      },
+      "Scope": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifiersAPI"
+        ]
+      },
+      "Xform": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifiersAPI"
+        ]
+      },
+      "Xform_kind_component": {
+        "applied": true,
+        "applied_schemas": [
+          "SourceIdentifiersAPI"
+        ]
+      }
+    },
+    "can_only_apply_to": {
+      "SemanticLabelsAPI": [],
+      "SourceIdentifiersAPI": []
+    },
+    "cost_per_prim": {
+      "bytes_per_prim": 208.0,
+      "delta_bytes": 2080,
+      "empty_bytes_for_10_prims": 221,
+      "with_identifier_bytes_for_10_prims": 2301
+    }
+  }
+}

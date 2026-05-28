@@ -1,0 +1,114 @@
+{
+  "A": {
+    "approach": "A",
+    "artifact_shipped": "data only",
+    "registers_with_core": true,
+    "registration_steps": [
+      "author assetInfo.source.<vendor> entries \u2014 no schema work"
+    ],
+    "two_vendors_coexist": {
+      "applied_schemas_after_round_trip": [
+        "SourceIdentifiersAPI"
+      ],
+      "distinct_vendor_storage": true,
+      "ifc_matches": true,
+      "ifc_round_trip": "Bs43BRT3PrSvZ0KshZJRhD",
+      "windchill_matches": true,
+      "windchill_round_trip": "OR:wt.part.WTPart:4697800"
+    },
+    "vendor_collision_mode": "dict key namespace (assetInfo.source.<vendor>)"
+  },
+  "B": {
+    "approach": "B",
+    "artifact_shipped": "data only",
+    "registers_with_core": true,
+    "registration_steps": [
+      "ApplyAPI(\"SourceIdentifierAPI\", \"<vendor>\") \u2014 no schema work",
+      "author typed sourceIdentifier:<vendor>:* properties"
+    ],
+    "two_vendors_coexist": {
+      "applied_schemas_after_round_trip": [
+        "SourceIdentifierAPI:windchill",
+        "SourceIdentifierAPI:ifc"
+      ],
+      "distinct_vendor_storage": true,
+      "ifc_matches": true,
+      "ifc_round_trip": "Bs43BRT3PrSvZ0KshZJRhD",
+      "windchill_matches": true,
+      "windchill_round_trip": "OR:wt.part.WTPart:4697800"
+    },
+    "vendor_collision_mode": "ApplyAPI instance name (multi-apply schema)"
+  },
+  "Bprime": {
+    "approach": "Bprime",
+    "artifact_shipped": "plugin + schema + data",
+    "per_vendor_schemas_shipped": {
+      "IFCSourceIdAPI": true,
+      "SourceIdentifierBaseAPI": true,
+      "WindchillSourceIdAPI": true
+    },
+    "registers_with_core": false,
+    "registration_steps": [
+      "author schema.usda declaring <Vendor>SourceIdAPI inheriting from APISchemaBase and prepending SourceIdentifierBaseAPI",
+      "run usdGenSchema (codeless or full)",
+      "publish plugInfo.json + generatedSchema.usda",
+      "add plugin dir to PXR_PLUGINPATH_NAME"
+    ],
+    "two_vendors_coexist": {
+      "applied_schemas_after_round_trip": [
+        "WindchillSourceIdAPI",
+        "SourceIdentifierBaseAPI",
+        "IFCSourceIdAPI"
+      ],
+      "distinct_vendor_storage": false,
+      "ifc_matches": null,
+      "ifc_round_trip": "shared base property; recovered='OR:wt.part.WTPart:4697800'; (both vendor schemas applied but base is shared)",
+      "windchill_matches": null,
+      "windchill_round_trip": "shared base property; recovered='OR:wt.part.WTPart:4697800'; (both vendor schemas applied but base is shared)"
+    },
+    "vendor_collision_mode": "class-name allocation (TfType global namespace)"
+  },
+  "C": {
+    "approach": "C",
+    "artifact_shipped": "data only (bridge mechanism not yet implemented)",
+    "registers_with_core": true,
+    "registration_steps": [
+      "ApplyAPI(\"SourceIdentifierBridgeAPI\", \"<vendor>\") \u2014 no schema work",
+      "author assetInfo.source.<vendor> entries",
+      "NOTE: per v3 findings, UsdPrimDefinition does not yet honor the assetInfoFallback customData mechanism that gives C its distinguishing behavior. Storage shape reduces to A in current OpenUSD."
+    ],
+    "two_vendors_coexist": {
+      "applied_schemas_after_round_trip": [
+        "SourceIdentifierBridgeAPI:windchill",
+        "SourceIdentifierBridgeAPI:ifc"
+      ],
+      "distinct_vendor_storage": true,
+      "ifc_matches": true,
+      "ifc_round_trip": "Bs43BRT3PrSvZ0KshZJRhD",
+      "windchill_matches": true,
+      "windchill_round_trip": "OR:wt.part.WTPart:4697800"
+    },
+    "vendor_collision_mode": "ApplyAPI instance name + dict key namespace"
+  },
+  "D": {
+    "approach": "D",
+    "artifact_shipped": "data only",
+    "registers_with_core": true,
+    "registration_steps": [
+      "identifier half: author assetInfo.source.<vendor> entries",
+      "label half: ApplyAPI(\"SemanticLabelsAPI\", \"<vendor>:<labelKind>\") and set tokens",
+      "no schema work for either half"
+    ],
+    "two_vendors_coexist": {
+      "applied_schemas_after_round_trip": [
+        "SourceIdentifiersAPI"
+      ],
+      "distinct_vendor_storage": true,
+      "ifc_matches": true,
+      "ifc_round_trip": "Bs43BRT3PrSvZ0KshZJRhD",
+      "windchill_matches": true,
+      "windchill_round_trip": "OR:wt.part.WTPart:4697800"
+    },
+    "vendor_collision_mode": "identifier: dict key namespace; labels: ApplyAPI instance (vendor:labelKind)"
+  }
+}

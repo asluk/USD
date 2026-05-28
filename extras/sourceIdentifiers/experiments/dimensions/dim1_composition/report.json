@@ -1,0 +1,627 @@
+{
+  "A": {
+    "approach": "A",
+    "results": {
+      "inherit": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "payload": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "reference": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "specialize": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "sublayer": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      }
+    }
+  },
+  "B": {
+    "approach": "B",
+    "results": {
+      "inherit": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifierAPI:windchill"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifierAPI:ifc",
+            "SourceIdentifierAPI:windchill"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "payload": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifierAPI:windchill"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifierAPI:ifc",
+            "SourceIdentifierAPI:windchill"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "reference": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifierAPI:windchill"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifierAPI:ifc",
+            "SourceIdentifierAPI:windchill"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "specialize": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifierAPI:windchill"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifierAPI:ifc",
+            "SourceIdentifierAPI:windchill"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "sublayer": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifierAPI:windchill"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifierAPI:ifc",
+            "SourceIdentifierAPI:windchill"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      }
+    }
+  },
+  "Bprime": {
+    "approach": "Bprime",
+    "results": {
+      "inherit": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "WindchillSourceIdAPI",
+            "SourceIdentifierBaseAPI"
+          ],
+          "ifc_value": "STRONG_WINDCHILL",
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "IFCSourceIdAPI",
+            "SourceIdentifierBaseAPI",
+            "WindchillSourceIdAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "STRONG_IFC"
+        }
+      },
+      "payload": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "WindchillSourceIdAPI",
+            "SourceIdentifierBaseAPI"
+          ],
+          "ifc_value": "STRONG_WINDCHILL",
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "IFCSourceIdAPI",
+            "SourceIdentifierBaseAPI",
+            "WindchillSourceIdAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "STRONG_IFC"
+        }
+      },
+      "reference": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "WindchillSourceIdAPI",
+            "SourceIdentifierBaseAPI"
+          ],
+          "ifc_value": "STRONG_WINDCHILL",
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "IFCSourceIdAPI",
+            "SourceIdentifierBaseAPI",
+            "WindchillSourceIdAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "STRONG_IFC"
+        }
+      },
+      "specialize": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "WindchillSourceIdAPI",
+            "SourceIdentifierBaseAPI"
+          ],
+          "ifc_value": "STRONG_WINDCHILL",
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "IFCSourceIdAPI",
+            "SourceIdentifierBaseAPI",
+            "WindchillSourceIdAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "STRONG_IFC"
+        }
+      },
+      "sublayer": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "WindchillSourceIdAPI",
+            "SourceIdentifierBaseAPI"
+          ],
+          "ifc_value": "STRONG_WINDCHILL",
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "IFCSourceIdAPI",
+            "SourceIdentifierBaseAPI",
+            "WindchillSourceIdAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "STRONG_IFC"
+        }
+      }
+    }
+  },
+  "C": {
+    "approach": "C",
+    "results": {
+      "inherit": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifierBridgeAPI:windchill"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifierBridgeAPI:ifc",
+            "SourceIdentifierBridgeAPI:windchill"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "payload": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifierBridgeAPI:windchill"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifierBridgeAPI:ifc",
+            "SourceIdentifierBridgeAPI:windchill"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "reference": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifierBridgeAPI:windchill"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifierBridgeAPI:ifc",
+            "SourceIdentifierBridgeAPI:windchill"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "specialize": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifierBridgeAPI:windchill"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifierBridgeAPI:ifc",
+            "SourceIdentifierBridgeAPI:windchill"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "sublayer": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifierBridgeAPI:windchill"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifierBridgeAPI:ifc",
+            "SourceIdentifierBridgeAPI:windchill"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      }
+    }
+  },
+  "D": {
+    "approach": "D",
+    "results": {
+      "inherit": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "payload": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "reference": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "specialize": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      },
+      "sublayer": {
+        "override_same_vendor": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": null,
+          "vendors_visible": [
+            "windchill"
+          ],
+          "windchill_value": "STRONG_WINDCHILL"
+        },
+        "two_vendors_merge": {
+          "applied_schemas": [
+            "SourceIdentifiersAPI"
+          ],
+          "ifc_value": "STRONG_IFC",
+          "vendors_visible": [
+            "ifc",
+            "windchill"
+          ],
+          "windchill_value": "WEAK_WINDCHILL"
+        }
+      }
+    }
+  }
+}

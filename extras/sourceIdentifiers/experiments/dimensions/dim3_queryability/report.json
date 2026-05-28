@@ -1,0 +1,287 @@
+{
+  "A": {
+    "approach": "A",
+    "authored_count": 52,
+    "indexer_loc": 14,
+    "matched_count": 52,
+    "missed": [],
+    "recall_pct": 100.0,
+    "recovered_count": 52,
+    "sample_recovered": [
+      [
+        "/Project/Asset_000",
+        "adobe",
+        "ADOBE-0000"
+      ],
+      [
+        "/Project/Asset_000",
+        "ifc",
+        "IFC-0000"
+      ],
+      [
+        "/Project/Asset_000",
+        "windchill",
+        "WINDCHILL-0000"
+      ],
+      [
+        "/Project/Asset_001",
+        "ifc",
+        "IFC-0001"
+      ],
+      [
+        "/Project/Asset_002",
+        "adobe",
+        "ADOBE-0002"
+      ]
+    ],
+    "spurious": [],
+    "vendors_authored": [
+      "adobe",
+      "ifc",
+      "windchill"
+    ],
+    "vendors_discovered": [
+      "adobe",
+      "ifc",
+      "windchill"
+    ]
+  },
+  "B": {
+    "approach": "B",
+    "authored_count": 52,
+    "indexer_loc": 16,
+    "matched_count": 52,
+    "missed": [],
+    "recall_pct": 100.0,
+    "recovered_count": 52,
+    "sample_recovered": [
+      [
+        "/Project/Asset_000",
+        "adobe",
+        "ADOBE-0000"
+      ],
+      [
+        "/Project/Asset_000",
+        "ifc",
+        "IFC-0000"
+      ],
+      [
+        "/Project/Asset_000",
+        "windchill",
+        "WINDCHILL-0000"
+      ],
+      [
+        "/Project/Asset_001",
+        "ifc",
+        "IFC-0001"
+      ],
+      [
+        "/Project/Asset_002",
+        "adobe",
+        "ADOBE-0002"
+      ]
+    ],
+    "spurious": [],
+    "vendors_authored": [
+      "adobe",
+      "ifc",
+      "windchill"
+    ],
+    "vendors_discovered": [
+      "adobe",
+      "ifc",
+      "windchill"
+    ]
+  },
+  "Bprime": {
+    "approach": "Bprime",
+    "authored_count": 36,
+    "indexer_loc": 22,
+    "matched_count": 23,
+    "missed": [
+      [
+        "/Project/Asset_000",
+        "windchill",
+        "WINDCHILL-0000"
+      ],
+      [
+        "/Project/Asset_003",
+        "windchill",
+        "WINDCHILL-0003"
+      ],
+      [
+        "/Project/Asset_006",
+        "windchill",
+        "WINDCHILL-0006"
+      ],
+      [
+        "/Project/Asset_007",
+        "windchill",
+        "WINDCHILL-0007"
+      ],
+      [
+        "/Project/Asset_009",
+        "windchill",
+        "WINDCHILL-0009"
+      ]
+    ],
+    "recall_pct": 63.888888888888886,
+    "recovered_count": 36,
+    "sample_recovered": [
+      [
+        "/Project/Asset_000",
+        "ifc",
+        "IFC-0000"
+      ],
+      [
+        "/Project/Asset_000",
+        "windchill",
+        "IFC-0000"
+      ],
+      [
+        "/Project/Asset_001",
+        "ifc",
+        "IFC-0001"
+      ],
+      [
+        "/Project/Asset_003",
+        "ifc",
+        "IFC-0003"
+      ],
+      [
+        "/Project/Asset_003",
+        "windchill",
+        "IFC-0003"
+      ]
+    ],
+    "spurious": [
+      [
+        "/Project/Asset_000",
+        "windchill",
+        "IFC-0000"
+      ],
+      [
+        "/Project/Asset_003",
+        "windchill",
+        "IFC-0003"
+      ],
+      [
+        "/Project/Asset_006",
+        "windchill",
+        "IFC-0006"
+      ],
+      [
+        "/Project/Asset_007",
+        "windchill",
+        "IFC-0007"
+      ],
+      [
+        "/Project/Asset_009",
+        "windchill",
+        "IFC-0009"
+      ]
+    ],
+    "vendors_authored": [
+      "ifc",
+      "windchill"
+    ],
+    "vendors_discovered": [
+      "ifc",
+      "windchill"
+    ]
+  },
+  "C": {
+    "approach": "C",
+    "authored_count": 52,
+    "indexer_loc": 1,
+    "matched_count": 52,
+    "missed": [],
+    "recall_pct": 100.0,
+    "recovered_count": 52,
+    "sample_recovered": [
+      [
+        "/Project/Asset_000",
+        "adobe",
+        "ADOBE-0000"
+      ],
+      [
+        "/Project/Asset_000",
+        "ifc",
+        "IFC-0000"
+      ],
+      [
+        "/Project/Asset_000",
+        "windchill",
+        "WINDCHILL-0000"
+      ],
+      [
+        "/Project/Asset_001",
+        "ifc",
+        "IFC-0001"
+      ],
+      [
+        "/Project/Asset_002",
+        "adobe",
+        "ADOBE-0002"
+      ]
+    ],
+    "spurious": [],
+    "vendors_authored": [
+      "adobe",
+      "ifc",
+      "windchill"
+    ],
+    "vendors_discovered": [
+      "adobe",
+      "ifc",
+      "windchill"
+    ]
+  },
+  "D": {
+    "approach": "D",
+    "authored_count": 52,
+    "indexer_loc": 1,
+    "matched_count": 52,
+    "missed": [],
+    "recall_pct": 100.0,
+    "recovered_count": 52,
+    "sample_recovered": [
+      [
+        "/Project/Asset_000",
+        "adobe",
+        "ADOBE-0000"
+      ],
+      [
+        "/Project/Asset_000",
+        "ifc",
+        "IFC-0000"
+      ],
+      [
+        "/Project/Asset_000",
+        "windchill",
+        "WINDCHILL-0000"
+      ],
+      [
+        "/Project/Asset_001",
+        "ifc",
+        "IFC-0001"
+      ],
+      [
+        "/Project/Asset_002",
+        "adobe",
+        "ADOBE-0002"
+      ]
+    ],
+    "spurious": [],
+    "vendors_authored": [
+      "adobe",
+      "ifc",
+      "windchill"
+    ],
+    "vendors_discovered": [
+      "adobe",
+      "ifc",
+      "windchill"
+    ]
+  }
+}

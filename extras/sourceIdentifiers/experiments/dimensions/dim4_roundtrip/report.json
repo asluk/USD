@@ -1,0 +1,677 @@
+{
+  "A": {
+    "approach": "A",
+    "by_value": {
+      "ascii_simple": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'OR:wt.part.WTPart:4697800'"
+      },
+      "colons": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'urn:adobe:sub3d:1:2:3'"
+      },
+      "cyrillic": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'\u0444\u0430\u0439\u043b'"
+      },
+      "empty": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "''"
+      },
+      "escaped_quote": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'has \"quotes\" inside'"
+      },
+      "ifc_globalid": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'Bs43BRT3PrSvZ0KshZJRhD'"
+      },
+      "newline_tab": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'line1\\nline2\\tcol'"
+      },
+      "slashes": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'file/path/to/part'"
+      },
+      "unicode": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'\u00fcnic\u00f6d\u00e9'"
+      },
+      "with_space": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'a value with spaces'"
+      }
+    }
+  },
+  "B": {
+    "approach": "B",
+    "by_value": {
+      "ascii_simple": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'OR:wt.part.WTPart:4697800'"
+      },
+      "colons": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'urn:adobe:sub3d:1:2:3'"
+      },
+      "cyrillic": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'\u0444\u0430\u0439\u043b'"
+      },
+      "empty": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "''"
+      },
+      "escaped_quote": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'has \"quotes\" inside'"
+      },
+      "ifc_globalid": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'Bs43BRT3PrSvZ0KshZJRhD'"
+      },
+      "newline_tab": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'line1\\nline2\\tcol'"
+      },
+      "slashes": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'file/path/to/part'"
+      },
+      "unicode": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'\u00fcnic\u00f6d\u00e9'"
+      },
+      "with_space": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'a value with spaces'"
+      }
+    }
+  },
+  "Bprime": {
+    "approach": "Bprime",
+    "by_value": {
+      "ascii_simple": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'OR:wt.part.WTPart:4697800'"
+      },
+      "colons": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'urn:adobe:sub3d:1:2:3'"
+      },
+      "cyrillic": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'\u0444\u0430\u0439\u043b'"
+      },
+      "empty": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "''"
+      },
+      "escaped_quote": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'has \"quotes\" inside'"
+      },
+      "ifc_globalid": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'Bs43BRT3PrSvZ0KshZJRhD'"
+      },
+      "newline_tab": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'line1\\nline2\\tcol'"
+      },
+      "slashes": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'file/path/to/part'"
+      },
+      "unicode": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'\u00fcnic\u00f6d\u00e9'"
+      },
+      "with_space": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'a value with spaces'"
+      }
+    }
+  },
+  "C": {
+    "approach": "C",
+    "by_value": {
+      "ascii_simple": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'OR:wt.part.WTPart:4697800'"
+      },
+      "colons": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'urn:adobe:sub3d:1:2:3'"
+      },
+      "cyrillic": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'\u0444\u0430\u0439\u043b'"
+      },
+      "empty": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "''"
+      },
+      "escaped_quote": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'has \"quotes\" inside'"
+      },
+      "ifc_globalid": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'Bs43BRT3PrSvZ0KshZJRhD'"
+      },
+      "newline_tab": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'line1\\nline2\\tcol'"
+      },
+      "slashes": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'file/path/to/part'"
+      },
+      "unicode": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'\u00fcnic\u00f6d\u00e9'"
+      },
+      "with_space": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'a value with spaces'"
+      }
+    }
+  },
+  "D": {
+    "approach": "D",
+    "by_value": {
+      "ascii_simple": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'OR:wt.part.WTPart:4697800'"
+      },
+      "colons": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'urn:adobe:sub3d:1:2:3'"
+      },
+      "cyrillic": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'\u0444\u0430\u0439\u043b'"
+      },
+      "empty": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "''"
+      },
+      "escaped_quote": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'has \"quotes\" inside'"
+      },
+      "ifc_globalid": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'Bs43BRT3PrSvZ0KshZJRhD'"
+      },
+      "newline_tab": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'line1\\nline2\\tcol'"
+      },
+      "slashes": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'file/path/to/part'"
+      },
+      "unicode": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'\u00fcnic\u00f6d\u00e9'"
+      },
+      "with_space": {
+        "usda": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "usdc": {
+          "pass": true,
+          "recovered": "__match__",
+          "recovered_type": "str"
+        },
+        "value_repr": "'a value with spaces'"
+      }
+    }
+  }
+}
