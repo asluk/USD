@@ -1,0 +1,77 @@
+#usda 1.0
+(
+    """Approach D (Matt Kuruc's semantic labels) — Split-by-concern.
+
+    Two coordinated schemas:
+      1. SourceIdentifiersAPI    — A-style, assetInfo.source.<vendor>
+                                   (identifiers live in metadata)
+      2. SemanticLabelsAPI       — B-style multi-apply with token[] props
+                                   (vendor-defined semantic labels)
+
+    The unified mechanism: identifiers and labels are split by concern,
+    not by mechanism. Either can be applied independently.
+
+    Source: Matt Kuruc Slack strawman, 2026-05-28.
+    Inspired by: pxr/usd/usdSemantics/SemanticsLabelsAPI (same multi-apply
+    shape, propertyNamespacePrefix = 'semantics:labels').
+    """
+    subLayers = [
+        @../../../../pxr/usd/usd/schema.usda@
+    ]
+)
+
+over "GLOBAL" (
+    customData = {
+        string libraryName       = "sourceIdentifiersD"
+        string libraryPath       = "."
+        bool   skipCodeGeneration = true
+    }
+) {
+}
+
+class "SourceIdentifiersAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+    doc = """D, identifier half: documented contract over the
+    assetInfo.source.<vendor> sub-dictionary. Same shape as Approach A.
+
+    Expected shape:
+        assetInfo = {
+            dictionary source = {
+                dictionary <vendor> = {
+                    string     primaryId = "..."
+                    string     revision  = "..."        # optional
+                    dictionary metadata  = { ... }      # optional
+                }
+            }
+        }
+    """
+)
+{
+}
+
+class "SemanticLabelsAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType         = "multipleApply"
+        token propertyNamespacePrefix = "semantics:labels"
+    }
+    doc = """D, labels half: multi-apply schema for vendor-defined semantic
+    labels. Instance name encodes vendor + labelKind. Examples:
+
+        prim.ApplyAPI('SemanticLabelsAPI', 'windchill:partCategory')
+        prim.ApplyAPI('SemanticLabelsAPI', 'ifc:entityType')
+
+    Yields one property per instance:
+        semantics:labels:windchill:partCategory = ['Frame', 'Structural']
+        semantics:labels:ifc:entityType         = ['IfcBeam']
+
+    Modeled directly on pxr/usd/usdSemantics/SemanticsLabelsAPI."""
+)
+{
+    token[] __INSTANCE_NAME__ = [] (
+        doc = "Array of semantic labels for this (vendor, labelKind) pair."
+    )
+}

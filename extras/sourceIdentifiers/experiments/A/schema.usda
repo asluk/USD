@@ -1,0 +1,50 @@
+#usda 1.0
+(
+    """Approach A — Extend assetInfo with stratified sub-dictionaries; the
+    applied schema is a documented contract over the assetInfo.source dict.
+
+    Storage:  all identifier data lives in assetInfo metadata.
+    Schema:   defines no properties; documents the dict shape.
+    Precedent: pxr/usd/usdMedia/UsdMediaAssetPreviewsAPI — same pattern
+    (no properties, contract is the assetInfo sub-dictionary shape).
+
+    Source of truth: PR #105 (identifier_separation_of_concerns, Approach A).
+    """
+    subLayers = [
+        @../../../../pxr/usd/usd/schema.usda@
+    ]
+)
+
+over "GLOBAL" (
+    customData = {
+        string libraryName       = "sourceIdentifiersA"
+        string libraryPath       = "."
+        bool   skipCodeGeneration = true
+    }
+) {
+}
+
+class "SourceIdentifiersAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+    doc = """Documents that this prim's assetInfo carries external source
+    identifiers under the 'source' key.
+
+    Expected shape (no enforcement — schema defines no properties):
+
+        assetInfo = {
+            dictionary source = {
+                dictionary <vendor> = {
+                    string     primaryId = "..."
+                    string     revision  = "..."        # optional
+                    dictionary metadata  = { ... }      # optional, vendor-specific
+                }
+            }
+        }
+
+    Access via Usd.Prim.GetAssetInfo() / SetAssetInfoByKey()."""
+)
+{
+}

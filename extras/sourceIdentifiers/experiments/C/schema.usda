@@ -1,0 +1,73 @@
+#usda 1.0
+(
+    """Approach C (spiffmon's bridge) — Applied schema declares default
+    assetInfo sub-dictionary via customData. Storage shape is A's;
+    discoverability is B-like (defaults land in UsdPrimDefinition).
+
+    Conditional: every field must have a fallback value (per spiffmon).
+    Storage:    assetInfo metadata (A's shape).
+    Schema:     declares the fallback dict via customData; no typed properties.
+
+    Source of truth: PR #105 review comment #1 by spiffmon (line ~560).
+    Note: the proposed mechanism (applied-schema customData populating a
+    prim's effective assetInfo via UsdPrimDefinition) is what this
+    experiment tests. usdGenSchema may not yet honor the
+    'assetInfoFallback' customData key — that's the experimental finding
+    we expect to surface.
+    """
+    subLayers = [
+        @../../../../pxr/usd/usd/schema.usda@
+    ]
+)
+
+over "GLOBAL" (
+    customData = {
+        string libraryName       = "sourceIdentifiersC"
+        string libraryPath       = "."
+        bool   skipCodeGeneration = true
+    }
+) {
+}
+
+class "SourceIdentifierBridgeAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        dictionary assetInfoFallback = {
+            dictionary source = {
+                dictionary __INSTANCE_NAME__ = {
+                    string     primaryId = ""
+                    string     revision  = ""
+                    dictionary metadata  = {}
+                }
+            }
+        }
+    }
+    doc = """Multi-apply schema with no typed properties.
+
+    Experimental finding (during authoring): USD requires multi-apply
+    schemas with 'propertyNamespacePrefix' to have at least one property.
+    Since C deliberately has no typed properties (all storage lives in
+    assetInfo), we omit the prefix entirely.
+
+    Intended mechanism: the schema's customData declares default
+    assetInfo sub-dictionary entries so that defaults appear in
+    UsdPrimDefinition (per spiffmon's bridge proposal).
+
+    Apply: prim.ApplyAPI('SourceIdentifierBridgeAPI', 'windchill')
+
+    Intended fallback (if mechanism is honored by usdGenSchema /
+    UsdPrimDefinition — to be verified empirically):
+        assetInfo = {
+            dictionary source = {
+                dictionary windchill = {
+                    string     primaryId = ""
+                    string     revision  = ""
+                    dictionary metadata  = {}
+                }
+            }
+        }
+    """
+)
+{
+}

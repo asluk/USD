@@ -1,0 +1,97 @@
+#usda 1.0
+(
+    """Approach B' — Single-apply base schema in core + domain-specific
+    single-apply schemas inheriting from it.
+
+    Storage:  identifier data lives in typed schema properties.
+    Schema:   one single-apply base + N vendor-specific single-applies.
+    Trade-off: per PR #105, requires UsdSchemaRegistry query enhancements
+    to enumerate all single-apply descendants of a base (so tools can
+    discover "what kinds of source identifiers does this prim carry?"
+    without prior knowledge of the vendor schemas).
+
+    Source of truth: PR #105 (variant of Approach B, "Variant of Approach B").
+    """
+    subLayers = [
+        @../../../../pxr/usd/usd/schema.usda@
+    ]
+)
+
+over "GLOBAL" (
+    customData = {
+        string libraryName       = "sourceIdentifiersBprime"
+        string libraryPath       = "."
+        bool   skipCodeGeneration = true
+    }
+) {
+}
+
+class "SourceIdentifierBaseAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+    doc = """Common base for all per-vendor source identifier schemas.
+    Defines fields common to every identifier type."""
+)
+{
+    string sourceId:primaryId = "" (
+        doc = "Primary identifier in the external system."
+    )
+    string sourceId:revision = "" (
+        doc = "Revision/version identifier. Empty string = unspecified."
+    )
+}
+
+class "WindchillSourceIdAPI" (
+    inherits = </APISchemaBase>
+    prepend apiSchemas = ["SourceIdentifierBaseAPI"]
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+    doc = """PTC Windchill PLM source identifier.
+
+    USD applied schemas must inherit directly from APISchemaBase; we use
+    'prepend apiSchemas = [\"SourceIdentifierBaseAPI\"]' to include the
+    base's properties when this schema is applied. This is the closest
+    USD-supported expression of PR #105's B' variant (which describes
+    inheritance among single-apply schemas — not natively supported by
+    the schema language; an experimental finding).
+
+    Adds Windchill-specific fields. From PR #105 review comment #4
+    (steveghee): Windchill needs a 'navigation criteria' as a secondary
+    key for product-structure traversal in addition to the primary OID."""
+)
+{
+    string sourceId:windchill:navigationCriteria = "" (
+        doc = "Windchill navigation criteria (object reference or encoded URL/JSON)."
+    )
+    string sourceId:windchill:displayNumber = "" (
+        doc = "Windchill display part number (user-facing label)."
+    )
+}
+
+class "IFCSourceIdAPI" (
+    inherits = </APISchemaBase>
+    prepend apiSchemas = ["SourceIdentifierBaseAPI"]
+    customData = {
+        token apiSchemaType = "singleApply"
+    }
+    doc = """IFC (Industry Foundation Classes) GlobalId source identifier.
+
+    IFC GlobalIds are 22-character base64-encoded GUIDs. From PR #105
+    design considerations: round-trip fidelity for invalid-char identifiers
+    is a stated principle (Principle 7).
+
+    Uses 'prepend apiSchemas' to include SourceIdentifierBaseAPI's
+    properties when applied (see WindchillSourceIdAPI doc for the
+    schema-language constraint this addresses)."""
+)
+{
+    token sourceId:ifc:ifcType = "" (
+        doc = "IFC entity type (IfcWall, IfcBeam, IfcDoor, etc.)."
+    )
+    token sourceId:ifc:schema = "" (
+        doc = "IFC schema version (IFC4, IFC4x3, etc.)."
+    )
+}
