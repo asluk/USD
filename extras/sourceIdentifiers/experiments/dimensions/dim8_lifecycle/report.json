@@ -1,0 +1,187 @@
+{
+  "A": {
+    "approach": "A",
+    "scenarios": {
+      "8.1_promotion": {
+        "layer_line_delta": 0,
+        "layer_v1_lines": 41,
+        "layer_v2_lines": 41,
+        "plugin_change_required": false,
+        "prims_rewritten": 3,
+        "schema_change_required": false,
+        "v2_readable_prims": 3,
+        "vendor_identity_location": "assetInfo dict key (data)"
+      },
+      "8.2_coexistence": {
+        "authored_multivendor_prims": 3,
+        "authored_windchill_prims": 3,
+        "both_resolve_on_one_stage": true,
+        "multivendor_readable": 3,
+        "vendors_observable_on_stage": [
+          "multiVendor",
+          "windchill"
+        ],
+        "windchill_readable": 3
+      },
+      "8.3_versioning": {
+        "v1_field": "primaryId",
+        "v1_field_in_schema": "documented-dict-shape (no typed properties)",
+        "v1_readable": true,
+        "v1_value": "P-1",
+        "v2_field": "oid",
+        "v2_field_in_schema": "documented-dict-shape (no typed properties)",
+        "v2_field_location": "inside-dict-shape",
+        "v2_readable": true,
+        "v2_value": "O-2"
+      }
+    }
+  },
+  "B": {
+    "approach": "B",
+    "scenarios": {
+      "8.1_promotion": {
+        "layer_line_delta": 0,
+        "layer_v1_lines": 23,
+        "layer_v2_lines": 23,
+        "plugin_change_required": false,
+        "prims_rewritten": 3,
+        "schema_change_required": false,
+        "v2_readable_prims": 3,
+        "vendor_identity_location": "multi-apply instance name (data)"
+      },
+      "8.2_coexistence": {
+        "authored_multivendor_prims": 3,
+        "authored_windchill_prims": 3,
+        "both_resolve_on_one_stage": true,
+        "multivendor_readable": 3,
+        "vendors_observable_on_stage": [
+          "multiVendor",
+          "windchill"
+        ],
+        "windchill_readable": 3
+      },
+      "8.3_versioning": {
+        "v1_field": "primaryId",
+        "v1_field_in_schema": true,
+        "v1_readable": true,
+        "v1_value": "P-1",
+        "v2_field": "oid",
+        "v2_field_in_schema": false,
+        "v2_field_location": "custom-attribute",
+        "v2_readable": true,
+        "v2_value": "O-2"
+      }
+    }
+  },
+  "Bprime": {
+    "approach": "Bprime",
+    "scenarios": {
+      "8.1_promotion": {
+        "layer_line_delta": 0,
+        "layer_v1_lines": 23,
+        "layer_v2_lines": 23,
+        "plugin_change_required": true,
+        "prims_rewritten": 3,
+        "schema_change_required": true,
+        "v2_readable_prims": 3,
+        "vendor_identity_location": "schema class identifier (registered type)"
+      },
+      "8.2_coexistence": {
+        "authored_multivendor_prims": 3,
+        "authored_windchill_prims": 3,
+        "both_resolve_on_one_stage": true,
+        "multivendor_readable": 3,
+        "vendors_observable_on_stage": [
+          "<base-only:no-schema-vendor-identity>",
+          "windchill"
+        ],
+        "windchill_readable": 3
+      },
+      "8.3_versioning": {
+        "v1_field": "primaryId",
+        "v1_field_in_schema": true,
+        "v1_readable": true,
+        "v1_value": "P-1",
+        "v2_field": "oid",
+        "v2_field_in_schema": false,
+        "v2_field_location": "custom-attribute",
+        "v2_readable": true,
+        "v2_value": "O-2"
+      }
+    }
+  },
+  "C": {
+    "approach": "C",
+    "scenarios": {
+      "8.1_promotion": {
+        "layer_line_delta": 0,
+        "layer_v1_lines": 41,
+        "layer_v2_lines": 41,
+        "plugin_change_required": false,
+        "prims_rewritten": 3,
+        "schema_change_required": false,
+        "v2_readable_prims": 3,
+        "vendor_identity_location": "multi-apply instance name + assetInfo dict key (data)"
+      },
+      "8.2_coexistence": {
+        "authored_multivendor_prims": 3,
+        "authored_windchill_prims": 3,
+        "both_resolve_on_one_stage": true,
+        "multivendor_readable": 3,
+        "vendors_observable_on_stage": [
+          "multiVendor",
+          "windchill"
+        ],
+        "windchill_readable": 3
+      },
+      "8.3_versioning": {
+        "v1_field": "primaryId",
+        "v1_field_in_schema": "documented-dict-shape (assetInfoFallback via customData)",
+        "v1_readable": true,
+        "v1_value": "P-1",
+        "v2_field": "oid",
+        "v2_field_in_schema": "documented-dict-shape (assetInfoFallback via customData)",
+        "v2_field_location": "inside-dict-shape-with-bridge",
+        "v2_readable": true,
+        "v2_value": "O-2"
+      }
+    }
+  },
+  "D": {
+    "approach": "D",
+    "scenarios": {
+      "8.1_promotion": {
+        "layer_line_delta": 0,
+        "layer_v1_lines": 41,
+        "layer_v2_lines": 41,
+        "plugin_change_required": false,
+        "prims_rewritten": 3,
+        "schema_change_required": false,
+        "v2_readable_prims": 3,
+        "vendor_identity_location": "assetInfo dict key (data); labels half = instance name"
+      },
+      "8.2_coexistence": {
+        "authored_multivendor_prims": 3,
+        "authored_windchill_prims": 3,
+        "both_resolve_on_one_stage": true,
+        "multivendor_readable": 3,
+        "vendors_observable_on_stage": [
+          "multiVendor",
+          "windchill"
+        ],
+        "windchill_readable": 3
+      },
+      "8.3_versioning": {
+        "v1_field": "primaryId",
+        "v1_field_in_schema": "documented-dict-shape (no typed properties)",
+        "v1_readable": true,
+        "v1_value": "P-1",
+        "v2_field": "oid",
+        "v2_field_in_schema": "documented-dict-shape (no typed properties)",
+        "v2_field_location": "inside-dict-shape",
+        "v2_readable": true,
+        "v2_value": "O-2"
+      }
+    }
+  }
+}

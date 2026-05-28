@@ -1,6 +1,6 @@
 # Source-identifier dimension experiments
 
-Seven empirical experiments comparing the five source-identifier candidate
+Empirical experiments comparing the five source-identifier candidate
 mechanisms (A, B, B', C, D) from PR #105 along the dimensions surfaced by
 the proposal's principles and open questions.
 
@@ -18,6 +18,8 @@ dimensions/
   dim5_distribution/     schema/plugin distribution (P3)
   dim6_scope/            scope-of-applicability (OQ4)
   dim7_lexical/          vendor-name lexical scope (P3 + OQ5)
+  dim8_lifecycle/        within-approach lifecycle: promotion +
+                         coexistence + within-vendor versioning (P3)
 ```
 
 Per dimension:
