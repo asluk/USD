@@ -22,9 +22,9 @@ measured by these dims and are not represented as matrix rows.
 | [3 — queryability (P6 + OQ1)](experiments/dimensions/dim3_queryability/summary.md) | dict walk (14 LoC), 100% recall | property walk (16 LoC), 100% | apiSchemas walk (22 LoC), 63.9% (shared-slot on multi-vendor prims) | dict walk via A's indexer, 100% | dict walk via A's indexer, 100% (id half only) |
 | [4 — round-trip (P7)](experiments/dimensions/dim4_roundtrip/summary.md) | ✓ all sampled values (`.usda` + `.usdc`) | ✓ all | ✓ all | ✓ all | ✓ all |
 | [5 — distribution (P3)](experiments/dimensions/dim5_distribution/summary.md) | data only | data only | plugin + schema + data; shared base slot constrains 2-vendor coexistence | data only (bridge mechanism not surfaced in current OpenUSD; see implementation findings) | data only (both halves) |
-| [6 — scope (OQ4)](experiments/dimensions/dim6_scope/summary.md) | no `apiSchemaCanOnlyApplyTo`; 208 B/prim | no restriction; 117 B/prim | no restriction; 90 B/prim | no restriction; 223 B/prim | no restriction; 208 B/prim (id half measurement) |
-| [7 — vendor-name slot (P3 + OQ5)](experiments/dimensions/dim7_lexical/summary.md) | dict key — all probed strings round-trip | apply-instance + property segments — `✗ prop` on hyphen/space/dot/slash/leading-digit; `⚠ silent` on colon | schema class name — `Tf.IsValidIdentifier` gate (ASCII identifier only) | dict key (same as A) | id: dict key (A-shape); label: apply-instance (B-shape, same failures) |
-| [8 — migration & compatibility (P3 + operational)](experiments/dimensions/dim8_lifecycle/summary.md) | (a, b) lexical mapping; (c→B/B') drops extra dict keys | (a, b) lexical mapping; (b) lands as custom attr; (c←A) preserves | (a) new schema + plugin registration; (b) custom attr; (c←A) preserves primaryId, drops extras | (a, b) lexical mapping; (c) target preserves dict shape | (a, b) lexical mapping both halves; carrier (c) exercised on id half only |
+| [6 — scope (OQ4)](experiments/dimensions/dim6_scope/summary.md) | no `apiSchemaCanOnlyApplyTo`; 208 B/prim | no `apiSchemaCanOnlyApplyTo`; 117 B/prim | no `apiSchemaCanOnlyApplyTo`; 90 B/prim | no `apiSchemaCanOnlyApplyTo`; 223 B/prim | no `apiSchemaCanOnlyApplyTo`; 208 B/prim (id half measurement) |
+| [7 — vendor-name slot (P3 + OQ5)](experiments/dimensions/dim7_lexical/summary.md) | dict key — all probed strings round-trip | apply-instance + property segments — `✗ prop` on hyphen/space/dot/slash/leading-digit; `⚠ silent` on colon | schema class name — `Tf.IsValidIdentifier` gate (ASCII identifier only) | dict key — all probed strings round-trip (same shape as A; apply-instance also permissive in this probe) | id: dict key (A-shape, same outcomes); label: apply-instance + property segments (B-shape, same failures) |
+| [8 — migration & compatibility (P3 + operational)](experiments/dimensions/dim8_lifecycle/summary.md) | (a, b) lexical mapping; (c→B/B') drops extra dict keys | (a, b) lexical mapping; (b) lands as custom attr; (c←A) preserves primaryId, drops extra dict keys at hop1 | (a) new schema + plugin registration; (b) custom attr; (c←A) preserves primaryId, drops extra dict keys at hop1 | (a, b) lexical mapping; (c) target preserves dict shape | (a, b) lexical mapping both halves; carrier (c) exercised on id half only |
 
 The patterns that emerge cluster by storage primitive (dict-valued
 metadata vs typed attributes vs schema class identity), not by any
@@ -39,7 +39,9 @@ groupings as authoritative.
   instance name. PR #105.
 - **B'** — Single-apply base in core + per-vendor single-applies
   inheriting via `prepend apiSchemas`. Vendor = schema class name.
-  PR #105 variant.
+  PR #105 names B' as a variant of B; the criteria file notes it
+  "Requires `UsdSchemaRegistry` query enhancements" for registry-
+  level vendor-schema enumeration.
 - **C** — Spiffmon's bridge (PR #105 review comment): applied schema
   declares default `assetInfo` sub-dict via `customData`. Vendor =
   dict key + instance.
@@ -63,6 +65,9 @@ groupings as authoritative.
   `apiSchemaCanOnlyApplyTo`; the model-roots-vs-any-prim question
   is decided by policy, not measured beyond apply-success on
   five tested prim types.
+- **OQ5** — Dim 7 measures the namespacing question (where vendor
+  identity lives in each approach: dict key vs apply-instance vs
+  class name vs both halves).
 - **OQ6, OQ7, OQ8** — displayName, authorship traceability,
   transcoding; named as open questions in PR #105, not exercised
   by these dims.
