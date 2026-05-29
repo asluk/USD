@@ -20,6 +20,14 @@ in by reference for reachability — the probe records what each
 arc surfaces under that composition assembly; it does not
 disentangle direct-opinion vs class-arc strength in isolation.
 
+**Note on Approach D.** D is a candidate beyond PR #105
+(Matt Kuruc strawman, per the criteria file). Its mechanism
+combines an identifier half (assetInfo dict shape, mirroring
+A) and a label half (`SemanticLabelsAPI` multi-apply,
+mirroring B). Where a dim measurement applies to both halves,
+this summary shows two rows for D; the comparison stays five
+approaches (A, B, B', C, D), not six.
+
 ## A
 
 ### override_same_vendor — which value composes?
@@ -161,11 +169,15 @@ disentangle direct-opinion vs class-arc strength in isolation.
   override takes the strongest opinion. Two vendors authored
   in two layers therefore appear as two entries in the composed
   `source` dict.
-- For B and D-label, the identifier is stored in typed
-  attributes. Attribute composition is strongest-opinion-wins
-  per attribute. Different vendors live in different
-  attributes, so they compose per-attribute and both remain
-  visible. Same-vendor override is per-attribute override.
+- For B, the identifier is stored in typed attributes
+  (`sourceIdentifier:<vendor>:primaryId`). For D's label half,
+  labels (token[] arrays) are stored in typed attributes
+  (`semantics:labels:<vendor>:<kind>`). Attribute composition
+  is strongest-opinion-wins per attribute. Different vendors
+  (B) or different vendor:kind instances (D-label) live in
+  different attributes, so they compose per-attribute and
+  both remain visible. Same-attribute override is per-attribute
+  override.
 - For B', the per-vendor schema name carries vendor identity.
   `apiSchemas` is a listOp, so adding a second vendor schema
   in a stronger layer composes into the union of applied

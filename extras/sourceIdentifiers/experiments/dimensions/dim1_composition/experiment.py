@@ -54,6 +54,20 @@ def render_summary(results):
     print('disentangle direct-opinion vs class-arc strength in isolation.',
           file=buf)
     print('', file=buf)
+    print('**Note on Approach D.** D is a candidate beyond PR #105',
+          file=buf)
+    print('(Matt Kuruc strawman, per the criteria file). Its mechanism',
+          file=buf)
+    print('combines an identifier half (assetInfo dict shape, mirroring',
+          file=buf)
+    print('A) and a label half (`SemanticLabelsAPI` multi-apply,',
+          file=buf)
+    print('mirroring B). Where a dim measurement applies to both halves,',
+          file=buf)
+    print('this summary shows two rows for D; the comparison stays five',
+          file=buf)
+    print('approaches (A, B, B\', C, D), not six.', file=buf)
+    print('', file=buf)
 
     for ap in APPROACHES:
         if ap == 'D':
@@ -145,15 +159,23 @@ def render_summary(results):
     print('  in two layers therefore appear as two entries in the composed',
           file=buf)
     print('  `source` dict.', file=buf)
-    print('- For B and D-label, the identifier is stored in typed', file=buf)
-    print('  attributes. Attribute composition is strongest-opinion-wins',
+    print('- For B, the identifier is stored in typed attributes',
           file=buf)
-    print('  per attribute. Different vendors live in different',
+    print('  (`sourceIdentifier:<vendor>:primaryId`). For D\'s label half,',
           file=buf)
-    print('  attributes, so they compose per-attribute and both remain',
+    print('  labels (token[] arrays) are stored in typed attributes',
           file=buf)
-    print('  visible. Same-vendor override is per-attribute override.',
+    print('  (`semantics:labels:<vendor>:<kind>`). Attribute composition',
           file=buf)
+    print('  is strongest-opinion-wins per attribute. Different vendors',
+          file=buf)
+    print('  (B) or different vendor:kind instances (D-label) live in',
+          file=buf)
+    print('  different attributes, so they compose per-attribute and',
+          file=buf)
+    print('  both remain visible. Same-attribute override is per-attribute',
+          file=buf)
+    print('  override.', file=buf)
     print('- For B\', the per-vendor schema name carries vendor identity.',
           file=buf)
     print('  `apiSchemas` is a listOp, so adding a second vendor schema',
