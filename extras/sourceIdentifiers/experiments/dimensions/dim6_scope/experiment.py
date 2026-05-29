@@ -72,13 +72,14 @@ def render_summary(results):
     # Cost per prim
     print('## Approximate cost per prim', file=buf)
     print('', file=buf)
-    print('Bytes added to a 10-Xform `.usda` layer by applying the schema and',
+    print('Bytes added to a 10-Xform `.usda` layer by applying the schema',
           file=buf)
-    print('authoring one vendor identifier on each prim. Rough comparison;',
+    print('and authoring one vendor identifier on each prim. Single',
           file=buf)
-    print('actual size depends on identifier value length, vendor name, and',
+    print('measurement per approach with short ASCII vendor name and a',
           file=buf)
-    print('compression (`.usdc` not measured here).', file=buf)
+    print('single-character primaryId; not measured for `.usdc`.',
+          file=buf)
     print('', file=buf)
     print('| approach | empty (10 prims) | with identifier | Δ bytes | bytes/prim |', file=buf)
     print('|---|---|---|---|---|', file=buf)
@@ -92,22 +93,28 @@ def render_summary(results):
 
     print('## Observations', file=buf)
     print('', file=buf)
-    print('- None of the five schemas declare `apiSchemaCanOnlyApplyTo` — all',
+    print('- None of the schemas across the five approaches declare',
           file=buf)
-    print('  can be applied to any prim. OQ4 (model roots vs any prim) is a',
+    print('  `apiSchemaCanOnlyApplyTo`. With the constraint absent, scope',
           file=buf)
-    print('  *policy* question, not a mechanism question, in every approach.',
+    print('  is decided by policy (what tooling chooses to apply where)',
           file=buf)
-    print('- Apply succeeds across the full prim-type range for every',
+    print('  rather than by schema-level enforcement.',
           file=buf)
-    print('  approach.', file=buf)
-    print('- Cost-per-prim is small in absolute terms for all approaches.',
+    print('- Apply succeeded for all tested prim types (Mesh leaf, Over',
           file=buf)
-    print('  The relative ordering depends on the identifier-data payload',
+    print('  typeless, Scope, Xform, Xform with kind=component) for every',
           file=buf)
-    print('  (vendor name, primaryId length) — this measurement uses a',
+    print('  approach. The matrix records the tested range; broader',
           file=buf)
-    print('  short ASCII vendor name and a single-character primaryId.',
+    print('  applicability is not measured.', file=buf)
+    print('- Cost-per-prim (bytes/prim) ranges from 90 to 223 across the',
+          file=buf)
+    print('  five approaches under the single payload measured (short',
+          file=buf)
+    print('  ASCII vendor name, single-character primaryId). Different',
+          file=buf)
+    print('  identifier-data sizes are not measured.',
           file=buf)
     print('', file=buf)
 

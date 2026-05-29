@@ -34,10 +34,10 @@ vendor's identifier).
 
 ## Approximate cost per prim
 
-Bytes added to a 10-Xform `.usda` layer by applying the schema and
-authoring one vendor identifier on each prim. Rough comparison;
-actual size depends on identifier value length, vendor name, and
-compression (`.usdc` not measured here).
+Bytes added to a 10-Xform `.usda` layer by applying the schema
+and authoring one vendor identifier on each prim. Single
+measurement per approach with short ASCII vendor name and a
+single-character primaryId; not measured for `.usdc`.
 
 | approach | empty (10 prims) | with identifier | Δ bytes | bytes/prim |
 |---|---|---|---|---|
@@ -49,13 +49,16 @@ compression (`.usdc` not measured here).
 
 ## Observations
 
-- None of the five schemas declare `apiSchemaCanOnlyApplyTo` — all
-  can be applied to any prim. OQ4 (model roots vs any prim) is a
-  *policy* question, not a mechanism question, in every approach.
-- Apply succeeds across the full prim-type range for every
-  approach.
-- Cost-per-prim is small in absolute terms for all approaches.
-  The relative ordering depends on the identifier-data payload
-  (vendor name, primaryId length) — this measurement uses a
-  short ASCII vendor name and a single-character primaryId.
+- None of the schemas across the five approaches declare
+  `apiSchemaCanOnlyApplyTo`. With the constraint absent, scope
+  is decided by policy (what tooling chooses to apply where)
+  rather than by schema-level enforcement.
+- Apply succeeded for all tested prim types (Mesh leaf, Over
+  typeless, Scope, Xform, Xform with kind=component) for every
+  approach. The matrix records the tested range; broader
+  applicability is not measured.
+- Cost-per-prim (bytes/prim) ranges from 90 to 223 across the
+  five approaches under the single payload measured (short
+  ASCII vendor name, single-character primaryId). Different
+  identifier-data sizes are not measured.
 
