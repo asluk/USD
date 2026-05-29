@@ -14,11 +14,12 @@ Five candidate mechanisms for storing a vendor source identifier
 USD prim. Each example below shows the authored layer fragment for
 one vendor (`windchill`) identifier on a single `Asset` prim.
 
-### A — `assetInfo` sub-dictionary (PR #105)
+### A — `assetInfo` sub-dictionary + single-apply API schema (PR #105)
 
 Vendor identifier lives in a stratified sub-dictionary of `assetInfo`;
-a convenience applied schema marks the prim as carrying source
-identifiers. Vendor identity is the dict key.
+a convenience single-apply API schema (`SourceIdentifiersAPI`) marks
+the prim as carrying source identifiers. Vendor identity is the dict
+key.
 
 ```usda
 def Xform "Asset" (
@@ -37,10 +38,10 @@ def Xform "Asset" (
 ### B — multi-apply API schema with typed properties (PR #105)
 
 Vendor identifier lives in typed properties declared by a multi-apply
-*applied* API schema (a multi-apply schema is an applied API schema
-that can be applied multiple times with different instance names —
-it is not a typed schema in the USD sense). The vendor name is the
-ApplyAPI instance name. One ApplyAPI call per vendor.
+API schema (`SourceIdentifierAPI`). Vendor identity is the
+ApplyAPI instance name; one ApplyAPI call per vendor. (Multi-apply
+API schemas are not typed schemas in the USD sense — a
+typed schema defines a prim type.)
 
 ```usda
 def Xform "Asset" (
@@ -50,10 +51,12 @@ def Xform "Asset" (
 }
 ```
 
-### B' — single-apply base + per-vendor single-applies (PR #105 variant)
+### B' — single-apply base + per-vendor single-apply API schemas (PR #105 variant)
 
-Each vendor ships its own single-apply schema class that inherits
-the common base via `prepend apiSchemas`. Vendor identity is the
+A common base single-apply API schema (`SourceIdentifierBaseAPI`)
+declares the shared typed properties. Each vendor ships its own
+single-apply API schema class (`WindchillSourceIdAPI`, etc.) that
+inherits the base via `prepend apiSchemas`. Vendor identity is the
 schema class name. Requires the vendor to publish a plugin; requires
 `UsdSchemaRegistry` query enhancements (named in PR #105) for
 registry-level vendor-schema enumeration.
@@ -66,13 +69,17 @@ def Xform "Asset" (
 }
 ```
 
-### C — Spiffmon's bridge (PR #105 review comment)
+### C — multi-apply API schema + `assetInfo` customData fallback (PR #105 review comment)
 
-An applied multi-apply schema marks the prim as carrying source
-identifiers AND declares a default `assetInfo` sub-dict via
-`customData`. Storage shape on the prim is A's; discoverability is
-B-like (vendor is in the ApplyAPI instance name). Conditional on the
-schema's declared fallback values appearing in `UsdPrimDefinition`.
+A multi-apply API schema (`SourceIdentifierBridgeAPI`) marks
+the prim as carrying source identifiers AND declares a default
+`assetInfo.source.<vendor>` sub-dict via `customData` on the schema
+class. Storage shape on the prim is A's (the schema-declared
+fallback is intended to surface in `UsdPrimDefinition` so registry
+tooling sees `source` without scene authoring); vendor identity is
+both the dict key and the ApplyAPI instance name. Conditional on
+the schema's declared fallback values appearing in
+`UsdPrimDefinition`.
 
 ```usda
 def Xform "Asset" (
@@ -88,11 +95,14 @@ def Xform "Asset" (
 }
 ```
 
-### D — split-by-concern, identifiers + semantic labels (beyond PR #105)
+### D — `assetInfo` sub-dictionary + multi-apply API schema (beyond PR #105)
 
-Two coordinated halves on the same prim: identifiers in
-`assetInfo.source.<vendor>` (A-style) AND semantic labels via a
-multi-apply `SemanticLabelsAPI:<vendor>:<labelKind>` schema (B-style).
+Two coordinated mechanisms on the same prim: identifiers in
+`assetInfo.source.<vendor>` (same shape as A, with a convenience
+`SourceIdentifiersAPI` applied) AND semantic labels via a multi-apply
+API schema (`SemanticLabelsAPI:<vendor>:<labelKind>`, same
+multi-apply shape as B). Vendor identity is the dict key on the
+identifier half and the ApplyAPI instance segment on the label half.
 Either half can be authored independently; the example below shows
 both.
 
@@ -133,7 +143,7 @@ USD namespace paths, and surveys candidate mechanisms across a tiered
 vendor lifecycle (vendor → multi-vendor → core). The proposal lists
 eight numbered *principles* and eight numbered *open questions*. The
 central open question is whether identifiers should live as
-dictionary metadata on `assetInfo` or as an applied API schema with
+dictionary metadata on `assetInfo` or as an API schema with
 typed properties (OQ2). This comparison provides empirical data for OQ2 and for the
 surrounding principles, without proposing which way to resolve OQ2.
 
@@ -188,20 +198,19 @@ Each candidate handles overflow differently:
 - **A / C** — `assetInfo.source.<vendor>` is a freeform dictionary;
   arbitrary keys coexist with the schema-declared keys. Overflow is
   the *native* shape; nothing extra is needed to use it.
-- **B / B'** — applied API schemas declare a fixed set of typed
+- **B / B'** — API schemas declare a fixed set of typed
   properties. Overflow fields are authored as *custom attributes*
   on the prim, outside the schema's declared property set; they
   carry the value but do not appear in `UsdPrimDefinition`, so
   registry-driven tooling (validation, GUI, indexers that consult
   prim definitions) cannot see them.
-- **D** — Matt Kuruc's motivation for the split-by-concern
-  mechanism. Identifiers (the standardized, schema-declared part)
-  use A-shape; labels (the overflow space for vendor-defined
-  kinds) use a multi-apply template
-  `SemanticLabelsAPI:<vendor>:<labelKind>` where any new
-  vendor:kind instance still matches the template and appears in
-  `UsdPrimDefinition`. The intent: an overflow space that is
-  schema-defined but open-ended.
+- **D** — the motivation Matt Kuruc gave for the two-mechanism
+  shape. Identifiers (the standardized, schema-declared part) use
+  A-shape; labels (the overflow space for vendor-defined kinds) use
+  a multi-apply template `SemanticLabelsAPI:<vendor>:<labelKind>`
+  where any new vendor:kind instance still matches the template and
+  appears in `UsdPrimDefinition`. The intent: an overflow space that
+  is schema-defined but open-ended.
 
 Dim 5 (distribution) and Dim 8 (migration & compatibility) surface
 this difference empirically; see the per-dim findings below.
