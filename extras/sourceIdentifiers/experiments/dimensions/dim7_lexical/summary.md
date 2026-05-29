@@ -1,14 +1,24 @@
 # Dim 7 — vendor-name lexical scope (P3 + OQ5)
 
-Framing: PR #105 names vendor extensibility (P3) as a core
-principle — vendors must be able to declare their own scheme
-without central approval. The vendor *name* is the operational
-carrier of that vendor identity in every approach. This
-dimension records what character classes each approach's
-vendor slot accepts and how it fails when it doesn't. The
-measured lexical scope of each slot is the input; whether
-that scope is acceptable under P3 is a downstream question
-for COMPARISON.md.
+PR #105 Principle 3 (vendor extensibility): "Any vendor or
+standards body can declare their own identifier scheme without
+central approval." Open Question 5 (namespacing of identifiers):
+where the vendor identity lives in each approach.
+
+Each approach has a *vendor slot* — a string that carries the
+vendor identity in the layer (dict key for A/C, multi-apply
+instance segment for B and D-label, schema class name for B').
+This dimension records, per probed vendor name, which slots
+accept it end-to-end (apply, author, round-trip) and which
+fail (and at what gate). Whether the measured scope is
+acceptable under P3 is a downstream question for COMPARISON.md.
+
+**Note on Approach D.** D is a candidate beyond PR #105
+(Matt Kuruc strawman, per the criteria file). Its mechanism
+has two vendor slots: a dict-key slot for the identifier half
+(same shape as A) and a multi-apply instance segment for the
+label half (same shape as B). Both slots are probed; the D
+section below shows them side by side.
 
 ## Slot per approach
 
@@ -40,11 +50,12 @@ identity on parse without raising an error;
 | slash | ✓ (dict) | ✗ prop | ✗ class | ✓ (dict) |
 | unicode_letter | ✓ (dict) | ✓ | ✗ class | ✓ (dict) |
 
-## Result matrix — D (split-by-concern)
+## Result matrix — D (two slots)
 
-D has two slots, probed independently. Identifier slot is a dict
-key (A-shaped). Label slot is ApplyAPI instance + property segment
-(B-shaped). Same column legend as above.
+D has two vendor slots, probed independently. The identifier
+slot is a dict key (same shape as A). The label slot is the
+ApplyAPI instance segment + property name segment (same shape
+as B). Same column legend as above.
 
 | vendor name | identifier slot | label slot |
 |---|---|---|
@@ -73,8 +84,11 @@ key (A-shaped). Label slot is ApplyAPI instance + property segment
   `silent_renamespace: true`.
 - B' (Bprime) class-name slot is gated by
   `Tf.IsValidIdentifier` (ASCII identifier rules: no unicode,
-  no hyphen/space/dot, no leading digit). Schema class names
-  that violate these rules fail at schema validation.
+  no hyphen/space/dot, no leading digit). report.json records
+  `tf_isvalid_identifier: false` for class names that violate
+  these rules; the per-vendor schema cannot be registered
+  with such a name and `authoring_succeeded: null` reflects
+  that runtime apply was not exercised.
 - A, C, and D's identifier slot (dict key under
   `assetInfo.source.<vendor>`) accepted every probed string in
   this run, including unicode and embedded special characters,

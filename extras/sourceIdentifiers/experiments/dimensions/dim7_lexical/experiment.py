@@ -66,23 +66,40 @@ def render_summary(results):
     buf = io.StringIO()
     print('# Dim 7 — vendor-name lexical scope (P3 + OQ5)', file=buf)
     print('', file=buf)
-    print('Framing: PR #105 names vendor extensibility (P3) as a core',
+    print('PR #105 Principle 3 (vendor extensibility): "Any vendor or',
           file=buf)
-    print('principle — vendors must be able to declare their own scheme',
+    print('standards body can declare their own identifier scheme without',
           file=buf)
-    print('without central approval. The vendor *name* is the operational',
+    print('central approval." Open Question 5 (namespacing of identifiers):',
           file=buf)
-    print('carrier of that vendor identity in every approach. This',
+    print('where the vendor identity lives in each approach.', file=buf)
+    print('', file=buf)
+    print('Each approach has a *vendor slot* — a string that carries the',
           file=buf)
-    print('dimension records what character classes each approach\'s',
+    print('vendor identity in the layer (dict key for A/C, multi-apply',
           file=buf)
-    print('vendor slot accepts and how it fails when it doesn\'t. The',
+    print('instance segment for B and D-label, schema class name for B\').',
           file=buf)
-    print('measured lexical scope of each slot is the input; whether',
+    print('This dimension records, per probed vendor name, which slots',
           file=buf)
-    print('that scope is acceptable under P3 is a downstream question',
+    print('accept it end-to-end (apply, author, round-trip) and which',
           file=buf)
-    print('for COMPARISON.md.', file=buf)
+    print('fail (and at what gate). Whether the measured scope is',
+          file=buf)
+    print('acceptable under P3 is a downstream question for COMPARISON.md.',
+          file=buf)
+    print('', file=buf)
+    print('**Note on Approach D.** D is a candidate beyond PR #105',
+          file=buf)
+    print('(Matt Kuruc strawman, per the criteria file). Its mechanism',
+          file=buf)
+    print('has two vendor slots: a dict-key slot for the identifier half',
+          file=buf)
+    print('(same shape as A) and a multi-apply instance segment for the',
+          file=buf)
+    print('label half (same shape as B). Both slots are probed; the D',
+          file=buf)
+    print('section below shows them side by side.', file=buf)
     print('', file=buf)
 
     print('## Slot per approach', file=buf)
@@ -121,13 +138,15 @@ def render_summary(results):
     print('', file=buf)
 
     # D's split-slot matrix
-    print('## Result matrix — D (split-by-concern)', file=buf)
+    print('## Result matrix — D (two slots)', file=buf)
     print('', file=buf)
-    print('D has two slots, probed independently. Identifier slot is a dict',
+    print('D has two vendor slots, probed independently. The identifier',
           file=buf)
-    print('key (A-shaped). Label slot is ApplyAPI instance + property segment',
+    print('slot is a dict key (same shape as A). The label slot is the',
           file=buf)
-    print('(B-shaped). Same column legend as above.', file=buf)
+    print('ApplyAPI instance segment + property name segment (same shape',
+          file=buf)
+    print('as B). Same column legend as above.', file=buf)
     print('', file=buf)
     print('| vendor name | identifier slot | label slot |', file=buf)
     print('|---|---|---|', file=buf)
@@ -165,9 +184,15 @@ def render_summary(results):
           file=buf)
     print('  `Tf.IsValidIdentifier` (ASCII identifier rules: no unicode,',
           file=buf)
-    print('  no hyphen/space/dot, no leading digit). Schema class names',
+    print('  no hyphen/space/dot, no leading digit). report.json records',
           file=buf)
-    print('  that violate these rules fail at schema validation.',
+    print('  `tf_isvalid_identifier: false` for class names that violate',
+          file=buf)
+    print('  these rules; the per-vendor schema cannot be registered',
+          file=buf)
+    print('  with such a name and `authoring_succeeded: null` reflects',
+          file=buf)
+    print('  that runtime apply was not exercised.',
           file=buf)
     print('- A, C, and D\'s identifier slot (dict key under',
           file=buf)
