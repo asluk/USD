@@ -1,14 +1,14 @@
 # Dim 7 — vendor-name lexical scope (P3 + OQ5)
 
-Framing: PR #105 names vendor extensibility (P3) as a core principle —
-vendors must be able to declare their own scheme without central
-approval. The vendor *name* is the operational carrier of that vendor
-identity in every approach. This dimension records what character
-classes each approach's vendor slot accepts and how it fails when it
-doesn't. Findings inform whether the proposed extension paradigm
-imposes a soft form of central approval via naming constraints
-(tensions with P3's "no central approval" stance) — captured here
-as data, not verdict.
+Framing: PR #105 names vendor extensibility (P3) as a core
+principle — vendors must be able to declare their own scheme
+without central approval. The vendor *name* is the operational
+carrier of that vendor identity in every approach. This
+dimension records what character classes each approach's
+vendor slot accepts and how it fails when it doesn't. The
+measured lexical scope of each slot is the input; whether
+that scope is acceptable under P3 is a downstream question
+for COMPARISON.md.
 
 ## Slot per approach
 
@@ -20,11 +20,12 @@ as data, not verdict.
 
 ## Result matrix — A, B, B', C
 
-Legend: ✓ = end-to-end authoring works (including round-trip);
-✓ (dict) = permissive dict-key slot (runtime always succeeds);
+Legend: ✓ = end-to-end authoring works (recovered value equals
+authored value);
+✓ (dict) = dict-key slot, all probed strings round-trip;
 ✓ class = class-name passes Tf.IsValidIdentifier;
-⚠ silent = ApplyAPI succeeds but Sdf silently re-namespaces the
-vendor identity on parse;
+⚠ silent = ApplyAPI succeeds but Sdf re-namespaces the vendor
+identity on parse without raising an error;
 ✗ apply / ✗ prop / ✗ class = failure at that gate.
 
 | vendor name | A | B | Bprime | C |
@@ -59,23 +60,23 @@ key (A-shaped). Label slot is ApplyAPI instance + property segment
 
 ## Observations
 
-- Two layers of constraint, not one: ApplyAPI/dict-key behavior is
-  permissive at the runtime API; the harder constraint lives in
-  `SdfAttributeSpec::New`, which enforces `Sdf.Path.IsValidNamespacedIdentifier`
-  per property-name segment.
-- Colons in the vendor name (`siemens:nx`) trigger silent
-  re-namespacing in B and D-label: Sdf parses the property name into
-  extra namespace segments, producing a different shape than what
-  was authored — no error raised. This is a separable USD bug
-  ([[bugs-vs-proposal-considerations]]), distinct from the
-  vendor-extension-paradigm question.
-- B' is the most-restrictive of the slots: schema class name must
-  satisfy `Tf.IsValidIdentifier` (ASCII identifier rules — no
-  unicode, no hyphen/space/dot, no leading digit). Codeless
-  schemas do not relax this; the constraint sits in
-  `Sdf_TextFileFormatParser` + the usdGenSchema validator, neither
-  bypassed by `skipCodeGeneration`.
-- A, C, D-identifier (dict-key slot) accept every probed string
-  including unicode and embedded special characters. Round-trips
-  byte-for-byte through `.usda`.
+- For B and D-label, ApplyAPI accepts the vendor segment but
+  the property-name slot is gated by
+  `Sdf.Path.IsValidNamespacedIdentifier` per segment. The
+  runtime ApplyAPI surface and the SdfAttributeSpec surface
+  have different acceptance rules; the probe records both.
+- Colons in the vendor name (`siemens:nx`) cause silent
+  re-namespacing in B and D-label: ApplyAPI returns success
+  but Sdf parses the property name into extra namespace
+  segments, so the authored vendor identity differs from the
+  recovered shape. report.json records this as
+  `silent_renamespace: true`.
+- B' (Bprime) class-name slot is gated by
+  `Tf.IsValidIdentifier` (ASCII identifier rules: no unicode,
+  no hyphen/space/dot, no leading digit). Schema class names
+  that violate these rules fail at schema validation.
+- A, C, and D's identifier slot (dict key under
+  `assetInfo.source.<vendor>`) accepted every probed string in
+  this run, including unicode and embedded special characters,
+  and the recovered values matched the authored values.
 

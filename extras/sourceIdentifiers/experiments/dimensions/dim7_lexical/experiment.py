@@ -66,23 +66,23 @@ def render_summary(results):
     buf = io.StringIO()
     print('# Dim 7 — vendor-name lexical scope (P3 + OQ5)', file=buf)
     print('', file=buf)
-    print('Framing: PR #105 names vendor extensibility (P3) as a core principle —',
+    print('Framing: PR #105 names vendor extensibility (P3) as a core',
           file=buf)
-    print('vendors must be able to declare their own scheme without central',
+    print('principle — vendors must be able to declare their own scheme',
           file=buf)
-    print('approval. The vendor *name* is the operational carrier of that vendor',
+    print('without central approval. The vendor *name* is the operational',
           file=buf)
-    print('identity in every approach. This dimension records what character',
+    print('carrier of that vendor identity in every approach. This',
           file=buf)
-    print('classes each approach\'s vendor slot accepts and how it fails when it',
+    print('dimension records what character classes each approach\'s',
           file=buf)
-    print("doesn't. Findings inform whether the proposed extension paradigm",
+    print('vendor slot accepts and how it fails when it doesn\'t. The',
           file=buf)
-    print('imposes a soft form of central approval via naming constraints',
+    print('measured lexical scope of each slot is the input; whether',
           file=buf)
-    print('(tensions with P3\'s "no central approval" stance) — captured here',
+    print('that scope is acceptable under P3 is a downstream question',
           file=buf)
-    print('as data, not verdict.', file=buf)
+    print('for COMPARISON.md.', file=buf)
     print('', file=buf)
 
     print('## Slot per approach', file=buf)
@@ -95,14 +95,17 @@ def render_summary(results):
     # Main matrix (non-D)
     print('## Result matrix — A, B, B\', C', file=buf)
     print('', file=buf)
-    print('Legend: ✓ = end-to-end authoring works (including round-trip);',
+    print('Legend: ✓ = end-to-end authoring works (recovered value equals',
           file=buf)
-    print('✓ (dict) = permissive dict-key slot (runtime always succeeds);',
+    print('authored value);',
+          file=buf)
+    print('✓ (dict) = dict-key slot, all probed strings round-trip;',
           file=buf)
     print('✓ class = class-name passes Tf.IsValidIdentifier;', file=buf)
-    print('⚠ silent = ApplyAPI succeeds but Sdf silently re-namespaces the',
+    print('⚠ silent = ApplyAPI succeeds but Sdf re-namespaces the vendor',
           file=buf)
-    print('vendor identity on parse;', file=buf)
+    print('identity on parse without raising an error;',
+          file=buf)
     print('✗ apply / ✗ prop / ✗ class = failure at that gate.', file=buf)
     print('', file=buf)
 
@@ -137,39 +140,43 @@ def render_summary(results):
 
     print('## Observations', file=buf)
     print('', file=buf)
-    print('- Two layers of constraint, not one: ApplyAPI/dict-key behavior is',
+    print('- For B and D-label, ApplyAPI accepts the vendor segment but',
           file=buf)
-    print('  permissive at the runtime API; the harder constraint lives in',
+    print('  the property-name slot is gated by',
           file=buf)
-    print('  `SdfAttributeSpec::New`, which enforces `Sdf.Path.IsValidNamespacedIdentifier`',
+    print('  `Sdf.Path.IsValidNamespacedIdentifier` per segment. The',
           file=buf)
-    print('  per property-name segment.', file=buf)
-    print('- Colons in the vendor name (`siemens:nx`) trigger silent',
+    print('  runtime ApplyAPI surface and the SdfAttributeSpec surface',
           file=buf)
-    print('  re-namespacing in B and D-label: Sdf parses the property name into',
+    print('  have different acceptance rules; the probe records both.',
           file=buf)
-    print('  extra namespace segments, producing a different shape than what',
+    print('- Colons in the vendor name (`siemens:nx`) cause silent',
           file=buf)
-    print("  was authored — no error raised. This is a separable USD bug",
+    print('  re-namespacing in B and D-label: ApplyAPI returns success',
           file=buf)
-    print('  ([[bugs-vs-proposal-considerations]]), distinct from the',
+    print('  but Sdf parses the property name into extra namespace',
           file=buf)
-    print('  vendor-extension-paradigm question.', file=buf)
-    print('- B\' is the most-restrictive of the slots: schema class name must',
+    print('  segments, so the authored vendor identity differs from the',
           file=buf)
-    print('  satisfy `Tf.IsValidIdentifier` (ASCII identifier rules — no',
+    print('  recovered shape. report.json records this as',
           file=buf)
-    print('  unicode, no hyphen/space/dot, no leading digit). Codeless',
+    print('  `silent_renamespace: true`.', file=buf)
+    print('- B\' (Bprime) class-name slot is gated by',
           file=buf)
-    print('  schemas do not relax this; the constraint sits in', file=buf)
-    print('  `Sdf_TextFileFormatParser` + the usdGenSchema validator, neither',
+    print('  `Tf.IsValidIdentifier` (ASCII identifier rules: no unicode,',
           file=buf)
-    print('  bypassed by `skipCodeGeneration`.', file=buf)
-    print('- A, C, D-identifier (dict-key slot) accept every probed string',
+    print('  no hyphen/space/dot, no leading digit). Schema class names',
           file=buf)
-    print('  including unicode and embedded special characters. Round-trips',
+    print('  that violate these rules fail at schema validation.',
           file=buf)
-    print('  byte-for-byte through `.usda`.', file=buf)
+    print('- A, C, and D\'s identifier slot (dict key under',
+          file=buf)
+    print('  `assetInfo.source.<vendor>`) accepted every probed string in',
+          file=buf)
+    print('  this run, including unicode and embedded special characters,',
+          file=buf)
+    print('  and the recovered values matched the authored values.',
+          file=buf)
     print('', file=buf)
 
     return buf.getvalue()
