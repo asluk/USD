@@ -198,40 +198,47 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('### Carrier (a) — vendor name rewrite (`windchill` -> `multiVendor`)',
           file=buf)
     print('', file=buf)
-    print('| approach | convention | v1 lines | v2 lines | new vendor visible after rewrite |',
+    print('"Lexical mapping" = the rewrite can be expressed as a layer-text', file=buf)
+    print('operation on the layer file. "Schema + plugin registration" = the', file=buf)
+    print('rewrite touches the schema definition and the plugin\'s TfType', file=buf)
+    print('registration, not just the layer text.', file=buf)
+    print('', file=buf)
+    print('| approach | convention | sites/prim | v1 lines | v2 lines | new vendor visible after rewrite |',
+          file=buf)
+    print('|---|---|---|---|---|---|', file=buf)
+    for ap in APPROACHES:
+        row = (results.get(ap, {}).get('forward_a', {}) or {}).get('result', {}) or {}
+        if 'error' in row:
+            print(f'| {ap} | ERROR | — | — | — | `{row["error"][:60]}` |', file=buf)
+            continue
+        conv = row.get('convention', '—')
+        spp = row.get('sites_per_prim')
+        detail = row.get('sites_detail', '')
+        if spp is None:
+            sites = f'n/a ({detail})' if detail else 'n/a'
+        else:
+            sites = f'{spp} ({detail})' if detail else str(spp)
+        sl = row.get('src_lines', '—')
+        dl = row.get('dst_lines', '—')
+        nv = ', '.join(row.get('new_vendors_visible_after_rewrite', []))
+        print(f'| {ap} | `{conv}` | {sites} | {sl} | {dl} | {nv} |', file=buf)
+    print('', file=buf)
+
+    print('### Carrier (b) — field name rewrite (`primaryId` -> `oid`)', file=buf)
+    print('', file=buf)
+    print('| approach | convention | v1 lines | v2 lines | note |',
           file=buf)
     print('|---|---|---|---|---|', file=buf)
     for ap in APPROACHES:
-        row = (results.get(ap, {}).get('forward_a', {}) or {}).get('result', {}) or {}
+        row = (results.get(ap, {}).get('forward_b', {}) or {}).get('result', {}) or {}
         if 'error' in row:
             print(f'| {ap} | ERROR | — | — | `{row["error"][:60]}` |', file=buf)
             continue
         conv = row.get('convention', '—')
         sl = row.get('src_lines', '—')
         dl = row.get('dst_lines', '—')
-        nv = ', '.join(row.get('new_vendors_visible_after_rewrite', []))
-        print(f'| {ap} | `{conv}` | {sl} | {dl} | {nv} |', file=buf)
-    print('', file=buf)
-
-    print('### Carrier (b) — field name rewrite (`primaryId` -> `oid`)', file=buf)
-    print('', file=buf)
-    print('| approach | convention | rewrite in layer alone | v1 lines | v2 lines | note |',
-          file=buf)
-    print('|---|---|---|---|---|---|', file=buf)
-    for ap in APPROACHES:
-        row = (results.get(ap, {}).get('forward_b', {}) or {}).get('result', {}) or {}
-        if 'error' in row:
-            print(f'| {ap} | ERROR | — | — | — | `{row["error"][:60]}` |', file=buf)
-            continue
-        conv = row.get('convention', '—')
-        attempted = row.get('rewrite_attempted_in_layer_only')
-        succ = row.get('rewrite_succeeded_in_layer_only')
-        layer_only = ('yes' if (attempted and succ) else
-                      ('no' if attempted is False else '—'))
-        sl = row.get('src_lines', '—')
-        dl = row.get('dst_lines', '—')
         note = (row.get('note') or '').replace('|', '\\|')
-        print(f'| {ap} | `{conv}` | {layer_only} | {sl} | {dl} | {note} |', file=buf)
+        print(f'| {ap} | `{conv}` | {sl} | {dl} | {note} |', file=buf)
     print('', file=buf)
 
     print('### Carrier (c) — approach rewrite (storage-primitive transitions)',
@@ -396,17 +403,23 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('', file=buf)
     print('- For A, C, D identifier-half, both the vendor token (carrier a)', file=buf)
     print('  and the field name (carrier b) are plain dict keys; both', file=buf)
-    print('  rewrites are layer-text-only operations.', file=buf)
-    print('- For B, the vendor token is a multi-apply schema instance name;', file=buf)
-    print('  the field name is a typed schema property. Carrier (a) is a', file=buf)
-    print('  re-authoring with a different instance name; carrier (b)', file=buf)
-    print('  requires editing the schema .usda and re-registering the', file=buf)
-    print('  plugin, and cannot be done as a layer-text rewrite alone.',
+    print('  rewrites are layer-text-only operations (one site per prim).',
           file=buf)
-    print("- For B', the vendor token is the schema class name; rewriting", file=buf)
-    print('  the vendor requires editing the schema .usda and the plugin', file=buf)
-    print("  registration. The field name is also a typed property and has", file=buf)
-    print('  the same constraint as B.', file=buf)
+    print('- For B, the vendor token is a multi-apply schema instance name', file=buf)
+    print('  appearing in the apiSchemas list and as the middle segment of', file=buf)
+    print('  each typed property name; carrier (a) is a layer-text rewrite', file=buf)
+    print('  across those five sites per prim. The field name is a typed', file=buf)
+    print("  schema property; carrier (b)'s renamed field can be authored", file=buf)
+    print('  as a custom attribute on the prim (layer-text-only), which', file=buf)
+    print('  carries the value but is not present in UsdPrimDefinition.',
+          file=buf)
+    print("- For B', the vendor token is the schema class name itself,", file=buf)
+    print("  which lives in the schema definition and the plugin's TfType", file=buf)
+    print('  registration. Carrier (a) requires declaring and registering', file=buf)
+    print("  a new schema class before any prim can reference it. Carrier", file=buf)
+    print("  (b) is the same as B's field-name case: the renamed field is", file=buf)
+    print('  authored as a custom attribute (not in UsdPrimDefinition).',
+          file=buf)
     print('- D-labels-half (not exercised in this dim per the dim1', file=buf)
     print('  convention) shares B-like typed-property mechanics for', file=buf)
     print('  label values; the same B-style constraints would apply if', file=buf)

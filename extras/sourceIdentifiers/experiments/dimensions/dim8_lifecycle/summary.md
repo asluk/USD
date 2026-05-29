@@ -25,23 +25,28 @@ new layer; observe what the rewrite required.
 
 ### Carrier (a) — vendor name rewrite (`windchill` -> `multiVendor`)
 
-| approach | convention | v1 lines | v2 lines | new vendor visible after rewrite |
-|---|---|---|---|---|
-| A | `text-symbol-swap` | 41 | 41 | multiVendor |
-| B | `schema-aware-mapping` | 23 | 23 | multiVendor |
-| Bprime | `schema-edit-required` | 23 | 14 |  |
-| C | `text-symbol-swap` | 41 | 41 | multiVendor |
-| D | `text-symbol-swap` | 41 | 41 | multiVendor |
+"Lexical mapping" = the rewrite can be expressed as a layer-text
+operation on the layer file. "Schema + plugin registration" = the
+rewrite touches the schema definition and the plugin's TfType
+registration, not just the layer text.
+
+| approach | convention | sites/prim | v1 lines | v2 lines | new vendor visible after rewrite |
+|---|---|---|---|---|---|
+| A | `lexical-mapping` | 1 (dict key under source.<vendor>) | 41 | 41 | multiVendor |
+| B | `lexical-mapping` | 5 (apiSchemas entry + 4 property-name prefixes) | 23 | 23 | multiVendor |
+| Bprime | `schema + plugin registration` | n/a (vendor identity is the schema class name; new class must be declared and registered before any prim can reference it) | 23 | 14 |  |
+| C | `lexical-mapping` | 1 (dict key under source.<vendor>) | 41 | 41 | multiVendor |
+| D | `lexical-mapping` | 1 (dict key under source.<vendor>) | 41 | 41 | multiVendor |
 
 ### Carrier (b) — field name rewrite (`primaryId` -> `oid`)
 
-| approach | convention | rewrite in layer alone | v1 lines | v2 lines | note |
-|---|---|---|---|---|---|
-| A | `text-symbol-swap` | yes | 41 | 41 | dict-key under source.<vendor> renamed |
-| B | `schema-edit-required` | no | 23 | 23 | field is a typed schema attribute; renaming requires editing the schema .usda + regenerating/re-registering the plugin (cannot be expressed as a layer rewrite alone) |
-| Bprime | `schema-edit-required` | no | 23 | 23 | field is a typed schema attribute; renaming requires editing the schema .usda + regenerating/re-registering the plugin (cannot be expressed as a layer rewrite alone) |
-| C | `text-symbol-swap` | yes | 41 | 41 | dict-key under source.<vendor> renamed |
-| D | `text-symbol-swap` | yes | 41 | 41 | dict-key under source.<vendor> renamed |
+| approach | convention | v1 lines | v2 lines | note |
+|---|---|---|---|---|
+| A | `lexical-mapping` | 41 | 41 | dict-key under source.<vendor> renamed |
+| B | `lexical-mapping` | 23 | 23 | renamed field authored as a custom attribute on the prim (not in UsdPrimDefinition) |
+| Bprime | `lexical-mapping` | 23 | 23 | renamed field authored as a custom attribute on the prim (not in UsdPrimDefinition) |
+| C | `lexical-mapping` | 41 | 41 | dict-key under source.<vendor> renamed |
+| D | `lexical-mapping` | 41 | 41 | dict-key under source.<vendor> renamed |
 
 ### Carrier (c) — approach rewrite (storage-primitive transitions)
 
@@ -134,16 +139,20 @@ schema on both ends) and is not enumerated separately.
 
 - For A, C, D identifier-half, both the vendor token (carrier a)
   and the field name (carrier b) are plain dict keys; both
-  rewrites are layer-text-only operations.
-- For B, the vendor token is a multi-apply schema instance name;
-  the field name is a typed schema property. Carrier (a) is a
-  re-authoring with a different instance name; carrier (b)
-  requires editing the schema .usda and re-registering the
-  plugin, and cannot be done as a layer-text rewrite alone.
-- For B', the vendor token is the schema class name; rewriting
-  the vendor requires editing the schema .usda and the plugin
-  registration. The field name is also a typed property and has
-  the same constraint as B.
+  rewrites are layer-text-only operations (one site per prim).
+- For B, the vendor token is a multi-apply schema instance name
+  appearing in the apiSchemas list and as the middle segment of
+  each typed property name; carrier (a) is a layer-text rewrite
+  across those five sites per prim. The field name is a typed
+  schema property; carrier (b)'s renamed field can be authored
+  as a custom attribute on the prim (layer-text-only), which
+  carries the value but is not present in UsdPrimDefinition.
+- For B', the vendor token is the schema class name itself,
+  which lives in the schema definition and the plugin's TfType
+  registration. Carrier (a) requires declaring and registering
+  a new schema class before any prim can reference it. Carrier
+  (b) is the same as B's field-name case: the renamed field is
+  authored as a custom attribute (not in UsdPrimDefinition).
 - D-labels-half (not exercised in this dim per the dim1
   convention) shares B-like typed-property mechanics for
   label values; the same B-style constraints would apply if

@@ -56,7 +56,16 @@ def author_identifier(prim, approach, vendor, primary_id, field_name='primaryId'
         prim.SetAssetInfo(info)
     elif approach == 'B':
         prim.ApplyAPI('SourceIdentifierAPI', vendor)
-        prim.GetAttribute(f'sourceIdentifier:{vendor}:{field_name}').Set(primary_id)
+        attr_name = f'sourceIdentifier:{vendor}:{field_name}'
+        attr = prim.GetAttribute(attr_name)
+        if not attr.IsValid():
+            # Field is not declared in B's typed schema for this vendor;
+            # author as a custom attribute on the prim. The attribute
+            # carries the value lexically but does not appear in
+            # UsdPrimDefinition (no schema-declared fallback).
+            attr = prim.CreateAttribute(
+                attr_name, Sdf.ValueTypeNames.String, custom=True)
+        attr.Set(primary_id)
     elif approach == 'Bprime':
         if vendor == 'windchill':
             prim.ApplyAPI('WindchillSourceIdAPI')
@@ -65,7 +74,12 @@ def author_identifier(prim, approach, vendor, primary_id, field_name='primaryId'
         else:
             # B' is per-vendor; unsupported vendor for this probe.
             return False
-        prim.GetAttribute(f'sourceId:{field_name}').Set(primary_id)
+        attr_name = f'sourceId:{field_name}'
+        attr = prim.GetAttribute(attr_name)
+        if not attr.IsValid():
+            attr = prim.CreateAttribute(
+                attr_name, Sdf.ValueTypeNames.String, custom=True)
+        attr.Set(primary_id)
     elif approach == 'C':
         prim.ApplyAPI('SourceIdentifierBridgeAPI', vendor)
         info = dict(prim.GetAssetInfo() or {})
@@ -183,12 +197,23 @@ def rewrite_vendor_in_layer(approach, src_path, dst_path,
         dst_prim = UsdGeom.Xform.Define(dst_stage, src_prim_spec_path).GetPrim()
         author_identifier(dst_prim, approach, new_vendor, val)
 
+    # All approaches whose vendor identity lives as data in the layer text
+    # can be rewritten by a layer-level lexical operation, regardless of
+    # how many sites per prim are involved. B' is the outlier: its vendor
+    # identity is the schema class name, which lives in the schema
+    # definition and plugin TfType registration, not in the layer.
     if approach in ('A', 'C', 'D'):
-        convention = 'text-symbol-swap'   # dict key under source.<vendor>
+        convention = 'lexical-mapping'
+        sites_per_prim = 1
+        sites_detail = 'dict key under source.<vendor>'
     elif approach == 'B':
-        convention = 'schema-aware-mapping'  # instance-name on multi-apply schema
+        convention = 'lexical-mapping'
+        sites_per_prim = 5
+        sites_detail = 'apiSchemas entry + 4 property-name prefixes'
     elif approach == 'Bprime':
-        convention = 'schema-edit-required'  # vendor is the schema class name
+        convention = 'schema + plugin registration'
+        sites_per_prim = None
+        sites_detail = 'vendor identity is the schema class name; new class must be declared and registered before any prim can reference it'
 
     dst_stage.GetRootLayer().Save()
 
@@ -216,6 +241,8 @@ def rewrite_vendor_in_layer(approach, src_path, dst_path,
 
     return {
         'convention': convention,
+        'sites_per_prim': sites_per_prim,
+        'sites_detail': sites_detail,
         'src_lines': src_lines,
         'dst_lines': dst_lines,
         'carried_over_sample': sorted(set(carried_over)),
@@ -228,45 +255,43 @@ def rewrite_field_in_layer(approach, src_path, dst_path,
                            vendor, old_field, new_field):
     """Carrier (b) rewrite: rename the primaryId-equivalent field.
 
-    For dict-storage approaches (A, C, D), the field is a plain dict key
-    and the rewrite stays within the same approach + same vendor.
-    For B and B', the field is a typed schema attribute — renaming it
-    would require editing the schema definition (and regenerating /
-    re-registering the plugin); the probe records this constraint
-    rather than attempting it.
+    For all five approaches the rewrite is a layer-level lexical
+    operation (the new field name appears on the prim somewhere in the
+    layer). The mechanism difference is where the new field ends up
+    relative to the schema's declared properties:
+
+      A, C, D — the field is a plain dict key under
+                ``assetInfo.source.<vendor>``; renaming = dict-key rename.
+
+      B, B'   — the field is a typed schema property; the renamed field
+                is authored as a custom attribute on the prim with the
+                new name. The custom attribute carries the value but
+                does not appear in ``UsdPrimDefinition`` (no
+                schema-declared fallback).
+
+    All five are reported with convention ``lexical-mapping``; the
+    ``note`` column records where the new field ends up.
     """
     src_stage = Usd.Stage.Open(src_path)
+    dst_stage = Usd.Stage.CreateNew(dst_path)
 
-    convention = None
-    rewrite_attempted = False
-    rewrite_succeeded = False
+    convention = 'lexical-mapping'
     note = None
 
+    for path in PRIM_PATHS:
+        sp = src_stage.GetPrimAtPath(path)
+        if not sp:
+            continue
+        val = read_identifier(sp, approach, vendor, old_field)
+        dp = UsdGeom.Xform.Define(dst_stage, path).GetPrim()
+        author_identifier(dp, approach, vendor, val, new_field)
+    dst_stage.GetRootLayer().Save()
+
     if approach in ('A', 'C', 'D'):
-        # Pure dict-key rewrite.
-        dst_stage = Usd.Stage.CreateNew(dst_path)
-        for path in PRIM_PATHS:
-            sp = src_stage.GetPrimAtPath(path)
-            if not sp:
-                continue
-            val = read_identifier(sp, approach, vendor, old_field)
-            dp = UsdGeom.Xform.Define(dst_stage, path).GetPrim()
-            author_identifier(dp, approach, vendor, val, new_field)
-        dst_stage.GetRootLayer().Save()
-        convention = 'text-symbol-swap'
-        rewrite_attempted = True
-        rewrite_succeeded = True
         note = 'dict-key under source.<vendor> renamed'
     elif approach in ('B', 'Bprime'):
-        convention = 'schema-edit-required'
-        rewrite_attempted = False
-        rewrite_succeeded = False
-        note = ('field is a typed schema attribute; renaming requires '
-                'editing the schema .usda + regenerating/re-registering the '
-                'plugin (cannot be expressed as a layer rewrite alone)')
-        # Still write a copy of the source layer to dst_path so the
-        # downstream measurement code has a layer to inspect.
-        Sdf.Layer.FindOrOpen(src_path).Export(dst_path)
+        note = ('renamed field authored as a custom attribute on the '
+                'prim (not in UsdPrimDefinition)')
 
     with open(src_path, 'r', encoding='utf-8') as f:
         src_lines = f.read().count('\n')
@@ -275,8 +300,6 @@ def rewrite_field_in_layer(approach, src_path, dst_path,
 
     return {
         'convention': convention,
-        'rewrite_attempted_in_layer_only': rewrite_attempted,
-        'rewrite_succeeded_in_layer_only': rewrite_succeeded,
         'src_lines': src_lines,
         'dst_lines': dst_lines,
         'note': note,
