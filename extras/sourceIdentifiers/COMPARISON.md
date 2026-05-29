@@ -7,9 +7,122 @@ against eight empirical experiments. It reports mechanism affordances
 measured at the primitive level (Sdf, Usd, schema registry); it does
 not pick a candidate and does not invent criteria beyond PR #105.
 
-The criteria authority is the PR #105 proposal text:
-*Design considerations* (Principles + Open questions) and
-*Likely direction* (Emerging consensus).
+## What's being compared
+
+Five candidate mechanisms for storing a vendor source identifier
+(e.g. a Windchill PLM part number `OR:wt.part.WTPart:4697800`) on a
+USD prim. Each example below shows the authored layer fragment for
+one vendor (`windchill`) identifier on a single `Asset` prim.
+
+### A — `assetInfo` sub-dictionary (PR #105)
+
+Vendor identifier lives in a stratified sub-dictionary of `assetInfo`;
+a convenience applied schema marks the prim as carrying source
+identifiers. Vendor identity is the dict key.
+
+```usda
+def Xform "Asset" (
+    apiSchemas = ["SourceIdentifiersAPI"]
+    assetInfo = {
+        dictionary source = {
+            dictionary windchill = {
+                string primaryId = "OR:wt.part.WTPart:4697800"
+            }
+        }
+    }
+) {
+}
+```
+
+### B — multi-apply typed schema (PR #105)
+
+Vendor identifier lives in typed properties on a multi-apply schema;
+the vendor name is the ApplyAPI instance name. One ApplyAPI call per
+vendor.
+
+```usda
+def Xform "Asset" (
+    apiSchemas = ["SourceIdentifierAPI:windchill"]
+) {
+    uniform string sourceIdentifier:windchill:primaryId = "OR:wt.part.WTPart:4697800"
+}
+```
+
+### B' — single-apply base + per-vendor single-applies (PR #105 variant)
+
+Each vendor ships its own single-apply schema class that inherits
+the common base via `prepend apiSchemas`. Vendor identity is the
+schema class name. Requires the vendor to publish a plugin; requires
+`UsdSchemaRegistry` query enhancements (named in PR #105) for
+registry-level vendor-schema enumeration.
+
+```usda
+def Xform "Asset" (
+    apiSchemas = ["WindchillSourceIdAPI"]
+) {
+    uniform string sourceId:primaryId = "OR:wt.part.WTPart:4697800"
+}
+```
+
+### C — Spiffmon's bridge (PR #105 review comment)
+
+An applied multi-apply schema marks the prim as carrying source
+identifiers AND declares a default `assetInfo` sub-dict via
+`customData`. Storage shape on the prim is A's; discoverability is
+B-like (vendor is in the ApplyAPI instance name). Conditional on the
+schema's declared fallback values appearing in `UsdPrimDefinition`.
+
+```usda
+def Xform "Asset" (
+    apiSchemas = ["SourceIdentifierBridgeAPI:windchill"]
+    assetInfo = {
+        dictionary source = {
+            dictionary windchill = {
+                string primaryId = "OR:wt.part.WTPart:4697800"
+            }
+        }
+    }
+) {
+}
+```
+
+### D — split-by-concern, identifiers + semantic labels (beyond PR #105)
+
+Two coordinated halves on the same prim: identifiers in
+`assetInfo.source.<vendor>` (A-style) AND semantic labels via a
+multi-apply `SemanticLabelsAPI:<vendor>:<labelKind>` schema (B-style).
+Either half can be authored independently; the example below shows
+both.
+
+```usda
+def Xform "Asset" (
+    apiSchemas = [
+        "SourceIdentifiersAPI",
+        "SemanticLabelsAPI:windchill:partCategory"
+    ]
+    assetInfo = {
+        dictionary source = {
+            dictionary windchill = {
+                string primaryId = "OR:wt.part.WTPart:4697800"
+            }
+        }
+    }
+) {
+    uniform token[] semantics:labels:windchill:partCategory = ["Frame", "Structural"]
+}
+```
+
+D's lineage: it came out of Matt Kuruc's review of an earlier
+internal comparison of A/B/B'/C. Matt's motivation was to suggest
+another way to handle the *overflow* problem (see next section):
+that identifiers and semantic labels are distinct concerns that
+should be split, with each carrier shape chosen for its concern,
+and overflow accommodated naturally on the labels side via the
+multi-apply template. Per the criteria authority D is "internal
+NVIDIA discussion, not in PR #105"; D is included in this comparison
+at the author's direction. Where a dim's measurement applies to both
+halves, the summary table shows two rows for D — one for the
+identifier half, one for the label half.
 
 ## What the proposal asks
 
@@ -24,18 +137,47 @@ applied schema (OQ2). This comparison provides empirical data for
 that question and for the surrounding principles, without proposing
 which way to resolve OQ2.
 
-## Candidates compared
+## Overflow: the cross-cutting concern
 
-| | mechanism | vendor identity lives in | source |
-|---|---|---|---|
-| **A** | `assetInfo.source.<vendor>` sub-dicts + convenience applied schema | dict key | PR #105 |
-| **B** | Multi-apply schema with typed properties | ApplyAPI instance name | PR #105 |
-| **B'** | Single-apply base in core + per-vendor single-applies via `prepend apiSchemas` | schema class name | PR #105 variant¹ |
-| **C** | Spiffmon's bridge: applied schema declares default `assetInfo` sub-dict via `customData` | dict key + apply instance | PR #105 review comment |
-| **D** | Identifiers in `assetInfo` (A-style) + labels via `SemanticLabelsAPI:<vendor>:<labelKind>` multi-apply (B-style) | dict key + apply instance | Matt Kuruc strawman² |
+A concept that runs through every candidate but is not called out
+explicitly in PR #105 is **overflow**: the freeform space where a
+vendor can author domain-specific fields *without prior schema
+declaration*, with a graduation path toward standardization once a
+field stabilizes (the lifecycle P3 names: vendor → multi-vendor →
+core). PR #105 hints at overflow through P3 (vendor extensibility
+is data-model-level, not plugin-architecture-level), OQ3
+(stratification and governance), and the *Likely direction* note on
+*multi-field, not single-value*. It does not name overflow as a
+first-class concern, and the proposal text does not enumerate how
+each candidate handles it.
 
-¹ B' requires `UsdSchemaRegistry` query enhancements for registry-level vendor-schema enumeration (named in PR #105).
-² D is a candidate beyond PR #105 per the criteria authority; specifics still need re-grounding against rev2 source. D is included in the comparison at the author's direction. Each half of D is exercised independently where a dim admits a label-side measurement.
+Each candidate handles overflow differently:
+
+- **A / C** — `assetInfo.source.<vendor>` is a freeform dictionary;
+  arbitrary keys coexist with the schema-declared keys. Overflow is
+  the *native* shape; nothing extra is needed to use it.
+- **B / B'** — typed-property schemas declare a fixed set of
+  properties. Overflow fields are authored as *custom attributes*
+  outside the typed schema contract; they carry the value but do
+  not appear in `UsdPrimDefinition`, so registry-driven tooling
+  (validation, GUI, indexers that consult prim definitions) cannot
+  see them.
+- **D** — Matt Kuruc's motivation for the split-by-concern
+  mechanism. Identifiers (the standardized, schema-declared part)
+  use A-shape; labels (the overflow space for vendor-defined
+  kinds) use a multi-apply template
+  `SemanticLabelsAPI:<vendor>:<labelKind>` where any new
+  vendor:kind instance still matches the template and appears in
+  `UsdPrimDefinition`. The intent: an overflow space that is
+  schema-defined but open-ended.
+
+Dim 5 (distribution) and Dim 8 (migration & compatibility) surface
+this difference empirically; see the per-dim findings below.
+
+This document is partly seeding follow-up work on overflow: either
+a patch to PR #105 calling overflow out as a first-class concern,
+or a downstream proposal that handles overflow alongside the OQ2
+identifier-storage choice.
 
 ## How the comparison was conducted
 

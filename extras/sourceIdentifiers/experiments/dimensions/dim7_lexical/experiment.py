@@ -91,9 +91,13 @@ def render_summary(results):
     print('', file=buf)
     print('**Note on Approach D.** D is a candidate beyond PR #105',
           file=buf)
-    print('(Matt Kuruc strawman, per the criteria file). Its mechanism',
+    print('(came out of Matt Kuruc\'s review of an earlier internal',
           file=buf)
-    print('has two vendor slots: a dict-key slot for the identifier half',
+    print('comparison doc; per the criteria file, "internal NVIDIA',
+          file=buf)
+    print('discussion, not in PR #105"). Its mechanism has two vendor',
+          file=buf)
+    print('slots: a dict-key slot for the identifier half',
           file=buf)
     print('(same shape as A) and a multi-apply instance segment for the',
           file=buf)

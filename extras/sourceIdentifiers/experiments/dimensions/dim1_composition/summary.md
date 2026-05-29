@@ -21,10 +21,12 @@ arc surfaces under that composition assembly; it does not
 disentangle direct-opinion vs class-arc strength in isolation.
 
 **Note on Approach D.** D is a candidate beyond PR #105
-(Matt Kuruc strawman, per the criteria file). Its mechanism
-combines an identifier half (assetInfo dict shape, mirroring
-A) and a label half (`SemanticLabelsAPI` multi-apply,
-mirroring B). Where a dim measurement applies to both halves,
+(came out of Matt Kuruc's review of an earlier internal
+comparison doc; per the criteria file, "internal NVIDIA
+discussion, not in PR #105"). Its mechanism combines an
+identifier half (assetInfo dict shape, mirroring A) and a
+label half (`SemanticLabelsAPI` multi-apply, mirroring B).
+Where a dim measurement applies to both halves,
 this summary shows two rows for D; the comparison stays five
 approaches (A, B, B', C, D), not six.
 

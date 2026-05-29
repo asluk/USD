@@ -2,7 +2,7 @@
   "cross_approach_coexist": {
     "A->B": {
       "both_layers_readable_without_plugin_load": true,
-      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_B_v2.usda",
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_B_v2.usda",
       "neutral_read": {
         "approach": "A",
         "mode": "neutral_read",
@@ -12,7 +12,7 @@
               "applied_schema_tokens_in_layer": [
                 "SourceIdentifiersAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_B_v1.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_B_v1.usda",
               "layer_lines": 47,
               "snapshot": {
                 "/AssetA": {
@@ -73,7 +73,7 @@
               "applied_schema_tokens_in_layer": [
                 "SourceIdentifierAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_B_v2.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_B_v2.usda",
               "layer_lines": 23,
               "snapshot": {
                 "/AssetA": {
@@ -106,11 +106,11 @@
           ]
         }
       },
-      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_B_v1.usda"
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_B_v1.usda"
     },
     "A->Bprime": {
       "both_layers_readable_without_plugin_load": true,
-      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_Bprime_v2.usda",
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_Bprime_v2.usda",
       "neutral_read": {
         "approach": "A",
         "mode": "neutral_read",
@@ -120,7 +120,7 @@
               "applied_schema_tokens_in_layer": [
                 "SourceIdentifiersAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_Bprime_v1.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_Bprime_v1.usda",
               "layer_lines": 47,
               "snapshot": {
                 "/AssetA": {
@@ -181,7 +181,7 @@
               "applied_schema_tokens_in_layer": [
                 "WindchillSourceIdAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_Bprime_v2.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_Bprime_v2.usda",
               "layer_lines": 23,
               "snapshot": {
                 "/AssetA": {
@@ -215,11 +215,11 @@
           ]
         }
       },
-      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_Bprime_v1.usda"
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_Bprime_v1.usda"
     },
     "A->C": {
       "both_layers_readable_without_plugin_load": true,
-      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_C_v2.usda",
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_C_v2.usda",
       "neutral_read": {
         "approach": "A",
         "mode": "neutral_read",
@@ -229,7 +229,7 @@
               "applied_schema_tokens_in_layer": [
                 "SourceIdentifiersAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_C_v1.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_C_v1.usda",
               "layer_lines": 47,
               "snapshot": {
                 "/AssetA": {
@@ -290,7 +290,7 @@
               "applied_schema_tokens_in_layer": [
                 "SourceIdentifierBridgeAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_C_v2.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_C_v2.usda",
               "layer_lines": 47,
               "snapshot": {
                 "/AssetA": {
@@ -350,11 +350,11 @@
           ]
         }
       },
-      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_C_v1.usda"
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_C_v1.usda"
     },
     "A->D": {
       "both_layers_readable_without_plugin_load": true,
-      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_D_v2.usda",
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_D_v2.usda",
       "neutral_read": {
         "approach": "A",
         "mode": "neutral_read",
@@ -364,7 +364,7 @@
               "applied_schema_tokens_in_layer": [
                 "SourceIdentifiersAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_D_v1.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_D_v1.usda",
               "layer_lines": 47,
               "snapshot": {
                 "/AssetA": {
@@ -425,7 +425,7 @@
               "applied_schema_tokens_in_layer": [
                 "SourceIdentifiersAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_D_v2.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_D_v2.usda",
               "layer_lines": 47,
               "snapshot": {
                 "/AssetA": {
@@ -485,11 +485,11 @@
           ]
         }
       },
-      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_D_v1.usda"
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_D_v1.usda"
     },
     "B->A": {
       "both_layers_readable_without_plugin_load": true,
-      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_A_v2.usda",
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_A_v2.usda",
       "neutral_read": {
         "approach": "B",
         "mode": "neutral_read",
@@ -499,7 +499,7 @@
               "applied_schema_tokens_in_layer": [
                 "SourceIdentifierAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_A_v1.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_A_v1.usda",
               "layer_lines": 23,
               "snapshot": {
                 "/AssetA": {
@@ -533,7 +533,7 @@
               "applied_schema_tokens_in_layer": [
                 "SourceIdentifiersAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_A_v2.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_A_v2.usda",
               "layer_lines": 41,
               "snapshot": {
                 "/AssetA": {
@@ -578,11 +578,11 @@
           ]
         }
       },
-      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_A_v1.usda"
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_A_v1.usda"
     },
     "B->Bprime": {
       "both_layers_readable_without_plugin_load": true,
-      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_Bprime_v2.usda",
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_Bprime_v2.usda",
       "neutral_read": {
         "approach": "B",
         "mode": "neutral_read",
@@ -592,7 +592,7 @@
               "applied_schema_tokens_in_layer": [
                 "SourceIdentifierAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_Bprime_v1.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_Bprime_v1.usda",
               "layer_lines": 23,
               "snapshot": {
                 "/AssetA": {
@@ -626,7 +626,7 @@
               "applied_schema_tokens_in_layer": [
                 "WindchillSourceIdAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_Bprime_v2.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_Bprime_v2.usda",
               "layer_lines": 23,
               "snapshot": {
                 "/AssetA": {
@@ -660,11 +660,11 @@
           ]
         }
       },
-      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_Bprime_v1.usda"
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_Bprime_v1.usda"
     },
     "Bprime->A": {
       "both_layers_readable_without_plugin_load": true,
-      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\Bprime_A_v2.usda",
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\Bprime_A_v2.usda",
       "neutral_read": {
         "approach": "Bprime",
         "mode": "neutral_read",
@@ -674,7 +674,7 @@
               "applied_schema_tokens_in_layer": [
                 "WindchillSourceIdAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\Bprime_A_v1.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\Bprime_A_v1.usda",
               "layer_lines": 23,
               "snapshot": {
                 "/AssetA": {
@@ -709,7 +709,7 @@
               "applied_schema_tokens_in_layer": [
                 "SourceIdentifiersAPI"
               ],
-              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\Bprime_A_v2.usda",
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\Bprime_A_v2.usda",
               "layer_lines": 41,
               "snapshot": {
                 "/AssetA": {
@@ -754,7 +754,7 @@
           ]
         }
       },
-      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\Bprime_A_v1.usda"
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\Bprime_A_v1.usda"
     }
   },
   "cross_approach_forward": {
@@ -828,7 +828,7 @@
               "vendor": "windchill"
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_B_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_B_v2.usda"
         }
       },
       "src": "A",
@@ -887,8 +887,8 @@
             }
           },
           "src_lines": 47,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_B_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_B_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_B_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_B_v1.usda.snapshot.json"
         }
       }
     },
@@ -965,7 +965,7 @@
               "vendor": "windchill"
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_Bprime_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_Bprime_v2.usda"
         }
       },
       "src": "A",
@@ -1024,8 +1024,8 @@
             }
           },
           "src_lines": 47,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_Bprime_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_Bprime_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_Bprime_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_Bprime_v1.usda.snapshot.json"
         }
       }
     },
@@ -1101,7 +1101,7 @@
               }
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_C_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_C_v2.usda"
         }
       },
       "src": "A",
@@ -1160,8 +1160,8 @@
             }
           },
           "src_lines": 47,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_C_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_C_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_C_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_C_v1.usda.snapshot.json"
         }
       }
     },
@@ -1237,7 +1237,7 @@
               }
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_D_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_D_v2.usda"
         }
       },
       "src": "A",
@@ -1296,8 +1296,8 @@
             }
           },
           "src_lines": 47,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_D_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_D_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_D_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_D_v1.usda.snapshot.json"
         }
       }
     },
@@ -1358,7 +1358,7 @@
               "vendor_extras": {}
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_A_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_A_v2.usda"
         }
       },
       "src": "B",
@@ -1390,8 +1390,8 @@
             }
           },
           "src_lines": 23,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_A_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_A_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_A_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_A_v1.usda.snapshot.json"
         }
       }
     },
@@ -1443,7 +1443,7 @@
               "vendor": "windchill"
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_Bprime_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_Bprime_v2.usda"
         }
       },
       "src": "B",
@@ -1475,8 +1475,8 @@
             }
           },
           "src_lines": 23,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_Bprime_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_Bprime_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_Bprime_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_Bprime_v1.usda.snapshot.json"
         }
       }
     },
@@ -1537,7 +1537,7 @@
               "vendor_extras": {}
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\Bprime_A_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\Bprime_A_v2.usda"
         }
       },
       "src": "Bprime",
@@ -1572,8 +1572,8 @@
             }
           },
           "src_lines": 23,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\Bprime_A_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\Bprime_A_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\Bprime_A_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\Bprime_A_v1.usda.snapshot.json"
         }
       }
     }
@@ -1649,7 +1649,7 @@
               "vendor": "windchill"
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_B_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_B_v2.usda"
         }
       },
       "roundtrip_preserved": {
@@ -1740,8 +1740,8 @@
             }
           },
           "src_lines": 47,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_B_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_B_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_B_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_B_v1.usda.snapshot.json"
         }
       },
       "src_rewrite_back": {
@@ -1799,7 +1799,7 @@
               "vendor_extras": {}
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_B_v3.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_B_v3.usda"
         }
       }
     },
@@ -1876,7 +1876,7 @@
               "vendor": "windchill"
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_Bprime_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_Bprime_v2.usda"
         }
       },
       "roundtrip_preserved": {
@@ -1967,8 +1967,8 @@
             }
           },
           "src_lines": 47,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_Bprime_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_Bprime_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_Bprime_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_Bprime_v1.usda.snapshot.json"
         }
       },
       "src_rewrite_back": {
@@ -2026,7 +2026,7 @@
               "vendor_extras": {}
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_Bprime_v3.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_Bprime_v3.usda"
         }
       }
     },
@@ -2102,7 +2102,7 @@
               }
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_C_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_C_v2.usda"
         }
       },
       "roundtrip_preserved": {
@@ -2168,8 +2168,8 @@
             }
           },
           "src_lines": 47,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_C_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_C_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_C_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_C_v1.usda.snapshot.json"
         }
       },
       "src_rewrite_back": {
@@ -2242,7 +2242,7 @@
               }
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_C_v3.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_C_v3.usda"
         }
       }
     },
@@ -2318,7 +2318,7 @@
               }
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_D_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_D_v2.usda"
         }
       },
       "roundtrip_preserved": {
@@ -2384,8 +2384,8 @@
             }
           },
           "src_lines": 47,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_D_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_D_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_D_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_D_v1.usda.snapshot.json"
         }
       },
       "src_rewrite_back": {
@@ -2458,7 +2458,7 @@
               }
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\A_D_v3.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\A_D_v3.usda"
         }
       }
     },
@@ -2519,7 +2519,7 @@
               "vendor_extras": {}
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_A_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_A_v2.usda"
         }
       },
       "roundtrip_preserved": {
@@ -2558,8 +2558,8 @@
             }
           },
           "src_lines": 23,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_A_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_A_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_A_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_A_v1.usda.snapshot.json"
         }
       },
       "src_rewrite_back": {
@@ -2605,7 +2605,7 @@
               "vendor": "windchill"
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_A_v3.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_A_v3.usda"
         }
       }
     },
@@ -2657,7 +2657,7 @@
               "vendor": "windchill"
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_Bprime_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_Bprime_v2.usda"
         }
       },
       "roundtrip_preserved": {
@@ -2696,8 +2696,8 @@
             }
           },
           "src_lines": 23,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_Bprime_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_Bprime_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_Bprime_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_Bprime_v1.usda.snapshot.json"
         }
       },
       "src_rewrite_back": {
@@ -2743,7 +2743,7 @@
               "vendor": "windchill"
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\B_Bprime_v3.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\B_Bprime_v3.usda"
         }
       }
     },
@@ -2804,7 +2804,7 @@
               "vendor_extras": {}
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\Bprime_A_v2.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\Bprime_A_v2.usda"
         }
       },
       "roundtrip_preserved": {
@@ -2846,8 +2846,8 @@
             }
           },
           "src_lines": 23,
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\Bprime_A_v1.usda",
-          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\Bprime_A_v1.usda.snapshot.json"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\Bprime_A_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\Bprime_A_v1.usda.snapshot.json"
         }
       },
       "src_rewrite_back": {
@@ -2896,7 +2896,7 @@
               "vendor": "windchill"
             }
           },
-          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpuj1qwaot\\Bprime_A_v3.usda"
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmpxm6cv325\\Bprime_A_v3.usda"
         }
       }
     }

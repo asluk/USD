@@ -44,13 +44,17 @@ def render_summary(results):
     print('', file=buf)
     print('**Note on Approach D.** D is a candidate beyond PR #105',
           file=buf)
-    print('(Matt Kuruc strawman, per the criteria file). Its mechanism',
+    print('(came out of Matt Kuruc\'s review of an earlier internal',
           file=buf)
-    print('combines an identifier half (assetInfo dict shape, mirroring',
+    print('comparison doc; per the criteria file, "internal NVIDIA',
           file=buf)
-    print('A) and a label half (`SemanticLabelsAPI` multi-apply,',
+    print('discussion, not in PR #105"). Its mechanism combines an',
           file=buf)
-    print('mirroring B). The label half is measured by authoring a',
+    print('identifier half (assetInfo dict shape, mirroring A) and a',
+          file=buf)
+    print('label half (`SemanticLabelsAPI` multi-apply, mirroring B).',
+          file=buf)
+    print('The label half is measured by authoring a',
           file=buf)
     print('`SemanticLabelsAPI:windchill:partCategory` instance on a',
           file=buf)

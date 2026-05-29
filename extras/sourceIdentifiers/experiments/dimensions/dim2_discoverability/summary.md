@@ -8,10 +8,12 @@ Four surfaces queried — what does each reveal about the vendor
 and the identifier value?
 
 **Note on Approach D.** D is a candidate beyond PR #105
-(Matt Kuruc strawman, per the criteria file). Its mechanism
-combines an identifier half (assetInfo dict shape, mirroring
-A) and a label half (`SemanticLabelsAPI` multi-apply,
-mirroring B). The label half is measured by authoring a
+(came out of Matt Kuruc's review of an earlier internal
+comparison doc; per the criteria file, "internal NVIDIA
+discussion, not in PR #105"). Its mechanism combines an
+identifier half (assetInfo dict shape, mirroring A) and a
+label half (`SemanticLabelsAPI` multi-apply, mirroring B).
+The label half is measured by authoring a
 `SemanticLabelsAPI:windchill:partCategory` instance on a
 separate prim and running the same four surfaces; rows tagged
 "D (label half)" pull from that measurement.

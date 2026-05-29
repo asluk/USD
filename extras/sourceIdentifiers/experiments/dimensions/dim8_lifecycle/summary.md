@@ -22,10 +22,12 @@ renamed). The chosen pairs include A->C and A->D for that
 shape; the reverse direction (C->A, D->A) is not enumerated.
 
 **Note on Approach D.** D is a candidate beyond PR #105
-(Matt Kuruc strawman, per the criteria file). Its mechanism
-combines an identifier half (assetInfo dict shape, mirroring
-A) and a label half (`SemanticLabelsAPI` multi-apply,
-mirroring B). Where a scenario applies to both halves, this
+(came out of Matt Kuruc's review of an earlier internal
+comparison doc; per the criteria file, "internal NVIDIA
+discussion, not in PR #105"). Its mechanism combines an
+identifier half (assetInfo dict shape, mirroring A) and a
+label half (`SemanticLabelsAPI` multi-apply, mirroring B).
+Where a scenario applies to both halves, this
 summary shows two rows tagged "D (id half)" and "D (label
 half)"; carrier (c) cross-approach migration is exercised
 only on the identifier half (label-half cross-approach
@@ -207,8 +209,9 @@ ends, so this scenario only enumerates cross-approach (c) pairs.
   instance suffix).
 - A and D both name their identifier-half schema
   `SourceIdentifiersAPI`. Per the criteria file, D is a
-  proposal candidate beyond PR #105 (Matt Kuruc strawman); the
-  shared name is a design choice in that strawman, not a PR
+  proposal candidate beyond PR #105 (came out of Matt Kuruc's
+  review of an earlier internal comparison doc); the
+  shared name is a design choice in D as proposed, not a PR
   #105 design. Neutral layer-text inspection does not
   distinguish A's authoring from D's identifier-half authoring
   on this surface alone.

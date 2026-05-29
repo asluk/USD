@@ -9,10 +9,12 @@ identifier scheme, and verifies empirically that two vendors can
 coexist on one prim.
 
 **Note on Approach D.** D is a candidate beyond PR #105
-(Matt Kuruc strawman, per the criteria file). Its mechanism
-combines an identifier half (assetInfo dict shape, mirroring
-A) and a label half (`SemanticLabelsAPI` multi-apply,
-mirroring B). The coexistence row for D's label half
+(came out of Matt Kuruc's review of an earlier internal
+comparison doc; per the criteria file, "internal NVIDIA
+discussion, not in PR #105"). Its mechanism combines an
+identifier half (assetInfo dict shape, mirroring A) and a
+label half (`SemanticLabelsAPI` multi-apply, mirroring B).
+The coexistence row for D's label half
 records label-token round-trip, not identifier-value
 round-trip — D-label stores `token[]` values, not identifier
 strings.
@@ -49,7 +51,7 @@ strings.
 
 - ApplyAPI("SourceIdentifierBridgeAPI", "<vendor>") — no schema work
 - author assetInfo.source.<vendor> entries
-- NOTE: per v3 findings, UsdPrimDefinition does not yet honor the assetInfoFallback customData mechanism that gives C its distinguishing behavior. Storage shape reduces to A in current OpenUSD.
+- NOTE: the assetInfoFallback customData mechanism that gives C its distinguishing behavior did not surface in UsdPrimDefinition in this run (see implementation findings in COMPARISON.md). Storage shape resolves to A in current OpenUSD.
 
 ### D
 

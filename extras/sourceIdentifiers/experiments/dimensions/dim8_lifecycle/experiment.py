@@ -195,13 +195,17 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('', file=buf)
     print('**Note on Approach D.** D is a candidate beyond PR #105',
           file=buf)
-    print('(Matt Kuruc strawman, per the criteria file). Its mechanism',
+    print('(came out of Matt Kuruc\'s review of an earlier internal',
           file=buf)
-    print('combines an identifier half (assetInfo dict shape, mirroring',
+    print('comparison doc; per the criteria file, "internal NVIDIA',
           file=buf)
-    print('A) and a label half (`SemanticLabelsAPI` multi-apply,',
+    print('discussion, not in PR #105"). Its mechanism combines an',
           file=buf)
-    print('mirroring B). Where a scenario applies to both halves, this',
+    print('identifier half (assetInfo dict shape, mirroring A) and a',
+          file=buf)
+    print('label half (`SemanticLabelsAPI` multi-apply, mirroring B).',
+          file=buf)
+    print('Where a scenario applies to both halves, this',
           file=buf)
     print('summary shows two rows tagged "D (id half)" and "D (label',
           file=buf)
@@ -581,9 +585,11 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
           file=buf)
     print('  `SourceIdentifiersAPI`. Per the criteria file, D is a',
           file=buf)
-    print('  proposal candidate beyond PR #105 (Matt Kuruc strawman); the',
+    print('  proposal candidate beyond PR #105 (came out of Matt Kuruc\'s',
           file=buf)
-    print('  shared name is a design choice in that strawman, not a PR',
+    print('  review of an earlier internal comparison doc); the',
+          file=buf)
+    print('  shared name is a design choice in D as proposed, not a PR',
           file=buf)
     print('  #105 design. Neutral layer-text inspection does not',
           file=buf)

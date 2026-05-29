@@ -14,8 +14,10 @@ fail (and at what gate). Whether the measured scope is
 acceptable under P3 is a downstream question for COMPARISON.md.
 
 **Note on Approach D.** D is a candidate beyond PR #105
-(Matt Kuruc strawman, per the criteria file). Its mechanism
-has two vendor slots: a dict-key slot for the identifier half
+(came out of Matt Kuruc's review of an earlier internal
+comparison doc; per the criteria file, "internal NVIDIA
+discussion, not in PR #105"). Its mechanism has two vendor
+slots: a dict-key slot for the identifier half
 (same shape as A) and a multi-apply instance segment for the
 label half (same shape as B). Both slots are probed; the D
 section below shows them side by side.

@@ -166,9 +166,10 @@ ARTIFACT_FACTS = {
         'registration_steps': [
             'ApplyAPI("SourceIdentifierBridgeAPI", "<vendor>") — no schema work',
             'author assetInfo.source.<vendor> entries',
-            'NOTE: per v3 findings, UsdPrimDefinition does not yet honor the '
-            'assetInfoFallback customData mechanism that gives C its distinguishing '
-            'behavior. Storage shape reduces to A in current OpenUSD.',
+            'NOTE: the assetInfoFallback customData mechanism that gives C its '
+            'distinguishing behavior did not surface in UsdPrimDefinition in '
+            'this run (see implementation findings in COMPARISON.md). Storage '
+            'shape resolves to A in current OpenUSD.',
         ],
     },
     'D': {
