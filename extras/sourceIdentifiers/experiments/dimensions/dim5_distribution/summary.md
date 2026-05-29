@@ -62,7 +62,8 @@ per-vendor independence (see notes).
 | B | ✓ | ✓ | yes |
 | Bprime | ~ | ~ | no |
 | C | ✓ | ✓ | yes |
-| D | ✓ | ✓ | yes |
+| D (id half) | ✓ | ✓ | yes |
+| D (label half) | ✓ | ✓ | yes |
 
 ## Bprime per-vendor schemas (sanity check)
 

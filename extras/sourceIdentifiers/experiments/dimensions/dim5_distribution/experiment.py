@@ -69,17 +69,28 @@ def render_summary(results):
     print('| approach | windchill round-trip | ifc round-trip | distinct vendor storage |',
           file=buf)
     print('|---|---|---|---|', file=buf)
-    for ap in APPROACHES:
-        c = results.get(ap, {}).get('two_vendors_coexist', {})
-        if 'error' in c:
-            print(f'| {ap} | ERROR | ERROR | — |', file=buf)
-            continue
+
+    def render_coexist_row(label, c):
+        if not c or 'error' in c:
+            err = c.get('error', '—') if c else '—'
+            print(f'| {label} | ERROR | ERROR | {err} |', file=buf)
+            return
         wc_mark = '✓' if c.get('windchill_matches') else (
             '~' if c.get('windchill_matches') is None else '✗')
         ifc_mark = '✓' if c.get('ifc_matches') else (
             '~' if c.get('ifc_matches') is None else '✗')
         dist = 'yes' if c.get('distinct_vendor_storage') else 'no'
-        print(f'| {ap} | {wc_mark} | {ifc_mark} | {dist} |', file=buf)
+        print(f'| {label} | {wc_mark} | {ifc_mark} | {dist} |', file=buf)
+
+    for ap in APPROACHES:
+        ap_block = results.get(ap, {})
+        if ap == 'D' and 'label_half' in ap_block:
+            render_coexist_row('D (id half)', ap_block.get('two_vendors_coexist', {}))
+            render_coexist_row(
+                'D (label half)',
+                ap_block.get('label_half', {}).get('two_vendors_coexist', {}))
+        else:
+            render_coexist_row(ap, ap_block.get('two_vendors_coexist', {}))
     print('', file=buf)
 
     # Bprime-specific

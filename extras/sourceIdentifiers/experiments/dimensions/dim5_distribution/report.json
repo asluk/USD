@@ -93,6 +93,24 @@
   "D": {
     "approach": "D",
     "artifact_shipped": "data only",
+    "label_half": {
+      "two_vendors_coexist": {
+        "applied_schemas_after_round_trip": [
+          "SemanticLabelsAPI:windchill:partCategory",
+          "SemanticLabelsAPI:ifc:entityType"
+        ],
+        "distinct_vendor_storage": true,
+        "ifc_matches": true,
+        "ifc_round_trip": [
+          "IfcBeam"
+        ],
+        "windchill_matches": true,
+        "windchill_round_trip": [
+          "Frame",
+          "Structural"
+        ]
+      }
+    },
     "registers_with_core": true,
     "registration_steps": [
       "identifier half: author assetInfo.source.<vendor> entries",

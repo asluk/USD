@@ -184,6 +184,48 @@ ARTIFACT_FACTS = {
 }
 
 
+def d_labels_two_vendors_coexist():
+    """D label half: apply two SemanticLabelsAPI instances on one prim,
+    set token[] labels, round-trip via USDA, verify both recovered.
+
+    Mirrors the shape of two_vendors_apply but for the label half so that
+    Dim 5's "two-vendor coexistence" question has a measurement for both
+    sides of D's split mechanism.
+    """
+    stage = Usd.Stage.CreateInMemory()
+    prim = UsdGeom.Xform.Define(stage, '/Asset').GetPrim()
+    expected_wc = ['Frame', 'Structural']
+    expected_ifc = ['IfcBeam']
+
+    try:
+        prim.ApplyAPI('SemanticLabelsAPI', 'windchill:partCategory')
+        prim.ApplyAPI('SemanticLabelsAPI', 'ifc:entityType')
+        prim.GetAttribute('semantics:labels:windchill:partCategory').Set(expected_wc)
+        prim.GetAttribute('semantics:labels:ifc:entityType').Set(expected_ifc)
+
+        usda = stage.GetRootLayer().ExportToString()
+        stage2 = Usd.Stage.CreateInMemory()
+        stage2.GetRootLayer().ImportFromString(usda)
+        prim2 = stage2.GetPrimAtPath('/Asset')
+
+        applied = list(prim2.GetAppliedSchemas())
+        wc_attr = prim2.GetAttribute('semantics:labels:windchill:partCategory')
+        ifc_attr = prim2.GetAttribute('semantics:labels:ifc:entityType')
+        wc_val = list(wc_attr.Get()) if wc_attr and wc_attr.Get() is not None else None
+        ifc_val = list(ifc_attr.Get()) if ifc_attr and ifc_attr.Get() is not None else None
+
+        return {
+            'windchill_round_trip': wc_val,
+            'windchill_matches': wc_val == expected_wc,
+            'ifc_round_trip': ifc_val,
+            'ifc_matches': ifc_val == expected_ifc,
+            'applied_schemas_after_round_trip': applied,
+            'distinct_vendor_storage': True,
+        }
+    except Exception as e:
+        return {'error': f'{type(e).__name__}: {e}'}
+
+
 def main():
     approach = sys.argv[1]
     out = dict(ARTIFACT_FACTS[approach])
@@ -191,6 +233,10 @@ def main():
     out['two_vendors_coexist'] = two_vendors_apply(approach)
     if approach == 'Bprime':
         out['per_vendor_schemas_shipped'] = bprime_vendor_schemas()
+    if approach == 'D':
+        out['label_half'] = {
+            'two_vendors_coexist': d_labels_two_vendors_coexist(),
+        }
     print(json.dumps(out, ensure_ascii=False))
 
 
