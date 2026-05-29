@@ -446,7 +446,7 @@ def do_coexist_b(approach):
                 'old_field_visible': True,
                 'new_field_visible': True,
                 'enumerable_without_prior_field_knowledge': True,
-                'note': 'dict keys are open; arbitrary key names coexist freely',
+                'note': 'both field names coexist as separate dict keys under source.<vendor>',
             }
         else:
             # B and B' typed-attribute schemas only know the schema-defined
@@ -495,9 +495,9 @@ def do_coexist_b(approach):
                 'old_field_visible': True,
                 'new_field_visible': True,
                 'enumerable_without_prior_field_knowledge': False,
-                'note': ('new field carried as custom attribute outside the '
-                         'typed schema contract; not discoverable via '
-                         'UsdPrimDefinition without prior knowledge'),
+                'note': ('renamed field authored as a custom attribute on '
+                         'the prim; carries the value but does not appear '
+                         'in UsdPrimDefinition'),
             }
 
 
@@ -885,8 +885,8 @@ def do_coexist_b_label():
             'old_field_visible': True,
             'new_field_visible': True,
             'enumerable_without_prior_field_knowledge': True,
-            'note': ('label-kind segment is openly enumerable via '
-                     'SemanticLabelsAPI:<vendor>:<kind> instance names'),
+            'note': ('both kind segments coexist as separate '
+                     'SemanticLabelsAPI:<vendor>:<kind> instances'),
         }
 
 

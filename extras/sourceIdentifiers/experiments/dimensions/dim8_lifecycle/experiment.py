@@ -184,11 +184,12 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('  `primaryId` -> `oid`).', file=buf)
     print('- **(c)** the approach itself (X -> Y).', file=buf)
     print('', file=buf)
-    print('Cross-approach (c) is exercised on a chosen set of', file=buf)
+    print('Cross-approach (c) is exercised on a chosen set of seven', file=buf)
     print('storage-primitive-transition representative ordered pairs', file=buf)
-    print('rather than all 20 candidates; A/C/D identifier-half are', file=buf)
-    print('storage-equivalent (dict shape) so transitions among them are', file=buf)
-    print('mostly trivial dict renames and are not enumerated separately.', file=buf)
+    print('rather than all 20 candidates. A/C/D identifier-half share', file=buf)
+    print('the same dict storage shape (`assetInfo.source.<vendor>`), so', file=buf)
+    print('transitions among them are dict-key renames; the chosen pairs', file=buf)
+    print('cover one representative each via A<->C and A<->D.', file=buf)
     print('', file=buf)
 
     # ------------------------------------------------------------------
@@ -310,6 +311,14 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('the specific token names.', file=buf)
     print('', file=buf)
 
+    print('Carrier (b) for B and B\' authors the renamed field as a',
+          file=buf)
+    print('custom attribute on the prim — present in the layer but not',
+          file=buf)
+    print('in the schema-declared property table; A/C/D author the',
+          file=buf)
+    print('renamed field as a dict key.', file=buf)
+    print('', file=buf)
     print('### Carrier (a) — both vendor names on one stage', file=buf)
     print('', file=buf)
     print('| approach | both resolve under one read pass | enumerable w/o prior vendor knowledge | all vendors visible |',
@@ -399,8 +408,9 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('## Scenario 3 — round-trip (carrier c only)', file=buf)
     print('', file=buf)
     print('X -> Y -> X across three layers. Carrier (a) and (b) round-trip', file=buf)
-    print('within one approach is trivially lossless (same destination', file=buf)
-    print('schema on both ends) and is not enumerated separately.', file=buf)
+    print('within one approach goes back to the same source schema on both', file=buf)
+    print('ends, so this scenario only enumerates cross-approach (c) pairs.',
+          file=buf)
     print('', file=buf)
     print('| pair (X -> Y -> X) | primaryId preserved | matches | diffs | extras lost at hop1 |',
           file=buf)
@@ -434,17 +444,27 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     # ------------------------------------------------------------------
     print('## Criteria mapping', file=buf)
     print('', file=buf)
-    print('- **Carrier (a) + (b)** map to **PR #105 Principle 3** (vendor',
+    print('- **Carrier (a)** — vendor name within one approach — touches',
           file=buf)
-    print('  extensibility; tiered lifecycle vendor -> multi-vendor -> core).',
+    print('  **PR #105 Principle 3** (vendor extensibility; tiered',
           file=buf)
-    print('  Both exercise content evolution within one approach as the', file=buf)
-    print("  carrier's identity changes — the operation the tiered", file=buf)
-    print('  lifecycle implicitly demands.', file=buf)
-    print('- **Carrier (c)** is **not named in any PR #105 principle**.', file=buf)
-    print('  It is an operational concern that emerges downstream of the', file=buf)
-    print('  proposal: if multiple mechanisms end up adopted, this is the', file=buf)
-    print('  implication of mechanism plurality.', file=buf)
+    print('  lifecycle vendor -> multi-vendor -> core). Vendor-name',
+          file=buf)
+    print('  evolution is the operation the tiered lifecycle names.',
+          file=buf)
+    print('- **Carrier (b)** — field name within one vendor — is not',
+          file=buf)
+    print('  directly named in PR #105\'s principles. The probe measures',
+          file=buf)
+    print('  the mechanism\'s response (where the renamed field lives,',
+          file=buf)
+    print('  whether it stays in UsdPrimDefinition) as data.',
+          file=buf)
+    print('- **Carrier (c)** — approach itself — is not named in PR #105.',
+          file=buf)
+    print('  It is an operational concern downstream of mechanism',
+          file=buf)
+    print('  plurality.', file=buf)
     print('', file=buf)
 
     # ------------------------------------------------------------------
@@ -453,52 +473,96 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('## Observations', file=buf)
     print('', file=buf)
     print('- For A, C, D identifier-half, both the vendor token (carrier a)', file=buf)
-    print('  and the field name (carrier b) are plain dict keys; both', file=buf)
-    print('  rewrites are layer-text-only operations (one site per prim).',
+    print('  and the field name (carrier b) are dict keys; both rewrites',
           file=buf)
-    print('- For B, the vendor token is a multi-apply schema instance name', file=buf)
-    print('  appearing in the apiSchemas list and as the middle segment of', file=buf)
-    print('  each authored typed-property name; carrier (a) is a layer-text', file=buf)
-    print('  rewrite across one site per authored typed-property plus one', file=buf)
-    print('  in the apiSchemas entry (the probe authors only `primaryId`,', file=buf)
-    print('  for a total of two sites per prim; B declares four typed', file=buf)
-    print('  properties, so the count scales by +1 per additional authored', file=buf)
-    print('  property). The field name is a typed schema property; carrier', file=buf)
-    print("  (b)'s renamed field can be authored as a custom attribute on", file=buf)
-    print('  the prim (layer-text-only), which carries the value but is', file=buf)
-    print('  not present in UsdPrimDefinition.', file=buf)
-    print("- For B', the vendor token is the schema class name itself,", file=buf)
-    print("  which lives in the schema definition and the plugin's TfType", file=buf)
-    print('  registration. Carrier (a) requires declaring and registering', file=buf)
-    print("  a new schema class before any prim can reference it. Carrier", file=buf)
-    print("  (b) is the same as B's field-name case: the renamed field is", file=buf)
-    print('  authored as a custom attribute (not in UsdPrimDefinition).',
+    print('  are layer-text operations (one site per prim).', file=buf)
+    print('- For B, the vendor token is a multi-apply schema instance', file=buf)
+    print('  name appearing in the apiSchemas list and as the middle',
           file=buf)
-    print('- D-labels-half (not exercised in this dim per the dim1', file=buf)
-    print('  convention) shares B-like typed-property mechanics for', file=buf)
-    print('  label values; the same B-style constraints would apply if', file=buf)
-    print('  the same probes were run against the labels-half.', file=buf)
-    print('- Cross-approach probes author each prim with `primaryId` plus', file=buf)
-    print('  extra dict-keyed metadata (`extra`, `pdmTag`) when the source', file=buf)
-    print('  approach is dict-storage (A, C, D). Pairs whose destination', file=buf)
-    print("  is typed-property storage (B, B') drop the extra keys at the", file=buf)
-    print('  destination-rewrite step; this surfaces in the `dropped`', file=buf)
-    print('  column of carrier (c) forward and the `extras lost at hop1`', file=buf)
-    print('  column of round-trip.', file=buf)
+    print('  segment of each authored typed-property name. Carrier (a) is',
+          file=buf)
+    print('  a layer-text rewrite across one site per authored',
+          file=buf)
+    print('  typed-property plus one in the apiSchemas entry — two sites',
+          file=buf)
+    print('  per prim in this probe (which authors only `primaryId`); B',
+          file=buf)
+    print('  declares four typed properties, so the count scales by +1',
+          file=buf)
+    print('  per additional authored property. Carrier (b) authors the',
+          file=buf)
+    print('  renamed field as a custom attribute on the prim — carries',
+          file=buf)
+    print('  the value, not present in UsdPrimDefinition.', file=buf)
+    print("- For B' (Bprime), the vendor token is the schema class name",
+          file=buf)
+    print("  itself, which lives in the schema definition and the",
+          file=buf)
+    print("  plugin's TfType registration. Carrier (a) requires declaring",
+          file=buf)
+    print('  and registering a new schema class before any prim can',
+          file=buf)
+    print('  reference it. Carrier (b) lands the renamed field as a',
+          file=buf)
+    print('  custom attribute on the prim (same shape as B\'s carrier b).',
+          file=buf)
+    print('- D label-half is now exercised in this dim. The forward/coexist',
+          file=buf)
+    print('  rows tagged "D (label half)" report:',
+          file=buf)
+    print('  carrier (a) at two sites per prim (apiSchemas entry +',
+          file=buf)
+    print('  property name segment), v2 layer = v1 line count;',
+          file=buf)
+    print('  carrier (b) with the renamed kind segment landing in',
+          file=buf)
+    print('  UsdPrimDefinition via the SemanticLabelsAPI multi-apply',
+          file=buf)
+    print('  template (the multi-apply template covers any',
+          file=buf)
+    print('  vendor:kind instance, so a renamed kind ships in the',
+          file=buf)
+    print('  prim definition rather than as a custom attribute).',
+          file=buf)
+    print('- Cross-approach probes author A as the dict-storage source',
+          file=buf)
+    print('  with `primaryId` plus extra dict-keyed metadata (`extra`,',
+          file=buf)
+    print('  `pdmTag`). Destinations whose storage is typed-property',
+          file=buf)
+    print("  (B, B') drop the extra keys at the destination-rewrite",
+          file=buf)
+    print('  step; this surfaces in the `dropped` column of carrier (c)',
+          file=buf)
+    print('  forward and the `extras lost at hop1` column of round-trip.',
+          file=buf)
     print('- The neutral-read coexistence row for carrier (c) reports', file=buf)
     print('  what raw layer text + snapshot files carry; it does not', file=buf)
     print('  require any specific approach\'s plugin to be loaded.', file=buf)
-    print("- B' layer text carries the vendor identity inside the schema", file=buf)
-    print('  class name itself (e.g. `WindchillSourceIdAPI`); a separate', file=buf)
-    print('  vendor token does not appear as a string literal in the', file=buf)
-    print('  layer. Every other approach surfaces the vendor token as a', file=buf)
-    print('  literal string in the layer (dict key or multi-apply', file=buf)
+    print("- B' (Bprime) layer text carries the vendor identity inside",
+          file=buf)
+    print('  the schema class name itself (e.g. `WindchillSourceIdAPI`);',
+          file=buf)
+    print('  a separate vendor token does not appear as a string literal',
+          file=buf)
+    print('  in the layer. Other approaches surface the vendor token as',
+          file=buf)
+    print('  a literal string in the layer (dict key or multi-apply',
+          file=buf)
     print('  instance suffix).', file=buf)
-    print('- A and D both publish a schema named `SourceIdentifiersAPI`', file=buf)
-    print("  for the identifier half (per PR #105's design for D, which", file=buf)
-    print("  mirrors A's identifier shape). Neutral layer-text inspection", file=buf)
-    print("  cannot distinguish A's authoring from D's identifier-half", file=buf)
-    print('  authoring on this surface alone.', file=buf)
+    print('- A and D both name their identifier-half schema',
+          file=buf)
+    print('  `SourceIdentifiersAPI`. Per the criteria file, D is a',
+          file=buf)
+    print('  proposal candidate beyond PR #105 (Matt Kuruc strawman); the',
+          file=buf)
+    print('  shared name is a design choice in that strawman, not a PR',
+          file=buf)
+    print('  #105 design. Neutral layer-text inspection does not',
+          file=buf)
+    print("  distinguish A's authoring from D's identifier-half authoring",
+          file=buf)
+    print('  on this surface alone.', file=buf)
     print('', file=buf)
 
     return buf.getvalue()

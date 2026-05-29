@@ -12,11 +12,12 @@ Carrier-change types:
   `primaryId` -> `oid`).
 - **(c)** the approach itself (X -> Y).
 
-Cross-approach (c) is exercised on a chosen set of
+Cross-approach (c) is exercised on a chosen set of seven
 storage-primitive-transition representative ordered pairs
-rather than all 20 candidates; A/C/D identifier-half are
-storage-equivalent (dict shape) so transitions among them are
-mostly trivial dict renames and are not enumerated separately.
+rather than all 20 candidates. A/C/D identifier-half share
+the same dict storage shape (`assetInfo.source.<vendor>`), so
+transitions among them are dict-key renames; the chosen pairs
+cover one representative each via A<->C and A<->D.
 
 ## Scenario 1 — forward migration
 
@@ -70,6 +71,11 @@ Observe whether both resolve under a single read pass and
 whether tooling can enumerate both without prior knowledge of
 the specific token names.
 
+Carrier (b) for B and B' authors the renamed field as a
+custom attribute on the prim — present in the layer but not
+in the schema-declared property table; A/C/D author the
+renamed field as a dict key.
+
 ### Carrier (a) — both vendor names on one stage
 
 | approach | both resolve under one read pass | enumerable w/o prior vendor knowledge | all vendors visible |
@@ -85,12 +91,12 @@ the specific token names.
 
 | approach | both resolve under one read pass | enumerable w/o prior field knowledge | note |
 |---|---|---|---|
-| A | yes | yes | dict keys are open; arbitrary key names coexist freely |
-| B | yes | no | new field carried as custom attribute outside the typed schema contract; not discoverable via UsdPrimDefinition without prior knowledge |
-| Bprime | yes | no | new field carried as custom attribute outside the typed schema contract; not discoverable via UsdPrimDefinition without prior knowledge |
-| C | yes | yes | dict keys are open; arbitrary key names coexist freely |
-| D (id half) | yes | yes | dict keys are open; arbitrary key names coexist freely |
-| D (label half) | yes | yes | label-kind segment is openly enumerable via SemanticLabelsAPI:<vendor>:<kind> instance names |
+| A | yes | yes | both field names coexist as separate dict keys under source.<vendor> |
+| B | yes | no | renamed field authored as a custom attribute on the prim; carries the value but does not appear in UsdPrimDefinition |
+| Bprime | yes | no | renamed field authored as a custom attribute on the prim; carries the value but does not appear in UsdPrimDefinition |
+| C | yes | yes | both field names coexist as separate dict keys under source.<vendor> |
+| D (id half) | yes | yes | both field names coexist as separate dict keys under source.<vendor> |
+| D (label half) | yes | yes | both kind segments coexist as separate SemanticLabelsAPI:<vendor>:<kind> instances |
 
 ### Carrier (c) — both approaches' layers on disk, read neutrally
 
@@ -114,8 +120,8 @@ two layers carry. This is the closest mechanism-level analog to
 ## Scenario 3 — round-trip (carrier c only)
 
 X -> Y -> X across three layers. Carrier (a) and (b) round-trip
-within one approach is trivially lossless (same destination
-schema on both ends) and is not enumerated separately.
+within one approach goes back to the same source schema on both
+ends, so this scenario only enumerates cross-approach (c) pairs.
 
 | pair (X -> Y -> X) | primaryId preserved | matches | diffs | extras lost at hop1 |
 |---|---|---|---|---|
@@ -129,61 +135,68 @@ schema on both ends) and is not enumerated separately.
 
 ## Criteria mapping
 
-- **Carrier (a) + (b)** map to **PR #105 Principle 3** (vendor
-  extensibility; tiered lifecycle vendor -> multi-vendor -> core).
-  Both exercise content evolution within one approach as the
-  carrier's identity changes — the operation the tiered
-  lifecycle implicitly demands.
-- **Carrier (c)** is **not named in any PR #105 principle**.
-  It is an operational concern that emerges downstream of the
-  proposal: if multiple mechanisms end up adopted, this is the
-  implication of mechanism plurality.
+- **Carrier (a)** — vendor name within one approach — touches
+  **PR #105 Principle 3** (vendor extensibility; tiered
+  lifecycle vendor -> multi-vendor -> core). Vendor-name
+  evolution is the operation the tiered lifecycle names.
+- **Carrier (b)** — field name within one vendor — is not
+  directly named in PR #105's principles. The probe measures
+  the mechanism's response (where the renamed field lives,
+  whether it stays in UsdPrimDefinition) as data.
+- **Carrier (c)** — approach itself — is not named in PR #105.
+  It is an operational concern downstream of mechanism
+  plurality.
 
 ## Observations
 
 - For A, C, D identifier-half, both the vendor token (carrier a)
-  and the field name (carrier b) are plain dict keys; both
-  rewrites are layer-text-only operations (one site per prim).
-- For B, the vendor token is a multi-apply schema instance name
-  appearing in the apiSchemas list and as the middle segment of
-  each authored typed-property name; carrier (a) is a layer-text
-  rewrite across one site per authored typed-property plus one
-  in the apiSchemas entry (the probe authors only `primaryId`,
-  for a total of two sites per prim; B declares four typed
-  properties, so the count scales by +1 per additional authored
-  property). The field name is a typed schema property; carrier
-  (b)'s renamed field can be authored as a custom attribute on
-  the prim (layer-text-only), which carries the value but is
-  not present in UsdPrimDefinition.
-- For B', the vendor token is the schema class name itself,
-  which lives in the schema definition and the plugin's TfType
-  registration. Carrier (a) requires declaring and registering
-  a new schema class before any prim can reference it. Carrier
-  (b) is the same as B's field-name case: the renamed field is
-  authored as a custom attribute (not in UsdPrimDefinition).
-- D-labels-half (not exercised in this dim per the dim1
-  convention) shares B-like typed-property mechanics for
-  label values; the same B-style constraints would apply if
-  the same probes were run against the labels-half.
-- Cross-approach probes author each prim with `primaryId` plus
-  extra dict-keyed metadata (`extra`, `pdmTag`) when the source
-  approach is dict-storage (A, C, D). Pairs whose destination
-  is typed-property storage (B, B') drop the extra keys at the
-  destination-rewrite step; this surfaces in the `dropped`
-  column of carrier (c) forward and the `extras lost at hop1`
-  column of round-trip.
+  and the field name (carrier b) are dict keys; both rewrites
+  are layer-text operations (one site per prim).
+- For B, the vendor token is a multi-apply schema instance
+  name appearing in the apiSchemas list and as the middle
+  segment of each authored typed-property name. Carrier (a) is
+  a layer-text rewrite across one site per authored
+  typed-property plus one in the apiSchemas entry — two sites
+  per prim in this probe (which authors only `primaryId`); B
+  declares four typed properties, so the count scales by +1
+  per additional authored property. Carrier (b) authors the
+  renamed field as a custom attribute on the prim — carries
+  the value, not present in UsdPrimDefinition.
+- For B' (Bprime), the vendor token is the schema class name
+  itself, which lives in the schema definition and the
+  plugin's TfType registration. Carrier (a) requires declaring
+  and registering a new schema class before any prim can
+  reference it. Carrier (b) lands the renamed field as a
+  custom attribute on the prim (same shape as B's carrier b).
+- D label-half is now exercised in this dim. The forward/coexist
+  rows tagged "D (label half)" report:
+  carrier (a) at two sites per prim (apiSchemas entry +
+  property name segment), v2 layer = v1 line count;
+  carrier (b) with the renamed kind segment landing in
+  UsdPrimDefinition via the SemanticLabelsAPI multi-apply
+  template (the multi-apply template covers any
+  vendor:kind instance, so a renamed kind ships in the
+  prim definition rather than as a custom attribute).
+- Cross-approach probes author A as the dict-storage source
+  with `primaryId` plus extra dict-keyed metadata (`extra`,
+  `pdmTag`). Destinations whose storage is typed-property
+  (B, B') drop the extra keys at the destination-rewrite
+  step; this surfaces in the `dropped` column of carrier (c)
+  forward and the `extras lost at hop1` column of round-trip.
 - The neutral-read coexistence row for carrier (c) reports
   what raw layer text + snapshot files carry; it does not
   require any specific approach's plugin to be loaded.
-- B' layer text carries the vendor identity inside the schema
-  class name itself (e.g. `WindchillSourceIdAPI`); a separate
-  vendor token does not appear as a string literal in the
-  layer. Every other approach surfaces the vendor token as a
-  literal string in the layer (dict key or multi-apply
+- B' (Bprime) layer text carries the vendor identity inside
+  the schema class name itself (e.g. `WindchillSourceIdAPI`);
+  a separate vendor token does not appear as a string literal
+  in the layer. Other approaches surface the vendor token as
+  a literal string in the layer (dict key or multi-apply
   instance suffix).
-- A and D both publish a schema named `SourceIdentifiersAPI`
-  for the identifier half (per PR #105's design for D, which
-  mirrors A's identifier shape). Neutral layer-text inspection
-  cannot distinguish A's authoring from D's identifier-half
-  authoring on this surface alone.
+- A and D both name their identifier-half schema
+  `SourceIdentifiersAPI`. Per the criteria file, D is a
+  proposal candidate beyond PR #105 (Matt Kuruc strawman); the
+  shared name is a design choice in that strawman, not a PR
+  #105 design. Neutral layer-text inspection does not
+  distinguish A's authoring from D's identifier-half authoring
+  on this surface alone.
 
