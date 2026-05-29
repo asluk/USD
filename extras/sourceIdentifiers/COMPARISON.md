@@ -188,9 +188,10 @@ digit); class names that violate these rules cannot register, and
 the row records `authoring_succeeded: null` (runtime apply not
 exercised).
 
-The colon case in B and D-label is a silent-failure surface — Aaron
-filed [PR-comment-pending] to flag this as a separate USD
-implementation issue, distinct from the vendor-extension paradigm
+The colon case in B and D-label is a silent-failure surface. It is
+a separable USD implementation concern (the apiSchemas list accepts
+a vendor segment that the SdfAttributeSpec layer re-namespaces
+without error), distinct from the vendor-extension paradigm
 question this dim measures.
 
 ### Dim 8 — content migration & compatibility (P3 + operational)
