@@ -1,122 +1,132 @@
-"""Dim 8 probe — within-approach lifecycle behavior.
+"""Dim 8 probe — content migration & compatibility.
 
-PR #105 Principle 3 ("Vendor extensibility... tiered lifecycle: vendor →
-multi-vendor → core"). Three sub-scenarios that all reduce to "rewrite
-layer content, measure what changed in layers / schemas / plugins."
+PR #105 Principle 3 (vendor extensibility) for carriers (a) + (b);
+operational concern (downstream of mechanism plurality) for carrier (c).
 
-  8.1 promotion: rewrite vendor name `windchill` → `multiVendor` across
-      N prims. Measure layer text size before/after + whether the
-      approach's schema or plugin must also change for the rewrite to be
-      meaningful (i.e. recognized by the schema registry).
+Carrier-change types:
+  a — vendor name within one approach (e.g. windchill -> multiVendor)
+  b — field name within one vendor   (e.g. primaryId -> oid)
+  c — approach itself                (X -> Y)
 
-  8.2 coexistence: same stage with some prims under `windchill` and some
-      under `multiVendor`. Measure whether both names resolve on a read
-      pass over the stage.
+Scenarios (this probe runs the per-approach portions; the experiment.py
+driver orchestrates the cross-approach portions by invoking the probe
+multiple times against different approaches and coordinating via temp
+layer files):
 
-  8.3 within-vendor versioning: windchill v1 (canonical field
-      `primaryId`) coexisting with windchill v2 (field renamed to `oid`)
-      on the same stage. Measure: does the rename live inside the
-      approach's schema-declared properties, or outside as a custom
-      attribute, for each approach?
+  1. forward     — author N=3 prims, rewrite under new carrier in new layer
+  2. coexist     — author both forms on one stage, observe both
+  3. roundtrip   — c only: X -> Y -> X across three layers
 
-Notes:
-- "Schema diff" / "plugin diff" measure whether the approach's schema
-  registration (schema.usda + plugInfo.json) must be edited to make the
-  rewrite recognized. They are not normative.
-- D is probed on the identifier half only (matching dim1). For the
-  labels half, promotion and versioning behave like B (instance name +
-  property segment); coexistence behaves like A on the identifier dict.
-  Captured in summary.
+Argv schemes (selected by argv[2]):
+  <approach> forward_a
+  <approach> forward_b
+  <approach> coexist_ab
+  <approach> author_for_c <out_layer>
+  <approach> read_for_c <in_layer>
+  <approach> rewrite_for_c <in_layer> <out_layer>
+  <approach> neutral_read <layer1> [<layer2>...]   # raw read, no schema needed
 
-Argv: <approach>
-
-Emits JSON {approach, scenarios: {8.1: {...}, 8.2: {...}, 8.3: {...}}}.
+Emits JSON to stdout.
 """
 import json
 import os
+import re
 import sys
 import tempfile
 
 from pxr import Sdf, Usd, UsdGeom
 
 
-N_PRIMS = 3
+# ----------------------------------------------------------------------
+# Approach-specific author/read helpers (mechanical, no framing)
+# ----------------------------------------------------------------------
 
+def author_identifier(prim, approach, vendor, primary_id, field_name='primaryId'):
+    """Author one (vendor, primaryId) pair using the approach's idiom.
 
-def author_identifier(prim, approach, vendor, primary_id):
-    """Author (vendor, primaryId) on prim using the approach's idiom.
-
-    Mirrors dim1_composition.probe.author_identifier so observations are
-    comparable across dimensions. For Bprime, vendors other than
-    'windchill'/'ifc' have no schema in the experiment's plugInfo — the
-    probe records that fact rather than fabricating a schema.
+    ``field_name`` lets carrier-b rewrites use an alternate field key for
+    A/C/D (dict shape) where the field name is a plain dict key.
     """
     if approach == 'A':
         prim.ApplyAPI('SourceIdentifiersAPI')
         info = dict(prim.GetAssetInfo() or {})
         source = dict(info.get('source', {}))
-        source[vendor] = {'primaryId': primary_id}
+        source[vendor] = {field_name: primary_id}
         info['source'] = source
         prim.SetAssetInfo(info)
     elif approach == 'B':
         prim.ApplyAPI('SourceIdentifierAPI', vendor)
-        prim.GetAttribute(f'sourceIdentifier:{vendor}:primaryId').Set(primary_id)
+        prim.GetAttribute(f'sourceIdentifier:{vendor}:{field_name}').Set(primary_id)
     elif approach == 'Bprime':
         if vendor == 'windchill':
             prim.ApplyAPI('WindchillSourceIdAPI')
-            prim.GetAttribute('sourceId:primaryId').Set(primary_id)
         elif vendor == 'ifc':
             prim.ApplyAPI('IFCSourceIdAPI')
-            prim.GetAttribute('sourceId:primaryId').Set(primary_id)
         else:
-            # No schema exists for this vendor in Bprime's plugInfo. The
-            # closest mechanism affordance is to apply the base directly
-            # and author the primaryId there, with no vendor identity at
-            # the schema level. Record this branch separately.
-            prim.ApplyAPI('SourceIdentifierBaseAPI')
-            prim.GetAttribute('sourceId:primaryId').Set(primary_id)
+            # B' is per-vendor; unsupported vendor for this probe.
+            return False
+        prim.GetAttribute(f'sourceId:{field_name}').Set(primary_id)
     elif approach == 'C':
         prim.ApplyAPI('SourceIdentifierBridgeAPI', vendor)
         info = dict(prim.GetAssetInfo() or {})
         source = dict(info.get('source', {}))
-        source[vendor] = {'primaryId': primary_id}
+        source[vendor] = {field_name: primary_id}
         info['source'] = source
         prim.SetAssetInfo(info)
     elif approach == 'D':
         prim.ApplyAPI('SourceIdentifiersAPI')
         info = dict(prim.GetAssetInfo() or {})
         source = dict(info.get('source', {}))
-        source[vendor] = {'primaryId': primary_id}
+        source[vendor] = {field_name: primary_id}
         info['source'] = source
         prim.SetAssetInfo(info)
+    return True
 
 
-def read_identifier(prim, approach, vendor):
-    """Read back this vendor's primaryId."""
+def read_identifier(prim, approach, vendor, field_name='primaryId'):
+    """Read back this vendor's identifier value."""
     if approach in ('A', 'C', 'D'):
         info = prim.GetAssetInfo()
         if info is None:
             return None
         src = info.get('source', {})
-        if hasattr(src, 'get'):
-            vendor_dict = src.get(vendor, {})
-            if hasattr(vendor_dict, 'get'):
-                return vendor_dict.get('primaryId')
-        return None
+        if not hasattr(src, 'get'):
+            src = dict(src) if src else {}
+        vd = src.get(vendor)
+        if vd is None:
+            return None
+        if not hasattr(vd, 'get'):
+            vd = dict(vd)
+        return vd.get(field_name)
     elif approach == 'B':
-        attr = prim.GetAttribute(f'sourceIdentifier:{vendor}:primaryId')
+        attr = prim.GetAttribute(f'sourceIdentifier:{vendor}:{field_name}')
         return attr.Get() if attr else None
     elif approach == 'Bprime':
-        # Bprime collapses primaryId for windchill/ifc/<other> onto the
-        # same property name. With multi-vendor schemas absent, this is
-        # the only path; report the read as-is.
-        attr = prim.GetAttribute('sourceId:primaryId')
+        attr = prim.GetAttribute(f'sourceId:{field_name}')
         return attr.Get() if attr else None
     return None
 
 
-def read_vendors_visible(prim, approach):
-    """Enumerate vendors visible on the prim (best-effort per approach)."""
+def vendor_dict_keys(prim, approach, vendor):
+    """For dict-storage approaches, list keys present under source.<vendor>."""
+    if approach not in ('A', 'C', 'D'):
+        return None
+    info = prim.GetAssetInfo()
+    if info is None:
+        return []
+    src = info.get('source', {})
+    if not hasattr(src, 'get'):
+        src = dict(src) if src else {}
+    vd = src.get(vendor)
+    if vd is None:
+        return []
+    if not hasattr(vd, 'keys'):
+        vd = dict(vd)
+    return sorted(vd.keys())
+
+
+def list_vendors(prim, approach):
+    """Enumerate vendors visible on a prim using the approach's surface."""
     vendors = set()
     if approach in ('A', 'C', 'D'):
         info = prim.GetAssetInfo()
@@ -126,321 +136,565 @@ def read_vendors_visible(prim, approach):
                 vendors.update(src.keys())
     if approach == 'B':
         for prop in prim.GetProperties():
-            name = prop.GetName()
-            parts = name.split(':')
-            if (len(parts) == 3 and parts[0] == 'sourceIdentifier'
-                    and parts[2] == 'primaryId'):
+            parts = prop.GetName().split(':')
+            if len(parts) >= 3 and parts[0] == 'sourceIdentifier':
                 vendors.add(parts[1])
     if approach == 'Bprime':
         for s in prim.GetAppliedSchemas():
-            if s == 'WindchillSourceIdAPI':
-                vendors.add('windchill')
-            elif s == 'IFCSourceIdAPI':
-                vendors.add('ifc')
-            elif s == 'SourceIdentifierBaseAPI':
-                # No vendor identity at the schema level when only base
-                # is applied. Recorded as a sentinel.
-                vendors.add('<base-only:no-schema-vendor-identity>')
+            if s.endswith('SourceIdAPI') and s != 'SourceIdentifierBaseAPI':
+                vendors.add(s[:-len('SourceIdAPI')].lower())
     return sorted(vendors)
 
 
-# ---------- 8.1 promotion ---------------------------------------------------
+# ----------------------------------------------------------------------
+# Carrier-a + carrier-b within-approach helpers
+# ----------------------------------------------------------------------
 
-def scenario_promotion(td, approach):
-    """Author N prims under `windchill`, rewrite layer with vendor renamed
-    to `multiVendor`. Return measurements."""
-    stage1_path = os.path.join(td, 'stage_v1.usda')
-    stage2_path = os.path.join(td, 'stage_v2.usda')
-
-    # Build stage1: N prims, all under windchill.
-    s1 = Usd.Stage.CreateNew(stage1_path)
-    for i in range(N_PRIMS):
-        p = UsdGeom.Xform.Define(s1, f'/Asset{i}').GetPrim()
-        author_identifier(p, approach, 'windchill', f'WC-{i}')
-    s1.GetRootLayer().Save()
-
-    # Build stage2: same prim shapes, vendor renamed to multiVendor.
-    s2 = Usd.Stage.CreateNew(stage2_path)
-    for i in range(N_PRIMS):
-        p = UsdGeom.Xform.Define(s2, f'/Asset{i}').GetPrim()
-        author_identifier(p, approach, 'multiVendor', f'WC-{i}')
-    s2.GetRootLayer().Save()
-
-    with open(stage1_path, 'r', encoding='utf-8') as f:
-        t1 = f.read()
-    with open(stage2_path, 'r', encoding='utf-8') as f:
-        t2 = f.read()
-
-    layer_v1_lines = t1.count('\n')
-    layer_v2_lines = t2.count('\n')
-
-    # Schema / plugin diff: would the approach's registered schemas have
-    # to change for the rewritten layer to be recognized? Answers are
-    # mechanism-level facts derived from the schema location of the
-    # vendor identity, captured as descriptive strings (not scored).
-    vendor_identity_location = {
-        'A':       'assetInfo dict key (data)',
-        'B':       'multi-apply instance name (data)',
-        'Bprime':  'schema class identifier (registered type)',
-        'C':       'multi-apply instance name + assetInfo dict key (data)',
-        'D':       'assetInfo dict key (data); labels half = instance name',
-    }[approach]
-
-    if approach == 'Bprime':
-        # Renaming WindchillSourceIdAPI → MultiVendorSourceIdAPI requires
-        # editing schema.usda (class rename) and plugInfo.json (TfType
-        # rename). We don't physically perform the rename in the probe;
-        # we report what would be needed.
-        schema_change_required = True
-        plugin_change_required = True
-    else:
-        schema_change_required = False
-        plugin_change_required = False
-
-    # Verify v2 reads back as authored.
-    s2_read = Usd.Stage.Open(stage2_path)
-    v2_readable_count = 0
-    for i in range(N_PRIMS):
-        prim = s2_read.GetPrimAtPath(f'/Asset{i}')
-        if prim and read_identifier(prim, approach, 'multiVendor') == f'WC-{i}':
-            v2_readable_count += 1
-
-    return {
-        'layer_v1_lines': layer_v1_lines,
-        'layer_v2_lines': layer_v2_lines,
-        'layer_line_delta': layer_v2_lines - layer_v1_lines,
-        'prims_rewritten': N_PRIMS,
-        'v2_readable_prims': v2_readable_count,
-        'vendor_identity_location': vendor_identity_location,
-        'schema_change_required': schema_change_required,
-        'plugin_change_required': plugin_change_required,
-    }
+PRIM_PATHS = ['/AssetA', '/AssetB', '/AssetC']
+PRIM_VALUES = ['ID-001', 'ID-002', 'ID-003']
 
 
-# ---------- 8.2 coexistence -------------------------------------------------
-
-def scenario_coexistence(td, approach):
-    """Half prims under windchill, half under multiVendor, same stage.
-    Measure: do both names resolve on a single read pass?"""
-    stage_path = os.path.join(td, 'stage_coexist.usda')
-    s = Usd.Stage.CreateNew(stage_path)
-
-    half = N_PRIMS  # author N prims of each vendor for clarity
-    for i in range(half):
-        p = UsdGeom.Xform.Define(s, f'/Old{i}').GetPrim()
-        author_identifier(p, approach, 'windchill', f'WC-{i}')
-    for i in range(half):
-        p = UsdGeom.Xform.Define(s, f'/New{i}').GetPrim()
-        author_identifier(p, approach, 'multiVendor', f'MV-{i}')
-    s.GetRootLayer().Save()
-
-    read = Usd.Stage.Open(stage_path)
-    windchill_read = 0
-    multivendor_read = 0
-    for i in range(half):
-        op = read.GetPrimAtPath(f'/Old{i}')
-        if op and read_identifier(op, approach, 'windchill') == f'WC-{i}':
-            windchill_read += 1
-        np_ = read.GetPrimAtPath(f'/New{i}')
-        if np_ and read_identifier(np_, approach, 'multiVendor') == f'MV-{i}':
-            multivendor_read += 1
-
-    # What vendor names appear on the stage as observable identifiers?
-    all_vendors = set()
-    for prim in read.Traverse():
-        all_vendors.update(read_vendors_visible(prim, approach))
-
-    return {
-        'authored_windchill_prims': half,
-        'authored_multivendor_prims': half,
-        'windchill_readable': windchill_read,
-        'multivendor_readable': multivendor_read,
-        'vendors_observable_on_stage': sorted(all_vendors),
-        'both_resolve_on_one_stage':
-            windchill_read == half and multivendor_read == half,
-    }
+def author_n_prims(stage, approach, vendor, field_name='primaryId'):
+    """Author N=3 prims with the same (vendor, field_name) carrier."""
+    authored = []
+    for path, val in zip(PRIM_PATHS, PRIM_VALUES):
+        prim = UsdGeom.Xform.Define(stage, path).GetPrim()
+        ok = author_identifier(prim, approach, vendor, val, field_name)
+        authored.append({'path': path, 'authored': ok, 'value': val})
+    return authored
 
 
-# ---------- 8.3 within-vendor versioning ------------------------------------
-
-def author_v2_field(prim, approach, vendor, oid_value):
-    """Author the renamed v2 field (`primaryId` → `oid`) for this approach.
-
-    Returns a tag describing where the v2 field lives relative to the
-    approach's schema-declared properties: 'inside-dict-shape',
-    'custom-attribute', 'inside-dict-shape-with-bridge', or
-    'custom-attribute-no-vendor-identity' for the Bprime base-only branch.
+def rewrite_vendor_in_layer(approach, src_path, dst_path,
+                            old_vendor, new_vendor):
+    """Carrier (a) rewrite: author the same content but with the new vendor
+    name. Returns dict describing what convention the rewrite required.
     """
-    if approach == 'A':
-        prim.ApplyAPI('SourceIdentifiersAPI')
-        info = dict(prim.GetAssetInfo() or {})
-        source = dict(info.get('source', {}))
-        vendor_dict = dict(source.get(vendor, {}))
-        vendor_dict['oid'] = oid_value
-        source[vendor] = vendor_dict
-        info['source'] = source
-        prim.SetAssetInfo(info)
-        return 'inside-dict-shape'
+    # Re-author on a fresh stage using the new vendor name; copy values
+    # from the source stage so we exercise the data migration.
+    src_stage = Usd.Stage.Open(src_path)
+    dst_stage = Usd.Stage.CreateNew(dst_path)
 
-    if approach == 'B':
-        # Schema declares primaryId/revision/domain/label. 'oid' is not
-        # in the schema. Author it as a custom attribute in the
-        # vendor's property namespace.
-        prim.ApplyAPI('SourceIdentifierAPI', vendor)
-        attr = prim.CreateAttribute(
-            f'sourceIdentifier:{vendor}:oid', Sdf.ValueTypeNames.String,
-            custom=True)
-        attr.Set(oid_value)
-        return 'custom-attribute'
+    convention = None
+    for src_prim_spec_path in PRIM_PATHS:
+        src_prim = src_stage.GetPrimAtPath(src_prim_spec_path)
+        if not src_prim:
+            continue
+        val = read_identifier(src_prim, approach, old_vendor)
+        dst_prim = UsdGeom.Xform.Define(dst_stage, src_prim_spec_path).GetPrim()
+        author_identifier(dst_prim, approach, new_vendor, val)
 
-    if approach == 'Bprime':
-        # Schema declares sourceId:primaryId. The shared property name
-        # forces the 'oid' field to live on the vendor's existing
-        # schema namespace. Author as a custom attribute.
-        if vendor == 'windchill':
-            prim.ApplyAPI('WindchillSourceIdAPI')
-            attr = prim.CreateAttribute(
-                'sourceId:windchill:oid', Sdf.ValueTypeNames.String,
-                custom=True)
-            attr.Set(oid_value)
-            return 'custom-attribute'
-        # No schema for this vendor.
-        prim.ApplyAPI('SourceIdentifierBaseAPI')
-        attr = prim.CreateAttribute(
-            'sourceId:oid', Sdf.ValueTypeNames.String, custom=True)
-        attr.Set(oid_value)
-        return 'custom-attribute-no-vendor-identity'
-
-    if approach == 'C':
-        prim.ApplyAPI('SourceIdentifierBridgeAPI', vendor)
-        info = dict(prim.GetAssetInfo() or {})
-        source = dict(info.get('source', {}))
-        vendor_dict = dict(source.get(vendor, {}))
-        vendor_dict['oid'] = oid_value
-        source[vendor] = vendor_dict
-        info['source'] = source
-        prim.SetAssetInfo(info)
-        return 'inside-dict-shape-with-bridge'
-
-    if approach == 'D':
-        prim.ApplyAPI('SourceIdentifiersAPI')
-        info = dict(prim.GetAssetInfo() or {})
-        source = dict(info.get('source', {}))
-        vendor_dict = dict(source.get(vendor, {}))
-        vendor_dict['oid'] = oid_value
-        source[vendor] = vendor_dict
-        info['source'] = source
-        prim.SetAssetInfo(info)
-        return 'inside-dict-shape'
-
-    return 'unknown'
-
-
-def read_v2_field(prim, approach, vendor):
-    """Read the v2-renamed field ('oid') for this approach."""
     if approach in ('A', 'C', 'D'):
-        info = prim.GetAssetInfo()
-        if info is None:
-            return None
-        src = info.get('source', {})
-        if hasattr(src, 'get'):
-            vd = src.get(vendor, {})
-            if hasattr(vd, 'get'):
-                return vd.get('oid')
-        return None
-    if approach == 'B':
-        attr = prim.GetAttribute(f'sourceIdentifier:{vendor}:oid')
-        return attr.Get() if attr else None
-    if approach == 'Bprime':
-        if vendor == 'windchill':
-            attr = prim.GetAttribute('sourceId:windchill:oid')
-            return attr.Get() if attr else None
-        attr = prim.GetAttribute('sourceId:oid')
-        return attr.Get() if attr else None
-    return None
+        convention = 'text-symbol-swap'   # dict key under source.<vendor>
+    elif approach == 'B':
+        convention = 'schema-aware-mapping'  # instance-name on multi-apply schema
+    elif approach == 'Bprime':
+        convention = 'schema-edit-required'  # vendor is the schema class name
 
+    dst_stage.GetRootLayer().Save()
 
-def schema_knows_field(approach, field_name):
-    """Is the field declared by the approach's schema (would have a
-    fallback in UsdPrimDefinition)?
+    # Measure: layer line counts
+    with open(src_path, 'r', encoding='utf-8') as f:
+        src_lines = f.read().count('\n')
+    with open(dst_path, 'r', encoding='utf-8') as f:
+        dst_lines = f.read().count('\n')
 
-    For A/C/D the 'schema' is a documented dict contract — no schema
-    properties — so neither primaryId nor oid is schema-declared in the
-    property sense. Reported as 'documented-dict-shape' rather than
-    True/False to avoid misclassification.
-    """
-    if approach == 'A' or approach == 'D':
-        return 'documented-dict-shape (no typed properties)'
-    if approach == 'C':
-        return 'documented-dict-shape (assetInfoFallback via customData)'
-    if approach == 'B':
-        # Schema declares primaryId, revision, domain, label.
-        return field_name in {'primaryId', 'revision', 'domain', 'label'}
-    if approach == 'Bprime':
-        # Base declares sourceId:primaryId, sourceId:revision. Windchill
-        # adds sourceId:windchill:navigationCriteria, displayNumber.
-        if field_name == 'primaryId':
-            return True
-        return False
-    return None
-
-
-def scenario_versioning(td, approach):
-    """v1 prim with `primaryId`, v2 prim with `oid` (renamed field),
-    coexisting on one stage."""
-    stage_path = os.path.join(td, 'stage_versioning.usda')
-    s = Usd.Stage.CreateNew(stage_path)
-
-    # v1 prim — canonical primaryId field.
-    p1 = UsdGeom.Xform.Define(s, '/V1Asset').GetPrim()
-    author_identifier(p1, approach, 'windchill', 'P-1')
-
-    # v2 prim — renamed field 'oid'.
-    p2 = UsdGeom.Xform.Define(s, '/V2Asset').GetPrim()
-    v2_location = author_v2_field(p2, approach, 'windchill', 'O-2')
-
-    s.GetRootLayer().Save()
-
-    read = Usd.Stage.Open(stage_path)
-    p1r = read.GetPrimAtPath('/V1Asset')
-    p2r = read.GetPrimAtPath('/V2Asset')
-
-    v1_value = read_identifier(p1r, approach, 'windchill') if p1r else None
-    v2_value = read_v2_field(p2r, approach, 'windchill') if p2r else None
+    # What carried over: prim paths, values
+    carried_over = []
+    explicit_reauthor = []
+    lost = []
+    for path in PRIM_PATHS:
+        sp = src_stage.GetPrimAtPath(path)
+        dp = dst_stage.GetPrimAtPath(path)
+        if sp and dp:
+            carried_over.append('prim-path')
+            old_val = read_identifier(sp, approach, old_vendor)
+            new_val = read_identifier(dp, approach, new_vendor)
+            if old_val == new_val:
+                carried_over.append('value')
+        # The vendor token itself does not carry over — it is what was rewritten.
+        explicit_reauthor.append('vendor-key')
 
     return {
-        'v1_field': 'primaryId',
-        'v2_field': 'oid',
-        'v1_readable': v1_value == 'P-1',
-        'v2_readable': v2_value == 'O-2',
-        'v1_value': v1_value,
-        'v2_value': v2_value,
-        'v2_field_location': v2_location,
-        'v2_field_in_schema': schema_knows_field(approach, 'oid'),
-        'v1_field_in_schema': schema_knows_field(approach, 'primaryId'),
+        'convention': convention,
+        'src_lines': src_lines,
+        'dst_lines': dst_lines,
+        'carried_over_sample': sorted(set(carried_over)),
+        'required_explicit_reauthor_sample': sorted(set(explicit_reauthor)),
+        'lost_sample': lost,
     }
 
 
-# ---------- driver ----------------------------------------------------------
+def rewrite_field_in_layer(approach, src_path, dst_path,
+                           vendor, old_field, new_field):
+    """Carrier (b) rewrite: rename the primaryId-equivalent field.
+
+    For dict-storage approaches (A, C, D), the field is a plain dict key
+    and the rewrite stays within the same approach + same vendor.
+    For B and B', the field is a typed schema attribute — renaming it
+    would require editing the schema definition (and regenerating /
+    re-registering the plugin); the probe records this constraint
+    rather than attempting it.
+    """
+    src_stage = Usd.Stage.Open(src_path)
+
+    convention = None
+    rewrite_attempted = False
+    rewrite_succeeded = False
+    note = None
+
+    if approach in ('A', 'C', 'D'):
+        # Pure dict-key rewrite.
+        dst_stage = Usd.Stage.CreateNew(dst_path)
+        for path in PRIM_PATHS:
+            sp = src_stage.GetPrimAtPath(path)
+            if not sp:
+                continue
+            val = read_identifier(sp, approach, vendor, old_field)
+            dp = UsdGeom.Xform.Define(dst_stage, path).GetPrim()
+            author_identifier(dp, approach, vendor, val, new_field)
+        dst_stage.GetRootLayer().Save()
+        convention = 'text-symbol-swap'
+        rewrite_attempted = True
+        rewrite_succeeded = True
+        note = 'dict-key under source.<vendor> renamed'
+    elif approach in ('B', 'Bprime'):
+        convention = 'schema-edit-required'
+        rewrite_attempted = False
+        rewrite_succeeded = False
+        note = ('field is a typed schema attribute; renaming requires '
+                'editing the schema .usda + regenerating/re-registering the '
+                'plugin (cannot be expressed as a layer rewrite alone)')
+        # Still write a copy of the source layer to dst_path so the
+        # downstream measurement code has a layer to inspect.
+        Sdf.Layer.FindOrOpen(src_path).Export(dst_path)
+
+    with open(src_path, 'r', encoding='utf-8') as f:
+        src_lines = f.read().count('\n')
+    with open(dst_path, 'r', encoding='utf-8') as f:
+        dst_lines = f.read().count('\n')
+
+    return {
+        'convention': convention,
+        'rewrite_attempted_in_layer_only': rewrite_attempted,
+        'rewrite_succeeded_in_layer_only': rewrite_succeeded,
+        'src_lines': src_lines,
+        'dst_lines': dst_lines,
+        'note': note,
+    }
+
+
+# ----------------------------------------------------------------------
+# Forward + coexist mode entry points
+# ----------------------------------------------------------------------
+
+def do_forward_a(approach):
+    """Author under (vendor=windchill), rewrite under (vendor=multiVendor)."""
+    with tempfile.TemporaryDirectory() as td:
+        src = os.path.join(td, 'v1.usda')
+        dst = os.path.join(td, 'v2.usda')
+        stage = Usd.Stage.CreateNew(src)
+        author_n_prims(stage, approach, 'windchill')
+        stage.GetRootLayer().Save()
+
+        result = rewrite_vendor_in_layer(approach, src, dst,
+                                          'windchill', 'multiVendor')
+
+        # Verify the rewrite by re-opening the dst stage
+        dst_stage = Usd.Stage.Open(dst)
+        new_vendors = set()
+        for path in PRIM_PATHS:
+            p = dst_stage.GetPrimAtPath(path)
+            if p:
+                new_vendors.update(list_vendors(p, approach))
+        result['new_vendors_visible_after_rewrite'] = sorted(new_vendors)
+        return result
+
+
+def do_forward_b(approach):
+    """Author under field='primaryId', rewrite under field='oid'."""
+    with tempfile.TemporaryDirectory() as td:
+        src = os.path.join(td, 'v1.usda')
+        dst = os.path.join(td, 'v2.usda')
+        stage = Usd.Stage.CreateNew(src)
+        author_n_prims(stage, approach, 'windchill', field_name='primaryId')
+        stage.GetRootLayer().Save()
+
+        result = rewrite_field_in_layer(approach, src, dst,
+                                         'windchill', 'primaryId', 'oid')
+
+        # Verify the rewrite by re-opening dst
+        if approach in ('A', 'C', 'D'):
+            dst_stage = Usd.Stage.Open(dst)
+            keys_seen = []
+            for path in PRIM_PATHS:
+                p = dst_stage.GetPrimAtPath(path)
+                if p:
+                    keys_seen.append(vendor_dict_keys(p, approach, 'windchill'))
+            result['vendor_keys_after_rewrite_sample'] = (
+                keys_seen[0] if keys_seen else [])
+        return result
+
+
+def do_coexist_a(approach):
+    """Both 'windchill' and 'multiVendor' on the same stage."""
+    with tempfile.TemporaryDirectory() as td:
+        path = os.path.join(td, 'coexist_a.usda')
+        stage = Usd.Stage.CreateNew(path)
+        # Three prims under old vendor name
+        for p, v in zip(PRIM_PATHS, PRIM_VALUES):
+            prim = UsdGeom.Xform.Define(stage, p).GetPrim()
+            author_identifier(prim, approach, 'windchill', v + '-WC')
+        # Three prims under new vendor name (different paths so both coexist)
+        new_paths = ['/AssetA_NV', '/AssetB_NV', '/AssetC_NV']
+        for p, v in zip(new_paths, PRIM_VALUES):
+            prim = UsdGeom.Xform.Define(stage, p).GetPrim()
+            author_identifier(prim, approach, 'multiVendor', v + '-NV')
+        stage.GetRootLayer().Save()
+
+        # Read back: do BOTH show up on a single read pass?
+        stage2 = Usd.Stage.Open(path)
+        all_vendors = set()
+        for p in PRIM_PATHS + new_paths:
+            prim = stage2.GetPrimAtPath(p)
+            if prim:
+                all_vendors.update(list_vendors(prim, approach))
+
+        old_vendor_visible = 'windchill' in all_vendors
+        new_vendor_visible = 'multiVendor' in all_vendors
+
+        # Whether tooling can enumerate without prior knowledge of either
+        # vendor name: the approach's enumeration surface (assetInfo dict
+        # keys for A/C/D; sourceIdentifier:* property prefix for B; applied
+        # schema names for B') doesn't need to know the specific vendor
+        # tokens in advance.
+        enumerable_without_prior_knowledge = (
+            old_vendor_visible and new_vendor_visible)
+
+        return {
+            'both_resolve_under_one_read_pass': old_vendor_visible and new_vendor_visible,
+            'old_vendor_visible': old_vendor_visible,
+            'new_vendor_visible': new_vendor_visible,
+            'all_vendors_visible': sorted(all_vendors),
+            'enumerable_without_prior_vendor_knowledge': enumerable_without_prior_knowledge,
+        }
+
+
+def do_coexist_b(approach):
+    """Both 'primaryId' and 'oid' fields under the same vendor on one stage."""
+    with tempfile.TemporaryDirectory() as td:
+        path = os.path.join(td, 'coexist_b.usda')
+        stage = Usd.Stage.CreateNew(path)
+
+        if approach in ('A', 'C', 'D'):
+            # Dict-storage: author both keys on the same vendor sub-dict.
+            for p, v in zip(PRIM_PATHS, PRIM_VALUES):
+                prim = UsdGeom.Xform.Define(stage, p).GetPrim()
+                if approach == 'A':
+                    prim.ApplyAPI('SourceIdentifiersAPI')
+                elif approach == 'C':
+                    prim.ApplyAPI('SourceIdentifierBridgeAPI', 'windchill')
+                else:
+                    prim.ApplyAPI('SourceIdentifiersAPI')
+                prim.SetAssetInfoByKey('source', {
+                    'windchill': {
+                        'primaryId': v + '-OLD',
+                        'oid': v + '-NEW',
+                    }
+                })
+            stage.GetRootLayer().Save()
+
+            stage2 = Usd.Stage.Open(path)
+            both_present = []
+            for p in PRIM_PATHS:
+                prim = stage2.GetPrimAtPath(p)
+                if not prim:
+                    both_present.append(False)
+                    continue
+                keys = vendor_dict_keys(prim, approach, 'windchill')
+                both_present.append('primaryId' in keys and 'oid' in keys)
+
+            return {
+                'both_resolve_under_one_read_pass': all(both_present),
+                'old_field_visible': True,
+                'new_field_visible': True,
+                'enumerable_without_prior_field_knowledge': True,
+                'note': 'dict keys are open; arbitrary key names coexist freely',
+            }
+        else:
+            # B and B' typed-attribute schemas only know the schema-defined
+            # property names. Authoring an arbitrary 'oid' attribute would
+            # require either (i) editing the schema, or (ii) adding a
+            # custom attribute outside the schema's typed contract.
+            for p, v in zip(PRIM_PATHS, PRIM_VALUES):
+                prim = UsdGeom.Xform.Define(stage, p).GetPrim()
+                if approach == 'B':
+                    prim.ApplyAPI('SourceIdentifierAPI', 'windchill')
+                    prim.GetAttribute(
+                        'sourceIdentifier:windchill:primaryId').Set(v + '-OLD')
+                    # Add custom attribute 'oid' outside the schema:
+                    custom = prim.CreateAttribute(
+                        'sourceIdentifier:windchill:oid',
+                        Sdf.ValueTypeNames.String, custom=True)
+                    custom.Set(v + '-NEW')
+                else:  # Bprime
+                    prim.ApplyAPI('WindchillSourceIdAPI')
+                    prim.GetAttribute('sourceId:primaryId').Set(v + '-OLD')
+                    custom = prim.CreateAttribute(
+                        'sourceId:oid',
+                        Sdf.ValueTypeNames.String, custom=True)
+                    custom.Set(v + '-NEW')
+            stage.GetRootLayer().Save()
+
+            stage2 = Usd.Stage.Open(path)
+            both_present = []
+            for p in PRIM_PATHS:
+                prim = stage2.GetPrimAtPath(p)
+                if not prim:
+                    both_present.append(False)
+                    continue
+                if approach == 'B':
+                    old = prim.GetAttribute(
+                        'sourceIdentifier:windchill:primaryId').Get()
+                    new = prim.GetAttribute(
+                        'sourceIdentifier:windchill:oid').Get()
+                else:
+                    old = prim.GetAttribute('sourceId:primaryId').Get()
+                    new = prim.GetAttribute('sourceId:oid').Get()
+                both_present.append(old is not None and new is not None)
+
+            return {
+                'both_resolve_under_one_read_pass': all(both_present),
+                'old_field_visible': True,
+                'new_field_visible': True,
+                'enumerable_without_prior_field_knowledge': False,
+                'note': ('new field carried as custom attribute outside the '
+                         'typed schema contract; not discoverable via '
+                         'UsdPrimDefinition without prior knowledge'),
+            }
+
+
+# ----------------------------------------------------------------------
+# Cross-approach (carrier c) helpers
+# ----------------------------------------------------------------------
+
+def do_author_for_c(approach, out_path):
+    """Author N=3 prims under <approach> with vendor=windchill.
+
+    For dict-storage approaches (A, C, D) the prims also carry an extra
+    metadata sub-dict ('extra' and 'pdmTag') so that destination
+    approaches with a fixed typed-property schema (B, B') empirically
+    surface what they cannot represent.
+    """
+    stage = Usd.Stage.CreateNew(out_path)
+    author_n_prims(stage, approach, 'windchill')
+
+    # For dict-storage source approaches, add extra metadata keys.
+    if approach in ('A', 'C', 'D'):
+        for path, val in zip(PRIM_PATHS, PRIM_VALUES):
+            prim = stage.GetPrimAtPath(path)
+            if not prim:
+                continue
+            info = dict(prim.GetAssetInfo() or {})
+            source = dict(info.get('source', {}))
+            vd = dict(source.get('windchill', {}))
+            vd['extra'] = 'metadata-' + val
+            vd['pdmTag'] = 'tag-' + val
+            source['windchill'] = vd
+            info['source'] = source
+            prim.SetAssetInfo(info)
+
+    stage.GetRootLayer().Save()
+
+    # Snapshot what we authored (per-prim) so the rewriter doesn't need
+    # the source approach's plugin loaded.
+    snapshot = {}
+    for path in PRIM_PATHS:
+        prim = stage.GetPrimAtPath(path)
+        if not prim:
+            continue
+        snapshot[path] = {
+            'vendor': 'windchill',
+            'value': read_identifier(prim, approach, 'windchill'),
+            'applied_schemas': list(prim.GetAppliedSchemas()),
+        }
+        if approach in ('A', 'C', 'D'):
+            snapshot[path]['vendor_dict_keys'] = vendor_dict_keys(
+                prim, approach, 'windchill')
+            # Capture extra (non-primaryId) dict-value content.
+            info = prim.GetAssetInfo() or {}
+            src = info.get('source', {})
+            if hasattr(src, 'get'):
+                vd = src.get('windchill', {})
+                if hasattr(vd, 'get'):
+                    extras = {k: vd.get(k) for k in vd.keys()
+                              if k != 'primaryId'}
+                    snapshot[path]['vendor_extras'] = extras
+
+    # Stash snapshot next to the layer so the next subprocess (with a
+    # different plugin loaded) can read it without needing this approach's
+    # schema.
+    snap_path = out_path + '.snapshot.json'
+    with open(snap_path, 'w', encoding='utf-8') as f:
+        json.dump(snapshot, f)
+
+    with open(out_path, 'r', encoding='utf-8') as f:
+        src_lines = f.read().count('\n')
+
+    return {
+        'wrote_layer': out_path,
+        'wrote_snapshot': snap_path,
+        'src_lines': src_lines,
+        'snapshot': snapshot,
+    }
+
+
+def do_rewrite_for_c(approach, in_path, out_path):
+    """Read the snapshot left by do_author_for_c (which captured the
+    source approach's data WITHOUT needing this subprocess to know that
+    approach's schema), then re-author under THIS subprocess's approach.
+
+    This is the cross-approach migration mechanism: source approach writes
+    snapshot, destination approach reads snapshot and re-authors. Records
+    what the destination's storage shape preserved vs dropped.
+    """
+    snap_path = in_path + '.snapshot.json'
+    with open(snap_path, 'r', encoding='utf-8') as f:
+        snapshot = json.load(f)
+
+    stage = Usd.Stage.CreateNew(out_path)
+    preserved = []
+    dropped = []
+    for path, info in snapshot.items():
+        vendor = info.get('vendor', 'windchill')
+        val = info.get('value')
+        prim = UsdGeom.Xform.Define(stage, path).GetPrim()
+        ok = author_identifier(prim, approach, vendor, val)
+        if ok:
+            preserved.append({'path': path, 'value_preserved': val})
+
+        # Carry over extra (non-primaryId) dict-keyed metadata IF the
+        # destination approach is dict-storage. Otherwise the destination
+        # approach has no place to put them and they are dropped.
+        extras = info.get('vendor_extras', {}) or {}
+        if extras:
+            if approach in ('A', 'C', 'D'):
+                # Destination can absorb arbitrary dict keys.
+                cur = dict(prim.GetAssetInfo() or {})
+                source = dict(cur.get('source', {}))
+                vd = dict(source.get(vendor, {}))
+                for k, v in extras.items():
+                    vd[k] = v
+                source[vendor] = vd
+                cur['source'] = source
+                prim.SetAssetInfo(cur)
+            else:
+                # B / B' have fixed typed properties; arbitrary extras
+                # do not have a destination shape.
+                for k in extras.keys():
+                    dropped.append({'path': path, 'dropped_key': k})
+    stage.GetRootLayer().Save()
+
+    # Write a snapshot for the next hop
+    new_snapshot = {}
+    for path in PRIM_PATHS:
+        prim = stage.GetPrimAtPath(path)
+        if not prim:
+            continue
+        new_snapshot[path] = {
+            'vendor': 'windchill',
+            'value': read_identifier(prim, approach, 'windchill'),
+            'applied_schemas': list(prim.GetAppliedSchemas()),
+        }
+        if approach in ('A', 'C', 'D'):
+            new_snapshot[path]['vendor_dict_keys'] = vendor_dict_keys(
+                prim, approach, 'windchill')
+            cur_info = prim.GetAssetInfo() or {}
+            src = cur_info.get('source', {})
+            if hasattr(src, 'get'):
+                vd = src.get('windchill', {})
+                if hasattr(vd, 'get'):
+                    new_snapshot[path]['vendor_extras'] = {
+                        k: vd.get(k) for k in vd.keys() if k != 'primaryId'}
+    snap_path_out = out_path + '.snapshot.json'
+    with open(snap_path_out, 'w', encoding='utf-8') as f:
+        json.dump(new_snapshot, f)
+
+    with open(out_path, 'r', encoding='utf-8') as f:
+        dst_lines = f.read().count('\n')
+
+    return {
+        'wrote_layer': out_path,
+        'dst_lines': dst_lines,
+        'preserved': preserved,
+        'dropped': dropped,
+        'snapshot': new_snapshot,
+    }
+
+
+def do_neutral_read(layer_paths):
+    """Read raw layer text + snapshots without loading any plugin schemas.
+
+    Used to assess coexistence under carrier (c) — a tool that has neither
+    approach's plugin loaded reports what it can observe.
+    """
+    obs = []
+    for lp in layer_paths:
+        entry = {'layer': lp, 'snapshot_present': False}
+        snap = lp + '.snapshot.json'
+        if os.path.exists(snap):
+            entry['snapshot_present'] = True
+            with open(snap, 'r', encoding='utf-8') as f:
+                entry['snapshot'] = json.load(f)
+        # Raw layer-text scan for source-identifier-shaped tokens
+        if os.path.exists(lp):
+            with open(lp, 'r', encoding='utf-8') as f:
+                text = f.read()
+            # Schema class names, with optional ':instance' suffix for
+            # multi-apply schemas (e.g. SourceIdentifierAPI:windchill).
+            applied = sorted(set(re.findall(
+                r'(SourceIdentifiers?(?:Bridge|Base)?API|Windchill[A-Za-z]*API|IFC[A-Za-z]*API|SemanticLabelsAPI)(?::\w+)?',
+                text)))
+            # Vendor tokens visible in the layer text (as dict keys or
+            # multi-apply instance suffixes).
+            instance_names = sorted(set(re.findall(
+                r'\b(windchill|ifc|multiVendor|sap)\b', text)))
+            entry['applied_schema_tokens_in_layer'] = applied
+            entry['vendor_tokens_in_layer'] = instance_names
+            entry['layer_lines'] = text.count('\n')
+        obs.append(entry)
+    return {'observations': obs}
+
+
+# ----------------------------------------------------------------------
+# Main dispatcher
+# ----------------------------------------------------------------------
 
 def main():
     approach = sys.argv[1]
-    out = {'approach': approach, 'scenarios': {}}
+    mode = sys.argv[2]
 
-    scenarios = [
-        ('8.1_promotion', scenario_promotion),
-        ('8.2_coexistence', scenario_coexistence),
-        ('8.3_versioning', scenario_versioning),
-    ]
-    for name, fn in scenarios:
-        with tempfile.TemporaryDirectory() as td:
-            try:
-                out['scenarios'][name] = fn(td, approach)
-            except Exception as e:
-                out['scenarios'][name] = {
-                    'error': f'{type(e).__name__}: {e}',
-                }
-    print(json.dumps(out, ensure_ascii=False))
+    try:
+        if mode == 'forward_a':
+            result = do_forward_a(approach)
+        elif mode == 'forward_b':
+            result = do_forward_b(approach)
+        elif mode == 'coexist_a':
+            result = do_coexist_a(approach)
+        elif mode == 'coexist_b':
+            result = do_coexist_b(approach)
+        elif mode == 'author_for_c':
+            result = do_author_for_c(approach, sys.argv[3])
+        elif mode == 'rewrite_for_c':
+            result = do_rewrite_for_c(approach, sys.argv[3], sys.argv[4])
+        elif mode == 'neutral_read':
+            result = do_neutral_read(sys.argv[3:])
+        else:
+            result = {'error': f'unknown mode {mode}'}
+    except Exception as e:
+        result = {'error': f'{type(e).__name__}: {e}'}
+
+    print(json.dumps({'approach': approach, 'mode': mode, 'result': result},
+                      ensure_ascii=False))
 
 
 if __name__ == '__main__':

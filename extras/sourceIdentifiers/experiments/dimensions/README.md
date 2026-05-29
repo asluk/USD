@@ -18,8 +18,8 @@ dimensions/
   dim5_distribution/     schema/plugin distribution (P3)
   dim6_scope/            scope-of-applicability (OQ4)
   dim7_lexical/          vendor-name lexical scope (P3 + OQ5)
-  dim8_lifecycle/        within-approach lifecycle: promotion +
-                         coexistence + within-vendor versioning (P3)
+  dim8_lifecycle/        content migration & compatibility:
+                         within-approach + cross-approach (P3 + operational)
 ```
 
 Per dimension:

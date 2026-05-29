@@ -1,186 +1,3205 @@
 {
-  "A": {
-    "approach": "A",
-    "scenarios": {
-      "8.1_promotion": {
-        "layer_line_delta": 0,
-        "layer_v1_lines": 41,
-        "layer_v2_lines": 41,
-        "plugin_change_required": false,
-        "prims_rewritten": 3,
-        "schema_change_required": false,
-        "v2_readable_prims": 3,
-        "vendor_identity_location": "assetInfo dict key (data)"
+  "cross_approach_coexist": {
+    "A->B": {
+      "both_layers_readable_without_plugin_load": true,
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_B_v2.usda",
+      "neutral_read": {
+        "approach": "A",
+        "mode": "neutral_read",
+        "result": {
+          "observations": [
+            {
+              "applied_schema_tokens_in_layer": [
+                "SourceIdentifiersAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_B_v1.usda",
+              "layer_lines": 47,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-001",
+                    "pdmTag": "tag-ID-001"
+                  }
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-002",
+                    "pdmTag": "tag-ID-002"
+                  }
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-003",
+                    "pdmTag": "tag-ID-003"
+                  }
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": [
+                "windchill"
+              ]
+            },
+            {
+              "applied_schema_tokens_in_layer": [
+                "SourceIdentifierAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_B_v2.usda",
+              "layer_lines": 23,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "SourceIdentifierAPI:windchill"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill"
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "SourceIdentifierAPI:windchill"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill"
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "SourceIdentifierAPI:windchill"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill"
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": [
+                "windchill"
+              ]
+            }
+          ]
+        }
       },
-      "8.2_coexistence": {
-        "authored_multivendor_prims": 3,
-        "authored_windchill_prims": 3,
-        "both_resolve_on_one_stage": true,
-        "multivendor_readable": 3,
-        "vendors_observable_on_stage": [
-          "multiVendor",
-          "windchill"
-        ],
-        "windchill_readable": 3
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_B_v1.usda"
+    },
+    "A->Bprime": {
+      "both_layers_readable_without_plugin_load": true,
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_Bprime_v2.usda",
+      "neutral_read": {
+        "approach": "A",
+        "mode": "neutral_read",
+        "result": {
+          "observations": [
+            {
+              "applied_schema_tokens_in_layer": [
+                "SourceIdentifiersAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_Bprime_v1.usda",
+              "layer_lines": 47,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-001",
+                    "pdmTag": "tag-ID-001"
+                  }
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-002",
+                    "pdmTag": "tag-ID-002"
+                  }
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-003",
+                    "pdmTag": "tag-ID-003"
+                  }
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": [
+                "windchill"
+              ]
+            },
+            {
+              "applied_schema_tokens_in_layer": [
+                "WindchillSourceIdAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_Bprime_v2.usda",
+              "layer_lines": 23,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "WindchillSourceIdAPI",
+                    "SourceIdentifierBaseAPI"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill"
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "WindchillSourceIdAPI",
+                    "SourceIdentifierBaseAPI"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill"
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "WindchillSourceIdAPI",
+                    "SourceIdentifierBaseAPI"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill"
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": []
+            }
+          ]
+        }
       },
-      "8.3_versioning": {
-        "v1_field": "primaryId",
-        "v1_field_in_schema": "documented-dict-shape (no typed properties)",
-        "v1_readable": true,
-        "v1_value": "P-1",
-        "v2_field": "oid",
-        "v2_field_in_schema": "documented-dict-shape (no typed properties)",
-        "v2_field_location": "inside-dict-shape",
-        "v2_readable": true,
-        "v2_value": "O-2"
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_Bprime_v1.usda"
+    },
+    "A->C": {
+      "both_layers_readable_without_plugin_load": true,
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_C_v2.usda",
+      "neutral_read": {
+        "approach": "A",
+        "mode": "neutral_read",
+        "result": {
+          "observations": [
+            {
+              "applied_schema_tokens_in_layer": [
+                "SourceIdentifiersAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_C_v1.usda",
+              "layer_lines": 47,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-001",
+                    "pdmTag": "tag-ID-001"
+                  }
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-002",
+                    "pdmTag": "tag-ID-002"
+                  }
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-003",
+                    "pdmTag": "tag-ID-003"
+                  }
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": [
+                "windchill"
+              ]
+            },
+            {
+              "applied_schema_tokens_in_layer": [
+                "SourceIdentifierBridgeAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_C_v2.usda",
+              "layer_lines": 47,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "SourceIdentifierBridgeAPI:windchill"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-001",
+                    "pdmTag": "tag-ID-001"
+                  }
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "SourceIdentifierBridgeAPI:windchill"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-002",
+                    "pdmTag": "tag-ID-002"
+                  }
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "SourceIdentifierBridgeAPI:windchill"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-003",
+                    "pdmTag": "tag-ID-003"
+                  }
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": [
+                "windchill"
+              ]
+            }
+          ]
+        }
+      },
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_C_v1.usda"
+    },
+    "A->D": {
+      "both_layers_readable_without_plugin_load": true,
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_D_v2.usda",
+      "neutral_read": {
+        "approach": "A",
+        "mode": "neutral_read",
+        "result": {
+          "observations": [
+            {
+              "applied_schema_tokens_in_layer": [
+                "SourceIdentifiersAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_D_v1.usda",
+              "layer_lines": 47,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-001",
+                    "pdmTag": "tag-ID-001"
+                  }
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-002",
+                    "pdmTag": "tag-ID-002"
+                  }
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-003",
+                    "pdmTag": "tag-ID-003"
+                  }
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": [
+                "windchill"
+              ]
+            },
+            {
+              "applied_schema_tokens_in_layer": [
+                "SourceIdentifiersAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_D_v2.usda",
+              "layer_lines": 47,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-001",
+                    "pdmTag": "tag-ID-001"
+                  }
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-002",
+                    "pdmTag": "tag-ID-002"
+                  }
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "extra",
+                    "pdmTag",
+                    "primaryId"
+                  ],
+                  "vendor_extras": {
+                    "extra": "metadata-ID-003",
+                    "pdmTag": "tag-ID-003"
+                  }
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": [
+                "windchill"
+              ]
+            }
+          ]
+        }
+      },
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_D_v1.usda"
+    },
+    "B->A": {
+      "both_layers_readable_without_plugin_load": true,
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_A_v2.usda",
+      "neutral_read": {
+        "approach": "B",
+        "mode": "neutral_read",
+        "result": {
+          "observations": [
+            {
+              "applied_schema_tokens_in_layer": [
+                "SourceIdentifierAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_A_v1.usda",
+              "layer_lines": 23,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "SourceIdentifierAPI:windchill"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill"
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "SourceIdentifierAPI:windchill"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill"
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "SourceIdentifierAPI:windchill"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill"
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": [
+                "windchill"
+              ]
+            },
+            {
+              "applied_schema_tokens_in_layer": [
+                "SourceIdentifiersAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_A_v2.usda",
+              "layer_lines": 41,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "primaryId"
+                  ],
+                  "vendor_extras": {}
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "primaryId"
+                  ],
+                  "vendor_extras": {}
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "primaryId"
+                  ],
+                  "vendor_extras": {}
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": [
+                "windchill"
+              ]
+            }
+          ]
+        }
+      },
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_A_v1.usda"
+    },
+    "B->Bprime": {
+      "both_layers_readable_without_plugin_load": true,
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_Bprime_v2.usda",
+      "neutral_read": {
+        "approach": "B",
+        "mode": "neutral_read",
+        "result": {
+          "observations": [
+            {
+              "applied_schema_tokens_in_layer": [
+                "SourceIdentifierAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_Bprime_v1.usda",
+              "layer_lines": 23,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "SourceIdentifierAPI:windchill"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill"
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "SourceIdentifierAPI:windchill"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill"
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "SourceIdentifierAPI:windchill"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill"
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": [
+                "windchill"
+              ]
+            },
+            {
+              "applied_schema_tokens_in_layer": [
+                "WindchillSourceIdAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_Bprime_v2.usda",
+              "layer_lines": 23,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "WindchillSourceIdAPI",
+                    "SourceIdentifierBaseAPI"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill"
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "WindchillSourceIdAPI",
+                    "SourceIdentifierBaseAPI"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill"
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "WindchillSourceIdAPI",
+                    "SourceIdentifierBaseAPI"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill"
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": []
+            }
+          ]
+        }
+      },
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_Bprime_v1.usda"
+    },
+    "Bprime->A": {
+      "both_layers_readable_without_plugin_load": true,
+      "dst_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\Bprime_A_v2.usda",
+      "neutral_read": {
+        "approach": "Bprime",
+        "mode": "neutral_read",
+        "result": {
+          "observations": [
+            {
+              "applied_schema_tokens_in_layer": [
+                "WindchillSourceIdAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\Bprime_A_v1.usda",
+              "layer_lines": 23,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "WindchillSourceIdAPI",
+                    "SourceIdentifierBaseAPI"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill"
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "WindchillSourceIdAPI",
+                    "SourceIdentifierBaseAPI"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill"
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "WindchillSourceIdAPI",
+                    "SourceIdentifierBaseAPI"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill"
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": []
+            },
+            {
+              "applied_schema_tokens_in_layer": [
+                "SourceIdentifiersAPI"
+              ],
+              "layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\Bprime_A_v2.usda",
+              "layer_lines": 41,
+              "snapshot": {
+                "/AssetA": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-001",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "primaryId"
+                  ],
+                  "vendor_extras": {}
+                },
+                "/AssetB": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-002",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "primaryId"
+                  ],
+                  "vendor_extras": {}
+                },
+                "/AssetC": {
+                  "applied_schemas": [
+                    "SourceIdentifiersAPI"
+                  ],
+                  "value": "ID-003",
+                  "vendor": "windchill",
+                  "vendor_dict_keys": [
+                    "primaryId"
+                  ],
+                  "vendor_extras": {}
+                }
+              },
+              "snapshot_present": true,
+              "vendor_tokens_in_layer": [
+                "windchill"
+              ]
+            }
+          ]
+        }
+      },
+      "src_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\Bprime_A_v1.usda"
+    }
+  },
+  "cross_approach_forward": {
+    "A->B": {
+      "dst": "B",
+      "dst_rewrite": {
+        "approach": "B",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [
+            {
+              "dropped_key": "extra",
+              "path": "/AssetA"
+            },
+            {
+              "dropped_key": "pdmTag",
+              "path": "/AssetA"
+            },
+            {
+              "dropped_key": "extra",
+              "path": "/AssetB"
+            },
+            {
+              "dropped_key": "pdmTag",
+              "path": "/AssetB"
+            },
+            {
+              "dropped_key": "extra",
+              "path": "/AssetC"
+            },
+            {
+              "dropped_key": "pdmTag",
+              "path": "/AssetC"
+            }
+          ],
+          "dst_lines": 23,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_B_v2.usda"
+        }
+      },
+      "src": "A",
+      "src_author": {
+        "approach": "A",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "src_lines": 47,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_B_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_B_v1.usda.snapshot.json"
+        }
+      }
+    },
+    "A->Bprime": {
+      "dst": "Bprime",
+      "dst_rewrite": {
+        "approach": "Bprime",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [
+            {
+              "dropped_key": "extra",
+              "path": "/AssetA"
+            },
+            {
+              "dropped_key": "pdmTag",
+              "path": "/AssetA"
+            },
+            {
+              "dropped_key": "extra",
+              "path": "/AssetB"
+            },
+            {
+              "dropped_key": "pdmTag",
+              "path": "/AssetB"
+            },
+            {
+              "dropped_key": "extra",
+              "path": "/AssetC"
+            },
+            {
+              "dropped_key": "pdmTag",
+              "path": "/AssetC"
+            }
+          ],
+          "dst_lines": 23,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_Bprime_v2.usda"
+        }
+      },
+      "src": "A",
+      "src_author": {
+        "approach": "A",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "src_lines": 47,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_Bprime_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_Bprime_v1.usda.snapshot.json"
+        }
+      }
+    },
+    "A->C": {
+      "dst": "C",
+      "dst_rewrite": {
+        "approach": "C",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 47,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifierBridgeAPI:windchill"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifierBridgeAPI:windchill"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifierBridgeAPI:windchill"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_C_v2.usda"
+        }
+      },
+      "src": "A",
+      "src_author": {
+        "approach": "A",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "src_lines": 47,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_C_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_C_v1.usda.snapshot.json"
+        }
+      }
+    },
+    "A->D": {
+      "dst": "D",
+      "dst_rewrite": {
+        "approach": "D",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 47,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_D_v2.usda"
+        }
+      },
+      "src": "A",
+      "src_author": {
+        "approach": "A",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "src_lines": 47,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_D_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_D_v1.usda.snapshot.json"
+        }
+      }
+    },
+    "B->A": {
+      "dst": "A",
+      "dst_rewrite": {
+        "approach": "A",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 41,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_A_v2.usda"
+        }
+      },
+      "src": "B",
+      "src_author": {
+        "approach": "B",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "src_lines": 23,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_A_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_A_v1.usda.snapshot.json"
+        }
+      }
+    },
+    "B->Bprime": {
+      "dst": "Bprime",
+      "dst_rewrite": {
+        "approach": "Bprime",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 23,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_Bprime_v2.usda"
+        }
+      },
+      "src": "B",
+      "src_author": {
+        "approach": "B",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "src_lines": 23,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_Bprime_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_Bprime_v1.usda.snapshot.json"
+        }
+      }
+    },
+    "Bprime->A": {
+      "dst": "A",
+      "dst_rewrite": {
+        "approach": "A",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 41,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\Bprime_A_v2.usda"
+        }
+      },
+      "src": "Bprime",
+      "src_author": {
+        "approach": "Bprime",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "src_lines": 23,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\Bprime_A_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\Bprime_A_v1.usda.snapshot.json"
+        }
       }
     }
   },
-  "B": {
-    "approach": "B",
-    "scenarios": {
-      "8.1_promotion": {
-        "layer_line_delta": 0,
-        "layer_v1_lines": 23,
-        "layer_v2_lines": 23,
-        "plugin_change_required": false,
-        "prims_rewritten": 3,
-        "schema_change_required": false,
-        "v2_readable_prims": 3,
-        "vendor_identity_location": "multi-apply instance name (data)"
+  "cross_approach_roundtrip": {
+    "A->B": {
+      "dst": "B",
+      "dst_rewrite": {
+        "approach": "B",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [
+            {
+              "dropped_key": "extra",
+              "path": "/AssetA"
+            },
+            {
+              "dropped_key": "pdmTag",
+              "path": "/AssetA"
+            },
+            {
+              "dropped_key": "extra",
+              "path": "/AssetB"
+            },
+            {
+              "dropped_key": "pdmTag",
+              "path": "/AssetB"
+            },
+            {
+              "dropped_key": "extra",
+              "path": "/AssetC"
+            },
+            {
+              "dropped_key": "pdmTag",
+              "path": "/AssetC"
+            }
+          ],
+          "dst_lines": 23,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_B_v2.usda"
+        }
       },
-      "8.2_coexistence": {
-        "authored_multivendor_prims": 3,
-        "authored_windchill_prims": 3,
-        "both_resolve_on_one_stage": true,
-        "multivendor_readable": 3,
-        "vendors_observable_on_stage": [
-          "multiVendor",
-          "windchill"
+      "roundtrip_preserved": {
+        "comparable": true,
+        "diffs": [],
+        "extras_lost_in_roundtrip": [
+          {
+            "lost_key": "extra",
+            "path": "/AssetA"
+          },
+          {
+            "lost_key": "pdmTag",
+            "path": "/AssetA"
+          },
+          {
+            "lost_key": "extra",
+            "path": "/AssetB"
+          },
+          {
+            "lost_key": "pdmTag",
+            "path": "/AssetB"
+          },
+          {
+            "lost_key": "extra",
+            "path": "/AssetC"
+          },
+          {
+            "lost_key": "pdmTag",
+            "path": "/AssetC"
+          }
         ],
-        "windchill_readable": 3
+        "matches_count": 3,
+        "value_preserved_for_all_prims": true
       },
-      "8.3_versioning": {
-        "v1_field": "primaryId",
-        "v1_field_in_schema": true,
-        "v1_readable": true,
-        "v1_value": "P-1",
-        "v2_field": "oid",
-        "v2_field_in_schema": false,
-        "v2_field_location": "custom-attribute",
-        "v2_readable": true,
-        "v2_value": "O-2"
+      "src": "A",
+      "src_author": {
+        "approach": "A",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "src_lines": 47,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_B_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_B_v1.usda.snapshot.json"
+        }
+      },
+      "src_rewrite_back": {
+        "approach": "A",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 41,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_B_v3.usda"
+        }
+      }
+    },
+    "A->Bprime": {
+      "dst": "Bprime",
+      "dst_rewrite": {
+        "approach": "Bprime",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [
+            {
+              "dropped_key": "extra",
+              "path": "/AssetA"
+            },
+            {
+              "dropped_key": "pdmTag",
+              "path": "/AssetA"
+            },
+            {
+              "dropped_key": "extra",
+              "path": "/AssetB"
+            },
+            {
+              "dropped_key": "pdmTag",
+              "path": "/AssetB"
+            },
+            {
+              "dropped_key": "extra",
+              "path": "/AssetC"
+            },
+            {
+              "dropped_key": "pdmTag",
+              "path": "/AssetC"
+            }
+          ],
+          "dst_lines": 23,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_Bprime_v2.usda"
+        }
+      },
+      "roundtrip_preserved": {
+        "comparable": true,
+        "diffs": [],
+        "extras_lost_in_roundtrip": [
+          {
+            "lost_key": "extra",
+            "path": "/AssetA"
+          },
+          {
+            "lost_key": "pdmTag",
+            "path": "/AssetA"
+          },
+          {
+            "lost_key": "extra",
+            "path": "/AssetB"
+          },
+          {
+            "lost_key": "pdmTag",
+            "path": "/AssetB"
+          },
+          {
+            "lost_key": "extra",
+            "path": "/AssetC"
+          },
+          {
+            "lost_key": "pdmTag",
+            "path": "/AssetC"
+          }
+        ],
+        "matches_count": 3,
+        "value_preserved_for_all_prims": true
+      },
+      "src": "A",
+      "src_author": {
+        "approach": "A",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "src_lines": 47,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_Bprime_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_Bprime_v1.usda.snapshot.json"
+        }
+      },
+      "src_rewrite_back": {
+        "approach": "A",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 41,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_Bprime_v3.usda"
+        }
+      }
+    },
+    "A->C": {
+      "dst": "C",
+      "dst_rewrite": {
+        "approach": "C",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 47,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifierBridgeAPI:windchill"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifierBridgeAPI:windchill"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifierBridgeAPI:windchill"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_C_v2.usda"
+        }
+      },
+      "roundtrip_preserved": {
+        "comparable": true,
+        "diffs": [],
+        "extras_lost_in_roundtrip": [],
+        "matches_count": 3,
+        "value_preserved_for_all_prims": true
+      },
+      "src": "A",
+      "src_author": {
+        "approach": "A",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "src_lines": 47,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_C_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_C_v1.usda.snapshot.json"
+        }
+      },
+      "src_rewrite_back": {
+        "approach": "A",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 47,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_C_v3.usda"
+        }
+      }
+    },
+    "A->D": {
+      "dst": "D",
+      "dst_rewrite": {
+        "approach": "D",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 47,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_D_v2.usda"
+        }
+      },
+      "roundtrip_preserved": {
+        "comparable": true,
+        "diffs": [],
+        "extras_lost_in_roundtrip": [],
+        "matches_count": 3,
+        "value_preserved_for_all_prims": true
+      },
+      "src": "A",
+      "src_author": {
+        "approach": "A",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "src_lines": 47,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_D_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_D_v1.usda.snapshot.json"
+        }
+      },
+      "src_rewrite_back": {
+        "approach": "A",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 47,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-001",
+                "pdmTag": "tag-ID-001"
+              }
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-002",
+                "pdmTag": "tag-ID-002"
+              }
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "extra",
+                "pdmTag",
+                "primaryId"
+              ],
+              "vendor_extras": {
+                "extra": "metadata-ID-003",
+                "pdmTag": "tag-ID-003"
+              }
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\A_D_v3.usda"
+        }
+      }
+    },
+    "B->A": {
+      "dst": "A",
+      "dst_rewrite": {
+        "approach": "A",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 41,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_A_v2.usda"
+        }
+      },
+      "roundtrip_preserved": {
+        "comparable": true,
+        "diffs": [],
+        "extras_lost_in_roundtrip": [],
+        "matches_count": 3,
+        "value_preserved_for_all_prims": true
+      },
+      "src": "B",
+      "src_author": {
+        "approach": "B",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "src_lines": 23,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_A_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_A_v1.usda.snapshot.json"
+        }
+      },
+      "src_rewrite_back": {
+        "approach": "B",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 23,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_A_v3.usda"
+        }
+      }
+    },
+    "B->Bprime": {
+      "dst": "Bprime",
+      "dst_rewrite": {
+        "approach": "Bprime",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 23,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_Bprime_v2.usda"
+        }
+      },
+      "roundtrip_preserved": {
+        "comparable": true,
+        "diffs": [],
+        "extras_lost_in_roundtrip": [],
+        "matches_count": 3,
+        "value_preserved_for_all_prims": true
+      },
+      "src": "B",
+      "src_author": {
+        "approach": "B",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "src_lines": 23,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_Bprime_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_Bprime_v1.usda.snapshot.json"
+        }
+      },
+      "src_rewrite_back": {
+        "approach": "B",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 23,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifierAPI:windchill"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\B_Bprime_v3.usda"
+        }
+      }
+    },
+    "Bprime->A": {
+      "dst": "A",
+      "dst_rewrite": {
+        "approach": "A",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 41,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "SourceIdentifiersAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill",
+              "vendor_dict_keys": [
+                "primaryId"
+              ],
+              "vendor_extras": {}
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\Bprime_A_v2.usda"
+        }
+      },
+      "roundtrip_preserved": {
+        "comparable": true,
+        "diffs": [],
+        "extras_lost_in_roundtrip": [],
+        "matches_count": 3,
+        "value_preserved_for_all_prims": true
+      },
+      "src": "Bprime",
+      "src_author": {
+        "approach": "Bprime",
+        "mode": "author_for_c",
+        "result": {
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "src_lines": 23,
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\Bprime_A_v1.usda",
+          "wrote_snapshot": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\Bprime_A_v1.usda.snapshot.json"
+        }
+      },
+      "src_rewrite_back": {
+        "approach": "Bprime",
+        "mode": "rewrite_for_c",
+        "result": {
+          "dropped": [],
+          "dst_lines": 23,
+          "preserved": [
+            {
+              "path": "/AssetA",
+              "value_preserved": "ID-001"
+            },
+            {
+              "path": "/AssetB",
+              "value_preserved": "ID-002"
+            },
+            {
+              "path": "/AssetC",
+              "value_preserved": "ID-003"
+            }
+          ],
+          "snapshot": {
+            "/AssetA": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-001",
+              "vendor": "windchill"
+            },
+            "/AssetB": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-002",
+              "vendor": "windchill"
+            },
+            "/AssetC": {
+              "applied_schemas": [
+                "WindchillSourceIdAPI",
+                "SourceIdentifierBaseAPI"
+              ],
+              "value": "ID-003",
+              "vendor": "windchill"
+            }
+          },
+          "wrote_layer": "C:\\Users\\aluk\\AppData\\Local\\Temp\\claude\\tmp516fi435\\Bprime_A_v3.usda"
+        }
       }
     }
   },
-  "Bprime": {
-    "approach": "Bprime",
-    "scenarios": {
-      "8.1_promotion": {
-        "layer_line_delta": 0,
-        "layer_v1_lines": 23,
-        "layer_v2_lines": 23,
-        "plugin_change_required": true,
-        "prims_rewritten": 3,
-        "schema_change_required": true,
-        "v2_readable_prims": 3,
-        "vendor_identity_location": "schema class identifier (registered type)"
+  "per_approach": {
+    "A": {
+      "coexist_a": {
+        "approach": "A",
+        "mode": "coexist_a",
+        "result": {
+          "all_vendors_visible": [
+            "multiVendor",
+            "windchill"
+          ],
+          "both_resolve_under_one_read_pass": true,
+          "enumerable_without_prior_vendor_knowledge": true,
+          "new_vendor_visible": true,
+          "old_vendor_visible": true
+        }
       },
-      "8.2_coexistence": {
-        "authored_multivendor_prims": 3,
-        "authored_windchill_prims": 3,
-        "both_resolve_on_one_stage": true,
-        "multivendor_readable": 3,
-        "vendors_observable_on_stage": [
-          "<base-only:no-schema-vendor-identity>",
-          "windchill"
-        ],
-        "windchill_readable": 3
+      "coexist_b": {
+        "approach": "A",
+        "mode": "coexist_b",
+        "result": {
+          "both_resolve_under_one_read_pass": true,
+          "enumerable_without_prior_field_knowledge": true,
+          "new_field_visible": true,
+          "note": "dict keys are open; arbitrary key names coexist freely",
+          "old_field_visible": true
+        }
       },
-      "8.3_versioning": {
-        "v1_field": "primaryId",
-        "v1_field_in_schema": true,
-        "v1_readable": true,
-        "v1_value": "P-1",
-        "v2_field": "oid",
-        "v2_field_in_schema": false,
-        "v2_field_location": "custom-attribute",
-        "v2_readable": true,
-        "v2_value": "O-2"
+      "forward_a": {
+        "approach": "A",
+        "mode": "forward_a",
+        "result": {
+          "carried_over_sample": [
+            "prim-path",
+            "value"
+          ],
+          "convention": "text-symbol-swap",
+          "dst_lines": 41,
+          "lost_sample": [],
+          "new_vendors_visible_after_rewrite": [
+            "multiVendor"
+          ],
+          "required_explicit_reauthor_sample": [
+            "vendor-key"
+          ],
+          "src_lines": 41
+        }
+      },
+      "forward_b": {
+        "approach": "A",
+        "mode": "forward_b",
+        "result": {
+          "convention": "text-symbol-swap",
+          "dst_lines": 41,
+          "note": "dict-key under source.<vendor> renamed",
+          "rewrite_attempted_in_layer_only": true,
+          "rewrite_succeeded_in_layer_only": true,
+          "src_lines": 41,
+          "vendor_keys_after_rewrite_sample": [
+            "oid"
+          ]
+        }
       }
-    }
-  },
-  "C": {
-    "approach": "C",
-    "scenarios": {
-      "8.1_promotion": {
-        "layer_line_delta": 0,
-        "layer_v1_lines": 41,
-        "layer_v2_lines": 41,
-        "plugin_change_required": false,
-        "prims_rewritten": 3,
-        "schema_change_required": false,
-        "v2_readable_prims": 3,
-        "vendor_identity_location": "multi-apply instance name + assetInfo dict key (data)"
+    },
+    "B": {
+      "coexist_a": {
+        "approach": "B",
+        "mode": "coexist_a",
+        "result": {
+          "all_vendors_visible": [
+            "multiVendor",
+            "windchill"
+          ],
+          "both_resolve_under_one_read_pass": true,
+          "enumerable_without_prior_vendor_knowledge": true,
+          "new_vendor_visible": true,
+          "old_vendor_visible": true
+        }
       },
-      "8.2_coexistence": {
-        "authored_multivendor_prims": 3,
-        "authored_windchill_prims": 3,
-        "both_resolve_on_one_stage": true,
-        "multivendor_readable": 3,
-        "vendors_observable_on_stage": [
-          "multiVendor",
-          "windchill"
-        ],
-        "windchill_readable": 3
+      "coexist_b": {
+        "approach": "B",
+        "mode": "coexist_b",
+        "result": {
+          "both_resolve_under_one_read_pass": true,
+          "enumerable_without_prior_field_knowledge": false,
+          "new_field_visible": true,
+          "note": "new field carried as custom attribute outside the typed schema contract; not discoverable via UsdPrimDefinition without prior knowledge",
+          "old_field_visible": true
+        }
       },
-      "8.3_versioning": {
-        "v1_field": "primaryId",
-        "v1_field_in_schema": "documented-dict-shape (assetInfoFallback via customData)",
-        "v1_readable": true,
-        "v1_value": "P-1",
-        "v2_field": "oid",
-        "v2_field_in_schema": "documented-dict-shape (assetInfoFallback via customData)",
-        "v2_field_location": "inside-dict-shape-with-bridge",
-        "v2_readable": true,
-        "v2_value": "O-2"
+      "forward_a": {
+        "approach": "B",
+        "mode": "forward_a",
+        "result": {
+          "carried_over_sample": [
+            "prim-path",
+            "value"
+          ],
+          "convention": "schema-aware-mapping",
+          "dst_lines": 23,
+          "lost_sample": [],
+          "new_vendors_visible_after_rewrite": [
+            "multiVendor"
+          ],
+          "required_explicit_reauthor_sample": [
+            "vendor-key"
+          ],
+          "src_lines": 23
+        }
+      },
+      "forward_b": {
+        "approach": "B",
+        "mode": "forward_b",
+        "result": {
+          "convention": "schema-edit-required",
+          "dst_lines": 23,
+          "note": "field is a typed schema attribute; renaming requires editing the schema .usda + regenerating/re-registering the plugin (cannot be expressed as a layer rewrite alone)",
+          "rewrite_attempted_in_layer_only": false,
+          "rewrite_succeeded_in_layer_only": false,
+          "src_lines": 23
+        }
       }
-    }
-  },
-  "D": {
-    "approach": "D",
-    "scenarios": {
-      "8.1_promotion": {
-        "layer_line_delta": 0,
-        "layer_v1_lines": 41,
-        "layer_v2_lines": 41,
-        "plugin_change_required": false,
-        "prims_rewritten": 3,
-        "schema_change_required": false,
-        "v2_readable_prims": 3,
-        "vendor_identity_location": "assetInfo dict key (data); labels half = instance name"
+    },
+    "Bprime": {
+      "coexist_a": {
+        "approach": "Bprime",
+        "mode": "coexist_a",
+        "result": {
+          "all_vendors_visible": [
+            "windchill"
+          ],
+          "both_resolve_under_one_read_pass": false,
+          "enumerable_without_prior_vendor_knowledge": false,
+          "new_vendor_visible": false,
+          "old_vendor_visible": true
+        }
       },
-      "8.2_coexistence": {
-        "authored_multivendor_prims": 3,
-        "authored_windchill_prims": 3,
-        "both_resolve_on_one_stage": true,
-        "multivendor_readable": 3,
-        "vendors_observable_on_stage": [
-          "multiVendor",
-          "windchill"
-        ],
-        "windchill_readable": 3
+      "coexist_b": {
+        "approach": "Bprime",
+        "mode": "coexist_b",
+        "result": {
+          "both_resolve_under_one_read_pass": true,
+          "enumerable_without_prior_field_knowledge": false,
+          "new_field_visible": true,
+          "note": "new field carried as custom attribute outside the typed schema contract; not discoverable via UsdPrimDefinition without prior knowledge",
+          "old_field_visible": true
+        }
       },
-      "8.3_versioning": {
-        "v1_field": "primaryId",
-        "v1_field_in_schema": "documented-dict-shape (no typed properties)",
-        "v1_readable": true,
-        "v1_value": "P-1",
-        "v2_field": "oid",
-        "v2_field_in_schema": "documented-dict-shape (no typed properties)",
-        "v2_field_location": "inside-dict-shape",
-        "v2_readable": true,
-        "v2_value": "O-2"
+      "forward_a": {
+        "approach": "Bprime",
+        "mode": "forward_a",
+        "result": {
+          "carried_over_sample": [
+            "prim-path"
+          ],
+          "convention": "schema-edit-required",
+          "dst_lines": 14,
+          "lost_sample": [],
+          "new_vendors_visible_after_rewrite": [],
+          "required_explicit_reauthor_sample": [
+            "vendor-key"
+          ],
+          "src_lines": 23
+        }
+      },
+      "forward_b": {
+        "approach": "Bprime",
+        "mode": "forward_b",
+        "result": {
+          "convention": "schema-edit-required",
+          "dst_lines": 23,
+          "note": "field is a typed schema attribute; renaming requires editing the schema .usda + regenerating/re-registering the plugin (cannot be expressed as a layer rewrite alone)",
+          "rewrite_attempted_in_layer_only": false,
+          "rewrite_succeeded_in_layer_only": false,
+          "src_lines": 23
+        }
+      }
+    },
+    "C": {
+      "coexist_a": {
+        "approach": "C",
+        "mode": "coexist_a",
+        "result": {
+          "all_vendors_visible": [
+            "multiVendor",
+            "windchill"
+          ],
+          "both_resolve_under_one_read_pass": true,
+          "enumerable_without_prior_vendor_knowledge": true,
+          "new_vendor_visible": true,
+          "old_vendor_visible": true
+        }
+      },
+      "coexist_b": {
+        "approach": "C",
+        "mode": "coexist_b",
+        "result": {
+          "both_resolve_under_one_read_pass": true,
+          "enumerable_without_prior_field_knowledge": true,
+          "new_field_visible": true,
+          "note": "dict keys are open; arbitrary key names coexist freely",
+          "old_field_visible": true
+        }
+      },
+      "forward_a": {
+        "approach": "C",
+        "mode": "forward_a",
+        "result": {
+          "carried_over_sample": [
+            "prim-path",
+            "value"
+          ],
+          "convention": "text-symbol-swap",
+          "dst_lines": 41,
+          "lost_sample": [],
+          "new_vendors_visible_after_rewrite": [
+            "multiVendor"
+          ],
+          "required_explicit_reauthor_sample": [
+            "vendor-key"
+          ],
+          "src_lines": 41
+        }
+      },
+      "forward_b": {
+        "approach": "C",
+        "mode": "forward_b",
+        "result": {
+          "convention": "text-symbol-swap",
+          "dst_lines": 41,
+          "note": "dict-key under source.<vendor> renamed",
+          "rewrite_attempted_in_layer_only": true,
+          "rewrite_succeeded_in_layer_only": true,
+          "src_lines": 41,
+          "vendor_keys_after_rewrite_sample": [
+            "oid"
+          ]
+        }
+      }
+    },
+    "D": {
+      "coexist_a": {
+        "approach": "D",
+        "mode": "coexist_a",
+        "result": {
+          "all_vendors_visible": [
+            "multiVendor",
+            "windchill"
+          ],
+          "both_resolve_under_one_read_pass": true,
+          "enumerable_without_prior_vendor_knowledge": true,
+          "new_vendor_visible": true,
+          "old_vendor_visible": true
+        }
+      },
+      "coexist_b": {
+        "approach": "D",
+        "mode": "coexist_b",
+        "result": {
+          "both_resolve_under_one_read_pass": true,
+          "enumerable_without_prior_field_knowledge": true,
+          "new_field_visible": true,
+          "note": "dict keys are open; arbitrary key names coexist freely",
+          "old_field_visible": true
+        }
+      },
+      "forward_a": {
+        "approach": "D",
+        "mode": "forward_a",
+        "result": {
+          "carried_over_sample": [
+            "prim-path",
+            "value"
+          ],
+          "convention": "text-symbol-swap",
+          "dst_lines": 41,
+          "lost_sample": [],
+          "new_vendors_visible_after_rewrite": [
+            "multiVendor"
+          ],
+          "required_explicit_reauthor_sample": [
+            "vendor-key"
+          ],
+          "src_lines": 41
+        }
+      },
+      "forward_b": {
+        "approach": "D",
+        "mode": "forward_b",
+        "result": {
+          "convention": "text-symbol-swap",
+          "dst_lines": 41,
+          "note": "dict-key under source.<vendor> renamed",
+          "rewrite_attempted_in_layer_only": true,
+          "rewrite_succeeded_in_layer_only": true,
+          "src_lines": 41,
+          "vendor_keys_after_rewrite_sample": [
+            "oid"
+          ]
+        }
       }
     }
   }
