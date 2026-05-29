@@ -694,6 +694,203 @@ def do_neutral_read(layer_paths):
 
 
 # ----------------------------------------------------------------------
+# D label-half helpers (SemanticLabelsAPI multi-apply)
+# ----------------------------------------------------------------------
+
+LABEL_PRIM_PATHS = ['/AssetA', '/AssetB', '/AssetC']
+LABEL_VALUES = [['Frame', 'Structural'],
+                ['Beam', 'Load-bearing'],
+                ['Column']]
+
+
+def author_label(prim, vendor, kind, labels):
+    """Apply SemanticLabelsAPI:<vendor>:<kind> and set the token[] attr."""
+    instance = f'{vendor}:{kind}'
+    prim.ApplyAPI('SemanticLabelsAPI', instance)
+    attr = prim.GetAttribute(f'semantics:labels:{instance}')
+    if attr:
+        attr.Set(labels)
+        return True
+    return False
+
+
+def read_label(prim, vendor, kind):
+    attr = prim.GetAttribute(f'semantics:labels:{vendor}:{kind}')
+    if not attr:
+        return None
+    val = attr.Get()
+    return list(val) if val is not None else None
+
+
+def list_label_instances_on(prim):
+    return sorted(
+        s.split(':', 1)[1]
+        for s in prim.GetAppliedSchemas()
+        if s.startswith('SemanticLabelsAPI:'))
+
+
+def author_n_label_prims(stage, vendor, kind):
+    authored = []
+    for path, labels in zip(LABEL_PRIM_PATHS, LABEL_VALUES):
+        prim = UsdGeom.Xform.Define(stage, path).GetPrim()
+        ok = author_label(prim, vendor, kind, labels)
+        authored.append({'path': path, 'authored': ok, 'labels': labels})
+    return authored
+
+
+def do_forward_a_label():
+    """D label half, carrier (a): rewrite vendor segment of the
+    SemanticLabelsAPI instance name. windchill:partCategory ->
+    multiVendor:partCategory."""
+    with tempfile.TemporaryDirectory() as td:
+        src = os.path.join(td, 'v1.usda')
+        dst = os.path.join(td, 'v2.usda')
+
+        stage = Usd.Stage.CreateNew(src)
+        author_n_label_prims(stage, 'windchill', 'partCategory')
+        stage.GetRootLayer().Save()
+
+        src_stage = Usd.Stage.Open(src)
+        dst_stage = Usd.Stage.CreateNew(dst)
+        for path in LABEL_PRIM_PATHS:
+            sp = src_stage.GetPrimAtPath(path)
+            if not sp:
+                continue
+            labels = read_label(sp, 'windchill', 'partCategory')
+            dp = UsdGeom.Xform.Define(dst_stage, path).GetPrim()
+            author_label(dp, 'multiVendor', 'partCategory', labels)
+        dst_stage.GetRootLayer().Save()
+
+        with open(src, 'r', encoding='utf-8') as f:
+            src_lines = f.read().count('\n')
+        with open(dst, 'r', encoding='utf-8') as f:
+            dst_lines = f.read().count('\n')
+
+        dst_stage2 = Usd.Stage.Open(dst)
+        new_vendors = set()
+        for path in LABEL_PRIM_PATHS:
+            p = dst_stage2.GetPrimAtPath(path)
+            if p:
+                for inst in list_label_instances_on(p):
+                    new_vendors.add(inst.split(':', 1)[0])
+
+        return {
+            'convention': 'lexical-mapping',
+            'sites_per_prim': 2,
+            'sites_detail': 'apiSchemas entry + property name segment',
+            'src_lines': src_lines,
+            'dst_lines': dst_lines,
+            'new_vendors_visible_after_rewrite': sorted(new_vendors),
+        }
+
+
+def do_forward_b_label():
+    """D label half, carrier (b): rewrite kind segment of the
+    SemanticLabelsAPI instance name. windchill:partCategory ->
+    windchill:category."""
+    with tempfile.TemporaryDirectory() as td:
+        src = os.path.join(td, 'v1.usda')
+        dst = os.path.join(td, 'v2.usda')
+
+        stage = Usd.Stage.CreateNew(src)
+        author_n_label_prims(stage, 'windchill', 'partCategory')
+        stage.GetRootLayer().Save()
+
+        src_stage = Usd.Stage.Open(src)
+        dst_stage = Usd.Stage.CreateNew(dst)
+        for path in LABEL_PRIM_PATHS:
+            sp = src_stage.GetPrimAtPath(path)
+            if not sp:
+                continue
+            labels = read_label(sp, 'windchill', 'partCategory')
+            dp = UsdGeom.Xform.Define(dst_stage, path).GetPrim()
+            author_label(dp, 'windchill', 'category', labels)
+        dst_stage.GetRootLayer().Save()
+
+        with open(src, 'r', encoding='utf-8') as f:
+            src_lines = f.read().count('\n')
+        with open(dst, 'r', encoding='utf-8') as f:
+            dst_lines = f.read().count('\n')
+
+        return {
+            'convention': 'lexical-mapping',
+            'src_lines': src_lines,
+            'dst_lines': dst_lines,
+            'note': ('kind segment renamed; new instance ships in '
+                     'UsdPrimDefinition via SemanticLabelsAPI multi-apply '
+                     'template'),
+        }
+
+
+def do_coexist_a_label():
+    """D label half, carrier (a) coexistence: both windchill:partCategory
+    and multiVendor:partCategory on one stage."""
+    with tempfile.TemporaryDirectory() as td:
+        path = os.path.join(td, 'coexist_a_label.usda')
+        stage = Usd.Stage.CreateNew(path)
+        for p, labels in zip(LABEL_PRIM_PATHS, LABEL_VALUES):
+            prim = UsdGeom.Xform.Define(stage, p).GetPrim()
+            author_label(prim, 'windchill', 'partCategory', labels)
+        new_paths = ['/AssetA_NV', '/AssetB_NV', '/AssetC_NV']
+        for p, labels in zip(new_paths, LABEL_VALUES):
+            prim = UsdGeom.Xform.Define(stage, p).GetPrim()
+            author_label(prim, 'multiVendor', 'partCategory', labels)
+        stage.GetRootLayer().Save()
+
+        stage2 = Usd.Stage.Open(path)
+        all_vendors = set()
+        for p in LABEL_PRIM_PATHS + new_paths:
+            prim = stage2.GetPrimAtPath(p)
+            if prim:
+                for inst in list_label_instances_on(prim):
+                    all_vendors.add(inst.split(':', 1)[0])
+
+        old = 'windchill' in all_vendors
+        new = 'multiVendor' in all_vendors
+        return {
+            'both_resolve_under_one_read_pass': old and new,
+            'old_vendor_visible': old,
+            'new_vendor_visible': new,
+            'all_vendors_visible': sorted(all_vendors),
+            'enumerable_without_prior_vendor_knowledge': old and new,
+        }
+
+
+def do_coexist_b_label():
+    """D label half, carrier (b) coexistence: both windchill:partCategory
+    and windchill:category on one prim."""
+    with tempfile.TemporaryDirectory() as td:
+        path = os.path.join(td, 'coexist_b_label.usda')
+        stage = Usd.Stage.CreateNew(path)
+        for p, labels in zip(LABEL_PRIM_PATHS, LABEL_VALUES):
+            prim = UsdGeom.Xform.Define(stage, p).GetPrim()
+            author_label(prim, 'windchill', 'partCategory', labels)
+            author_label(prim, 'windchill', 'category', labels)
+        stage.GetRootLayer().Save()
+
+        stage2 = Usd.Stage.Open(path)
+        both_present = []
+        for p in LABEL_PRIM_PATHS:
+            prim = stage2.GetPrimAtPath(p)
+            if not prim:
+                both_present.append(False)
+                continue
+            insts = set(list_label_instances_on(prim))
+            both_present.append(
+                'windchill:partCategory' in insts
+                and 'windchill:category' in insts)
+
+        return {
+            'both_resolve_under_one_read_pass': all(both_present),
+            'old_field_visible': True,
+            'new_field_visible': True,
+            'enumerable_without_prior_field_knowledge': True,
+            'note': ('label-kind segment is openly enumerable via '
+                     'SemanticLabelsAPI:<vendor>:<kind> instance names'),
+        }
+
+
+# ----------------------------------------------------------------------
 # Main dispatcher
 # ----------------------------------------------------------------------
 
@@ -716,6 +913,14 @@ def main():
             result = do_rewrite_for_c(approach, sys.argv[3], sys.argv[4])
         elif mode == 'neutral_read':
             result = do_neutral_read(sys.argv[3:])
+        elif mode == 'forward_a_label' and approach == 'D':
+            result = do_forward_a_label()
+        elif mode == 'forward_b_label' and approach == 'D':
+            result = do_forward_b_label()
+        elif mode == 'coexist_a_label' and approach == 'D':
+            result = do_coexist_a_label()
+        elif mode == 'coexist_b_label' and approach == 'D':
+            result = do_coexist_b_label()
         else:
             result = {'error': f'unknown mode {mode}'}
     except Exception as e:

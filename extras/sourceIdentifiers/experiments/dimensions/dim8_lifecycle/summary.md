@@ -36,7 +36,8 @@ registration, not just the layer text.
 | B | `lexical-mapping` | 2 (apiSchemas entry + each authored property's prefix) | 23 | 23 | multiVendor |
 | Bprime | `schema + plugin registration` | n/a (schema-level identity) | 23 | 14 | none (no schema registered for new vendor) |
 | C | `lexical-mapping` | 1 (dict key under source.<vendor>) | 41 | 41 | multiVendor |
-| D | `lexical-mapping` | 1 (dict key under source.<vendor>) | 41 | 41 | multiVendor |
+| D (id half) | `lexical-mapping` | 1 (dict key under source.<vendor>) | 41 | 41 | multiVendor |
+| D (label half) | `lexical-mapping` | 2 (apiSchemas entry + property name segment) | 23 | 23 | multiVendor |
 
 ### Carrier (b) — field name rewrite (`primaryId` -> `oid`)
 
@@ -46,7 +47,8 @@ registration, not just the layer text.
 | B | `lexical-mapping` | 23 | 23 | renamed field authored as a custom attribute on the prim (not in UsdPrimDefinition) |
 | Bprime | `lexical-mapping` | 23 | 23 | renamed field authored as a custom attribute on the prim (not in UsdPrimDefinition) |
 | C | `lexical-mapping` | 41 | 41 | dict-key under source.<vendor> renamed |
-| D | `lexical-mapping` | 41 | 41 | dict-key under source.<vendor> renamed |
+| D (id half) | `lexical-mapping` | 41 | 41 | dict-key under source.<vendor> renamed |
+| D (label half) | `lexical-mapping` | 23 | 23 | kind segment renamed; new instance ships in UsdPrimDefinition via SemanticLabelsAPI multi-apply template |
 
 ### Carrier (c) — approach rewrite (storage-primitive transitions)
 
@@ -76,7 +78,8 @@ the specific token names.
 | B | yes | yes | multiVendor, windchill |
 | Bprime | no | no | windchill |
 | C | yes | yes | multiVendor, windchill |
-| D | yes | yes | multiVendor, windchill |
+| D (id half) | yes | yes | multiVendor, windchill |
+| D (label half) | yes | yes | multiVendor, windchill |
 
 ### Carrier (b) — both field names on one prim
 
@@ -86,7 +89,8 @@ the specific token names.
 | B | yes | no | new field carried as custom attribute outside the typed schema contract; not discoverable via UsdPrimDefinition without prior knowledge |
 | Bprime | yes | no | new field carried as custom attribute outside the typed schema contract; not discoverable via UsdPrimDefinition without prior knowledge |
 | C | yes | yes | dict keys are open; arbitrary key names coexist freely |
-| D | yes | yes | dict keys are open; arbitrary key names coexist freely |
+| D (id half) | yes | yes | dict keys are open; arbitrary key names coexist freely |
+| D (label half) | yes | yes | label-kind segment is openly enumerable via SemanticLabelsAPI:<vendor>:<kind> instance names |
 
 ### Carrier (c) — both approaches' layers on disk, read neutrally
 

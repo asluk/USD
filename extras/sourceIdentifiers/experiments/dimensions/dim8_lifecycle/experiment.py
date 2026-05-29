@@ -47,12 +47,17 @@ CROSS_APPROACH_PAIRS = [
 # ----------------------------------------------------------------------
 
 def run_forward_coexist():
-    """Run forward_a, forward_b, coexist_a, coexist_b for each approach."""
+    """Run forward_a, forward_b, coexist_a, coexist_b for each approach.
+    Additionally run the *_label variants for D's label half."""
     results = {ap: {} for ap in APPROACHES}
     for mode in ('forward_a', 'forward_b', 'coexist_a', 'coexist_b'):
         per_approach = run_all_approaches(PROBE, mode)
         for ap in APPROACHES:
             results[ap][mode] = per_approach[ap]
+    # D label half: separate modes, only D handles them
+    for mode in ('forward_a_label', 'forward_b_label',
+                 'coexist_a_label', 'coexist_b_label'):
+        results['D'][mode] = run_probe(PROBE, 'D', mode)
     return results
 
 
@@ -206,11 +211,12 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('| approach | convention | sites/prim | v1 lines | v2 lines | new vendor visible after rewrite |',
           file=buf)
     print('|---|---|---|---|---|---|', file=buf)
-    for ap in APPROACHES:
-        row = (results.get(ap, {}).get('forward_a', {}) or {}).get('result', {}) or {}
-        if 'error' in row:
-            print(f'| {ap} | ERROR | — | — | — | `{row["error"][:60]}` |', file=buf)
-            continue
+
+    def render_forward_a(label, row):
+        if not row or 'error' in row:
+            err = row.get('error', '—') if row else '—'
+            print(f'| {label} | ERROR | — | — | — | `{err[:60]}` |', file=buf)
+            return
         conv = row.get('convention', '—')
         spp = row.get('sites_per_prim')
         detail = row.get('sites_detail', '')
@@ -223,7 +229,17 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
         visible_list = row.get('new_vendors_visible_after_rewrite', [])
         nv = (', '.join(visible_list) if visible_list
               else 'none (no schema registered for new vendor)')
-        print(f'| {ap} | `{conv}` | {sites} | {sl} | {dl} | {nv} |', file=buf)
+        print(f'| {label} | `{conv}` | {sites} | {sl} | {dl} | {nv} |', file=buf)
+
+    for ap in APPROACHES:
+        row = (results.get(ap, {}).get('forward_a', {}) or {}).get('result', {}) or {}
+        if ap == 'D':
+            render_forward_a('D (id half)', row)
+            lab = (results.get('D', {}).get('forward_a_label', {})
+                   or {}).get('result', {}) or {}
+            render_forward_a('D (label half)', lab)
+        else:
+            render_forward_a(ap, row)
     print('', file=buf)
 
     print('### Carrier (b) — field name rewrite (`primaryId` -> `oid`)', file=buf)
@@ -231,16 +247,27 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('| approach | convention | v1 lines | v2 lines | note |',
           file=buf)
     print('|---|---|---|---|---|', file=buf)
-    for ap in APPROACHES:
-        row = (results.get(ap, {}).get('forward_b', {}) or {}).get('result', {}) or {}
-        if 'error' in row:
-            print(f'| {ap} | ERROR | — | — | `{row["error"][:60]}` |', file=buf)
-            continue
+
+    def render_forward_b(label, row):
+        if not row or 'error' in row:
+            err = row.get('error', '—') if row else '—'
+            print(f'| {label} | ERROR | — | — | `{err[:60]}` |', file=buf)
+            return
         conv = row.get('convention', '—')
         sl = row.get('src_lines', '—')
         dl = row.get('dst_lines', '—')
         note = (row.get('note') or '').replace('|', '\\|')
-        print(f'| {ap} | `{conv}` | {sl} | {dl} | {note} |', file=buf)
+        print(f'| {label} | `{conv}` | {sl} | {dl} | {note} |', file=buf)
+
+    for ap in APPROACHES:
+        row = (results.get(ap, {}).get('forward_b', {}) or {}).get('result', {}) or {}
+        if ap == 'D':
+            render_forward_b('D (id half)', row)
+            lab = (results.get('D', {}).get('forward_b_label', {})
+                   or {}).get('result', {}) or {}
+            render_forward_b('D (label half)', lab)
+        else:
+            render_forward_b(ap, row)
     print('', file=buf)
 
     print('### Carrier (c) — approach rewrite (storage-primitive transitions)',
@@ -288,15 +315,26 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('| approach | both resolve under one read pass | enumerable w/o prior vendor knowledge | all vendors visible |',
           file=buf)
     print('|---|---|---|---|', file=buf)
-    for ap in APPROACHES:
-        row = (results.get(ap, {}).get('coexist_a', {}) or {}).get('result', {}) or {}
-        if 'error' in row:
-            print(f'| {ap} | ERROR | — | `{row["error"][:60]}` |', file=buf)
-            continue
+
+    def render_coexist_a(label, row):
+        if not row or 'error' in row:
+            err = row.get('error', '—') if row else '—'
+            print(f'| {label} | ERROR | — | `{err[:60]}` |', file=buf)
+            return
         br = 'yes' if row.get('both_resolve_under_one_read_pass') else 'no'
         en = 'yes' if row.get('enumerable_without_prior_vendor_knowledge') else 'no'
         av = ', '.join(row.get('all_vendors_visible', []))
-        print(f'| {ap} | {br} | {en} | {av} |', file=buf)
+        print(f'| {label} | {br} | {en} | {av} |', file=buf)
+
+    for ap in APPROACHES:
+        row = (results.get(ap, {}).get('coexist_a', {}) or {}).get('result', {}) or {}
+        if ap == 'D':
+            render_coexist_a('D (id half)', row)
+            lab = (results.get('D', {}).get('coexist_a_label', {})
+                   or {}).get('result', {}) or {}
+            render_coexist_a('D (label half)', lab)
+        else:
+            render_coexist_a(ap, row)
     print('', file=buf)
 
     print('### Carrier (b) — both field names on one prim', file=buf)
@@ -304,15 +342,26 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('| approach | both resolve under one read pass | enumerable w/o prior field knowledge | note |',
           file=buf)
     print('|---|---|---|---|', file=buf)
-    for ap in APPROACHES:
-        row = (results.get(ap, {}).get('coexist_b', {}) or {}).get('result', {}) or {}
-        if 'error' in row:
-            print(f'| {ap} | ERROR | — | `{row["error"][:60]}` |', file=buf)
-            continue
+
+    def render_coexist_b(label, row):
+        if not row or 'error' in row:
+            err = row.get('error', '—') if row else '—'
+            print(f'| {label} | ERROR | — | `{err[:60]}` |', file=buf)
+            return
         br = 'yes' if row.get('both_resolve_under_one_read_pass') else 'no'
         en = 'yes' if row.get('enumerable_without_prior_field_knowledge') else 'no'
         note = (row.get('note') or '').replace('|', '\\|')
-        print(f'| {ap} | {br} | {en} | {note} |', file=buf)
+        print(f'| {label} | {br} | {en} | {note} |', file=buf)
+
+    for ap in APPROACHES:
+        row = (results.get(ap, {}).get('coexist_b', {}) or {}).get('result', {}) or {}
+        if ap == 'D':
+            render_coexist_b('D (id half)', row)
+            lab = (results.get('D', {}).get('coexist_b_label', {})
+                   or {}).get('result', {}) or {}
+            render_coexist_b('D (label half)', lab)
+        else:
+            render_coexist_b(ap, row)
     print('', file=buf)
 
     print('### Carrier (c) — both approaches\' layers on disk, read neutrally',
