@@ -55,9 +55,10 @@ def render_summary(results):
     # Apply success matrix
     print('## Apply-success matrix', file=buf)
     print('', file=buf)
-    print('`✓` = apply returned True and authoring the identifier succeeded.',
+    print('`✓` = `ApplyAPI(...)` returned True for this prim type.',
           file=buf)
-    print('`✗` = apply or authoring failed; see report.json.', file=buf)
+    print('`✗` = ApplyAPI returned False or errored; see report.json.',
+          file=buf)
     print('', file=buf)
     print('| prim type | ' + ' | '.join(APPROACHES) + ' |', file=buf)
     print('|---|' + '|'.join(['---'] * len(APPROACHES)) + '|', file=buf)

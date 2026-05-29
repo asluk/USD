@@ -21,8 +21,8 @@ vendor's identifier).
 
 ## Apply-success matrix
 
-`✓` = apply returned True and authoring the identifier succeeded.
-`✗` = apply or authoring failed; see report.json.
+`✓` = `ApplyAPI(...)` returned True for this prim type.
+`✗` = ApplyAPI returned False or errored; see report.json.
 
 | prim type | A | B | Bprime | C | D |
 |---|---|---|---|---|---|
