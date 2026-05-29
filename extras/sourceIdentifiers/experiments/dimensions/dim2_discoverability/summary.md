@@ -4,10 +4,17 @@ PR #105 Principle 5: "tools can discover a prim carries source
 identifiers without prior pipeline-specific knowledge."
 
 Probed on a prim with one vendor (`windchill`) identifier authored.
-Four surfaces queried — what does each reveal about the vendor and
-the identifier value? For approach D, the label half is measured
-separately by authoring a `SemanticLabelsAPI:windchill:partCategory`
-instance on a fresh prim and re-running the same four surfaces.
+Four surfaces queried — what does each reveal about the vendor
+and the identifier value?
+
+**Note on Approach D.** D is a candidate beyond PR #105
+(Matt Kuruc strawman, per the criteria file). Its mechanism
+combines an identifier half (assetInfo dict shape, mirroring
+A) and a label half (`SemanticLabelsAPI` multi-apply,
+mirroring B). The label half is measured by authoring a
+`SemanticLabelsAPI:windchill:partCategory` instance on a
+separate prim and running the same four surfaces; rows tagged
+"D (label half)" pull from that measurement.
 
 ## Surface 1 — `prim.GetAppliedSchemas()`
 
@@ -40,7 +47,8 @@ sub-dictionary in the prim definition (without scene authoring)?
 
 What property names does each approach expose via the schema
 registry without any scene authoring? Multi-apply schemas
-answered for a `windchill` instance.
+are listed with their `__INSTANCE_NAME__` template (no
+instance substituted).
 
 ### A
 
@@ -84,29 +92,33 @@ actually recovers the vendor name on each approach.
 
 ## Observations
 
-- A authors the vendor identity in assetInfo only. The applied
-  schemas list shows `SourceIdentifiersAPI` but not the specific
-  vendor. A generic walker recovers the vendor via the
-  assetInfo strategy, not via applied_schemas.
-- B encodes the vendor identity into the apply instance name
-  (e.g. `SourceIdentifierAPI:windchill`). A generic
-  applied-schemas walk recovers the vendor directly.
-- B' (Bprime) encodes the vendor into the schema CLASS name
-  (`WindchillSourceIdAPI`). The applied-schemas walk recovers
-  the vendor token via the class name. Enumerating all known
-  vendors at the registry level requires querying for classes
-  inheriting from `SourceIdentifierBaseAPI`; PR #105 flags
-  the registry-query enhancements this needs.
-- C's `SourceIdentifierBridgeAPI:windchill` applied-schema
-  name is visible, but the `assetInfoFallback` customData on
-  the schema does NOT surface in UsdPrimDefinition in this
-  run (`prim_def_assetInfo: null` in report.json). The
-  resulting storage shape is the same as A.
-- D appears on two rows in the surface tables — one for the
-  identifier half (assetInfo.source authoring) and one for the
-  label half (SemanticLabelsAPI:<vendor>:<labelKind>
-  authoring). The two halves land on different surfaces: the
-  identifier half surfaces via assetInfo (vendor not in
-  applied_schemas); the label half surfaces via applied_schemas
-  (vendor in instance name, no assetInfo authored).
+- A authors the vendor identity in `assetInfo.source.<vendor>`.
+  The applied-schemas list carries `SourceIdentifiersAPI` (no
+  vendor segment). A generic walker recovers the vendor via
+  the assetInfo surface; the applied-schemas surface does not
+  carry the vendor for A.
+- B authors the vendor identity in the apply instance name
+  (`SourceIdentifierAPI:windchill`). The applied-schemas
+  surface carries the vendor in the instance segment; the
+  assetInfo surface does not (`assetInfo_source_keys: []`).
+- B' (Bprime) authors the vendor identity in the schema
+  class name (`WindchillSourceIdAPI`). The applied-schemas
+  surface carries the vendor in the class name. Enumerating
+  the set of vendor schemas at the registry level needs the
+  `UsdSchemaRegistry` query enhancements PR #105 names.
+- C applies `SourceIdentifierBridgeAPI:<vendor>` and authors
+  data into `assetInfo.source.<vendor>`. The applied-schemas
+  surface carries the vendor in the instance segment, and
+  the assetInfo surface carries the dict key — both. The
+  schema declares an `assetInfoFallback` customData entry
+  intended to surface in `UsdPrimDefinition`; in this run
+  `prim_def_assetInfo` is `null`, so the fallback path did
+  not bring the source sub-dictionary into the prim
+  definition. (See `report.json` for the exact field.)
+- D appears on two rows. The id half (assetInfo authoring)
+  surfaces via the assetInfo strategy, same as A. The label
+  half (SemanticLabelsAPI:<vendor>:<labelKind> authoring)
+  surfaces via the applied-schemas strategy, same as B. The
+  two halves are exercised independently here; on a real
+  prim a vendor could author either or both.
 

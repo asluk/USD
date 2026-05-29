@@ -38,14 +38,25 @@ def render_summary(results):
     print('', file=buf)
     print('Probed on a prim with one vendor (`windchill`) identifier authored.',
           file=buf)
-    print('Four surfaces queried — what does each reveal about the vendor and',
+    print('Four surfaces queried — what does each reveal about the vendor',
           file=buf)
-    print('the identifier value? For approach D, the label half is measured',
+    print('and the identifier value?', file=buf)
+    print('', file=buf)
+    print('**Note on Approach D.** D is a candidate beyond PR #105',
           file=buf)
-    print('separately by authoring a `SemanticLabelsAPI:windchill:partCategory`',
+    print('(Matt Kuruc strawman, per the criteria file). Its mechanism',
           file=buf)
-    print('instance on a fresh prim and re-running the same four surfaces.',
+    print('combines an identifier half (assetInfo dict shape, mirroring',
           file=buf)
+    print('A) and a label half (`SemanticLabelsAPI` multi-apply,',
+          file=buf)
+    print('mirroring B). The label half is measured by authoring a',
+          file=buf)
+    print('`SemanticLabelsAPI:windchill:partCategory` instance on a',
+          file=buf)
+    print('separate prim and running the same four surfaces; rows tagged',
+          file=buf)
+    print('"D (label half)" pull from that measurement.', file=buf)
     print('', file=buf)
 
     # Per-surface table
@@ -86,7 +97,9 @@ def render_summary(results):
           file=buf)
     print('registry without any scene authoring? Multi-apply schemas',
           file=buf)
-    print('answered for a `windchill` instance.', file=buf)
+    print('are listed with their `__INSTANCE_NAME__` template (no',
+          file=buf)
+    print('instance substituted).', file=buf)
     print('', file=buf)
     for ap in APPROACHES:
         s = results.get(ap, {}).get('surfaces', {}).get('prim_def_properties', {})
@@ -129,52 +142,62 @@ def render_summary(results):
 
     print('## Observations', file=buf)
     print('', file=buf)
-    print('- A authors the vendor identity in assetInfo only. The applied',
+    print('- A authors the vendor identity in `assetInfo.source.<vendor>`.',
           file=buf)
-    print('  schemas list shows `SourceIdentifiersAPI` but not the specific',
+    print('  The applied-schemas list carries `SourceIdentifiersAPI` (no',
           file=buf)
-    print('  vendor. A generic walker recovers the vendor via the',
+    print('  vendor segment). A generic walker recovers the vendor via',
           file=buf)
-    print('  assetInfo strategy, not via applied_schemas.', file=buf)
-    print('- B encodes the vendor identity into the apply instance name',
+    print('  the assetInfo surface; the applied-schemas surface does not',
           file=buf)
-    print('  (e.g. `SourceIdentifierAPI:windchill`). A generic',
+    print('  carry the vendor for A.', file=buf)
+    print('- B authors the vendor identity in the apply instance name',
           file=buf)
-    print('  applied-schemas walk recovers the vendor directly.', file=buf)
-    print('- B\' (Bprime) encodes the vendor into the schema CLASS name',
+    print('  (`SourceIdentifierAPI:windchill`). The applied-schemas',
           file=buf)
-    print('  (`WindchillSourceIdAPI`). The applied-schemas walk recovers',
+    print('  surface carries the vendor in the instance segment; the',
           file=buf)
-    print('  the vendor token via the class name. Enumerating all known',
+    print('  assetInfo surface does not (`assetInfo_source_keys: []`).',
           file=buf)
-    print('  vendors at the registry level requires querying for classes',
+    print('- B\' (Bprime) authors the vendor identity in the schema',
           file=buf)
-    print('  inheriting from `SourceIdentifierBaseAPI`; PR #105 flags',
+    print('  class name (`WindchillSourceIdAPI`). The applied-schemas',
           file=buf)
-    print('  the registry-query enhancements this needs.',
+    print('  surface carries the vendor in the class name. Enumerating',
           file=buf)
-    print('- C\'s `SourceIdentifierBridgeAPI:windchill` applied-schema',
+    print('  the set of vendor schemas at the registry level needs the',
           file=buf)
-    print('  name is visible, but the `assetInfoFallback` customData on',
+    print('  `UsdSchemaRegistry` query enhancements PR #105 names.',
           file=buf)
-    print('  the schema does NOT surface in UsdPrimDefinition in this',
+    print('- C applies `SourceIdentifierBridgeAPI:<vendor>` and authors',
           file=buf)
-    print('  run (`prim_def_assetInfo: null` in report.json). The',
+    print('  data into `assetInfo.source.<vendor>`. The applied-schemas',
           file=buf)
-    print('  resulting storage shape is the same as A.', file=buf)
-    print('- D appears on two rows in the surface tables — one for the',
+    print('  surface carries the vendor in the instance segment, and',
           file=buf)
-    print('  identifier half (assetInfo.source authoring) and one for the',
+    print('  the assetInfo surface carries the dict key — both. The',
           file=buf)
-    print('  label half (SemanticLabelsAPI:<vendor>:<labelKind>',
+    print('  schema declares an `assetInfoFallback` customData entry',
           file=buf)
-    print('  authoring). The two halves land on different surfaces: the',
+    print('  intended to surface in `UsdPrimDefinition`; in this run',
           file=buf)
-    print('  identifier half surfaces via assetInfo (vendor not in',
+    print('  `prim_def_assetInfo` is `null`, so the fallback path did',
           file=buf)
-    print('  applied_schemas); the label half surfaces via applied_schemas',
+    print('  not bring the source sub-dictionary into the prim',
           file=buf)
-    print('  (vendor in instance name, no assetInfo authored).',
+    print('  definition. (See `report.json` for the exact field.)',
+          file=buf)
+    print('- D appears on two rows. The id half (assetInfo authoring)',
+          file=buf)
+    print('  surfaces via the assetInfo strategy, same as A. The label',
+          file=buf)
+    print('  half (SemanticLabelsAPI:<vendor>:<labelKind> authoring)',
+          file=buf)
+    print('  surfaces via the applied-schemas strategy, same as B. The',
+          file=buf)
+    print('  two halves are exercised independently here; on a real',
+          file=buf)
+    print('  prim a vendor could author either or both.',
           file=buf)
     print('', file=buf)
 
