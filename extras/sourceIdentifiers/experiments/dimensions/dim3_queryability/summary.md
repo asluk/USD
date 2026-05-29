@@ -77,35 +77,35 @@ the layer (no pipeline-config knowing what vendors exist)?
 
 ## Observations
 
-- A, C, D-identifier share storage shape
-  (`assetInfo.source.<vendor>` dict walk). C and D's indexer
-  functions in `probe.py` are one-line delegations that call
-  A's indexer (`return indexer_A(layer_path)`); the indexer-LoC
-  column reports the body length of each approach's indexer
-  function, so A=14 is the actual walk and C=D=1 is the
-  delegation. Vendors enumerate from dict keys with no
-  pre-registration.
-- B's indexer walks `sourceIdentifier:<vendor>:primaryId`-shaped
-  property names. The convention is the property-namespace
-  template; a tool that did not know the template would not
-  distinguish a source-identifier attribute from another
-  namespaced attribute on the prim. Recall is 100% once the
-  template is known.
-- B' (Bprime) encodes vendor identity in the schema CLASS name
-  applied to the prim. The indexer walks `apiSchemas` rather
-  than the property table to enumerate vendors.
-- B' authors fewer rows than the other approaches in this run
-  because the experiment plugin ships per-vendor schemas only
-  for Windchill and IFC. Adobe rows are skipped at author time,
-  so the *authored count* drops to 36 (vs 52) while recall
-  computes against the actually-authored subset.
+- Each indexer relies on knowing its approach's storage
+  convention: A/C/D walk `assetInfo.source.<vendor>` dict
+  keys; B walks property-name segments matching
+  `sourceIdentifier:<vendor>:primaryId`; B' walks
+  `apiSchemas` for class names ending in `SourceIdAPI`.
+  The convention is the input each indexer needs.
+- A, C, D identifier-half share storage shape
+  (`assetInfo.source.<vendor>`). In `probe.py`, C's and D's
+  indexer functions are one-line delegations that call A's
+  indexer (`return indexer_A(layer_path)`); the indexer-LoC
+  column reports each approach's function body length, so
+  A=14 is the actual walk and C=D=1 are the delegations.
+- B and B' have indexer LoC closer to A's (16 and 22): the
+  property-template walk (B) and apiSchemas-class walk (B')
+  are similar in complexity to A's dict walk on this probe's
+  data shape.
+- B' (Bprime) authored 36 rows vs 52 for the others. The
+  experiment plugin ships per-vendor schemas for Windchill
+  and IFC only; Adobe rows are skipped at author time, so
+  the *authored count* records what actually landed in the
+  layer. Recall is computed against the actually-authored
+  subset.
 - B' (Bprime) shared-base-property effect: the per-vendor
   schemas inherit `SourceIdentifierBaseAPI` via `prepend
-  apiSchemas`, so `sourceId:primaryId` is a SINGLE attribute
-  slot shared across vendor schemas applied to one prim. When
-  a prim has both Windchill and IFC applied, only the
-  most-recently-authored value lives in the shared slot; the
-  indexer reports both vendor labels with that one value. The
-  63.9% recall reflects this slot-sharing effect on the
-  multi-vendor prims, not an indexer-walk limitation.
+  apiSchemas`, so `sourceId:primaryId` is one attribute
+  shared across vendor schemas applied on one prim. On a
+  prim with both Windchill and IFC applied, the shared slot
+  resolves to the most-recently-authored value; the indexer
+  reports both vendor labels with that one value. This
+  contributes the 63.9% recall on multi-vendor prims (recall
+  on single-vendor prims is 100%).
 
