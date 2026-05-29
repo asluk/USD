@@ -84,31 +84,29 @@ actually recovers the vendor name on each approach.
 
 ## Observations
 
-- A authors the vendor identity ONLY in assetInfo — the applied
-  schemas list reveals `SourceIdentifiersAPI` (the contract
-  marker) but not the specific vendor. A generic GUI walker
-  finds the vendor via the assetInfo strategy, not via
-  applied_schemas.
-- B and D-label encode the vendor identity into the apply
-  instance name (e.g. `SourceIdentifierAPI:windchill`). Generic
+- A authors the vendor identity in assetInfo only. The applied
+  schemas list shows `SourceIdentifiersAPI` but not the specific
+  vendor. A generic walker recovers the vendor via the
+  assetInfo strategy, not via applied_schemas.
+- B encodes the vendor identity into the apply instance name
+  (e.g. `SourceIdentifierAPI:windchill`). A generic
   applied-schemas walk recovers the vendor directly.
-- B' encodes the vendor into the schema CLASS name
-  (`WindchillSourceIdAPI`). Generic applied-schemas walk
-  recovers the vendor too — but a tool that wants to enumerate
-  *all known* vendors must consult the schema registry for
-  classes inheriting from `SourceIdentifierBaseAPI`, requiring
-  the registry-query enhancements PR #105 flags as a B'
-  prerequisite.
-- C is the most surprising: the `assetInfoFallback` mechanism
-  is not consumed by UsdPrimDefinition in current OpenUSD
-  (per v3 findings). C's `SourceIdentifierBridgeAPI:windchill`
-  applied-schema name is visible, but the schema's declared
-  fallback assetInfo dict does NOT surface in the prim
-  definition. Storage shape reduces to A.
-- D has TWO discovery surfaces: applied_schemas (with
-  `SemanticLabelsAPI:<vendor>:<labelKind>` instances for the
-  label half) and assetInfo.source.<vendor> (for the
-  identifier half). The applied-schemas list does not by
-  itself encode the identifier vendor — that lives in
-  assetInfo, same as A.
+- B' (Bprime) encodes the vendor into the schema CLASS name
+  (`WindchillSourceIdAPI`). The applied-schemas walk recovers
+  the vendor token via the class name. Enumerating all known
+  vendors at the registry level requires querying for classes
+  inheriting from `SourceIdentifierBaseAPI`; PR #105 flags
+  the registry-query enhancements this needs.
+- C's `SourceIdentifierBridgeAPI:windchill` applied-schema
+  name is visible, but the `assetInfoFallback` customData on
+  the schema does NOT surface in UsdPrimDefinition in this
+  run (`prim_def_assetInfo: null` in report.json). The
+  resulting storage shape is the same as A.
+- D appears on two rows in the surface tables — one for the
+  identifier half (assetInfo.source authoring) and one for the
+  label half (SemanticLabelsAPI:<vendor>:<labelKind>
+  authoring). The two halves land on different surfaces: the
+  identifier half surfaces via assetInfo (vendor not in
+  applied_schemas); the label half surfaces via applied_schemas
+  (vendor in instance name, no assetInfo authored).
 

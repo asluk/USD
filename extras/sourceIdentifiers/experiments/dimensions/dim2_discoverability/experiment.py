@@ -129,44 +129,53 @@ def render_summary(results):
 
     print('## Observations', file=buf)
     print('', file=buf)
-    print('- A authors the vendor identity ONLY in assetInfo — the applied',
+    print('- A authors the vendor identity in assetInfo only. The applied',
           file=buf)
-    print('  schemas list reveals `SourceIdentifiersAPI` (the contract',
+    print('  schemas list shows `SourceIdentifiersAPI` but not the specific',
           file=buf)
-    print('  marker) but not the specific vendor. A generic GUI walker',
+    print('  vendor. A generic walker recovers the vendor via the',
           file=buf)
-    print('  finds the vendor via the assetInfo strategy, not via', file=buf)
-    print('  applied_schemas.', file=buf)
-    print('- B and D-label encode the vendor identity into the apply',
+    print('  assetInfo strategy, not via applied_schemas.', file=buf)
+    print('- B encodes the vendor identity into the apply instance name',
           file=buf)
-    print('  instance name (e.g. `SourceIdentifierAPI:windchill`). Generic',
+    print('  (e.g. `SourceIdentifierAPI:windchill`). A generic',
           file=buf)
-    print("  applied-schemas walk recovers the vendor directly.", file=buf)
-    print('- B\' encodes the vendor into the schema CLASS name', file=buf)
-    print('  (`WindchillSourceIdAPI`). Generic applied-schemas walk', file=buf)
-    print('  recovers the vendor too — but a tool that wants to enumerate', file=buf)
-    print('  *all known* vendors must consult the schema registry for', file=buf)
-    print('  classes inheriting from `SourceIdentifierBaseAPI`, requiring', file=buf)
-    print('  the registry-query enhancements PR #105 flags as a B\'',
+    print('  applied-schemas walk recovers the vendor directly.', file=buf)
+    print('- B\' (Bprime) encodes the vendor into the schema CLASS name',
           file=buf)
-    print('  prerequisite.', file=buf)
-    print("- C is the most surprising: the `assetInfoFallback` mechanism",
+    print('  (`WindchillSourceIdAPI`). The applied-schemas walk recovers',
           file=buf)
-    print('  is not consumed by UsdPrimDefinition in current OpenUSD', file=buf)
-    print('  (per v3 findings). C\'s `SourceIdentifierBridgeAPI:windchill`',
+    print('  the vendor token via the class name. Enumerating all known',
           file=buf)
-    print('  applied-schema name is visible, but the schema\'s declared',
+    print('  vendors at the registry level requires querying for classes',
           file=buf)
-    print('  fallback assetInfo dict does NOT surface in the prim',
+    print('  inheriting from `SourceIdentifierBaseAPI`; PR #105 flags',
           file=buf)
-    print('  definition. Storage shape reduces to A.', file=buf)
-    print('- D has TWO discovery surfaces: applied_schemas (with',
+    print('  the registry-query enhancements this needs.',
           file=buf)
-    print("  `SemanticLabelsAPI:<vendor>:<labelKind>` instances for the", file=buf)
-    print("  label half) and assetInfo.source.<vendor> (for the", file=buf)
-    print('  identifier half). The applied-schemas list does not by', file=buf)
-    print('  itself encode the identifier vendor — that lives in', file=buf)
-    print('  assetInfo, same as A.', file=buf)
+    print('- C\'s `SourceIdentifierBridgeAPI:windchill` applied-schema',
+          file=buf)
+    print('  name is visible, but the `assetInfoFallback` customData on',
+          file=buf)
+    print('  the schema does NOT surface in UsdPrimDefinition in this',
+          file=buf)
+    print('  run (`prim_def_assetInfo: null` in report.json). The',
+          file=buf)
+    print('  resulting storage shape is the same as A.', file=buf)
+    print('- D appears on two rows in the surface tables — one for the',
+          file=buf)
+    print('  identifier half (assetInfo.source authoring) and one for the',
+          file=buf)
+    print('  label half (SemanticLabelsAPI:<vendor>:<labelKind>',
+          file=buf)
+    print('  authoring). The two halves land on different surfaces: the',
+          file=buf)
+    print('  identifier half surfaces via assetInfo (vendor not in',
+          file=buf)
+    print('  applied_schemas); the label half surfaces via applied_schemas',
+          file=buf)
+    print('  (vendor in instance name, no assetInfo authored).',
+          file=buf)
     print('', file=buf)
 
     return buf.getvalue()
