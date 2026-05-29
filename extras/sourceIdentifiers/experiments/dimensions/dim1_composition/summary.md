@@ -14,10 +14,11 @@ primitive, two scenarios:
   vendors visible on the composed prim?
 
 Both scenarios run for sublayer, reference, payload, inherit,
-and specialize composition arcs. (Inherit and specialize are
-exercised via a class prim on the weak layer brought in by
-reference for reachability; the relative-strength semantic
-they're testing is preserved.)
+and specialize composition arcs. The `inherit` and `specialize`
+rows are exercised via a class prim on the weak layer brought
+in by reference for reachability — the probe records what each
+arc surfaces under that composition assembly; it does not
+disentangle direct-opinion vs class-arc strength in isolation.
 
 ## A
 
@@ -155,27 +156,21 @@ they're testing is preserved.)
 
 - For A, C, D-identifier, the identifier is stored in
   `assetInfo` (a dict-valued metadatum). USD's composition
-  rules for dict-valued metadata MERGE entries from weaker
-  opinions when stronger opinions don't shadow them. Two
-  vendors authored in two layers therefore appear as two
-  entries in the composed `source` dict; same-key override
-  takes the strongest opinion.
+  rules for dict-valued metadata merge entries from weaker
+  opinions when stronger opinions do not shadow them; same-key
+  override takes the strongest opinion. Two vendors authored
+  in two layers therefore appear as two entries in the composed
+  `source` dict.
 - For B and D-label, the identifier is stored in typed
-  attributes. Composition for attributes is strongest-opinion-
-  wins per-attribute. Different vendors live in different
-  attributes, so they compose independently — both visible.
-  Same-vendor override is the standard attribute-override
-  behavior.
-- For B', the per-vendor schema name is what carries vendor
-  identity. `apiSchemas` is a listOp, so adding a second
-  vendor schema in a stronger layer composes into the union of
-  applied schemas. But the SHARED `sourceId:primaryId` slot
-  means same-vendor override and cross-vendor authoring
-  interact: only one primaryId value lives per prim.
-- The `inherit` and `specialize` rows in this probe are
-  modeled via class prims brought in by reference. The probe
-  reflects how arcs play out via the layer composition, not
-  the relative arc-strength semantics in isolation. A future
-  probe could disentangle direct vs class-arc opinions if
-  that distinction proves load-bearing for the comparison.
+  attributes. Attribute composition is strongest-opinion-wins
+  per attribute. Different vendors live in different
+  attributes, so they compose per-attribute and both remain
+  visible. Same-vendor override is per-attribute override.
+- For B', the per-vendor schema name carries vendor identity.
+  `apiSchemas` is a listOp, so adding a second vendor schema
+  in a stronger layer composes into the union of applied
+  schemas. The `sourceId:primaryId` slot is shared across
+  inherited base schemas, so same-vendor override and
+  cross-vendor authoring read from one slot: one primaryId
+  value per prim across applied vendor schemas.
 
