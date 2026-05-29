@@ -14,10 +14,22 @@ Carrier-change types:
 
 Cross-approach (c) is exercised on a chosen set of seven
 storage-primitive-transition representative ordered pairs
-rather than all 20 candidates. A/C/D identifier-half share
-the same dict storage shape (`assetInfo.source.<vendor>`), so
-transitions among them are dict-key renames; the chosen pairs
-cover one representative each via A<->C and A<->D.
+rather than all 20. A/C/D identifier-half share the same dict
+storage shape (`assetInfo.source.<vendor>`), so the migration
+between dict-shape approaches is dict-key shape preservation
+with a schema-token change (the applied schema class is
+renamed). The chosen pairs include A->C and A->D for that
+shape; the reverse direction (C->A, D->A) is not enumerated.
+
+**Note on Approach D.** D is a candidate beyond PR #105
+(Matt Kuruc strawman, per the criteria file). Its mechanism
+combines an identifier half (assetInfo dict shape, mirroring
+A) and a label half (`SemanticLabelsAPI` multi-apply,
+mirroring B). Where a scenario applies to both halves, this
+summary shows two rows tagged "D (id half)" and "D (label
+half)"; carrier (c) cross-approach migration is exercised
+only on the identifier half (label-half cross-approach
+migration to A/B/B'/C is not defined by the mechanism).
 
 ## Scenario 1 — forward migration
 
@@ -100,12 +112,11 @@ renamed field as a dict key.
 
 ### Carrier (c) — both approaches' layers on disk, read neutrally
 
-Note: each subprocess only has one approach's plugin loaded, so
-"two approaches on one stage" cannot be tested under a single
-Usd.Stage. Instead, src and dst each author their own layer file;
-a neutral reader (no schema-specific decoding) reports what the
-two layers carry. This is the closest mechanism-level analog to
-"can tooling enumerate both forms without prior knowledge."
+Note: each subprocess only has one approach's plugin loaded,
+so "two approaches on one stage" cannot be tested under a
+single Usd.Stage. Instead, src and dst each author their own
+layer file; a neutral reader (no schema-specific decoding)
+reads both layers and reports the schema tokens it finds.
 
 | pair | both layers readable | src tokens in layer | dst tokens in layer |
 |---|---|---|---|
@@ -154,29 +165,31 @@ ends, so this scenario only enumerates cross-approach (c) pairs.
   are layer-text operations (one site per prim).
 - For B, the vendor token is a multi-apply schema instance
   name appearing in the apiSchemas list and as the middle
-  segment of each authored typed-property name. Carrier (a) is
-  a layer-text rewrite across one site per authored
-  typed-property plus one in the apiSchemas entry — two sites
-  per prim in this probe (which authors only `primaryId`); B
-  declares four typed properties, so the count scales by +1
-  per additional authored property. Carrier (b) authors the
-  renamed field as a custom attribute on the prim — carries
-  the value, not present in UsdPrimDefinition.
+  segment of each authored typed-property name. Carrier (a)
+  is a layer-text rewrite at two sites per prim in this probe
+  (apiSchemas entry + the authored `primaryId` property). The
+  site count scales by +1 per additional authored typed
+  property; B declares four (primaryId, revision, domain,
+  label). Carrier (b) authors the renamed field as a custom
+  attribute on the prim — carries the value, not present in
+  UsdPrimDefinition.
 - For B' (Bprime), the vendor token is the schema class name
   itself, which lives in the schema definition and the
   plugin's TfType registration. Carrier (a) requires declaring
   and registering a new schema class before any prim can
   reference it. Carrier (b) lands the renamed field as a
   custom attribute on the prim (same shape as B's carrier b).
-- D label-half is now exercised in this dim. The forward/coexist
-  rows tagged "D (label half)" report:
-  carrier (a) at two sites per prim (apiSchemas entry +
-  property name segment), v2 layer = v1 line count;
-  carrier (b) with the renamed kind segment landing in
-  UsdPrimDefinition via the SemanticLabelsAPI multi-apply
-  template (the multi-apply template covers any
-  vendor:kind instance, so a renamed kind ships in the
-  prim definition rather than as a custom attribute).
+- D label-half: carrier (a) is a layer-text rewrite at two
+  sites per prim (apiSchemas entry + property name segment).
+  Because the SemanticLabelsAPI template is multi-apply over
+  `__INSTANCE_NAME__`, the site count does not scale with the
+  number of authored kinds the same way B's scales with the
+  number of authored typed properties — the template is one
+  property regardless of how many kind instances apply.
+  Carrier (b) renames the kind segment; the new instance
+  still matches the multi-apply template, so it appears in
+  UsdPrimDefinition (whereas B/B' carrier (b) lands as a
+  custom attribute).
 - Cross-approach probes author A as the dict-storage source
   with `primaryId` plus extra dict-keyed metadata (`extra`,
   `pdmTag`). Destinations whose storage is typed-property

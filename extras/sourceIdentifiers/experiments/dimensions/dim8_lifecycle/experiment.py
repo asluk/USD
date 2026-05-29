@@ -186,10 +186,31 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('', file=buf)
     print('Cross-approach (c) is exercised on a chosen set of seven', file=buf)
     print('storage-primitive-transition representative ordered pairs', file=buf)
-    print('rather than all 20 candidates. A/C/D identifier-half share', file=buf)
-    print('the same dict storage shape (`assetInfo.source.<vendor>`), so', file=buf)
-    print('transitions among them are dict-key renames; the chosen pairs', file=buf)
-    print('cover one representative each via A<->C and A<->D.', file=buf)
+    print('rather than all 20. A/C/D identifier-half share the same dict', file=buf)
+    print('storage shape (`assetInfo.source.<vendor>`), so the migration', file=buf)
+    print('between dict-shape approaches is dict-key shape preservation', file=buf)
+    print('with a schema-token change (the applied schema class is', file=buf)
+    print('renamed). The chosen pairs include A->C and A->D for that', file=buf)
+    print('shape; the reverse direction (C->A, D->A) is not enumerated.', file=buf)
+    print('', file=buf)
+    print('**Note on Approach D.** D is a candidate beyond PR #105',
+          file=buf)
+    print('(Matt Kuruc strawman, per the criteria file). Its mechanism',
+          file=buf)
+    print('combines an identifier half (assetInfo dict shape, mirroring',
+          file=buf)
+    print('A) and a label half (`SemanticLabelsAPI` multi-apply,',
+          file=buf)
+    print('mirroring B). Where a scenario applies to both halves, this',
+          file=buf)
+    print('summary shows two rows tagged "D (id half)" and "D (label',
+          file=buf)
+    print('half)"; carrier (c) cross-approach migration is exercised',
+          file=buf)
+    print('only on the identifier half (label-half cross-approach',
+          file=buf)
+    print('migration to A/B/B\'/C is not defined by the mechanism).',
+          file=buf)
     print('', file=buf)
 
     # ------------------------------------------------------------------
@@ -376,12 +397,15 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('### Carrier (c) — both approaches\' layers on disk, read neutrally',
           file=buf)
     print('', file=buf)
-    print('Note: each subprocess only has one approach\'s plugin loaded, so', file=buf)
-    print('"two approaches on one stage" cannot be tested under a single', file=buf)
-    print('Usd.Stage. Instead, src and dst each author their own layer file;', file=buf)
-    print('a neutral reader (no schema-specific decoding) reports what the', file=buf)
-    print('two layers carry. This is the closest mechanism-level analog to', file=buf)
-    print('"can tooling enumerate both forms without prior knowledge."',
+    print('Note: each subprocess only has one approach\'s plugin loaded,',
+          file=buf)
+    print('so "two approaches on one stage" cannot be tested under a',
+          file=buf)
+    print('single Usd.Stage. Instead, src and dst each author their own',
+          file=buf)
+    print('layer file; a neutral reader (no schema-specific decoding)',
+          file=buf)
+    print('reads both layers and reports the schema tokens it finds.',
           file=buf)
     print('', file=buf)
     print('| pair | both layers readable | src tokens in layer | dst tokens in layer |',
@@ -479,21 +503,21 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
     print('- For B, the vendor token is a multi-apply schema instance', file=buf)
     print('  name appearing in the apiSchemas list and as the middle',
           file=buf)
-    print('  segment of each authored typed-property name. Carrier (a) is',
+    print('  segment of each authored typed-property name. Carrier (a)',
           file=buf)
-    print('  a layer-text rewrite across one site per authored',
+    print('  is a layer-text rewrite at two sites per prim in this probe',
           file=buf)
-    print('  typed-property plus one in the apiSchemas entry — two sites',
+    print('  (apiSchemas entry + the authored `primaryId` property). The',
           file=buf)
-    print('  per prim in this probe (which authors only `primaryId`); B',
+    print('  site count scales by +1 per additional authored typed',
           file=buf)
-    print('  declares four typed properties, so the count scales by +1',
+    print('  property; B declares four (primaryId, revision, domain,',
           file=buf)
-    print('  per additional authored property. Carrier (b) authors the',
+    print('  label). Carrier (b) authors the renamed field as a custom',
           file=buf)
-    print('  renamed field as a custom attribute on the prim — carries',
+    print('  attribute on the prim — carries the value, not present in',
           file=buf)
-    print('  the value, not present in UsdPrimDefinition.', file=buf)
+    print('  UsdPrimDefinition.', file=buf)
     print("- For B' (Bprime), the vendor token is the schema class name",
           file=buf)
     print("  itself, which lives in the schema definition and the",
@@ -506,24 +530,27 @@ def render_summary(results, forward_c, roundtrip_c, coexist_c):
           file=buf)
     print('  custom attribute on the prim (same shape as B\'s carrier b).',
           file=buf)
-    print('- D label-half is now exercised in this dim. The forward/coexist',
+    print('- D label-half: carrier (a) is a layer-text rewrite at two',
           file=buf)
-    print('  rows tagged "D (label half)" report:',
+    print('  sites per prim (apiSchemas entry + property name segment).',
           file=buf)
-    print('  carrier (a) at two sites per prim (apiSchemas entry +',
+    print('  Because the SemanticLabelsAPI template is multi-apply over',
           file=buf)
-    print('  property name segment), v2 layer = v1 line count;',
+    print('  `__INSTANCE_NAME__`, the site count does not scale with the',
           file=buf)
-    print('  carrier (b) with the renamed kind segment landing in',
+    print('  number of authored kinds the same way B\'s scales with the',
           file=buf)
-    print('  UsdPrimDefinition via the SemanticLabelsAPI multi-apply',
+    print('  number of authored typed properties — the template is one',
           file=buf)
-    print('  template (the multi-apply template covers any',
+    print('  property regardless of how many kind instances apply.',
           file=buf)
-    print('  vendor:kind instance, so a renamed kind ships in the',
+    print('  Carrier (b) renames the kind segment; the new instance',
           file=buf)
-    print('  prim definition rather than as a custom attribute).',
+    print('  still matches the multi-apply template, so it appears in',
           file=buf)
+    print('  UsdPrimDefinition (whereas B/B\' carrier (b) lands as a',
+          file=buf)
+    print('  custom attribute).', file=buf)
     print('- Cross-approach probes author A as the dict-storage source',
           file=buf)
     print('  with `primaryId` plus extra dict-keyed metadata (`extra`,',
