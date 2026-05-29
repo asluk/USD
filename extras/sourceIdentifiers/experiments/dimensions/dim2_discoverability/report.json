@@ -161,6 +161,39 @@
   },
   "D": {
     "approach": "D",
+    "label_half": {
+      "applied_schemas": {
+        "applied_schemas": [
+          "SemanticLabelsAPI:windchill:partCategory"
+        ],
+        "vendor_visible_in_applied_schemas": true
+      },
+      "generic_gui_walk": {
+        "applied_schemas_seen": [
+          "SemanticLabelsAPI:windchill:partCategory"
+        ],
+        "assetInfo_source_keys": [],
+        "assetInfo_source_values": {},
+        "vendor_found_via_apply_schemas": true,
+        "vendor_found_via_assetInfo_source": false
+      },
+      "prim_def_metadata": {
+        "has_source_key_without_authoring": false,
+        "prim_def_assetInfo": null
+      },
+      "prim_def_properties": {
+        "SemanticLabelsAPI": {
+          "kind": "multi-apply",
+          "property_template": [
+            "semantics:labels:__INSTANCE_NAME__"
+          ]
+        },
+        "SourceIdentifiersAPI": {
+          "kind": "single-apply",
+          "properties": []
+        }
+      }
+    },
     "surfaces": {
       "applied_schemas": {
         "applied_schemas": [

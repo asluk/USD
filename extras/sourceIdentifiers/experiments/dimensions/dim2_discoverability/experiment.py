@@ -15,6 +15,19 @@ DIM_DIR = Path(__file__).resolve().parent
 PROBE = DIM_DIR / 'probe.py'
 
 
+def iter_rows(results):
+    """Yield (label, surfaces_block) for each approach row in the tables.
+    D appears twice when label_half data is present: once as the identifier
+    half and once as the label half."""
+    for ap in APPROACHES:
+        ap_block = results.get(ap, {})
+        if ap == 'D' and 'label_half' in ap_block:
+            yield ('D (id half)', ap_block.get('surfaces', {}))
+            yield ('D (label half)', ap_block.get('label_half', {}))
+        else:
+            yield (ap, ap_block.get('surfaces', {}))
+
+
 def render_summary(results):
     buf = io.StringIO()
     print('# Dim 2 — discoverability (P5)', file=buf)
@@ -27,7 +40,12 @@ def render_summary(results):
           file=buf)
     print('Four surfaces queried — what does each reveal about the vendor and',
           file=buf)
-    print('the identifier value?', file=buf)
+    print('the identifier value? For approach D, the label half is measured',
+          file=buf)
+    print('separately by authoring a `SemanticLabelsAPI:windchill:partCategory`',
+          file=buf)
+    print('instance on a fresh prim and re-running the same four surfaces.',
+          file=buf)
     print('', file=buf)
 
     # Per-surface table
@@ -37,11 +55,11 @@ def render_summary(results):
     print('', file=buf)
     print('| approach | applied_schemas | vendor visible? |', file=buf)
     print('|---|---|---|', file=buf)
-    for ap in APPROACHES:
-        s = results.get(ap, {}).get('surfaces', {}).get('applied_schemas', {})
+    for label, surfaces in iter_rows(results):
+        s = surfaces.get('applied_schemas', {})
         schemas = ', '.join(f'`{x}`' for x in s.get('applied_schemas', []))
         mark = '✓' if s.get('vendor_visible_in_applied_schemas') else '✗'
-        print(f'| {ap} | {schemas} | {mark} |', file=buf)
+        print(f'| {label} | {schemas} | {mark} |', file=buf)
     print('', file=buf)
 
     print('## Surface 2 — `UsdPrimDefinition.GetMetadata("assetInfo")`', file=buf)
@@ -54,12 +72,12 @@ def render_summary(results):
     print('| approach | prim_def_assetInfo | has `source` fallback? |',
           file=buf)
     print('|---|---|---|', file=buf)
-    for ap in APPROACHES:
-        s = results.get(ap, {}).get('surfaces', {}).get('prim_def_metadata', {})
+    for label, surfaces in iter_rows(results):
+        s = surfaces.get('prim_def_metadata', {})
         meta = s.get('prim_def_assetInfo')
         meta_str = '`' + str(meta) + '`' if meta else '_(none)_'
         mark = '✓' if s.get('has_source_key_without_authoring') else '✗'
-        print(f'| {ap} | {meta_str} | {mark} |', file=buf)
+        print(f'| {label} | {meta_str} | {mark} |', file=buf)
     print('', file=buf)
 
     print('## Surface 3 — typed property fallbacks (registry-derived)', file=buf)
@@ -102,11 +120,11 @@ def render_summary(results):
     print('| approach | via applied_schemas (a) | via assetInfo.source (b) |',
           file=buf)
     print('|---|---|---|', file=buf)
-    for ap in APPROACHES:
-        s = results.get(ap, {}).get('surfaces', {}).get('generic_gui_walk', {})
+    for label, surfaces in iter_rows(results):
+        s = surfaces.get('generic_gui_walk', {})
         a = '✓' if s.get('vendor_found_via_apply_schemas') else '✗'
         b = '✓' if s.get('vendor_found_via_assetInfo_source') else '✗'
-        print(f'| {ap} | {a} | {b} |', file=buf)
+        print(f'| {label} | {a} | {b} |', file=buf)
     print('', file=buf)
 
     print('## Observations', file=buf)

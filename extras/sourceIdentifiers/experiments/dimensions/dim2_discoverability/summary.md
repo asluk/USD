@@ -5,7 +5,9 @@ identifiers without prior pipeline-specific knowledge."
 
 Probed on a prim with one vendor (`windchill`) identifier authored.
 Four surfaces queried — what does each reveal about the vendor and
-the identifier value?
+the identifier value? For approach D, the label half is measured
+separately by authoring a `SemanticLabelsAPI:windchill:partCategory`
+instance on a fresh prim and re-running the same four surfaces.
 
 ## Surface 1 — `prim.GetAppliedSchemas()`
 
@@ -17,7 +19,8 @@ Does the schemas list surface the vendor identity directly?
 | B | `SourceIdentifierAPI:windchill` | ✓ |
 | Bprime | `WindchillSourceIdAPI`, `SourceIdentifierBaseAPI` | ✓ |
 | C | `SourceIdentifierBridgeAPI:windchill` | ✓ |
-| D | `SourceIdentifiersAPI` | ✗ |
+| D (id half) | `SourceIdentifiersAPI` | ✗ |
+| D (label half) | `SemanticLabelsAPI:windchill:partCategory` | ✓ |
 
 ## Surface 2 — `UsdPrimDefinition.GetMetadata("assetInfo")`
 
@@ -30,7 +33,8 @@ sub-dictionary in the prim definition (without scene authoring)?
 | B | _(none)_ | ✗ |
 | Bprime | _(none)_ | ✗ |
 | C | _(none)_ | ✗ |
-| D | _(none)_ | ✗ |
+| D (id half) | _(none)_ | ✗ |
+| D (label half) | _(none)_ | ✗ |
 
 ## Surface 3 — typed property fallbacks (registry-derived)
 
@@ -75,7 +79,8 @@ actually recovers the vendor name on each approach.
 | B | ✓ | ✗ |
 | Bprime | ✓ | ✗ |
 | C | ✓ | ✓ |
-| D | ✗ | ✓ |
+| D (id half) | ✗ | ✓ |
+| D (label half) | ✓ | ✗ |
 
 ## Observations
 

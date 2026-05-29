@@ -141,6 +141,25 @@ def probe_generic_gui_walk(prim, approach):
     return out
 
 
+def author_one_label_instance(prim):
+    """D's label half: apply SemanticLabelsAPI:windchill:partCategory and
+    set the token[] attribute. Used only for the label_half measurement."""
+    prim.ApplyAPI('SemanticLabelsAPI', 'windchill:partCategory')
+    attr = prim.GetAttribute('semantics:labels:windchill:partCategory')
+    if attr:
+        attr.Set(['Frame', 'Structural'])
+
+
+def measure_surfaces(prim, approach):
+    """Run all four surfaces against a prim already authored."""
+    return {
+        'applied_schemas': probe_applied_schemas(prim, approach),
+        'prim_def_metadata': probe_prim_def_metadata(prim, approach),
+        'prim_def_properties': probe_prim_def_properties(approach),
+        'generic_gui_walk': probe_generic_gui_walk(prim, approach),
+    }
+
+
 def main():
     approach = sys.argv[1]
     stage = Usd.Stage.CreateInMemory()
@@ -149,13 +168,17 @@ def main():
 
     out = {
         'approach': approach,
-        'surfaces': {
-            'applied_schemas': probe_applied_schemas(prim, approach),
-            'prim_def_metadata': probe_prim_def_metadata(prim, approach),
-            'prim_def_properties': probe_prim_def_properties(approach),
-            'generic_gui_walk': probe_generic_gui_walk(prim, approach),
-        },
+        'surfaces': measure_surfaces(prim, approach),
     }
+
+    # D's label half: author a SemanticLabelsAPI instance on a fresh prim
+    # (no SourceIdentifiersAPI authoring) and re-run the four surfaces.
+    if approach == 'D':
+        stage2 = Usd.Stage.CreateInMemory()
+        prim2 = UsdGeom.Xform.Define(stage2, '/Asset').GetPrim()
+        author_one_label_instance(prim2)
+        out['label_half'] = measure_surfaces(prim2, approach)
+
     print(json.dumps(out, ensure_ascii=False))
 
 
