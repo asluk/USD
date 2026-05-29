@@ -95,7 +95,7 @@ def Xform "Asset" (
 }
 ```
 
-### D — `assetInfo` sub-dictionary + multi-apply API schema (beyond PR #105)
+### D — `assetInfo` sub-dictionary for identifiers + multi-apply API schema for semantic labels (beyond PR #105)
 
 Two coordinated mechanisms on the same prim: identifiers in
 `assetInfo.source.<vendor>` (same shape as A, with a convenience
