@@ -32,6 +32,22 @@ def render_summary(results):
           file=buf)
     print('coexist on one prim.', file=buf)
     print('', file=buf)
+    print('**Note on Approach D.** D is a candidate beyond PR #105',
+          file=buf)
+    print('(Matt Kuruc strawman, per the criteria file). Its mechanism',
+          file=buf)
+    print('combines an identifier half (assetInfo dict shape, mirroring',
+          file=buf)
+    print('A) and a label half (`SemanticLabelsAPI` multi-apply,',
+          file=buf)
+    print('mirroring B). The coexistence row for D\'s label half',
+          file=buf)
+    print('records label-token round-trip, not identifier-value',
+          file=buf)
+    print('round-trip — D-label stores `token[]` values, not identifier',
+          file=buf)
+    print('strings.', file=buf)
+    print('', file=buf)
 
     # Artifact-shipped table
     print('## Artifact shipped per vendor', file=buf)
@@ -102,7 +118,9 @@ def render_summary(results):
               file=buf)
         print('per-vendor schema class. The experiment plugin ships two as',
               file=buf)
-        print('a concrete example, and SchemaRegistry confirms both register:',
+        print('a concrete example, and `Usd.SchemaRegistry.IsAppliedAPISchema`',
+              file=buf)
+        print('reports True for the base and both per-vendor classes:',
               file=buf)
         print('', file=buf)
         for name, registered in bp.items():
@@ -112,24 +130,30 @@ def render_summary(results):
     # Observations
     print('## Observations', file=buf)
     print('', file=buf)
-    print('- A, B, C, D ship the schema in the core (USD or AOUSD), and a',
+    print('- A, B, C, D record `artifact_shipped: "data only"` and',
           file=buf)
-    print('  vendor registers a new identifier scheme by authoring data',
+    print('  `registers_with_core: true`: a vendor registers a new',
           file=buf)
-    print('  into the agreed-on slot — no per-vendor schema or plugin.',
+    print('  identifier scheme by authoring data into the schema slot',
           file=buf)
-    print('  This is the "data-model-level, not plugin-architecture-level"',
+    print('  the schema already names — no per-vendor schema or',
           file=buf)
-    print('  form named in P3.', file=buf)
-    print('- B\' (Bprime) registers a new identifier scheme by declaring',
+    print('  plugin. This matches P3\'s "data-model-level, not',
           file=buf)
-    print('  a per-vendor schema class that inherits from the base via',
+    print('  plugin-architecture-level" wording.',
           file=buf)
-    print('  `prepend apiSchemas`, then publishing a plugin that USD',
+    print('- B\' (Bprime) records `artifact_shipped: "plugin + schema',
           file=buf)
-    print('  loads via PXR_PLUGINPATH_NAME. The class name occupies a',
+    print('  + data"` and `registers_with_core: false`: a vendor',
           file=buf)
-    print('  slot in the TfType namespace.', file=buf)
+    print('  declares a per-vendor schema class that inherits from',
+          file=buf)
+    print('  `SourceIdentifierBaseAPI` via `prepend apiSchemas`, then',
+          file=buf)
+    print('  publishes a plugin that USD loads via PXR_PLUGINPATH_NAME.',
+          file=buf)
+    print('  The class name lives in the TfType namespace.',
+          file=buf)
     print('- B\' (Bprime) shared-base-property effect: because the',
           file=buf)
     print('  per-vendor schemas inherit `SourceIdentifierBaseAPI` via',
@@ -150,13 +174,22 @@ def render_summary(results):
     print('  `assetInfo.source`; two vendors coexist as separate',
           file=buf)
     print('  sub-dictionaries.', file=buf)
-    print('- For B and D-label the vendor identity is the ApplyAPI',
+    print('- For B the vendor identity is the ApplyAPI instance name on',
           file=buf)
-    print('  instance name; two vendors coexist as two schema instances',
+    print('  `SourceIdentifierAPI`; two vendors coexist as two schema',
           file=buf)
-    print('  on the same prim. The D label-half row above grounds this',
+    print('  instances on the same prim, each carrying its own typed',
           file=buf)
-    print('  symmetrically with the B row.', file=buf)
+    print('  properties.', file=buf)
+    print('- For D\'s label half the analogous shape applies on',
+          file=buf)
+    print('  `SemanticLabelsAPI`: two vendor:kind instances coexist',
+          file=buf)
+    print('  as two schema instances; the coexistence row records the',
+          file=buf)
+    print('  round-trip of the `token[]` label arrays (not identifier',
+          file=buf)
+    print('  strings) on that side.', file=buf)
     print('', file=buf)
 
     return buf.getvalue()

@@ -8,6 +8,15 @@ This dimension records what a vendor must ship to register a new
 identifier scheme, and verifies empirically that two vendors can
 coexist on one prim.
 
+**Note on Approach D.** D is a candidate beyond PR #105
+(Matt Kuruc strawman, per the criteria file). Its mechanism
+combines an identifier half (assetInfo dict shape, mirroring
+A) and a label half (`SemanticLabelsAPI` multi-apply,
+mirroring B). The coexistence row for D's label half
+records label-token round-trip, not identifier-value
+round-trip — D-label stores `token[]` values, not identifier
+strings.
+
 ## Artifact shipped per vendor
 
 | approach | artifact | uses core schema | vendor collision mode |
@@ -69,7 +78,8 @@ shape constrains per-vendor independence (see notes).
 
 Bprime's registration step requires the vendor to ship a
 per-vendor schema class. The experiment plugin ships two as
-a concrete example, and SchemaRegistry confirms both register:
+a concrete example, and `Usd.SchemaRegistry.IsAppliedAPISchema`
+reports True for the base and both per-vendor classes:
 
 - `SourceIdentifierBaseAPI` registered: True
 - `WindchillSourceIdAPI` registered: True
@@ -77,16 +87,18 @@ a concrete example, and SchemaRegistry confirms both register:
 
 ## Observations
 
-- A, B, C, D ship the schema in the core (USD or AOUSD), and a
-  vendor registers a new identifier scheme by authoring data
-  into the agreed-on slot — no per-vendor schema or plugin.
-  This is the "data-model-level, not plugin-architecture-level"
-  form named in P3.
-- B' (Bprime) registers a new identifier scheme by declaring
-  a per-vendor schema class that inherits from the base via
-  `prepend apiSchemas`, then publishing a plugin that USD
-  loads via PXR_PLUGINPATH_NAME. The class name occupies a
-  slot in the TfType namespace.
+- A, B, C, D record `artifact_shipped: "data only"` and
+  `registers_with_core: true`: a vendor registers a new
+  identifier scheme by authoring data into the schema slot
+  the schema already names — no per-vendor schema or
+  plugin. This matches P3's "data-model-level, not
+  plugin-architecture-level" wording.
+- B' (Bprime) records `artifact_shipped: "plugin + schema
+  + data"` and `registers_with_core: false`: a vendor
+  declares a per-vendor schema class that inherits from
+  `SourceIdentifierBaseAPI` via `prepend apiSchemas`, then
+  publishes a plugin that USD loads via PXR_PLUGINPATH_NAME.
+  The class name lives in the TfType namespace.
 - B' (Bprime) shared-base-property effect: because the
   per-vendor schemas inherit `SourceIdentifierBaseAPI` via
   `prepend apiSchemas`, `sourceId:primaryId` is one attribute
@@ -98,8 +110,13 @@ a concrete example, and SchemaRegistry confirms both register:
 - For A, C, D the vendor identity is a dict key under
   `assetInfo.source`; two vendors coexist as separate
   sub-dictionaries.
-- For B and D-label the vendor identity is the ApplyAPI
-  instance name; two vendors coexist as two schema instances
-  on the same prim. The D label-half row above grounds this
-  symmetrically with the B row.
+- For B the vendor identity is the ApplyAPI instance name on
+  `SourceIdentifierAPI`; two vendors coexist as two schema
+  instances on the same prim, each carrying its own typed
+  properties.
+- For D's label half the analogous shape applies on
+  `SemanticLabelsAPI`: two vendor:kind instances coexist
+  as two schema instances; the coexistence row records the
+  round-trip of the `token[]` label arrays (not identifier
+  strings) on that side.
 
