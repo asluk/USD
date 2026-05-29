@@ -63,8 +63,8 @@ def render_summary(results):
     print('Two different vendor identifiers (`windchill`, `ifc`) applied to', file=buf)
     print('one prim; layer exported and re-imported; both identifiers', file=buf)
     print('queried back independently. `✓` = both vendors\' values recovered', file=buf)
-    print('byte-for-byte. `~` = applies, but storage shape constrains the', file=buf)
-    print('per-vendor independence (see notes).', file=buf)
+    print('and equal to the authored value. `~` = applies, but storage', file=buf)
+    print('shape constrains per-vendor independence (see notes).', file=buf)
     print('', file=buf)
     print('| approach | windchill round-trip | ifc round-trip | distinct vendor storage |',
           file=buf)
@@ -96,11 +96,13 @@ def render_summary(results):
     # Bprime-specific
     bp = results.get('Bprime', {}).get('per_vendor_schemas_shipped', {})
     if bp:
-        print('## Bprime per-vendor schemas (sanity check)', file=buf)
+        print('## Bprime per-vendor schemas registered', file=buf)
         print('', file=buf)
-        print('Bprime requires the vendor to ship a per-vendor schema class.',
+        print('Bprime\'s registration step requires the vendor to ship a',
               file=buf)
-        print('The experiment plugin already ships two as a concrete example:',
+        print('per-vendor schema class. The experiment plugin ships two as',
+              file=buf)
+        print('a concrete example, and SchemaRegistry confirms both register:',
               file=buf)
         print('', file=buf)
         for name, registered in bp.items():
@@ -110,32 +112,51 @@ def render_summary(results):
     # Observations
     print('## Observations', file=buf)
     print('', file=buf)
-    print('- A, B, C, D are all "data-only" from a vendor\'s perspective —',
+    print('- A, B, C, D ship the schema in the core (USD or AOUSD), and a',
           file=buf)
-    print('  the core (USD or AOUSD) ships the schema, and vendors just',
+    print('  vendor registers a new identifier scheme by authoring data',
           file=buf)
-    print('  author data into the agreed-on slot. This matches P3\'s', file=buf)
-    print('  "data-model-level, not plugin-architecture-level" wording.',
+    print('  into the agreed-on slot — no per-vendor schema or plugin.',
           file=buf)
-    print('- B\' is the outlier: it requires the vendor to ship a plugin', file=buf)
-    print('  (per-vendor schema class). The per-vendor schema goes through', file=buf)
-    print('  USD\'s plugin registration mechanism (plugInfo.json,',
+    print('  This is the "data-model-level, not plugin-architecture-level"',
           file=buf)
-    print('  PXR_PLUGINPATH_NAME), and the class name occupies a slot in', file=buf)
-    print('  the global TfType namespace.', file=buf)
-    print('- B\' also surfaces a *base-property-sharing* effect in this run:', file=buf)
-    print('  applying both WindchillSourceIdAPI and IFCSourceIdAPI to one', file=buf)
-    print('  prim gives only ONE `sourceId:primaryId` slot (the base is', file=buf)
-    print('  shared via `prepend apiSchemas`). Per-vendor extensions can', file=buf)
-    print('  still coexist (each vendor\'s own additional properties remain', file=buf)
-    print('  distinct), but the *base identifier* is not naturally', file=buf)
-    print('  one-per-vendor in this expression of B\'.', file=buf)
-    print('- For A, C, D the vendor identity is a dict key — two vendors', file=buf)
-    print('  coexist as separate sub-dictionaries with no schema work.',
+    print('  form named in P3.', file=buf)
+    print('- B\' (Bprime) registers a new identifier scheme by declaring',
           file=buf)
-    print('- For B and D-label the vendor identity is an ApplyAPI instance', file=buf)
-    print('  name — two vendors coexist as two schema instances on one', file=buf)
-    print('  prim, again with no schema work.', file=buf)
+    print('  a per-vendor schema class that inherits from the base via',
+          file=buf)
+    print('  `prepend apiSchemas`, then publishing a plugin that USD',
+          file=buf)
+    print('  loads via PXR_PLUGINPATH_NAME. The class name occupies a',
+          file=buf)
+    print('  slot in the TfType namespace.', file=buf)
+    print('- B\' (Bprime) shared-base-property effect: because the',
+          file=buf)
+    print('  per-vendor schemas inherit `SourceIdentifierBaseAPI` via',
+          file=buf)
+    print('  `prepend apiSchemas`, `sourceId:primaryId` is one attribute',
+          file=buf)
+    print('  shared across all applied vendor schemas on a prim. Applying',
+          file=buf)
+    print('  both WindchillSourceIdAPI and IFCSourceIdAPI to one prim',
+          file=buf)
+    print('  yields one primaryId slot, with the most-recently-authored',
+          file=buf)
+    print('  value resolved for both. Vendor-specific properties declared',
+          file=buf)
+    print('  outside the shared base remain per-vendor.', file=buf)
+    print('- For A, C, D the vendor identity is a dict key under',
+          file=buf)
+    print('  `assetInfo.source`; two vendors coexist as separate',
+          file=buf)
+    print('  sub-dictionaries.', file=buf)
+    print('- For B and D-label the vendor identity is the ApplyAPI',
+          file=buf)
+    print('  instance name; two vendors coexist as two schema instances',
+          file=buf)
+    print('  on the same prim. The D label-half row above grounds this',
+          file=buf)
+    print('  symmetrically with the B row.', file=buf)
     print('', file=buf)
 
     return buf.getvalue()

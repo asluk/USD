@@ -53,8 +53,8 @@ coexist on one prim.
 Two different vendor identifiers (`windchill`, `ifc`) applied to
 one prim; layer exported and re-imported; both identifiers
 queried back independently. `✓` = both vendors' values recovered
-byte-for-byte. `~` = applies, but storage shape constrains the
-per-vendor independence (see notes).
+and equal to the authored value. `~` = applies, but storage
+shape constrains per-vendor independence (see notes).
 
 | approach | windchill round-trip | ifc round-trip | distinct vendor storage |
 |---|---|---|---|
@@ -65,10 +65,11 @@ per-vendor independence (see notes).
 | D (id half) | ✓ | ✓ | yes |
 | D (label half) | ✓ | ✓ | yes |
 
-## Bprime per-vendor schemas (sanity check)
+## Bprime per-vendor schemas registered
 
-Bprime requires the vendor to ship a per-vendor schema class.
-The experiment plugin already ships two as a concrete example:
+Bprime's registration step requires the vendor to ship a
+per-vendor schema class. The experiment plugin ships two as
+a concrete example, and SchemaRegistry confirms both register:
 
 - `SourceIdentifierBaseAPI` registered: True
 - `WindchillSourceIdAPI` registered: True
@@ -76,25 +77,29 @@ The experiment plugin already ships two as a concrete example:
 
 ## Observations
 
-- A, B, C, D are all "data-only" from a vendor's perspective —
-  the core (USD or AOUSD) ships the schema, and vendors just
-  author data into the agreed-on slot. This matches P3's
-  "data-model-level, not plugin-architecture-level" wording.
-- B' is the outlier: it requires the vendor to ship a plugin
-  (per-vendor schema class). The per-vendor schema goes through
-  USD's plugin registration mechanism (plugInfo.json,
-  PXR_PLUGINPATH_NAME), and the class name occupies a slot in
-  the global TfType namespace.
-- B' also surfaces a *base-property-sharing* effect in this run:
-  applying both WindchillSourceIdAPI and IFCSourceIdAPI to one
-  prim gives only ONE `sourceId:primaryId` slot (the base is
-  shared via `prepend apiSchemas`). Per-vendor extensions can
-  still coexist (each vendor's own additional properties remain
-  distinct), but the *base identifier* is not naturally
-  one-per-vendor in this expression of B'.
-- For A, C, D the vendor identity is a dict key — two vendors
-  coexist as separate sub-dictionaries with no schema work.
-- For B and D-label the vendor identity is an ApplyAPI instance
-  name — two vendors coexist as two schema instances on one
-  prim, again with no schema work.
+- A, B, C, D ship the schema in the core (USD or AOUSD), and a
+  vendor registers a new identifier scheme by authoring data
+  into the agreed-on slot — no per-vendor schema or plugin.
+  This is the "data-model-level, not plugin-architecture-level"
+  form named in P3.
+- B' (Bprime) registers a new identifier scheme by declaring
+  a per-vendor schema class that inherits from the base via
+  `prepend apiSchemas`, then publishing a plugin that USD
+  loads via PXR_PLUGINPATH_NAME. The class name occupies a
+  slot in the TfType namespace.
+- B' (Bprime) shared-base-property effect: because the
+  per-vendor schemas inherit `SourceIdentifierBaseAPI` via
+  `prepend apiSchemas`, `sourceId:primaryId` is one attribute
+  shared across all applied vendor schemas on a prim. Applying
+  both WindchillSourceIdAPI and IFCSourceIdAPI to one prim
+  yields one primaryId slot, with the most-recently-authored
+  value resolved for both. Vendor-specific properties declared
+  outside the shared base remain per-vendor.
+- For A, C, D the vendor identity is a dict key under
+  `assetInfo.source`; two vendors coexist as separate
+  sub-dictionaries.
+- For B and D-label the vendor identity is the ApplyAPI
+  instance name; two vendors coexist as two schema instances
+  on the same prim. The D label-half row above grounds this
+  symmetrically with the B row.
 
