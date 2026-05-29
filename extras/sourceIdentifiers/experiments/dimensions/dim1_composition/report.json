@@ -506,6 +506,163 @@
   },
   "D": {
     "approach": "D",
+    "label_half": {
+      "inherit": {
+        "override_same_label": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:windchill:partCategory"
+          ],
+          "ifc_entityType_labels": null,
+          "label_instances_visible": [
+            "windchill:partCategory"
+          ],
+          "windchill_partCategory_labels": [
+            "STRONG_LABEL_X"
+          ]
+        },
+        "two_kinds_merge": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:ifc:entityType",
+            "SemanticLabelsAPI:windchill:partCategory"
+          ],
+          "ifc_entityType_labels": [
+            "IfcBeam"
+          ],
+          "label_instances_visible": [
+            "ifc:entityType",
+            "windchill:partCategory"
+          ],
+          "windchill_partCategory_labels": [
+            "WEAK_LABEL_A",
+            "WEAK_LABEL_B"
+          ]
+        }
+      },
+      "payload": {
+        "override_same_label": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:windchill:partCategory"
+          ],
+          "ifc_entityType_labels": null,
+          "label_instances_visible": [
+            "windchill:partCategory"
+          ],
+          "windchill_partCategory_labels": [
+            "STRONG_LABEL_X"
+          ]
+        },
+        "two_kinds_merge": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:ifc:entityType",
+            "SemanticLabelsAPI:windchill:partCategory"
+          ],
+          "ifc_entityType_labels": [
+            "IfcBeam"
+          ],
+          "label_instances_visible": [
+            "ifc:entityType",
+            "windchill:partCategory"
+          ],
+          "windchill_partCategory_labels": [
+            "WEAK_LABEL_A",
+            "WEAK_LABEL_B"
+          ]
+        }
+      },
+      "reference": {
+        "override_same_label": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:windchill:partCategory"
+          ],
+          "ifc_entityType_labels": null,
+          "label_instances_visible": [
+            "windchill:partCategory"
+          ],
+          "windchill_partCategory_labels": [
+            "STRONG_LABEL_X"
+          ]
+        },
+        "two_kinds_merge": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:ifc:entityType",
+            "SemanticLabelsAPI:windchill:partCategory"
+          ],
+          "ifc_entityType_labels": [
+            "IfcBeam"
+          ],
+          "label_instances_visible": [
+            "ifc:entityType",
+            "windchill:partCategory"
+          ],
+          "windchill_partCategory_labels": [
+            "WEAK_LABEL_A",
+            "WEAK_LABEL_B"
+          ]
+        }
+      },
+      "specialize": {
+        "override_same_label": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:windchill:partCategory"
+          ],
+          "ifc_entityType_labels": null,
+          "label_instances_visible": [
+            "windchill:partCategory"
+          ],
+          "windchill_partCategory_labels": [
+            "STRONG_LABEL_X"
+          ]
+        },
+        "two_kinds_merge": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:ifc:entityType",
+            "SemanticLabelsAPI:windchill:partCategory"
+          ],
+          "ifc_entityType_labels": [
+            "IfcBeam"
+          ],
+          "label_instances_visible": [
+            "ifc:entityType",
+            "windchill:partCategory"
+          ],
+          "windchill_partCategory_labels": [
+            "WEAK_LABEL_A",
+            "WEAK_LABEL_B"
+          ]
+        }
+      },
+      "sublayer": {
+        "override_same_label": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:windchill:partCategory"
+          ],
+          "ifc_entityType_labels": null,
+          "label_instances_visible": [
+            "windchill:partCategory"
+          ],
+          "windchill_partCategory_labels": [
+            "STRONG_LABEL_X"
+          ]
+        },
+        "two_kinds_merge": {
+          "applied_schemas": [
+            "SemanticLabelsAPI:ifc:entityType",
+            "SemanticLabelsAPI:windchill:partCategory"
+          ],
+          "ifc_entityType_labels": [
+            "IfcBeam"
+          ],
+          "label_instances_visible": [
+            "ifc:entityType",
+            "windchill:partCategory"
+          ],
+          "windchill_partCategory_labels": [
+            "WEAK_LABEL_A",
+            "WEAK_LABEL_B"
+          ]
+        }
+      }
+    },
     "results": {
       "inherit": {
         "override_same_vendor": {

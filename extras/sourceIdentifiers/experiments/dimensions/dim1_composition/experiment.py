@@ -53,7 +53,11 @@ def render_summary(results):
     print('', file=buf)
 
     for ap in APPROACHES:
-        print(f'## {ap}', file=buf)
+        if ap == 'D':
+            header = '## D — identifier half'
+        else:
+            header = f'## {ap}'
+        print(header, file=buf)
         print('', file=buf)
         print('### override_same_vendor — which value composes?', file=buf)
         print('', file=buf)
@@ -85,6 +89,44 @@ def render_summary(results):
             visible = ', '.join(scn.get('vendors_visible', []))
             print(f'| {op} | `{wc}` | `{ifc}` | {visible} |', file=buf)
         print('', file=buf)
+
+        # D's label half: render only when present in the report.
+        if ap == 'D' and 'label_half' in results.get(ap, {}):
+            print('## D — label half (SemanticLabelsAPI)', file=buf)
+            print('', file=buf)
+            print('### override_same_label — which label list composes?', file=buf)
+            print('', file=buf)
+            print('| op | windchill:partCategory labels | applied_schemas |',
+                  file=buf)
+            print('|---|---|---|', file=buf)
+            lab_results = results.get(ap, {}).get('label_half', {})
+            for op in COMPOSITION_OPS:
+                scn = lab_results.get(op, {}).get('override_same_label', {})
+                if 'error' in scn:
+                    print(f'| {op} | ERROR | {scn["error"]} |', file=buf)
+                    continue
+                labels = scn.get('windchill_partCategory_labels')
+                applied = ', '.join(
+                    f'`{x}`' for x in scn.get('applied_schemas', []))
+                print(f'| {op} | `{labels}` | {applied} |', file=buf)
+            print('', file=buf)
+
+            print('### two_kinds_merge — both label instances visible?',
+                  file=buf)
+            print('', file=buf)
+            print('| op | windchill:partCategory | ifc:entityType | instances_visible |',
+                  file=buf)
+            print('|---|---|---|---|', file=buf)
+            for op in COMPOSITION_OPS:
+                scn = lab_results.get(op, {}).get('two_kinds_merge', {})
+                if 'error' in scn:
+                    print(f'| {op} | ERROR | ERROR | {scn["error"]} |', file=buf)
+                    continue
+                wc = scn.get('windchill_partCategory_labels')
+                ifc = scn.get('ifc_entityType_labels')
+                visible = ', '.join(scn.get('label_instances_visible', []))
+                print(f'| {op} | `{wc}` | `{ifc}` | {visible} |', file=buf)
+            print('', file=buf)
 
     print('## Observations', file=buf)
     print('', file=buf)

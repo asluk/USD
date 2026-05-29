@@ -107,7 +107,7 @@ they're testing is preserved.)
 | inherit | `WEAK_WINDCHILL` | `STRONG_IFC` | ifc, windchill |
 | specialize | `WEAK_WINDCHILL` | `STRONG_IFC` | ifc, windchill |
 
-## D
+## D — identifier half
 
 ### override_same_vendor — which value composes?
 
@@ -128,6 +128,28 @@ they're testing is preserved.)
 | payload | `WEAK_WINDCHILL` | `STRONG_IFC` | ifc, windchill |
 | inherit | `WEAK_WINDCHILL` | `STRONG_IFC` | ifc, windchill |
 | specialize | `WEAK_WINDCHILL` | `STRONG_IFC` | ifc, windchill |
+
+## D — label half (SemanticLabelsAPI)
+
+### override_same_label — which label list composes?
+
+| op | windchill:partCategory labels | applied_schemas |
+|---|---|---|
+| sublayer | `['STRONG_LABEL_X']` | `SemanticLabelsAPI:windchill:partCategory` |
+| reference | `['STRONG_LABEL_X']` | `SemanticLabelsAPI:windchill:partCategory` |
+| payload | `['STRONG_LABEL_X']` | `SemanticLabelsAPI:windchill:partCategory` |
+| inherit | `['STRONG_LABEL_X']` | `SemanticLabelsAPI:windchill:partCategory` |
+| specialize | `['STRONG_LABEL_X']` | `SemanticLabelsAPI:windchill:partCategory` |
+
+### two_kinds_merge — both label instances visible?
+
+| op | windchill:partCategory | ifc:entityType | instances_visible |
+|---|---|---|---|
+| sublayer | `['WEAK_LABEL_A', 'WEAK_LABEL_B']` | `['IfcBeam']` | ifc:entityType, windchill:partCategory |
+| reference | `['WEAK_LABEL_A', 'WEAK_LABEL_B']` | `['IfcBeam']` | ifc:entityType, windchill:partCategory |
+| payload | `['WEAK_LABEL_A', 'WEAK_LABEL_B']` | `['IfcBeam']` | ifc:entityType, windchill:partCategory |
+| inherit | `['WEAK_LABEL_A', 'WEAK_LABEL_B']` | `['IfcBeam']` | ifc:entityType, windchill:partCategory |
+| specialize | `['WEAK_LABEL_A', 'WEAK_LABEL_B']` | `['IfcBeam']` | ifc:entityType, windchill:partCategory |
 
 ## Observations
 
