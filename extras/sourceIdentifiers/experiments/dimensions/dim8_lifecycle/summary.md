@@ -33,8 +33,8 @@ registration, not just the layer text.
 | approach | convention | sites/prim | v1 lines | v2 lines | new vendor visible after rewrite |
 |---|---|---|---|---|---|
 | A | `lexical-mapping` | 1 (dict key under source.<vendor>) | 41 | 41 | multiVendor |
-| B | `lexical-mapping` | 5 (apiSchemas entry + 4 property-name prefixes) | 23 | 23 | multiVendor |
-| Bprime | `schema + plugin registration` | n/a (vendor identity is the schema class name; new class must be declared and registered before any prim can reference it) | 23 | 14 |  |
+| B | `lexical-mapping` | 2 (apiSchemas entry + each authored property's prefix) | 23 | 23 | multiVendor |
+| Bprime | `schema + plugin registration` | n/a (schema-level identity) | 23 | 14 | none (no schema registered for new vendor) |
 | C | `lexical-mapping` | 1 (dict key under source.<vendor>) | 41 | 41 | multiVendor |
 | D | `lexical-mapping` | 1 (dict key under source.<vendor>) | 41 | 41 | multiVendor |
 
@@ -133,7 +133,7 @@ schema on both ends) and is not enumerated separately.
 - **Carrier (c)** is **not named in any PR #105 principle**.
   It is an operational concern that emerges downstream of the
   proposal: if multiple mechanisms end up adopted, this is the
-  cost of mechanism plurality.
+  implication of mechanism plurality.
 
 ## Observations
 
@@ -142,11 +142,15 @@ schema on both ends) and is not enumerated separately.
   rewrites are layer-text-only operations (one site per prim).
 - For B, the vendor token is a multi-apply schema instance name
   appearing in the apiSchemas list and as the middle segment of
-  each typed property name; carrier (a) is a layer-text rewrite
-  across those five sites per prim. The field name is a typed
-  schema property; carrier (b)'s renamed field can be authored
-  as a custom attribute on the prim (layer-text-only), which
-  carries the value but is not present in UsdPrimDefinition.
+  each authored typed-property name; carrier (a) is a layer-text
+  rewrite across one site per authored typed-property plus one
+  in the apiSchemas entry (the probe authors only `primaryId`,
+  for a total of two sites per prim; B declares four typed
+  properties, so the count scales by +1 per additional authored
+  property). The field name is a typed schema property; carrier
+  (b)'s renamed field can be authored as a custom attribute on
+  the prim (layer-text-only), which carries the value but is
+  not present in UsdPrimDefinition.
 - For B', the vendor token is the schema class name itself,
   which lives in the schema definition and the plugin's TfType
   registration. Carrier (a) requires declaring and registering
@@ -174,8 +178,8 @@ schema on both ends) and is not enumerated separately.
   literal string in the layer (dict key or multi-apply
   instance suffix).
 - A and D both publish a schema named `SourceIdentifiersAPI`
-  for the identifier half (intentional collision in the
-  proposal). Neutral layer-text inspection cannot distinguish
-  A's authoring from D's identifier-half authoring on this
-  surface alone.
+  for the identifier half (per PR #105's design for D, which
+  mirrors A's identifier shape). Neutral layer-text inspection
+  cannot distinguish A's authoring from D's identifier-half
+  authoring on this surface alone.
 

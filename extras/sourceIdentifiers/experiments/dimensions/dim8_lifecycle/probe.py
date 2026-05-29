@@ -207,13 +207,18 @@ def rewrite_vendor_in_layer(approach, src_path, dst_path,
         sites_per_prim = 1
         sites_detail = 'dict key under source.<vendor>'
     elif approach == 'B':
+        # The probe authors only `primaryId`; the vendor token therefore
+        # appears once in the apiSchemas list entry and once in the
+        # primaryId property name. The count scales by +1 per additional
+        # authored typed property (B declares four: primaryId, revision,
+        # domain, label).
         convention = 'lexical-mapping'
-        sites_per_prim = 5
-        sites_detail = 'apiSchemas entry + 4 property-name prefixes'
+        sites_per_prim = 2
+        sites_detail = "apiSchemas entry + each authored property's prefix"
     elif approach == 'Bprime':
         convention = 'schema + plugin registration'
         sites_per_prim = None
-        sites_detail = 'vendor identity is the schema class name; new class must be declared and registered before any prim can reference it'
+        sites_detail = 'schema-level identity'
 
     dst_stage.GetRootLayer().Save()
 
