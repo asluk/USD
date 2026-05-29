@@ -34,11 +34,13 @@ def Xform "Asset" (
 }
 ```
 
-### B — multi-apply typed schema (PR #105)
+### B — multi-apply API schema with typed properties (PR #105)
 
-Vendor identifier lives in typed properties on a multi-apply schema;
-the vendor name is the ApplyAPI instance name. One ApplyAPI call per
-vendor.
+Vendor identifier lives in typed properties declared by a multi-apply
+*applied* API schema (a multi-apply schema is an applied API schema
+that can be applied multiple times with different instance names —
+it is not a typed schema in the USD sense). The vendor name is the
+ApplyAPI instance name. One ApplyAPI call per vendor.
 
 ```usda
 def Xform "Asset" (
@@ -129,13 +131,42 @@ identifier half, one for the label half.
 PR #105 names source-identifier storage as a separate concern from
 USD namespace paths, and surveys candidate mechanisms across a tiered
 vendor lifecycle (vendor → multi-vendor → core). The proposal lists
-eight principles, eight open questions, and an emerging consensus on
-multi-field / multi-vendor / any-prim / type-vs-instance scoping /
-explicit typing. The central open question is whether identifiers
-should live as dictionary metadata on `assetInfo` or as a typed
-applied schema (OQ2). This comparison provides empirical data for
-that question and for the surrounding principles, without proposing
-which way to resolve OQ2.
+eight numbered *principles* and eight numbered *open questions*. The
+central open question is whether identifiers should live as
+dictionary metadata on `assetInfo` or as an applied API schema with
+typed properties (OQ2). This comparison provides empirical data for OQ2 and for the
+surrounding principles, without proposing which way to resolve OQ2.
+
+For quick reference, the principles and open questions cited in this
+document:
+
+- **P3** — *vendor extensibility*. Any vendor can declare an
+  identifier scheme without central approval; tiered lifecycle
+  (vendor → multi-vendor → core); data-model-level, not
+  plugin-architecture-level.
+- **P4** — *composability*. Clear behavior under reference, inherit,
+  specialize, payload, sublayer.
+- **P5** — *discoverability*. Tools can discover a prim carries
+  source identifiers without prior pipeline-specific knowledge.
+- **P6** — *external queryability*. Building external indexes
+  ("given identifier X, which layers reference it?") must be
+  tractable.
+- **P7** — *round-trip fidelity*. Identifier values survive a USD
+  round-trip without loss.
+- **OQ1** — cross-system resolution and indexing.
+- **OQ2** — dictionary metadata vs applied schema (the central
+  A/B question).
+- **OQ3** — stratification and governance.
+- **OQ4** — scope: model roots only, or any prim?
+- **OQ5** — namespacing of identifiers (key namespace vs
+  value-encoded).
+- **OQ6 / OQ7 / OQ8** — relationship to `displayName`, authorship
+  traceability, transcoding.
+
+PR #105 also names P1 (separation of concerns), P2 (industry
+agnosticism), and P8 (minimal disruption) as principles; this
+comparison does not measure them directly (see *What the data
+leaves undecidable* below).
 
 ## Overflow: the cross-cutting concern
 
@@ -143,10 +174,11 @@ A concept that runs through every candidate but is not called out
 explicitly in PR #105 is **overflow**: the freeform space where a
 vendor can author domain-specific fields *without prior schema
 declaration*, with a graduation path toward standardization once a
-field stabilizes (the lifecycle P3 names: vendor → multi-vendor →
-core). PR #105 hints at overflow through P3 (vendor extensibility
-is data-model-level, not plugin-architecture-level), OQ3
-(stratification and governance), and the *Likely direction* note on
+field stabilizes (the vendor → multi-vendor → core lifecycle P3
+names). PR #105 hints at overflow through the vendor-extensibility
+principle (P3, in particular the "data-model-level, not
+plugin-architecture-level" wording), the stratification/governance
+open question (OQ3), and the *Likely direction* note on
 *multi-field, not single-value*. It does not name overflow as a
 first-class concern, and the proposal text does not enumerate how
 each candidate handles it.
@@ -156,12 +188,12 @@ Each candidate handles overflow differently:
 - **A / C** — `assetInfo.source.<vendor>` is a freeform dictionary;
   arbitrary keys coexist with the schema-declared keys. Overflow is
   the *native* shape; nothing extra is needed to use it.
-- **B / B'** — typed-property schemas declare a fixed set of
+- **B / B'** — applied API schemas declare a fixed set of typed
   properties. Overflow fields are authored as *custom attributes*
-  outside the typed schema contract; they carry the value but do
-  not appear in `UsdPrimDefinition`, so registry-driven tooling
-  (validation, GUI, indexers that consult prim definitions) cannot
-  see them.
+  on the prim, outside the schema's declared property set; they
+  carry the value but do not appear in `UsdPrimDefinition`, so
+  registry-driven tooling (validation, GUI, indexers that consult
+  prim definitions) cannot see them.
 - **D** — Matt Kuruc's motivation for the split-by-concern
   mechanism. Identifiers (the standardized, schema-declared part)
   use A-shape; labels (the overflow space for vendor-defined
@@ -202,6 +234,12 @@ this comparison was drafted.
 
 ## The matrix
 
+Rows are the eight dimensions; the parenthesised codes after each
+dim name (P3, P4, OQ1, etc.) reference the PR #105 principles and
+open questions listed above. Columns are the five candidate
+mechanisms. Cells are short empirical observations — *Per-dim
+findings* below has the full text for each row.
+
 | dim | A | B | B' | C | D |
 |---|---|---|---|---|---|
 | [1 composition (P4)](experiments/dimensions/dim1_composition/summary.md) | dict-merge | per-attribute | listOp + shared slot | dict-merge | id: dict-merge; label: per-attr |
@@ -225,7 +263,10 @@ corresponding `report.json`.
 
 ## Per-dim findings
 
-### Dim 1 — composition (P4)
+### Dim 1 — composition behavior
+
+*Tests PR #105 P4 (composability): clear behavior under reference,
+inherit, specialize, payload, sublayer.*
 
 For dict-storage approaches (A, C, D's identifier half), composition
 follows USD's rules for dict-valued metadata: weaker-opinion entries
@@ -234,13 +275,17 @@ authored in two layers compose as two entries in the resulting
 `assetInfo.source` dict; same-key overrides take the strongest
 opinion. For typed-attribute approaches (B, D's label half), each
 authored property composes independently — strongest opinion wins
-per attribute. B' inherits the apiSchemas listOp behaviour: applying
-a second vendor schema in a stronger layer composes into the union
-of applied schemas, but the inherited base property `sourceId:primaryId`
-is one slot per prim across all applied vendor schemas, so
-cross-vendor authoring resolves to one value.
+per attribute. B' (Bprime) inherits the apiSchemas listOp
+behaviour: applying a second vendor schema in a stronger layer
+composes into the union of applied schemas, but the inherited base
+property `sourceId:primaryId` is one slot per prim across all
+applied vendor schemas, so cross-vendor authoring resolves to one
+value.
 
-### Dim 2 — discoverability (P5)
+### Dim 2 — discoverability
+
+*Tests PR #105 P5 (discoverability): tools can discover a prim
+carries source identifiers without prior pipeline-specific knowledge.*
 
 The four discovery surfaces (applied schemas, prim-def metadata,
 prim-def properties, generic GUI walk) carry the vendor identity
@@ -248,9 +293,9 @@ differently per approach. A authors the vendor only in
 `assetInfo.source.<vendor>` — the applied-schemas surface shows
 `SourceIdentifiersAPI` with no vendor segment. B and C carry the
 vendor in the apply-instance segment (`SourceIdentifierAPI:windchill`,
-`SourceIdentifierBridgeAPI:windchill`). B' carries it in the class
-name. D's two halves each surface separately: the identifier half
-matches A, the label half matches B.
+`SourceIdentifierBridgeAPI:windchill`). B' (Bprime) carries it in
+the class name. D's two halves each surface separately: the
+identifier half matches A, the label half matches B.
 
 C's bridge schema declares an `assetInfoFallback` customData entry
 intended to surface the `source` sub-dictionary in
@@ -259,48 +304,62 @@ intended to surface the `source` sub-dictionary in
 did not surface the sub-dictionary in current OpenUSD. This is
 captured under *implementation findings* below.
 
-### Dim 3 — external queryability (P6, OQ1)
+### Dim 3 — external queryability
+
+*Tests PR #105 P6 (external queryability) and OQ1 (cross-system
+resolution and indexing): "given identifier X, which layers reference
+it?" must be tractable.*
 
 All five mechanisms support Sdf-level indexing without composing a
-`Usd.Stage`. The walks are short: A=14 LoC for the dict walk, B=16
-for the property-namespace walk, B'=22 for the apiSchemas walk, and
-C and D each have one-line delegations to A's indexer (since their
-identifier-half storage shape *is* A's). Recall is 100% for A, B, C,
-and D's identifier half on the 30-prim multi-vendor project. B'
-records 63.9% because its `prepend apiSchemas` design shares one
-`sourceId:primaryId` slot across all applied vendor schemas on a
-prim: multi-vendor prims resolve to the most-recently-authored value,
-so the indexer reports both vendor labels with the one resolved
-value. Single-vendor prim recall is 100%.
+`Usd.Stage`. The walks are short: A=14 lines of code for the dict
+walk, B=16 for the property-namespace walk, B'=22 for the apiSchemas
+walk, and C and D each have one-line delegations to A's indexer
+(since their identifier-half storage shape *is* A's). Recall is
+100% for A, B, C, and D's identifier half on the 30-prim
+multi-vendor project. B' (Bprime) records 63.9% because its
+`prepend apiSchemas` design shares one `sourceId:primaryId` slot
+across all applied vendor schemas on a prim: multi-vendor prims
+resolve to the most-recently-authored value, so the indexer reports
+both vendor labels with the one resolved value. Single-vendor prim
+recall is 100%.
 
-### Dim 4 — round-trip fidelity (P7)
+### Dim 4 — round-trip fidelity
+
+*Tests PR #105 P7 (round-trip fidelity): identifier values survive a
+USD round-trip without loss.*
 
 Every approach round-trips every sampled identifier value across
-both `.usda` and `.usdc` formats — unicode strings, embedded newlines
-and tabs, escaped quotes, empty strings. The matrix records pass/match
-status; this dim does not measure byte-level guarantees of USD's
-string serialization in general.
+both `.usda` (text) and `.usdc` (binary) formats — unicode strings,
+embedded newlines and tabs, escaped quotes, empty strings. The
+matrix records pass/match status; this dim does not measure
+byte-level guarantees of USD's string serialization in general.
 
-### Dim 5 — schema/plugin distribution (P3)
+### Dim 5 — schema/plugin distribution
 
-A, B, C, and D record `artifact_shipped: "data only"` — a new vendor
-introduces a scheme by authoring data into the schema slot the core
-already names, with no per-vendor schema or plugin. This matches
-P3's *data-model-level, not plugin-architecture-level* wording. B'
-records `artifact_shipped: "plugin + schema + data"`: a new vendor
-declares a per-vendor schema class inheriting from
-`SourceIdentifierBaseAPI` via `prepend apiSchemas`, publishes a
-plugin, and adds the plugin dir to `PXR_PLUGINPATH_NAME`. The class
-name lives in the TfType namespace.
+*Tests PR #105 P3 (vendor extensibility): any vendor can declare an
+identifier scheme without central approval; data-model-level, not
+plugin-architecture-level.*
+
+A, B, C, and D ship as "data only" — a new vendor introduces a
+scheme by authoring data into the schema slot the core already
+names, with no per-vendor schema or plugin. This matches P3's
+*data-model-level, not plugin-architecture-level* wording. B'
+(Bprime) ships as "plugin + schema + data": a new vendor declares a
+per-vendor schema class inheriting from `SourceIdentifierBaseAPI`
+via `prepend apiSchemas`, publishes a plugin, and adds the plugin
+dir to `PXR_PLUGINPATH_NAME`. The class name lives in the TfType
+namespace.
 
 The same B' inheritance pattern produces the shared-base-property
 effect on two-vendor coexistence: applying both `WindchillSourceIdAPI`
-and `IFCSourceIdAPI` to one prim yields one shared `sourceId:primaryId`
-slot, resolving to the most-recently-authored value
-(`distinct_vendor_storage: no`). Per-vendor properties declared
-outside the inherited base remain per-vendor.
+and `IFCSourceIdAPI` to one prim yields one shared
+`sourceId:primaryId` slot, resolving to the most-recently-authored
+value. Per-vendor properties declared outside the inherited base
+remain per-vendor.
 
-### Dim 6 — scope of applicability (OQ4)
+### Dim 6 — scope of applicability
+
+*Tests PR #105 OQ4 (scope): model roots only, or any prim?*
 
 None of the schemas across the five approaches declares
 `apiSchemaCanOnlyApplyTo`. With the constraint absent, scope is
@@ -311,7 +370,10 @@ approaches. Cost per prim under a short ASCII vendor name and a
 single-character primaryId ranges from 90 (B') to 223 (C) bytes;
 different identifier-data sizes were not measured.
 
-### Dim 7 — vendor-name lexical scope (P3, OQ5)
+### Dim 7 — vendor-name lexical scope
+
+*Tests PR #105 P3 (vendor extensibility) and OQ5 (namespacing of
+identifiers): what character classes can a vendor name carry?*
 
 Each approach has a *vendor slot* — a string carrying the vendor
 identity in the layer. For A and C the slot is a dict key under
@@ -323,12 +385,11 @@ ApplyAPI accepts the vendor segment but
 `Sdf.Path.IsValidNamespacedIdentifier` rejects hyphen, space, dot,
 slash, and leading-digit vendor names at property creation, and
 colon-containing vendor names parse into extra namespace segments
-*without raising an error* (`silent_renamespace: true`). For B' the
-slot is a schema class name, gated by `Tf.IsValidIdentifier`: ASCII
-identifier rules only (no unicode, no hyphen/space/dot, no leading
-digit); class names that violate these rules cannot register, and
-the row records `authoring_succeeded: null` (runtime apply not
-exercised).
+*without raising an error*. For B' (Bprime) the slot is a schema
+class name, gated by `Tf.IsValidIdentifier`: ASCII identifier rules
+only (no unicode, no hyphen/space/dot, no leading digit); class
+names that violate these rules cannot register, and runtime apply
+is not exercised.
 
 The colon case in B and D-label is a silent-failure surface. It is
 a separable USD implementation concern (the apiSchemas list accepts
@@ -336,28 +397,42 @@ a vendor segment that the SdfAttributeSpec layer re-namespaces
 without error), distinct from the vendor-extension paradigm
 question this dim measures.
 
-### Dim 8 — content migration & compatibility (P3 + operational)
+### Dim 8 — content migration & compatibility
 
-Three carrier-change types are exercised. Carrier (a) is a vendor
-name change within one approach (`windchill` → `multiVendor`).
-Carrier (b) is a field name change within one vendor
-(`primaryId` → `oid`). Carrier (c) is a cross-approach migration
-(X → Y).
+*Tests PR #105 P3 (vendor extensibility, in particular the vendor →
+multi-vendor → core lifecycle) plus the operational concern of
+mechanism plurality.*
 
-For (a) and (b), all four data-shape approaches (A, B, C, D) rewrite
-via a lexical mapping on the layer text. For B and B' the renamed
-field under (b) lands as a custom attribute on the prim — carries
-the value but does not appear in `UsdPrimDefinition`. For D's label
-half the same (a)/(b) operations are exercised; under (b) the
-renamed kind segment lands in `UsdPrimDefinition` via the multi-apply
-template (`semantics:labels:__INSTANCE_NAME__`), since the template
-covers any vendor:kind instance. For B', carrier (a) requires
-declaring a new schema class and publishing a new plugin — a layer-
-text rewrite alone is not sufficient. Carrier (c) is exercised on
-seven representative pairs: from A, the destination preserves
-`primaryId` and drops extra dict keys (`extra`, `pdmTag`) when the
-destination is B or B' (typed-property storage with no place for
-arbitrary dict keys).
+Three kinds of carrier-change are exercised:
+
+- **(a) vendor-name change within one approach** — e.g. `windchill`
+  is promoted to a multi-vendor name `multiVendor`. The mechanism's
+  carrier of vendor identity changes but the approach stays the
+  same.
+- **(b) field-name change within one vendor** — e.g. `primaryId` is
+  renamed to `oid` while the vendor stays the same. The mechanism's
+  carrier of field identity changes but the approach stays the same.
+- **(c) approach change** — e.g. content authored under A is
+  rewritten under B. The whole mechanism changes.
+
+For carrier (a) and carrier (b), all four data-shape approaches (A,
+B, C, D) rewrite via a lexical mapping on the layer text. For B and
+B' (Bprime) the renamed field under carrier (b) lands as a custom
+attribute on the prim — carries the value but does not appear in
+`UsdPrimDefinition`. For D's label half the same (a)/(b) operations
+are exercised; under carrier (b) the renamed kind segment lands in
+`UsdPrimDefinition` via the multi-apply template
+(`semantics:labels:__INSTANCE_NAME__`), since the template covers
+any vendor:kind instance. For B', carrier (a) requires declaring a
+new schema class and publishing a new plugin — a layer-text rewrite
+alone is not sufficient.
+
+Carrier (c) is exercised on seven representative pairs (storage-
+primitive transitions, not all 20 ordered pairs). From A, the
+destination preserves `primaryId` and drops extra dict keys (`extra`,
+`pdmTag`) when the destination is B or B' — B/B' store identifier
+values in schema-declared typed properties on the prim, with no
+place for arbitrary additional dict keys.
 
 ## Cross-cutting patterns
 

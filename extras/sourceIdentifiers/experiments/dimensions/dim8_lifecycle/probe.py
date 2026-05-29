@@ -59,7 +59,7 @@ def author_identifier(prim, approach, vendor, primary_id, field_name='primaryId'
         attr_name = f'sourceIdentifier:{vendor}:{field_name}'
         attr = prim.GetAttribute(attr_name)
         if not attr.IsValid():
-            # Field is not declared in B's typed schema for this vendor;
+            # Field is not declared in B's applied API schema for this vendor;
             # author as a custom attribute on the prim. The attribute
             # carries the value lexically but does not appear in
             # UsdPrimDefinition (no schema-declared fallback).
@@ -268,7 +268,7 @@ def rewrite_field_in_layer(approach, src_path, dst_path,
       A, C, D — the field is a plain dict key under
                 ``assetInfo.source.<vendor>``; renaming = dict-key rename.
 
-      B, B'   — the field is a typed schema property; the renamed field
+      B, B'   — the field is a schema-declared typed property; the renamed field
                 is authored as a custom attribute on the prim with the
                 new name. The custom attribute carries the value but
                 does not appear in ``UsdPrimDefinition`` (no
