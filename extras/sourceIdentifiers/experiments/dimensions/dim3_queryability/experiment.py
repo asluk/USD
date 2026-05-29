@@ -82,46 +82,58 @@ def render_summary(results):
 
     print('## Observations', file=buf)
     print('', file=buf)
-    print('- A, C, D-identifier share the same storage shape and the same',
+    print('- A, C, D-identifier share storage shape',
           file=buf)
-    print('  indexer (`assetInfo.source.<vendor>` walk). Indexer is short', file=buf)
-    print('  and naturally enumerates vendors from the dictionary keys.', file=buf)
-    print('- B\'s indexer must know the property-namespace template', file=buf)
-    print('  (`sourceIdentifier:<vendor>:primaryId`) — without that', file=buf)
-    print('  knowledge, a tool can\'t distinguish a source-identifier', file=buf)
-    print('  attribute from any other namespaced attribute on the prim.', file=buf)
-    print('  Recall still 100% once the convention is known.', file=buf)
-    print('- B\' encodes the vendor identity into the schema CLASS name',
+    print('  (`assetInfo.source.<vendor>` dict walk). C and D\'s indexer',
           file=buf)
-    print('  applied to the prim. The indexer must walk `apiSchemas`', file=buf)
-    print('  rather than properties to enumerate vendors.', file=buf)
-    print('- B\' authors fewer rows than the other approaches because the',
+    print('  functions in `probe.py` are one-line delegations that call',
           file=buf)
-    print('  experiment plugin ships per-vendor schemas only for Windchill',
+    print('  A\'s indexer (`return indexer_A(layer_path)`); the indexer-LoC',
           file=buf)
-    print('  and IFC (no Adobe). Per-vendor schemas are the artifact',
+    print('  column reports the body length of each approach\'s indexer',
           file=buf)
-    print("  B' requires a vendor to ship; the missing Adobe schema models",
+    print('  function, so A=14 is the actual walk and C=D=1 is the',
           file=buf)
-    print('  that real cost. Adobe rows are skipped at author time, so',
+    print('  delegation. Vendors enumerate from dict keys with no',
           file=buf)
-    print('  they affect the *authored count* (36 vs 52) but not recall.',
+    print('  pre-registration.',
           file=buf)
-    print('- The 63.9% recall reflects a separate, structural finding: the',
+    print('- B\'s indexer walks `sourceIdentifier:<vendor>:primaryId`-shaped', file=buf)
+    print('  property names. The convention is the property-namespace', file=buf)
+    print('  template; a tool that did not know the template would not', file=buf)
+    print('  distinguish a source-identifier attribute from another', file=buf)
+    print('  namespaced attribute on the prim. Recall is 100% once the', file=buf)
+    print('  template is known.', file=buf)
+    print('- B\' (Bprime) encodes vendor identity in the schema CLASS name',
           file=buf)
-    print("  shared-base-property effect (per v3 findings). B's expression",
+    print('  applied to the prim. The indexer walks `apiSchemas` rather',
           file=buf)
-    print('  via `prepend apiSchemas` makes `sourceId:primaryId` a SINGLE',
+    print('  than the property table to enumerate vendors.', file=buf)
+    print('- B\' authors fewer rows than the other approaches in this run',
+          file=buf)
+    print('  because the experiment plugin ships per-vendor schemas only',
+          file=buf)
+    print('  for Windchill and IFC. Adobe rows are skipped at author time,',
+          file=buf)
+    print('  so the *authored count* drops to 36 (vs 52) while recall', file=buf)
+    print('  computes against the actually-authored subset.', file=buf)
+    print('- B\' (Bprime) shared-base-property effect: the per-vendor',
+          file=buf)
+    print('  schemas inherit `SourceIdentifierBaseAPI` via `prepend',
+          file=buf)
+    print('  apiSchemas`, so `sourceId:primaryId` is a SINGLE attribute',
           file=buf)
     print('  slot shared across vendor schemas applied to one prim. When',
           file=buf)
-    print('  a prim has both Windchill and IFC applied, the second author',
+    print('  a prim has both Windchill and IFC applied, only the',
           file=buf)
-    print("  overwrites the first — the index can't recover the original",
+    print('  most-recently-authored value lives in the shared slot; the',
           file=buf)
-    print('  per-vendor primaryId. The 63.9% number is the fraction of',
+    print('  indexer reports both vendor labels with that one value. The',
           file=buf)
-    print('  authored entries whose value survived this clobbering.',
+    print('  63.9% recall reflects this slot-sharing effect on the',
+          file=buf)
+    print('  multi-vendor prims, not an indexer-walk limitation.',
           file=buf)
     print('', file=buf)
 
