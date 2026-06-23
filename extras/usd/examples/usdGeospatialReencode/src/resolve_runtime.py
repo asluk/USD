@@ -8,21 +8,43 @@ and COMPUTES the world transform for each georeferenced prim, WITHOUT modifying
 the authored Xformable and WITHOUT relying on a baked resetXformStack.
 
 Resolution rule (the "coexist" answer to the stall question):
-  1. Read the prim's `crs:binding` relationship -> source CRS prim -> WKT2.
-  2. Read the stage Target CRS (the CRS bound to the composed defaultPrim, or a
-     supplied render CRS -- here WGS84 ECEF, the cartesian render frame).
+  1. Read the prim's `crs:binding` relationship -> source CRS prim -> WKT2
+     (inherited from nearest bound ancestor, like material binding).
+  2. Determine the Target CRS. Priority:
+       (a) explicit --target-epsg if the user overrides it, else
+       (b) the CRS bound to the composed defaultPrim (a stage-level render CRS),
+           else
+       (c) the WGS84 ECEF fallback (EPSG:4978), the cartesian render frame.
   3. Reproject the prim's absolute `crs:position` from source CRS -> target CRS
-     via PROJ. The resulting cartesian position is the world translation.
-  4. Compose with any ancestor Cartesian xformOps (NOT done destructively;
-     computed at runtime). A CRS-bound prim's geospatial position takes
-     precedence and isolates it from ancestor Cartesian offsets -- the same
-     precedence rule the omniGeoSceneIndex applied over resetXformStack.
+     via PROJ. The resulting cartesian point is the prim's GEOREFERENCED world
+     position in the target frame.
+  4. Compose ancestor Cartesian xformOps ON TOP of the georeferenced position,
+     non-destructively and at runtime. Concretely:
+        world = (ancestor_local_to_world_rotation_and_scale) * (georef_position)
+                + (ancestor_local_to_world_translation)
+     i.e. the georeferenced position is treated as the prim's local origin in
+     the target frame, and any ancestor transform (a rig offset, a tile-local
+     rotation, an instancing parent) is applied as an additional Cartesian
+     transform in that frame. The prim's OWN xform stack is intentionally
+     identity (the authored scene is CRS-neutral); only true ANCESTOR transforms
+     compose. This is the same precedence the omniGeoSceneIndex PoC used: the
+     geospatial binding establishes the world anchor, Cartesian transforms layer
+     relative to it.
+
+AXIS-ORDER CONTRACT (see docs/axis-order.md): `crs:position` is ALWAYS authored
+as (longitude/easting, latitude/northing, height) -- i.e. X,Y,Z / east-north-up
+ordering -- REGARDLESS of the bound CRS authority's declared axis order. All
+reprojection therefore uses PROJ `always_xy=True`. A consumer MUST NOT read
+`crs:position[0]` as latitude even when the bound CRS's WKT declares lat-first.
 
 Nothing here is written back into the authored scene unless --bake is passed
 (which exists only to produce a renderable artifact for visual evidence; the
 canonical authored scene stays neutral).
 """
 import argparse, numpy as np
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _schema_setup  # noqa
 from pyproj import CRS, Transformer
 from pxr import Usd, UsdGeom, Sdf, Gf
 
@@ -33,25 +55,59 @@ CRS_POSITION_ATTR = "crs:position"
 
 def crs_of_prim(prim):
     """Resolve the CRS bound to `prim` via the crs:binding relationship.
-    Inherits: if not bound, walk ancestors (like material binding)."""
+    Inherits: if not bound, walk ancestors (like material binding).
+    Returns (CRS, crs_prim_path, bound_prim_path)."""
     p = prim
     while p and p.IsValid():
         rel = p.GetRelationship(CRS_BINDING_REL)
         if rel and rel.GetTargets():
             crs_prim = p.GetStage().GetPrimAtPath(rel.GetTargets()[0])
             wkt = crs_prim.GetAttribute(CRS_WKT_ATTR).Get()
-            return CRS.from_wkt(wkt), crs_prim.GetPath()
+            return CRS.from_wkt(wkt), crs_prim.GetPath(), p.GetPath()
         p = p.GetParent()
-    return None, None
+    return None, None, None
+
+
+def target_crs_for_stage(stage, override_epsg=None):
+    """Determine the Target/render CRS for the stage.
+    Priority: explicit override -> CRS bound to the defaultPrim -> ECEF 4978.
+    Returns (CRS, source_description)."""
+    if override_epsg is not None:
+        return CRS.from_epsg(override_epsg), f"--target-epsg={override_epsg}"
+    dp = stage.GetDefaultPrim()
+    if dp and dp.IsValid():
+        crs, crs_path, _ = crs_of_prim(dp)
+        if crs is not None:
+            return crs, f"stage defaultPrim binding -> {crs_path}"
+    return CRS.from_epsg(4978), "fallback EPSG:4978 (WGS84 ECEF)"
 
 
 def make_transformer(src: CRS, dst: CRS):
     return Transformer.from_crs(src, dst, always_xy=True)
 
 
-def resolve_world_translation(prim, target_crs, cache):
-    """Compute the world-space (target-CRS cartesian) translation for a prim."""
-    src_crs, src_path = crs_of_prim(prim)
+def ancestor_local_to_world(prim):
+    """Compute the composed local-to-world transform contributed by ANCESTORS
+    only (excludes the prim's own xform, which is intentionally identity in the
+    CRS-neutral scene). Returns a Gf.Matrix4d. If the prim's own xform stack is
+    non-identity we still exclude it here -- the georeferenced position defines
+    the prim's own placement; ancestors compose on top."""
+    parent = prim.GetParent()
+    if not parent or not parent.IsValid():
+        return Gf.Matrix4d(1.0)
+    xc = UsdGeom.XformCache()
+    return xc.GetLocalToWorldTransform(parent)
+
+
+def resolve_world_translation(prim, target_crs, cache, compose_ancestors=True):
+    """Compute the world-space (target-CRS cartesian) position for a prim.
+
+    world = ancestor_L2W . reproject(crs:position)
+    where reproject maps the source-CRS (lon/E, lat/N, h) to the target frame.
+    The georeferenced point is the prim's local origin; ancestor Cartesian
+    transforms compose on top (rotation/scale applied to it, then translation).
+    """
+    src_crs, src_path, _ = crs_of_prim(prim)
     if src_crs is None:
         return None, None
     pos = prim.GetAttribute(CRS_POSITION_ATTR).Get()
@@ -61,15 +117,23 @@ def resolve_world_translation(prim, target_crs, cache):
     if key not in cache:
         cache[key] = make_transformer(src_crs, target_crs)
     t = cache[key]
-    # crs:position is (lon, lat, height) -> always_xy expects (x=lon, y=lat, z=h)
+    # AXIS-ORDER CONTRACT: crs:position is (x=lon/E, y=lat/N, z=h) always.
     x, y, z = t.transform(pos[0], pos[1], pos[2])
-    return Gf.Vec3d(x, y, z), src_path
+    georef = Gf.Vec3d(x, y, z)
+    if not compose_ancestors:
+        return georef, src_path
+    # Compose ancestor Cartesian transform on top of the georeferenced anchor.
+    a2w = ancestor_local_to_world(prim)
+    world = a2w.Transform(georef)   # applies ancestor rot/scale + translation
+    return world, src_path
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="inp", default="out/earth2_georef.usda")
-    ap.add_argument("--target-epsg", type=int, default=4978, help="render/target CRS")
+    ap.add_argument("--target-epsg", type=int, default=None,
+                    help="render/target CRS override; default: read from stage "
+                         "defaultPrim binding, else EPSG:4978")
     ap.add_argument("--bake", default=None,
                     help="optional: write a resolved (cartesian) USD for rendering")
     ap.add_argument("--scale", type=float, default=1e-6,
@@ -78,7 +142,7 @@ def main():
     args = ap.parse_args()
 
     stage = Usd.Stage.Open(args.inp)
-    target_crs = CRS.from_epsg(args.target_epsg)
+    target_crs, target_src = target_crs_for_stage(stage, args.target_epsg)
     cache = {}
 
     resolved = []
@@ -93,7 +157,7 @@ def main():
             t2m = prim.GetAttribute("primvars:t2m").Get()
             resolved.append((prim.GetPath(), tuple(pos), tuple(world), t2m))
 
-    print(f"[resolve] target CRS = EPSG:{args.target_epsg} ({target_crs.name})")
+    print(f"[resolve] target CRS = {target_crs.name} (via {target_src})")
     print(f"[resolve] {len(resolved)} georeferenced prims resolved to world cartesian")
     print(f"[resolve] authored scene was NOT modified (no translate/reset baked)\n")
     for path, pos, world, t2m in resolved[:args.limit]:
