@@ -5,6 +5,14 @@
     "Plugins": [
         {
             "Info": {
+                "SdfMetadata": {
+                    "bindCRSAs": {
+                        "appliesTo": ["relationships"],
+                        "displayGroup": "Geospatial",
+                        "documentation": "Strength of a crs:binding relative to bindings on descendant prims: weakerThanDescendants (default) or strongerThanDescendants.",
+                        "type": "token"
+                    }
+                },
                 "Types": {
                     "UsdGeospatialCRSCRSBindingAPI": {
                         "alias": {

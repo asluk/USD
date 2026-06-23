@@ -51,21 +51,63 @@ from pxr import Usd, UsdGeom, Sdf, Gf
 CRS_WKT_ATTR = "crs:wkt"
 CRS_BINDING_REL = "crs:binding"
 CRS_POSITION_ATTR = "crs:position"
+BIND_STRENGTH_KEY = "bindCRSAs"          # metadata on the binding relationship
+WEAKER = "weakerThanDescendants"          # default
+STRONGER = "strongerThanDescendants"
 
 
-def crs_of_prim(prim):
-    """Resolve the CRS bound to `prim` via the crs:binding relationship.
-    Inherits: if not bound, walk ancestors (like material binding).
-    Returns (CRS, crs_prim_path, bound_prim_path)."""
+def _binding_rel_for_purpose(prim, purpose):
+    """Return the binding relationship on `prim` for `purpose`, or None.
+    Purpose is encoded in the relationship name (MaterialBindingAPI style):
+      all-purpose  -> crs:binding
+      purpose 'x'  -> crs:binding:x  (wins over all-purpose for that purpose)
+    """
+    if purpose:
+        rel = prim.GetRelationship(f"{CRS_BINDING_REL}:{purpose}")
+        if rel and rel.GetTargets():
+            return rel
+    rel = prim.GetRelationship(CRS_BINDING_REL)
+    if rel and rel.GetTargets():
+        return rel
+    return None
+
+
+def _rel_strength(rel):
+    s = rel.GetMetadata(BIND_STRENGTH_KEY) if rel else None
+    return s if s in (WEAKER, STRONGER) else WEAKER
+
+
+def crs_of_prim(prim, purpose=""):
+    """Resolve the CRS bound to `prim` for `purpose`, honouring MaterialBindingAPI-
+    style strength + purpose semantics.
+
+    Algorithm (mirrors UsdShade material resolution):
+      * Walk from the prim up to the root collecting authored bindings (for the
+        requested purpose, falling back to all-purpose at each level).
+      * Default strength weakerThanDescendants: the NEAREST binding wins.
+      * If an ANCESTOR binding is authored strongerThanDescendants, it overrides
+        any closer (descendant) binding.
+    Returns (CRS, crs_prim_path, bound_prim_path, strength) or (None,...).
+    """
+    chain = []  # nearest-first: [(prim_path, rel, strength)]
     p = prim
     while p and p.IsValid():
-        rel = p.GetRelationship(CRS_BINDING_REL)
-        if rel and rel.GetTargets():
-            crs_prim = p.GetStage().GetPrimAtPath(rel.GetTargets()[0])
-            wkt = crs_prim.GetAttribute(CRS_WKT_ATTR).Get()
-            return CRS.from_wkt(wkt), crs_prim.GetPath(), p.GetPath()
+        rel = _binding_rel_for_purpose(p, purpose)
+        if rel is not None:
+            chain.append((p.GetPath(), rel, _rel_strength(rel)))
         p = p.GetParent()
-    return None, None, None
+    if not chain:
+        return None, None, None, None
+    # A strongerThanDescendants binding on an ancestor wins over nearer ones.
+    chosen = chain[0]  # nearest (default weaker semantics)
+    for entry in chain[1:]:  # ancestors, increasingly far
+        if entry[2] == STRONGER:
+            chosen = entry     # an ancestor declared itself stronger -> it wins
+            # keep scanning: an even-higher stronger ancestor wins over this one
+    bound_path, rel, strength = chosen
+    crs_prim = prim.GetStage().GetPrimAtPath(rel.GetTargets()[0])
+    wkt = crs_prim.GetAttribute(CRS_WKT_ATTR).Get()
+    return CRS.from_wkt(wkt), crs_prim.GetPath(), bound_path, strength
 
 
 def target_crs_for_stage(stage, override_epsg=None):
@@ -76,7 +118,7 @@ def target_crs_for_stage(stage, override_epsg=None):
         return CRS.from_epsg(override_epsg), f"--target-epsg={override_epsg}"
     dp = stage.GetDefaultPrim()
     if dp and dp.IsValid():
-        crs, crs_path, _ = crs_of_prim(dp)
+        crs, crs_path, _, _ = crs_of_prim(dp)
         if crs is not None:
             return crs, f"stage defaultPrim binding -> {crs_path}"
     return CRS.from_epsg(4978), "fallback EPSG:4978 (WGS84 ECEF)"
@@ -99,7 +141,7 @@ def ancestor_local_to_world(prim):
     return xc.GetLocalToWorldTransform(parent)
 
 
-def resolve_world_translation(prim, target_crs, cache, compose_ancestors=True):
+def resolve_world_translation(prim, target_crs, cache, compose_ancestors=True, purpose=""):
     """Compute the world-space (target-CRS cartesian) position for a prim.
 
     world = ancestor_L2W . reproject(crs:position)
@@ -107,7 +149,7 @@ def resolve_world_translation(prim, target_crs, cache, compose_ancestors=True):
     The georeferenced point is the prim's local origin; ancestor Cartesian
     transforms compose on top (rotation/scale applied to it, then translation).
     """
-    src_crs, src_path, _ = crs_of_prim(prim)
+    src_crs, src_path, _, _ = crs_of_prim(prim, purpose)
     if src_crs is None:
         return None, None
     pos = prim.GetAttribute(CRS_POSITION_ATTR).Get()
@@ -139,6 +181,9 @@ def main():
     ap.add_argument("--scale", type=float, default=1e-6,
                     help="scale ECEF metres -> scene units for renderable artifact")
     ap.add_argument("--limit", type=int, default=8, help="how many to print")
+    ap.add_argument("--purpose", default="",
+                    help="material-binding-style purpose; selects crs:binding:<purpose> "
+                         "over the all-purpose crs:binding")
     args = ap.parse_args()
 
     stage = Usd.Stage.Open(args.inp)
@@ -151,7 +196,7 @@ def main():
             continue
         if not prim.GetAttribute(CRS_POSITION_ATTR):
             continue
-        world, src = resolve_world_translation(prim, target_crs, cache)
+        world, src = resolve_world_translation(prim, target_crs, cache, purpose=args.purpose)
         if world is not None:
             pos = prim.GetAttribute(CRS_POSITION_ATTR).Get()
             t2m = prim.GetAttribute("primvars:t2m").Get()

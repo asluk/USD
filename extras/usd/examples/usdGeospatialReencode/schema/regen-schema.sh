@@ -47,9 +47,14 @@ run_gen() {  # $1 = output dir
 }
 
 substitute() {  # standalone plugInfo: resources next to plugInfo, root '.'
+        # Also injects the SdfMetadata registration for the binding-strength field
+        # `bindCRSAs` (usdGenSchema does not emit SdfMetadata; it is hand-maintained,
+        # mirroring how usdShade registers `bindMaterialAs`).
   sed -e 's#@PLUG_INFO_LIBRARY_PATH@##' \
       -e 's#@PLUG_INFO_RESOURCE_PATH@#resources#' \
-      -e 's#@PLUG_INFO_ROOT@#.#' "$1"
+      -e 's#@PLUG_INFO_ROOT@#.#' \
+      -e 's#"Info": {#"Info": {\n                "SdfMetadata": {\n                    "bindCRSAs": {\n                        "appliesTo": ["relationships"],\n                        "displayGroup": "Geospatial",\n                        "documentation": "Strength of a crs:binding relative to bindings on descendant prims: weakerThanDescendants (default) or strongerThanDescendants.",\n                        "type": "token"\n                    }\n                },#' \
+      "$1"
 }
 
 if [[ "${1:-}" == "--check" ]]; then

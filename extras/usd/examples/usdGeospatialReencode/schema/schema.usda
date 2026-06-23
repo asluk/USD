@@ -77,8 +77,19 @@ class "CRSBindingAPI" (
         the bound CRS authority's declared axis order (east-north-up / always_xy)."""
     )
     rel crs:binding (
-        doc = """Relationship to the CoordinateReferenceSystem prim defining the
-        CRS that crs:position is expressed in. Inherited by descendants lacking
-        their own binding (nearest-ancestor wins), like material binding."""
+        doc = """All-purpose binding to the CoordinateReferenceSystem prim that
+        crs:position is expressed in. Modelled on UsdShadeMaterialBindingAPI:
+
+        * PURPOSE is encoded in the relationship NAME. crs:binding is the
+          all-purpose (fallback) binding; crs:binding:<purpose> is a
+          purpose-restricted binding (e.g. crs:binding:render, crs:binding:edit).
+          A purpose-specific binding wins over the all-purpose binding when
+          resolving for that purpose.
+        * STRENGTH relative to descendants is token-valued metadata 'bindCRSAs'
+          authored on the binding relationship: weakerThanDescendants (default,
+          nearest binding wins) or strongerThanDescendants (an ancestor binding
+          overrides closer descendant bindings).
+        * Inherited by descendants lacking their own binding (nearest-ancestor
+          wins under the default weaker-than-descendants strength)."""
     )
 }

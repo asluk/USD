@@ -35,8 +35,8 @@ class "CRSBindingAPI" (
 {
     rel crs:binding (
         customData = {
-            string userDocBrief = """Relationship to the CoordinateReferenceSystem prim defining the
-        CRS that crs:position is expressed in."""
+            string userDocBrief = """All-purpose binding to the CoordinateReferenceSystem prim that
+        crs:position is expressed in."""
         }
     )
     double3 crs:position = (0, 0, 0) (
