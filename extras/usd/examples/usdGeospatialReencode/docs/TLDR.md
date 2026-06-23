@@ -1,7 +1,7 @@
 # Geospatial CRS Prototype — Running TLDR
 
 _Living status doc. Updated as work proceeds. Maintained by claw1 (unattended runs)._
-_Last updated: 2026-06-23 ~07:20 UTC._
+_Last updated: 2026-06-23 ~07:35 UTC._
 
 ## One-paragraph status
 Adversarial review (`docs/codex-review.md`) flagged 3 top weaknesses; **all 3 fixed and
@@ -69,16 +69,14 @@ bash schema/regen-schema.sh --check                     # schema resources in sy
 
 ## Tests / checks (all green, all with teeth)
 - `verify.py` A–F · `multi_crs_example.py` (negative control) · `test_ancestor_compose.py`
-  (T1–T3) · `test_binding_semantics.py` (S1–S7) · `test_dynamic_crs.py` (D1–D3) ·
-  `test_grid_files.py` (G1–G2).
+  (T1–T3) · `test_binding_semantics.py` (S1–S7) · `test_binding_composition.py` (L1–L3,
+  cross-layer + list-edit) · `test_dynamic_crs.py` (D1–D3) · `test_grid_files.py` (G1–G2).
 - `schema/regen-schema.sh --check` keeps generated resources in sync.
 
 ## Changelog
-- 2026-06-23 ~07:20 — independent self-audit + fixes (`docs/self-audit-response.md`): D0 collection>direct
-  precedence corrected (was backwards vs MaterialBindingAPI rule [4]); D1 check-E lon≈lat
-  false-positive fixed (synthetic probe); D2 None-WKT crash guard; D3 shared XformCache;
-  D4 dynamic-CRS "plate motion" wording corrected to mm/yr realization rate; D5 collection
-  tie-break sorted lexicographically. Full suite green.
+- 2026-06-23 ~07:35 — cross-layer + list-edit binding coverage (`test_binding_composition.py`
+  L1–L3) — closes the last in-environment self-audit gap.
+- 2026-06-23 ~07:20 — independent self-audit + fixes D0–D5 (`docs/self-audit-response.md`).
 - 2026-06-23 ~06:50 — `crs:gridFiles` plumbing wired; `test_grid_files.py` G1/G2.
 - 2026-06-23 ~06:35 — dynamic-CRS coordinate epoch (`crs:epoch` 4D); `test_dynamic_crs.py`.
 - 2026-06-23 ~06:10 — F.5 EPSG-vs-WKT precedence (check F) + README aligned to reality.
