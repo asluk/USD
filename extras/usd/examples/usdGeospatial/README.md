@@ -97,6 +97,34 @@ vertex came through the `crs:position` → PROJ → ECEF pipeline of `resolve_ru
 The hero globe is the same point set, rendered as a 3D globe colored by GFS `t2m` —
 again, every vertex resolved by the shipped runtime, never authored as geometry.
 
+## 3D coherence — against an independent ground truth
+
+The evidence above shows the resolver is *internally* consistent. This figure shows it is
+*externally* correct: schema-resolved geometry co-registers, in 3D, with a ground truth
+derived from **closed-form WGS84 geodesy** (first principles, independent of PROJ), using
+cross-CRS benchmark features whose coordinates come from an **independent authoritative
+source** (NOAA's NCAT geodesy service).
+
+![coherence](docs/coherence.png)
+
+- **Global (left):** the Earth-2 `t2m` cloud, resolved by `resolve_runtime`, drawn on a
+  graticule that is itself projected by closed-form geodesy — the temperature field sits
+  on the correct latitudes/poles. The red blob at the origin is the *same* cloud resolved
+  while **ignoring `crs:binding`** (the negative control): with no source CRS, the raw
+  `(lon, lat, h)` is mis-read as Cartesian metres and collapses ~6,400 km off the globe.
+- **Cross-CRS (right):** the *same* monument near the Empire State Building, authored three
+  ways — geographic (EPSG:4979), UTM 18N (EPSG:32618), and NY State Plane (EPSG:32118) —
+  each from independent NOAA coordinates (**not** by inverting one transform). All three
+  resolve through the schema to the **same ECEF point**, matching the closed-form ground
+  truth to **sub-millimetre** (≤ ~0.5 mm; the residual is real conformal-projection grid
+  noise). An axis-order or geodesy bug has nowhere to hide, because the reference side
+  makes no `always_xy` assumption to cancel against.
+
+> **Scope of this proof:** graticule + benchmark co-registration, **not** a draped
+> satellite/terrain raster basemap (that needs `cartopy` + a basemap/DEM asset — logged as
+> roadmap). And it demonstrates **point/leaf** coherence; **anchor + Cartesian-subtree**
+> coherence is a separate, tracked milestone (see Status / scope).
+
 ## Tests — all green, all with teeth
 
 `verify.py` A–F · `multi_crs_example.py` (negative control, ignoring bindings diverges
@@ -104,6 +132,8 @@ again, every vertex resolved by the shipped runtime, never authored as geometry.
 `test_binding_semantics.py` (S1–S7) · `test_binding_composition.py` (L1–L3, cross-layer
 + list-edit) · `test_dynamic_crs.py` (D1–D3) · `test_grid_files.py` (G1–G2) ·
 `testenv_equivalence.py` (design equivalence vs. the Esri scene) ·
+`render_figures.py` (the coherence figure self-asserts closed-form co-registration to
+sub-mm + the negative control flies off the globe) ·
 `pxr/usd/usdGeospatial/regen-schema.sh --check` (schema resources in sync).
 
 ## Running
@@ -123,10 +153,20 @@ python3 src/render_figures.py           # regenerate all 5 figures into docs/
   schema remains the parallel artifact; this bundle backs the proposal's design calls
   (binding shape, no baked resetXformStack, resolution-rule parity) with running code on
   a real dataset.
-- **In scope, deferred (not built yet):** a codeless `usdchecker`-discoverable
-  validator plugin (Python `"Type":"python"` plugin under
-  `pxr/usdValidation/usdGeospatialValidators/`); feasibility verified
-  (`RegisterPrimValidator` + a Python callable works in the wheel). `verify.py` A–F is
-  the runnable validator today.
-- **Out of scope here (need other resources):** an end-to-end grid-*applied* transform
-  (GDAL + a bundled PROJ grid); the parallel **NanoUSD** implementation.
+- **In scope, next milestone (not built yet):** runtime **anchor injection** so a georef
+  anchor with a *non-georef Cartesian subtree* resolves correctly. The current model is
+  absolute `crs:position` per prim + Cartesian ancestors composing on top — clean for
+  point/grid leaves (Earth-2, terrain), but a plain child of a georef anchor currently
+  resolves at the origin (the anchor's georef lives in `crs:position`, which stock USD
+  composition doesn't read). The fix is the Esri-convergent synthesis: keep an anchor +
+  local-offset, resolve the anchor into a **runtime-injected** transform (Hydra scene
+  index), and let descendants compose under it as ordinary USD — *not* a baked
+  `resetXformStack`, *not* dissolved into per-prim absolutes. This also restores the
+  float32-localization story.
+- **In scope, deferred:** a codeless `usdchecker`-discoverable validator plugin (Python
+  `"Type":"python"`); a **projection-engine registration seam** so PROJ/pyproj is one
+  registered engine rather than hardcoded (per Simon's Esri-PR request), with WKT kept
+  opaque to USD. `verify.py` A–F is the runnable validator today.
+- **Out of scope here (need other resources):** a draped raster/terrain basemap for the
+  coherence figure (`cartopy` + a basemap/DEM asset); an end-to-end grid-*applied*
+  transform (GDAL + a bundled PROJ grid); the parallel **NanoUSD** implementation.
