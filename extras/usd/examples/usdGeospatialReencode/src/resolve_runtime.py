@@ -191,6 +191,45 @@ def _crs_prim_epoch(stage, crs_prim_path):
     return float(v) if v else None
 
 
+_GRID_DIRS_REGISTERED = set()
+
+
+def _register_grid_files(stage, crs_prim_path):
+    """Read crs:gridFiles (asset[]) off the CRS prim, resolve each asset path, and
+    add its containing directory to PROJ's grid search path so PROJ can find the
+    transformation grids. Returns the list of resolved grid file paths.
+
+    This is the plumbing for high-accuracy datum/geoid transforms that reference
+    EXTERNAL grid assets rather than inlining everything in WKT. NOTE: applying a
+    grid still requires the grid file to exist and PROJ to select an operation
+    that uses it; this function makes the asset discoverable, it does not force a
+    particular operation.
+    """
+    cp = stage.GetPrimAtPath(crs_prim_path)
+    if not cp or not cp.IsValid():
+        return []
+    a = cp.GetAttribute("crs:gridFiles")
+    vals = a.Get() if a else None
+    if not vals:
+        return []
+    try:
+        from pyproj.datadir import append_data_dir, get_data_dir
+    except Exception:
+        return []
+    resolved = []
+    for asset in vals:
+        # Sdf.AssetPath -> resolved or authored path
+        p = getattr(asset, "resolvedPath", "") or getattr(asset, "path", "") or str(asset)
+        if not p:
+            continue
+        d = os.path.dirname(os.path.abspath(p))
+        if d and d not in _GRID_DIRS_REGISTERED and os.path.isdir(d):
+            append_data_dir(d)
+            _GRID_DIRS_REGISTERED.add(d)
+        resolved.append(p)
+    return resolved
+
+
 def target_crs_for_stage(stage, override_epsg=None):
     """Determine the Target/render CRS for the stage.
     Priority: explicit override -> CRS bound to the defaultPrim -> ECEF 4978.
@@ -238,6 +277,7 @@ def resolve_world_translation(prim, target_crs, cache, compose_ancestors=True, p
         return None, src_path
     key = str(src_path)
     if key not in cache:
+        _register_grid_files(prim.GetStage(), src_path)  # make grid assets discoverable
         cache[key] = make_transformer(src_crs, target_crs)
     t = cache[key]
     # AXIS-ORDER CONTRACT: crs:position is (x=lon/E, y=lat/N, z=h) always.

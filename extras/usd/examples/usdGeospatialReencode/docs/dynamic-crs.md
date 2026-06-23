@@ -49,8 +49,18 @@ WGS84 **ECEF (EPSG:4978)** collapses to a static transform and washes the epoch
 out — which is itself correct behaviour, and why the test targets a specific
 realization rather than 4978.
 
-## Not yet done
+## Grid plumbing (wired)
 
-- `crs:gridFiles` is declared and documented, but the example does not ship a
-  bundled PROJ grid asset to exercise it end-to-end (grids are large external
-  data). Wiring it to PROJ's grid search path is a follow-up.
+`crs:gridFiles` is read by `resolve_runtime._register_grid_files`: each authored
+asset path is resolved and its containing directory is appended to PROJ's data-dir
+search path before the transformer is built, so PROJ can locate external
+transformation grids. Proven by `src/test_grid_files.py` (G1 asset read, G2
+directory registered).
+
+## Not yet done (honest)
+
+- An actual grid-*applied* transform is not demonstrated end-to-end: PROJ applies
+  a grid only when the grid file exists and an operation selects it, and authoring
+  a real GeoTIFF grid needs GDAL / network grid data not available in this
+  environment. The plumbing (asset read + PROJ search-path registration) is wired
+  and tested; bundling a real grid to exercise an applied shift is a follow-up.
