@@ -44,7 +44,9 @@ detail, which is precisely the path past the stall.
 | `src/reencode_georef.py` | author OSS GFS t2m → CRS-neutral georeferenced USD (data only) |
 | `src/resolve_runtime.py` | runtime: reproject `crs:position` → target CRS world cartesian (PROJ); optional `--bake` for a renderable artifact |
 | `src/verify.py` | geodetic ground-truth checks (CI-style, exits non-zero on failure) |
+| `src/multi_crs_example.py` | worked multi-CRS scene: two prims in *different* source CRSs (geographic + UTM) resolve to the same target-CRS point |
 | `src/render_evidence.py` | visual evidence: resolved ECEF globe + flattening + data-at-lon/lat |
+| `src/render_globe_ovrtx.py` | hero render: globe mesh built from CRS-resolved ECEF vertices, path-traced with Omniverse RTX |
 
 ## Run
 
@@ -53,6 +55,9 @@ python3 src/reencode_georef.py --stride 10 --out out/earth2_georef.usda
 python3 src/verify.py            out/earth2_georef.usda
 python3 src/resolve_runtime.py   --in out/earth2_georef.usda --bake out/earth2_resolved_ecef.usda
 python3 src/render_evidence.py   --in out/earth2_georef.usda --out out/evidence.png
+python3 src/multi_crs_example.py out/multi_crs.usda
+# hero render (needs ovrtx + a GPU):
+python3 src/render_globe_ovrtx.py --in out/earth2_georef.usda --out-png out/globe_render.png
 ```
 
 ## Evidence (current)
@@ -67,8 +72,19 @@ python3 src/render_evidence.py   --in out/earth2_georef.usda --out out/evidence.
 * The resolved geometry shows WGS84 **ellipsoidal flattening** (mean equatorial
   radius ≈ 6 378 110 m vs polar ≈ 6 356 773 m): a true georeferenced Earth, not a
   baked sphere. See `docs/evidence.png`.
+* **Multi-CRS composes** (`multi_crs_example.py`): two prims at the same physical
+  location — one bound to WGS84 geographic (EPSG:4979), one to UTM zone 10N
+  (EPSG:32610) — resolve to the *same* ECEF coordinate to **0.000 cm**, with the
+  authored scene CRS-neutral. This is the proof that differing source CRSs reproject
+  into one target frame.
+* **Hero render** (`render_globe_ovrtx.py`): a globe mesh whose every vertex is
+  produced by the CRS pipeline (`crs:position` → ECEF), path-traced with Omniverse
+  RTX, colored by t2m — the recognizable Earth is constructed entirely by the
+  standards-CRS resolution. See `docs/globe_render.png`.
 
 ![evidence](docs/evidence.png)
+
+![globe](docs/globe_render.png)
 
 ## Status / next
 
