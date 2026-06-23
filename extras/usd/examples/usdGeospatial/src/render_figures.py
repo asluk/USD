@@ -189,18 +189,18 @@ def fig_tree_alignment(out):
                  "(mistafunk/USD geospatial-prototype)", fontsize=12, fontweight="bold")
 
     def col(x, title, lines, color, foot):
-        ax.add_patch(FancyBboxPatch((x, 1.2), 5.4, 7.2, boxstyle="round,pad=0.15",
+        ax.add_patch(FancyBboxPatch((x, 0.7), 5.4, 7.7, boxstyle="round,pad=0.15",
                                     fc=color, ec="black", lw=1.4))
-        ax.text(x + 2.7, 8.0, title, ha="center", fontsize=10.5, fontweight="bold")
-        y = 7.2
+        ax.text(x + 2.7, 8.05, title, ha="center", fontsize=10.5, fontweight="bold")
+        y = 7.05
         for txt, mono, em in lines:
             ax.text(x + 0.35, y, txt, ha="left", va="top",
                     fontsize=8.2 if not em else 8.6,
                     family="monospace" if mono else "sans-serif",
                     fontweight="bold" if em else "normal",
                     color="#1b5e20" if em else "#222")
-            y -= 0.62
-        ax.text(x + 2.7, 1.55, foot, ha="center", fontsize=7.6, style="italic", color="#444")
+            y -= 0.56
+        ax.text(x + 2.7, 1.05, foot, ha="center", fontsize=7.6, style="italic", color="#444")
 
     col(0.4, "Esri prototype (C++)", [
         ("pxr/usd/usdGeospatial/", True, True),
@@ -216,9 +216,9 @@ def fig_tree_alignment(out):
     ], "#fff3e0", "C++ library; binding baked into the scene")
 
     # arrow
-    ax.add_patch(FancyArrowPatch((5.95, 4.8), (8.0, 4.8), arrowstyle="<->",
+    ax.add_patch(FancyArrowPatch((5.95, 4.6), (8.0, 4.6), arrowstyle="<->",
                                  mutation_scale=22, lw=2, color="#2c6fbb"))
-    ax.text(7.0, 5.2, "same names\n& layout", ha="center", fontsize=8.5,
+    ax.text(7.0, 5.0, "same names\n& layout", ha="center", fontsize=8.5,
             color="#2c6fbb", fontweight="bold")
 
     col(8.1, "usdGeospatial codeless (ours)", [
