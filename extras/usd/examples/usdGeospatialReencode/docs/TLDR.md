@@ -1,7 +1,20 @@
 # Geospatial CRS Prototype — Running TLDR
 
 _Living status doc. Updated as work proceeds. Maintained by claw1 (unattended runs)._
-_Last updated: 2026-06-23 ~07:35 UTC._
+_Last updated: 2026-06-23 ~15:00 UTC._
+
+## Visual evidence
+![evidence](evidence.png)
+![hero globe](globe_render.png)
+![binding semantics](binding_semantics.png)
+
+- **evidence.png** — resolved ECEF point cloud; WGS84 flattening visible (equatorial radius
+  a=6 378 137 m vs polar b=6 356 752 m) → a true georeferenced Earth, not a baked sphere.
+- **globe_render.png** — RTX path-traced hero globe whose every vertex came through the
+  `crs:position` → ECEF pipeline, colored by GFS t2m.
+- **binding_semantics.png** — `crs:binding` precedence ladder + namespace strength, rendered
+  live from `resolve_runtime.crs_of_prim` (regenerate via `src/render_binding_semantics.py`;
+  it self-asserts the picture equals the resolver, so it cannot go stale).
 
 ## One-paragraph status
 Adversarial review (`docs/codex-review.md`) flagged 3 top weaknesses; **all 3 fixed and

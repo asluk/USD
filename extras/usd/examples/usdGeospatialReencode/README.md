@@ -114,7 +114,13 @@ self-contained (no `PXR_PLUGINPATH_NAME` needed).
   auto-selected from longitude.
 * **Binding semantics** (`test_binding_semantics.py`): nearest-wins, ancestor
   `strongerThanDescendants` override, purpose selection + fallback, and
-  collection-member resolution with direct-beats-collection precedence — S1–S7 pass.
+  collection-member resolution. Per `UsdShadeMaterialBindingAPI` rule [4], a
+  collection binding on a prim is **stronger** than a direct binding on the same
+  prim — S1–S7 pass (the earlier "direct beats collection" claim was a self-audit
+  finding and is fixed; see `docs/self-audit-response.md`).
+* **Binding composition** (`test_binding_composition.py`): resolution respects USD
+  composition — stronger-sublayer override and relationship list-editing
+  (prepend/delete) on `crs:binding` targets — L1–L3 pass.
 * **EPSG/WKT consistency** — check **F**; **axis-order contract** — check **E**
   (both with deliberately-failing negative cases verified).
 * **Hero render** (`render_globe_ovrtx.py`): a globe mesh whose every vertex is
@@ -125,6 +131,14 @@ self-contained (no `PXR_PLUGINPATH_NAME` needed).
 ![evidence](docs/evidence.png)
 
 ![globe](docs/globe_render.png)
+
+![binding semantics](docs/binding_semantics.png)
+
+*Figures: (1) `evidence.png` — resolved ECEF geometry showing WGS84 flattening (a vs b);
+(2) `globe_render.png` — RTX path-traced hero globe built entirely from CRS-resolved
+vertices, colored by t2m; (3) `binding_semantics.png` — `crs:binding` precedence ladder
+and namespace-strength rules, **computed live by the resolver** so the figure can't drift
+from the code.*
 
 ## Status / next
 
