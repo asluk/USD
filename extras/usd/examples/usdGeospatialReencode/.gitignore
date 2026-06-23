@@ -1,0 +1,6 @@
+.venv/
+data/*.nc
+out/*.usda
+out/*.usdc
+out/*.png
+__pycache__/
