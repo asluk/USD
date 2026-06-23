@@ -6,11 +6,11 @@ datum/epoch transformation grids or time-dependent CRSs).
 ## Why this matters
 
 Modern geodesy uses **dynamic reference frames** (ITRF realizations, GDA2020,
-NATRF2022). In these, a point's coordinates change over time due to plate motion
-(cm/year). A coordinate is only fully specified by a CRS **plus a coordinate
-epoch** (decimal year). Ignoring the epoch silently introduces metre-scale error
-over decades. High-accuracy datum transforms also need **transformation grids**
-(geoid/datum-shift assets) that are too large to inline in WKT.
+NATRF2022). In these, a point's coordinates change over time (the frame and the
+crust move relative to each other). A coordinate is only fully specified by a CRS
+**plus a coordinate epoch** (decimal year). Ignoring the epoch introduces error
+that accumulates over time. High-accuracy datum transforms also need
+**transformation grids** (geoid/datum-shift assets) that are too large to inline in WKT.
 
 ## Schema additions on `CoordinateReferenceSystem`
 
@@ -33,13 +33,23 @@ over decades. High-accuracy datum transforms also need **transformation grids**
 
 Two CRS prims share the same source WKT (ITRF2014 geographic 3D, EPSG:7912) but
 carry **different epochs** (2000.0 vs 2030.0). Resolving to ITRF2008 (EPSG:7911, a
-different dynamic realization) yields **different** positions — the plate-motion
-displacement between the two epochs. Checks:
+different dynamic realization) yields **different** positions — the displacement
+between the two epochs under the ITRF2014↔ITRF2008 time-dependent transform.
+Checks:
 
-- **D1/D2 (teeth):** epoch 2000 vs 2030 differ by a non-zero, physically-sensible
-  amount; an epoch-ignoring (3D) resolver would produce identical results.
+- **D1/D2 (teeth):** epoch 2000 vs 2030 differ by a non-zero amount; an
+  epoch-ignoring (3D) resolver would produce identical results.
 - **D3:** a CRS prim with `crs:epoch` unset resolves identically to a plain 3D
   transform — the feature does not perturb static CRSs.
+
+### Magnitude, stated honestly
+
+The demonstrated effect is **small** — the ITRF2014↔ITRF2008 realization difference
+is a **millimetre-per-year-scale** rate (the example shows ~7 mm vertical over
+30 yr), NOT the ~7 cm/yr absolute plate motion of a fast tectonic plate. The test
+proves the epoch is *honoured* (it changes the result, and an epoch-ignoring
+resolver would not); it does not claim a large displacement. A transform between
+frames with a large relative plate-motion model would show more.
 
 ### Important nuance (kept honest)
 

@@ -92,8 +92,16 @@ def main(out="out/_test_binding.usda"):
     coll.CreateIncludesRel().SetTargets([in1.GetPath(), in2.GetPath()])
     crel = coll_root.CreateRelationship("crs:binding:collection:sites", False)
     crel.SetTargets([coll.GetCollectionPath(), C.GetPath()])
-    # S7: In1 ALSO has a direct binding to GeoB -> direct must beat collection.
-    bind(in1, B)
+
+    # S7 (rule [4]): collection vs direct on the SAME prim. Put BOTH a direct
+    # binding (GeoB) and a collection binding (GeoA, including this prim) on the
+    # same prim Same; the collection must win over the direct binding.
+    same = UsdGeom.Xform.Define(stage, "/World/Same").GetPrim(); pos(same)
+    same_coll = Usd.CollectionAPI.Apply(same, "self")
+    same_coll.CreateIncludesRel().SetTargets([same.GetPath()])
+    bind(same, B)  # direct -> GeoB
+    screl = same.CreateRelationship("crs:binding:collection:self", False)
+    screl.SetTargets([same_coll.GetCollectionPath(), A.GetPath()])  # collection -> GeoA
 
     stage.GetRootLayer().Save()
 
@@ -108,7 +116,7 @@ def main(out="out/_test_binding.usda"):
     s3all = sel(pt3, "")
     s5 = sel(in2)          # collection member, no direct binding -> GeoC
     s6 = sel(outp)         # NOT a member -> no binding (None)
-    s7 = sel(in1)          # member but has direct GeoB -> direct wins
+    s7 = sel(same)         # same prim: direct GeoB + collection GeoA -> GeoA wins (rule [4])
 
     print(f"[author] {out}")
     print(f"S1 Region/Sub/Pt (default weaker)        -> {s1[0]}  (want GeoB)")
@@ -118,7 +126,7 @@ def main(out="out/_test_binding.usda"):
     print(f"   Purp/Pt all-purpose                   -> {s3all[0]} (want GeoA)")
     print(f"S5 Coll/In2 (collection member)          -> {s5[0]}  (want GeoC)")
     print(f"S6 Coll/Out (NOT a member)               -> {s6[0]}  (want None)")
-    print(f"S7 Coll/In1 (member + direct GeoB)       -> {s7[0]}  (want GeoB; direct beats collection)")
+    print(f"S7 Same (direct GeoB + coll GeoA, same prim) -> {s7[0]}  (want GeoA; collection beats direct, rule [4])")
 
     p1 = s1[0].endswith("GeoB")
     p2 = s2[0].endswith("GeoA") and s2[2] == "strongerThanDescendants"
@@ -126,7 +134,7 @@ def main(out="out/_test_binding.usda"):
     p4 = s4[0].endswith("GeoA") and s3all[0].endswith("GeoA")
     p5 = s5[0].endswith("GeoC")
     p6 = s6[0] == "None"
-    p7 = s7[0].endswith("GeoB")
+    p7 = s7[0].endswith("GeoA")
     ok = all([p1, p2, p3, p4, p5, p6, p7])
     print()
     print(f"[check] S1 nearest-wins (weaker default):        {p1}")
@@ -135,7 +143,7 @@ def main(out="out/_test_binding.usda"):
     print(f"[check] S4 purpose fallback to all-purpose:      {p4}")
     print(f"[check] S5 collection member resolves CRS:       {p5}")
     print(f"[check] S6 non-member gets NO binding:           {p6}")
-    print(f"[check] S7 direct binding beats collection:      {p7}")
+    print(f"[check] S7 collection beats direct at same prim (rule [4]):  {p7}")
     print("\nRESULT:", "BINDING STRENGTH+PURPOSE+COLLECTION SEMANTICS ✅" if ok else "FAIL ❌")
     return 0 if ok else 1
 

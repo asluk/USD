@@ -91,54 +91,76 @@ def _prim_in_collection(prim, collection_path):
 
 
 def _binding_rel_for_purpose(prim, purpose, resolving_prim=None):
-    """Return (rel, is_collection) for the binding on `prim` applying to
+    """Return (rel, is_collection) for the winning binding on `prim` applying to
     `resolving_prim`, for `purpose`, or (None, False).
 
-    Precedence on a given prim (MaterialBindingAPI order):
-      purpose-specific direct  >  all-purpose direct
-      >  purpose-specific collection  >  all-purpose collection
-    For collection bindings the resolving prim must be a member of the bound
-    collection. Relationship-name token grammar:
-      crs:binding                         all-purpose direct
-      crs:binding:<purpose>               purpose direct
-      crs:binding:collection:<name>       all-purpose collection
+    Per-prim precedence, faithful to UsdShadeMaterialBindingAPI rules [3]+[4]:
+      purpose-specific collection  >  purpose-specific direct
+      >  all-purpose collection     >  all-purpose direct
+    Rule [4]: at a given prim, a collection-based binding (whose collection
+    includes the resolving prim) is STRONGER than the direct binding. Rule [3]:
+    a restricted-purpose binding is preferred over an all-purpose one.
+    Among multiple matching collection bindings, rule [5]/[6]: the
+    lexicographically-smallest binding NAME wins (we sort to be spec-faithful
+    rather than relying on USD relationship iteration order).
+
+    Relationship-name token grammar:
+      crs:binding                              all-purpose direct
+      crs:binding:<purpose>                    purpose direct
+      crs:binding:collection:<name>            all-purpose collection
       crs:binding:collection:<purpose>:<name>  purpose collection
     """
     target = resolving_prim if resolving_prim is not None else prim
     stage = prim.GetStage()
 
-    # 1/2. direct bindings
-    if purpose:
-        r = prim.GetRelationship(f"{CRS_BINDING_REL}:{purpose}")
-        if r and r.GetTargets() and COLLECTION != purpose:
-            return r, False
-    r = prim.GetRelationship(CRS_BINDING_REL)
-    if r and r.GetTargets():
-        return r, False
+    def direct(p):
+        if p:
+            r = prim.GetRelationship(f"{CRS_BINDING_REL}:{p}")
+            if r and r.GetTargets() and p != COLLECTION:
+                return r
+        else:
+            r = prim.GetRelationship(CRS_BINDING_REL)
+            if r and r.GetTargets():
+                return r
+        return None
 
-    # 3/4. collection bindings -- scan all crs:binding:collection:* rels on prim
-    cands_purpose, cands_all = [], []
+    # Gather collection bindings on this prim, split by purpose, that include
+    # the resolving prim. Each entry: (binding_name, rel).
+    coll_purpose, coll_all = [], []
     for rel in prim.GetRelationships():
         name = rel.GetName()
         if not name.startswith(f"{CRS_BINDING_REL}:{COLLECTION}:"):
             continue
         if not rel.GetTargets():
             continue
-        toks = name.split(":")  # crs binding collection [purpose] name
-        # toks[0]=crs toks[1]=binding toks[2]=collection ...
-        rest = toks[3:]
+        rest = name.split(":")[3:]            # [name] or [purpose, name]
         rel_purpose = rest[0] if len(rest) == 2 else ""
+        binding_name = rest[-1] if rest else ""
         cpath = _collection_path_of(rel, stage)
         if cpath is None or not _prim_in_collection(target, cpath):
             continue
-        if rel_purpose and rel_purpose == purpose:
-            cands_purpose.append(rel)
-        elif not rel_purpose:
-            cands_all.append(rel)
-    if purpose and cands_purpose:
-        return cands_purpose[0], True
-    if cands_all:
-        return cands_all[0], True
+        if rel_purpose:
+            coll_purpose.append((rel_purpose, binding_name, rel))
+        else:
+            coll_all.append((binding_name, rel))
+
+    # [5]/[6] lexicographic-smallest binding name wins among collections.
+    coll_all.sort(key=lambda e: e[0])
+    coll_purpose.sort(key=lambda e: (e[0], e[1]))
+
+    # Precedence ladder (strongest first).
+    if purpose:
+        for rp, bn, rel in coll_purpose:
+            if rp == purpose:
+                return rel, True            # purpose collection (strongest)
+        d = direct(purpose)
+        if d is not None:
+            return d, False                 # purpose direct
+    if coll_all:
+        return coll_all[0][1], True         # all-purpose collection
+    d = direct("")
+    if d is not None:
+        return d, False                     # all-purpose direct
     return None, False
 
 
@@ -176,8 +198,24 @@ def crs_of_prim(prim, purpose=""):
             # keep scanning: an even-higher stronger ancestor wins over this one
     bound_path, rel, strength = chosen
     crs_prim = _crs_target_of(rel, prim.GetStage())
-    wkt = crs_prim.GetAttribute(CRS_WKT_ATTR).Get()
-    return CRS.from_wkt(wkt), crs_prim.GetPath(), bound_path, strength
+    # D2 guard: a mis-authored binding (target is not a CRS prim, or has no
+    # crs:wkt) must not crash the resolver with an opaque pyproj error.
+    wkt = crs_prim.GetAttribute(CRS_WKT_ATTR).Get() if (
+        crs_prim and crs_prim.IsValid() and crs_prim.GetAttribute(CRS_WKT_ATTR)) else None
+    if not wkt:
+        import sys as _sys
+        print(f"[resolve] WARNING: crs:binding on {bound_path} targets "
+              f"{crs_prim.GetPath() if crs_prim else '<none>'} which has no crs:wkt; "
+              f"skipping this prim.", file=_sys.stderr)
+        return None, None, None, None
+    try:
+        src = CRS.from_wkt(wkt)
+    except Exception as e:
+        import sys as _sys
+        print(f"[resolve] WARNING: invalid crs:wkt on {crs_prim.GetPath()}: {e}; "
+              f"skipping.", file=_sys.stderr)
+        return None, None, None, None
+    return src, crs_prim.GetPath(), bound_path, strength
 
 
 def _crs_prim_epoch(stage, crs_prim_path):
@@ -248,20 +286,21 @@ def make_transformer(src: CRS, dst: CRS):
     return Transformer.from_crs(src, dst, always_xy=True)
 
 
-def ancestor_local_to_world(prim):
+def ancestor_local_to_world(prim, xform_cache=None):
     """Compute the composed local-to-world transform contributed by ANCESTORS
     only (excludes the prim's own xform, which is intentionally identity in the
-    CRS-neutral scene). Returns a Gf.Matrix4d. If the prim's own xform stack is
-    non-identity we still exclude it here -- the georeferenced position defines
-    the prim's own placement; ancestors compose on top."""
+    CRS-neutral scene). Returns a Gf.Matrix4d. Pass a shared UsdGeom.XformCache
+    (`xform_cache`) to reuse ancestor computations across a full-stage resolve
+    (D3: avoid rebuilding the cache per prim)."""
     parent = prim.GetParent()
     if not parent or not parent.IsValid():
         return Gf.Matrix4d(1.0)
-    xc = UsdGeom.XformCache()
+    xc = xform_cache if xform_cache is not None else UsdGeom.XformCache()
     return xc.GetLocalToWorldTransform(parent)
 
 
-def resolve_world_translation(prim, target_crs, cache, compose_ancestors=True, purpose=""):
+def resolve_world_translation(prim, target_crs, cache, compose_ancestors=True, purpose="",
+                              xform_cache=None):
     """Compute the world-space (target-CRS cartesian) position for a prim.
 
     world = ancestor_L2W . reproject(crs:position)
@@ -283,7 +322,8 @@ def resolve_world_translation(prim, target_crs, cache, compose_ancestors=True, p
     # AXIS-ORDER CONTRACT: crs:position is (x=lon/E, y=lat/N, z=h) always.
     # DYNAMIC CRS: if the source CRS prim carries a coordinate epoch, pass it as
     # the 4th (time) coordinate of a 4D PROJ transform so time-dependent CRSs
-    # (plate motion) reproject at the correct epoch.
+    # reproject at the correct epoch. (Epoch differences are realization-rate
+    # effects, mm/yr-scale; see docs/dynamic-crs.md -- not full plate motion.)
     epoch = _crs_prim_epoch(prim.GetStage(), src_path)
     if epoch is not None:
         x, y, z, _ = t.transform(pos[0], pos[1], pos[2], epoch)
@@ -293,7 +333,7 @@ def resolve_world_translation(prim, target_crs, cache, compose_ancestors=True, p
     if not compose_ancestors:
         return georef, src_path
     # Compose ancestor Cartesian transform on top of the georeferenced anchor.
-    a2w = ancestor_local_to_world(prim)
+    a2w = ancestor_local_to_world(prim, xform_cache)
     world = a2w.Transform(georef)   # applies ancestor rot/scale + translation
     return world, src_path
 
@@ -317,6 +357,7 @@ def main():
     stage = Usd.Stage.Open(args.inp)
     target_crs, target_src = target_crs_for_stage(stage, args.target_epsg)
     cache = {}
+    xform_cache = UsdGeom.XformCache()   # D3: shared across the traverse
 
     resolved = []
     for prim in stage.Traverse():
@@ -324,7 +365,9 @@ def main():
             continue
         if not prim.GetAttribute(CRS_POSITION_ATTR):
             continue
-        world, src = resolve_world_translation(prim, target_crs, cache, purpose=args.purpose)
+        world, src = resolve_world_translation(prim, target_crs, cache,
+                                               purpose=args.purpose,
+                                               xform_cache=xform_cache)
         if world is not None:
             pos = prim.GetAttribute(CRS_POSITION_ATTR).Get()
             t2m = prim.GetAttribute("primvars:t2m").Get()

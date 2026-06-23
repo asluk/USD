@@ -6,8 +6,13 @@ time-dependent (dynamic) CRSs, the external-grid/datum-epoch story the review
 
 Setup: two CRS prims with the SAME source WKT (ITRF2014 geographic 3D, EPSG:7912)
 but DIFFERENT crs:epoch (2000.0 vs 2030.0), resolving to ITRF2008 (EPSG:7911)
-then ECEF. Because ITRF realizations differ by plate motion, the two epochs must
-produce DIFFERENT ECEF positions for the same lon/lat/h.
+then ECEF. Because ITRF realizations differ over time, the two epochs produce
+DIFFERENT positions for the same lon/lat/h.
+
+MAGNITUDE (honest): the ITRF2014<->ITRF2008 realization difference is a
+MILLIMETRE-per-year-scale effect (~7 mm vertical over 30 yr here), NOT large plate
+motion. The point of the test is that the epoch is HONOURED (it changes the
+result and an epoch-ignoring resolver would not), not that the shift is large.
 
 Assertions:
   D1 epoch honoured: resolved(epoch=2000) != resolved(epoch=2030) by a
@@ -28,7 +33,7 @@ import resolve_runtime as rr
 SRC = CRS.from_epsg(7912)   # ITRF2014 geographic 3D (dynamic)
 TGT = CRS.from_epsg(7911)   # ITRF2008 geographic 3D
 ECEF = CRS.from_epsg(4978)
-LON, LAT, H = 133.0, -25.0, 0.0   # central Australia (fast plate)
+LON, LAT, H = 133.0, -25.0, 0.0   # central Australia
 
 
 def mkcrs(stage, path, epoch=None):
@@ -63,10 +68,10 @@ def main(out="out/_test_dynamic.usda"):
 
     # Resolve to ITRF2008 (a DIFFERENT dynamic realization). Epoch matters only
     # between two realization-specific frames: ITRF2014->ITRF2008 carries a
-    # time-dependent (plate-motion) step. NOTE: going straight to generic WGS84
-    # ECEF (EPSG:4978) collapses to a static transform and would wash the epoch
-    # out -- which is itself the correct behaviour, and why this test targets a
-    # specific realization.
+    # time-dependent step (mm/yr-scale realization difference, NOT plate motion).
+    # NOTE: going straight to generic WGS84 ECEF (EPSG:4978) collapses to a
+    # static transform and would wash the epoch out -- which is itself the
+    # correct behaviour, and why this test targets a specific realization.
     cache = {}
     tgt = TGT
     w2000, _ = rr.resolve_world_translation(s2000, tgt, cache)

@@ -118,20 +118,26 @@ def main(path="out/earth2_georef.usda"):
         except Exception:
             lat_first = False
         tx = Transformer.from_crs(src, ecef, always_xy=True)
-        # (1) documented convention: pos = (lon/E, lat/N, h)
+        # (1) documented convention applied to the ACTUAL authored data: pos = (lon/E, lat/N, h)
         cx, cy, cz = tx.transform(pos[0], pos[1], pos[2])
         conv_r = (cx*cx + cy*cy + cz*cz) ** 0.5
         conv_ok = np.isfinite(conv_r) and (WGS84_B - 1000 <= conv_r <= WGS84_A + 60000)
-        # (2) authority-order misread: swap slot0/slot1 -> should be wrong/inf
-        mx, my, mz = tx.transform(pos[1], pos[0], pos[2])
-        mis_r = (mx*mx + my*my + mz*mz) ** 0.5
-        misread_detectably_wrong = (not np.isfinite(mis_r)) or abs(mis_r - conv_r) > 1000.0
+        # (2) teeth: does the contract MATTER for this CRS? Use a SYNTHETIC probe
+        # point with clearly distinct lon/lat (not the authored coordinate, which
+        # may legitimately be near-diagonal lon~=lat and make a swap undetectable).
+        # D1 fix: this tests the CRS/axis contract, not the data value.
+        plon, plat, ph = -123.4, 17.6, 0.0      # distinct, both valid ranges
+        ax, ay, az = tx.transform(plon, plat, ph)          # correct order
+        bx, by, bz = tx.transform(plat, plon, ph)          # swapped (authority misread)
+        ra = (ax*ax+ay*ay+az*az) ** 0.5
+        rb = (bx*bx+by*by+bz*bz) ** 0.5
+        misread_detectably_wrong = (not np.isfinite(rb)) or abs(rb - ra) > 1000.0
         if not conv_ok:
             passed &= fail(f"E. crs:position under documented (lon,lat,h) order is invalid "
                            f"(radius {conv_r})")
         elif lat_first and not misread_detectably_wrong:
-            passed &= fail("E. authority order is lat-first but a misread is NOT detectable "
-                           "-- axis-order test has no teeth")
+            passed &= fail("E. authority order is lat-first but a misread of the synthetic "
+                           "probe is NOT detectable -- axis-order test has no teeth")
         else:
             note = "authority lat-first; misread detectably wrong" if lat_first \
                    else "authority lon-first; convention matches"
