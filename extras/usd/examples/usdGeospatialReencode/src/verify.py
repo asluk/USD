@@ -138,6 +138,38 @@ def main(path="out/earth2_georef.usda"):
             ok(f"E. crs:position honors documented east-north-up contract ({note}); "
                f"authored WKT read from prim, not hardcoded EPSG")
 
+    # --- F. EPSG-vs-WKT precedence (review fix F.5) ---
+    # Contract (docs/crs-identity-precedence.md): crs:wkt is AUTHORITATIVE; crs:epsg
+    # is an informational hint. On mismatch the resolver uses WKT and we FLAG the
+    # inconsistency here. Check that, for every CRS prim carrying both, the EPSG
+    # code agrees with the WKT's own EPSG identity. A disagreement is a hard fail
+    # (it would silently mislead EPSG-keyed consumers).
+    crs_prims = [p for p in stage.Traverse() if p.GetTypeName() == "CoordinateReferenceSystem"]
+    mism = 0
+    checked = 0
+    for cp in crs_prims:
+        wkt_a = cp.GetAttribute("crs:wkt")
+        epsg_a = cp.GetAttribute("crs:epsg")
+        if not (wkt_a and wkt_a.Get() and epsg_a and epsg_a.Get()):
+            continue
+        checked += 1
+        wkt_epsg = None
+        try:
+            wkt_epsg = CRS.from_wkt(wkt_a.Get()).to_epsg()
+        except Exception:
+            pass
+        if wkt_epsg is not None and int(epsg_a.Get()) != int(wkt_epsg):
+            mism += 1
+            fail(f"F. {cp.GetPath()}: crs:epsg={epsg_a.Get()} disagrees with WKT EPSG={wkt_epsg} "
+                 f"(WKT is authoritative; epsg hint is wrong)")
+    if mism:
+        passed &= False
+    elif checked:
+        ok(f"F. EPSG-vs-WKT precedence: all {checked} CRS prims have crs:epsg consistent "
+           f"with authoritative crs:wkt (no silent mismatch)")
+    else:
+        ok("F. EPSG-vs-WKT precedence: no CRS prim carries both epsg+wkt to cross-check")
+
     print("\nRESULT:", "ALL PASS ✅" if passed else "FAILURES ❌")
     return 0 if passed else 1
 

@@ -1,7 +1,7 @@
 # Geospatial CRS Prototype — Running TLDR
 
 _Living status doc. Updated as work proceeds. Maintained by claw1 (unattended runs)._
-_Last updated: 2026-06-23 ~05:55 UTC._
+_Last updated: 2026-06-23 ~06:10 UTC._
 
 ## One-paragraph status
 Adversarial review (`docs/codex-review.md`) flagged 3 top weaknesses; **all 3 fixed and
@@ -60,14 +60,19 @@ bash schema/regen-schema.sh --check                     # schema resources in sy
 
 ## Open / next (Aaron decides)
 1. ~~MaterialBindingAPI strength/purpose/collection parity~~ ✅ done (F.1, S1–S7).
-2. EPSG-vs-WKT precedence on mismatch (currently WKT authoritative, documented).
-3. External-grid / datum-epoch / time-dependent CRS story.
+2. ~~EPSG-vs-WKT precedence on mismatch~~ ✅ done (F.5): WKT authoritative, `crs:epsg` a
+   hint; `docs/crs-identity-precedence.md` + `verify.py` check F (teeth: mismatch → FAIL).
+3. External-grid / datum-epoch / time-dependent CRS story (still open).
+4. Possible: ship a real `usdchecker` UsdValidation validator plugin for crs:* prims.
+
+## verify.py checks
+A neutrality · B binding/WKT · C geodesy landmarks · D round-trip · E axis-order (authored
+WKT, teeth) · F EPSG-vs-WKT precedence (teeth).
 
 ## Changelog
-- 2026-06-23 ~05:55 — collection-based binding (`crs:binding:collection:<name>`) implemented;
-  `test_binding_semantics.py` extended to S5–S7 (member resolves, non-member none, direct
-  beats collection). Full MaterialBindingAPI parity.
-- 2026-06-23 ~05:35 — F.1 binding strength+purpose parity (`test_binding_semantics.py` S1–S4).
-- 2026-06-23 ~05:10 — usdGenSchema bootstrapped; schema regenerated canonically;
-  `regen-schema.sh` added.
+- 2026-06-23 ~06:10 — F.5 EPSG-vs-WKT precedence: WKT authoritative; `verify.py` check F
+  flags any `crs:epsg` disagreeing with `crs:wkt` (teeth verified). `docs/crs-identity-precedence.md`.
+- 2026-06-23 ~05:55 — collection-based binding (S5–S7); full MaterialBindingAPI parity.
+- 2026-06-23 ~05:35 — F.1 binding strength+purpose parity (S1–S4).
+- 2026-06-23 ~05:10 — usdGenSchema bootstrapped; canonical schema; `regen-schema.sh`.
 - 2026-06-23 ~05:00 — fixes #1/#2/#3 complete & verified.
