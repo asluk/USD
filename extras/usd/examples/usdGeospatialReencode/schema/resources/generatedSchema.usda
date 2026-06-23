@@ -14,9 +14,19 @@ class CoordinateReferenceSystem "CoordinateReferenceSystem" (
             string userDocBrief = "Human-readable name for tools/UI."
         }
     )
+    uniform double crs:epoch = 0 (
+        customData = {
+            string userDocBrief = "Optional coordinate epoch (decimal year, e.g."
+        }
+    )
     uniform int crs:epsg = 0 (
         customData = {
             string userDocBrief = "Optional EPSG code."
+        }
+    )
+    asset[] crs:gridFiles = [] (
+        customData = {
+            string userDocBrief = "Optional PROJ transformation-grid asset paths (e.g."
         }
     )
     uniform token crs:wkt = "" (

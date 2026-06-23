@@ -180,6 +180,17 @@ def crs_of_prim(prim, purpose=""):
     return CRS.from_wkt(wkt), crs_prim.GetPath(), bound_path, strength
 
 
+def _crs_prim_epoch(stage, crs_prim_path):
+    """Return the coordinate epoch (decimal year) authored on the CRS prim, or
+    None if unspecified/zero."""
+    cp = stage.GetPrimAtPath(crs_prim_path)
+    if not cp or not cp.IsValid():
+        return None
+    a = cp.GetAttribute("crs:epoch")
+    v = a.Get() if a else None
+    return float(v) if v else None
+
+
 def target_crs_for_stage(stage, override_epsg=None):
     """Determine the Target/render CRS for the stage.
     Priority: explicit override -> CRS bound to the defaultPrim -> ECEF 4978.
@@ -230,7 +241,14 @@ def resolve_world_translation(prim, target_crs, cache, compose_ancestors=True, p
         cache[key] = make_transformer(src_crs, target_crs)
     t = cache[key]
     # AXIS-ORDER CONTRACT: crs:position is (x=lon/E, y=lat/N, z=h) always.
-    x, y, z = t.transform(pos[0], pos[1], pos[2])
+    # DYNAMIC CRS: if the source CRS prim carries a coordinate epoch, pass it as
+    # the 4th (time) coordinate of a 4D PROJ transform so time-dependent CRSs
+    # (plate motion) reproject at the correct epoch.
+    epoch = _crs_prim_epoch(prim.GetStage(), src_path)
+    if epoch is not None:
+        x, y, z, _ = t.transform(pos[0], pos[1], pos[2], epoch)
+    else:
+        x, y, z = t.transform(pos[0], pos[1], pos[2])
     georef = Gf.Vec3d(x, y, z)
     if not compose_ancestors:
         return georef, src_path

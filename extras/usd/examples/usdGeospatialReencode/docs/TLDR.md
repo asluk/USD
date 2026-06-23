@@ -1,7 +1,7 @@
 # Geospatial CRS Prototype — Running TLDR
 
 _Living status doc. Updated as work proceeds. Maintained by claw1 (unattended runs)._
-_Last updated: 2026-06-23 ~06:10 UTC._
+_Last updated: 2026-06-23 ~06:35 UTC._
 
 ## One-paragraph status
 Adversarial review (`docs/codex-review.md`) flagged 3 top weaknesses; **all 3 fixed and
@@ -60,18 +60,22 @@ bash schema/regen-schema.sh --check                     # schema resources in sy
 
 ## Open / next (Aaron decides)
 1. ~~MaterialBindingAPI strength/purpose/collection parity~~ ✅ done (F.1, S1–S7).
-2. ~~EPSG-vs-WKT precedence on mismatch~~ ✅ done (F.5): WKT authoritative, `crs:epsg` a
-   hint; `docs/crs-identity-precedence.md` + `verify.py` check F (teeth: mismatch → FAIL).
-3. External-grid / datum-epoch / time-dependent CRS story (still open).
-4. Possible: ship a real `usdchecker` UsdValidation validator plugin for crs:* prims.
+2. ~~EPSG-vs-WKT precedence on mismatch~~ ✅ done (F.5): WKT authoritative; check F.
+3. ~~Dynamic-CRS coordinate epoch~~ ✅ done: `crs:epoch` 4D transform, `test_dynamic_crs.py`
+   (D1–D3); `crs:gridFiles` declared+documented but not yet wired to a bundled PROJ grid.
+4. Possible: compiled `usdchecker`-discoverable validator plugin (needs a C++ build;
+   `verify.py` A–F is the runnable validator today). NanoUSD leg. Bundle a PROJ grid to
+   exercise `crs:gridFiles` end-to-end.
 
-## verify.py checks
-A neutrality · B binding/WKT · C geodesy landmarks · D round-trip · E axis-order (authored
-WKT, teeth) · F EPSG-vs-WKT precedence (teeth).
+## Tests / checks (all green, all with teeth)
+- `verify.py` A–F · `multi_crs_example.py` (negative control) · `test_ancestor_compose.py`
+  (T1–T3) · `test_binding_semantics.py` (S1–S7) · `test_dynamic_crs.py` (D1–D3).
+- `schema/regen-schema.sh --check` keeps generated resources in sync.
 
 ## Changelog
-- 2026-06-23 ~06:10 — F.5 EPSG-vs-WKT precedence: WKT authoritative; `verify.py` check F
-  flags any `crs:epsg` disagreeing with `crs:wkt` (teeth verified). `docs/crs-identity-precedence.md`.
+- 2026-06-23 ~06:35 — dynamic-CRS coordinate epoch (`crs:epoch` 4D transform) + `crs:gridFiles`
+  declared; `test_dynamic_crs.py` D1–D3; `docs/dynamic-crs.md`.
+- 2026-06-23 ~06:10 — F.5 EPSG-vs-WKT precedence (check F) + README aligned to reality.
 - 2026-06-23 ~05:55 — collection-based binding (S5–S7); full MaterialBindingAPI parity.
 - 2026-06-23 ~05:35 — F.1 binding strength+purpose parity (S1–S4).
 - 2026-06-23 ~05:10 — usdGenSchema bootstrapped; canonical schema; `regen-schema.sh`.

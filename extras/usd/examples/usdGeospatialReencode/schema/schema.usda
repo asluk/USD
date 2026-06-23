@@ -55,6 +55,18 @@ class CoordinateReferenceSystem "CoordinateReferenceSystem" (
     uniform string crs:displayName = "" (
         doc = "Human-readable name for tools/UI."
     )
+    uniform double crs:epoch = 0 (
+        doc = """Optional coordinate epoch (decimal year, e.g. 2020.0) for
+        time-dependent / dynamic CRSs (plate motion). 0 means unspecified. When
+        set, the runtime passes it as the time coordinate of a 4D PROJ transform
+        so positions are reprojected at the correct epoch. See docs/dynamic-crs.md."""
+    )
+    asset[] crs:gridFiles = [] (
+        doc = """Optional PROJ transformation-grid asset paths (e.g. datum/geoid
+        shift grids) that the runtime should make available to PROJ when building
+        the transform. Lets high-accuracy datum/epoch transforms reference
+        external grid assets instead of inlining everything in WKT."""
+    )
 }
 
 class "CRSBindingAPI" (
