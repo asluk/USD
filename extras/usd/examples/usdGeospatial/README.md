@@ -50,6 +50,53 @@ ways — Simon's baked `!resetXformStack!` + stacked `xformOp:translate`, and ou
 to 0.0 mm**, with the neutral scene carrying **no xformOps at all**. See
 `testenv/world_baked_resetxformstack.usda` vs. `testenv/world_neutral_relbinding.usda`.
 
+> **Why this is the unblock, not just a feature.** The earlier geospatial-in-USD effort
+> stalled on one question: how do georeferenced transforms reconcile with the pre-existing
+> `UsdGeomXformable` stack — *replace* it, *wrap* it, or *coexist*? That is the
+> `resetXformStack` debate. Baking a `resetXformStack` answers "replace," at the cost of a
+> non-neutral scene and lost composability. This bundle answers **"coexist," via a
+> runtime-injected anchor — and demonstrates it rather than arguing it** (the equivalence
+> above, plus anchor injection below).
+
+## Anchor injection — coexisting with `UsdGeomXformable` (inject, don't bake)
+
+The design above handles georeferenced *leaves* (each prim carries its own
+`crs:position`). The harder case — and the one stock USD gets wrong — is a georeferenced
+**anchor** with an ordinary, non-georeferenced **Cartesian subtree** (a building modelled
+in local metres, a moving asset with internal structure). A plain child has no
+`crs:position`, so the resolver never touches it and **standard composition renders it at
+the world origin** — the anchor's georeferencing lives in `crs:position`, which the xform
+stack never reads.
+
+The fix is to **inject** the anchor's frame at runtime, not bake it: the anchor's
+`crs:position` + bound CRS define a **rigid local-frame → ECEF transform**, and the
+subtree composes under it as ordinary USD.
+
+- **Orientation, not just position.** The injected frame is the full ENU/topocentric basis
+  at the anchor (east-north-up), not merely the translated ECEF point. A subtree's local
+  `+Z` must point along the *ellipsoidal normal* (up), which at, e.g., NYC is ~49° off
+  ECEF `+Z` — a position-only resolver lays every asset on its side everywhere but the
+  pole. (`src/crs_engine.py` supplies this basis; ENU for geographic anchors, the projected
+  plane for projected anchors.)
+- **Transient, never written.** Injection happens in a *computed* representation
+  (`resolve_runtime.resolve_with_injection`); the authored stage is untouched. Writing a
+  resolved `.usda` would just be baking at a different layer.
+- **Proven against closed-form geodesy** in `src/test_anchor_injection.py` (the inverse of
+  `test_ancestor_compose.py`): a building authored 1000 m E / 500 m N and a roof +20 m up
+  land to **0.0 mm**; the position-only placement is **410 m wrong** (so an orientation-
+  ignoring resolver fails the test); and stock USD without injection puts the child
+  **6.4×10⁶ m** from truth — the origin gap, quantified.
+- **Float32 localization falls out for free** (one-pager C-05): the large magnitude lives
+  in the double-precision injected anchor (~6.4×10⁶ m), the asset's vertices are small
+  float32 *local* offsets. `src/test_float32_localization.py` shows absolute-float32 ECEF
+  loses **162 mm** of precision at that magnitude while localized float32 keeps
+  **0.0003 mm** — a ~480,000× improvement.
+
+This is the **implementation-agnostic behavior reference**: the same coexist semantics a
+Hydra scene index, OpenExec, or an Omniverse runtime would each implement. (A compiled
+Hydra scene-index plugin is the natural production form; the Python here pins the expected
+behavior.)
+
 ## The schema (pure data)
 
 - **`CoordinateReferenceSystem`** (typed): `crs:wkt` (OGC WKT2, authoritative) plus
@@ -83,8 +130,15 @@ cannot drift from the code.
   **georeferenced** USD (real WKT CRS + `crs:position`), not a baked radius-100 sphere.
   Two authoring paths (didactic + `Sdf` batch) produce **byte-identical** output.
 - `src/resolve_runtime.py` — the CRS-aware runtime: traverses bindings (inheritance,
-  strength, purpose, collection), reprojects via PROJ/pyproj, composes ancestor
-  Cartesian transforms — without touching the authored xform stack.
+  strength, purpose, collection), reprojects via a registered **projection engine**,
+  composes ancestor Cartesian transforms, and (for anchors) injects the rigid
+  local-frame → ECEF transform — all without touching the authored xform stack.
+- `src/crs_engine.py` — the **projection-engine registration seam** (Simon's Esri-PR ask):
+  projection support is a registry, not a hardcoded dependency. PROJ/pyproj is the *default*
+  registered engine; a deployment could register a GPU engine (cuProj — this is the C-04
+  insertion point) or a NanoUSD-side engine instead. The engine exposes both bulk
+  `reproject(...)` **and** `local_frame_to_ecef(...)` (the basis/orientation at a point,
+  which anchor injection needs). **WKT stays opaque to USD** — only the engine consumes it.
 
 ![evidence](docs/evidence.png)
 
@@ -123,7 +177,8 @@ source** (NOAA's NCAT geodesy service).
 > **Scope of this proof:** graticule + benchmark co-registration, **not** a draped
 > satellite/terrain raster basemap (that needs `cartopy` + a basemap/DEM asset — logged as
 > roadmap). And it demonstrates **point/leaf** coherence; **anchor + Cartesian-subtree**
-> coherence is a separate, tracked milestone (see Status / scope).
+> coherence is shown separately by anchor injection (above) and
+> `test_anchor_injection.py`.
 
 ## Tests — all green, all with teeth
 
@@ -131,6 +186,9 @@ source** (NOAA's NCAT geodesy service).
 >100 km) · `test_ancestor_compose.py` (T1–T3, 7,482 km teeth) ·
 `test_binding_semantics.py` (S1–S7) · `test_binding_composition.py` (L1–L3, cross-layer
 + list-edit) · `test_dynamic_crs.py` (D1–D3) · `test_grid_files.py` (G1–G2) ·
+`test_anchor_injection.py` (P1–P4: georef anchor + Cartesian subtree lands & orients to
+0.0 mm; position-only is 410 m wrong; stock USD is 6.4×10⁶ m off) ·
+`test_float32_localization.py` (C1–C3: localized float32 ~480,000× better than absolute) ·
 `testenv_equivalence.py` (design equivalence vs. the Esri scene) ·
 `render_figures.py` (the coherence figure self-asserts closed-form co-registration to
 sub-mm + the negative control flies off the globe) ·
@@ -144,7 +202,8 @@ cd extras/usd/examples/usdGeospatial
 python3 src/reencode_georef.py --stride 40 --out out/earth2_georef.usda
 python3 src/verify.py out/earth2_georef.usda
 python3 src/testenv_equivalence.py
-python3 src/render_figures.py           # regenerate all 5 figures into docs/
+python3 src/test_anchor_injection.py    # georef anchor + Cartesian subtree (inject-don't-bake)
+python3 src/render_figures.py           # regenerate all figures into docs/
 ```
 
 ## Status / scope
@@ -153,20 +212,20 @@ python3 src/render_figures.py           # regenerate all 5 figures into docs/
   schema remains the parallel artifact; this bundle backs the proposal's design calls
   (binding shape, no baked resetXformStack, resolution-rule parity) with running code on
   a real dataset.
-- **In scope, next milestone (not built yet):** runtime **anchor injection** so a georef
-  anchor with a *non-georef Cartesian subtree* resolves correctly. The current model is
-  absolute `crs:position` per prim + Cartesian ancestors composing on top — clean for
-  point/grid leaves (Earth-2, terrain), but a plain child of a georef anchor currently
-  resolves at the origin (the anchor's georef lives in `crs:position`, which stock USD
-  composition doesn't read). The fix is the Esri-convergent synthesis: keep an anchor +
-  local-offset, resolve the anchor into a **runtime-injected** transform (Hydra scene
-  index), and let descendants compose under it as ordinary USD — *not* a baked
-  `resetXformStack`, *not* dissolved into per-prim absolutes. This also restores the
-  float32-localization story.
+- **Done — anchor injection (the coexist answer).** A georef anchor with a non-georef
+  Cartesian subtree now resolves correctly: `resolve_runtime.resolve_with_injection`
+  injects the rigid ENU/topocentric local-frame → ECEF transform (orientation + position)
+  transiently, and descendants compose under it as ordinary USD — *not* a baked
+  `resetXformStack`, *not* per-prim absolutes. Proven in `test_anchor_injection.py` and
+  `test_float32_localization.py` (C-05). The Python runtime is the implementation-agnostic
+  behavior reference; a compiled **Hydra scene-index plugin** is the natural production
+  form (needs a C++ build path not set up in this codeless bundle).
+- **Done — projection-engine seam.** `crs_engine.py` makes PROJ/pyproj one *registered*
+  engine (default), exposing reproject + local-frame basis; WKT stays opaque to USD. This
+  is the **C-04** insertion point for a GPU/cuProj engine.
 - **In scope, deferred:** a codeless `usdchecker`-discoverable validator plugin (Python
-  `"Type":"python"`); a **projection-engine registration seam** so PROJ/pyproj is one
-  registered engine rather than hardcoded (per Simon's Esri-PR request), with WKT kept
-  opaque to USD. `verify.py` A–F is the runnable validator today.
+  `"Type":"python"`). `verify.py` A–F is the runnable validator today.
 - **Out of scope here (need other resources):** a draped raster/terrain basemap for the
   coherence figure (`cartopy` + a basemap/DEM asset); an end-to-end grid-*applied*
-  transform (GDAL + a bundled PROJ grid); the parallel **NanoUSD** implementation.
+  transform (GDAL + a bundled PROJ grid); the parallel **NanoUSD** implementation; the
+  compiled Hydra scene-index / OpenExec form of anchor injection.

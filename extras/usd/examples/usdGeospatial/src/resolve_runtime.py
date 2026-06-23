@@ -45,6 +45,7 @@ import argparse, numpy as np
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _schema_setup  # noqa
+import crs_engine as ce
 from pyproj import CRS, Transformer
 from pxr import Usd, UsdGeom, Sdf, Gf
 
@@ -286,6 +287,11 @@ def make_transformer(src: CRS, dst: CRS):
     return Transformer.from_crs(src, dst, always_xy=True)
 
 
+def _wkt_of(crs):
+    """WKT2 string for a pyproj CRS (the engine consumes WKT; USD never parses it)."""
+    return crs.to_wkt(version="WKT2_2019")
+
+
 def ancestor_local_to_world(prim, xform_cache=None):
     """Compute the composed local-to-world transform contributed by ANCESTORS
     only (excludes the prim's own xform, which is intentionally identity in the
@@ -317,18 +323,15 @@ def resolve_world_translation(prim, target_crs, cache, compose_ancestors=True, p
     key = str(src_path)
     if key not in cache:
         _register_grid_files(prim.GetStage(), src_path)  # make grid assets discoverable
-        cache[key] = make_transformer(src_crs, target_crs)
-    t = cache[key]
+        # cache the (src_wkt, dst_wkt) pair the ENGINE will use -- pyproj is no
+        # longer called directly here; the registered engine does the geodesy.
+        cache[key] = (_wkt_of(src_crs), _wkt_of(target_crs))
+    src_wkt, dst_wkt = cache[key]
+    engine = ce.get_engine()
     # AXIS-ORDER CONTRACT: crs:position is (x=lon/E, y=lat/N, z=h) always.
-    # DYNAMIC CRS: if the source CRS prim carries a coordinate epoch, pass it as
-    # the 4th (time) coordinate of a 4D PROJ transform so time-dependent CRSs
-    # reproject at the correct epoch. (Epoch differences are realization-rate
-    # effects, mm/yr-scale; see docs/dynamic-crs.md -- not full plate motion.)
+    # DYNAMIC CRS: pass the coordinate epoch as the time coordinate when present.
     epoch = _crs_prim_epoch(prim.GetStage(), src_path)
-    if epoch is not None:
-        x, y, z, _ = t.transform(pos[0], pos[1], pos[2], epoch)
-    else:
-        x, y, z = t.transform(pos[0], pos[1], pos[2])
+    x, y, z = engine.reproject(src_wkt, dst_wkt, pos[0], pos[1], pos[2], epoch=epoch)
     georef = Gf.Vec3d(x, y, z)
     if not compose_ancestors:
         return georef, src_path
@@ -336,6 +339,96 @@ def resolve_world_translation(prim, target_crs, cache, compose_ancestors=True, p
     a2w = ancestor_local_to_world(prim, xform_cache)
     world = a2w.Transform(georef)   # applies ancestor rot/scale + translation
     return world, src_path
+
+
+# ===========================================================================
+# ANCHOR INJECTION (the inject-don't-bake answer to the resetXformStack debate)
+# ===========================================================================
+# A georeferenced prim acts as an ANCHOR: its crs:position + bound CRS define a
+# rigid local-frame -> ECEF transform (ORIENTATION + position; the ENU/topocentric
+# basis at its footprint, or the projected-plane basis for a projected CRS). A
+# NON-georef descendant authored in local metres (x=East, y=North, z=Up) is then
+# placed by composing its authored local xform UNDER the injected anchor frame:
+#
+#     world_ecef = anchorFrame . localXform(descendant, relative to anchor)
+#
+# This is the case stock USD composition gets wrong (the anchor's georef lives in
+# crs:position, which XformCache never reads, so the descendant renders at the
+# origin). We inject the anchor frame into a COMPUTED representation at runtime;
+# nothing is written back to the authored stage (injecting into a resolved .usda
+# would just be baking at a different layer). The Python behavior here is the
+# implementation-agnostic reference for a Hydra scene index / OpenExec / an OV
+# runtime to each implement.
+
+def anchor_frame(prim, target_crs, cache, purpose=""):
+    """If `prim` is a georeferenced anchor, return its rigid local-frame -> target
+    transform (Gf.Matrix4d, orientation+position) and the source CRS path; else
+    (None, None). Only valid when target is ECEF (4978): the topocentric basis is
+    defined for an ECEF target. For a planar/projected target, orientation is
+    implicit and callers should use position-only composition instead."""
+    src_crs, src_path, _, _ = crs_of_prim(prim, purpose)
+    if src_crs is None:
+        return None, None
+    pos = prim.GetAttribute(CRS_POSITION_ATTR).Get()
+    if pos is None:
+        return None, src_path
+    key = ("frame", str(src_path))
+    if key not in cache:
+        _register_grid_files(prim.GetStage(), src_path)
+        cache[key] = _wkt_of(src_crs)
+    src_wkt = cache[key]
+    epoch = _crs_prim_epoch(prim.GetStage(), src_path)
+    engine = ce.get_engine()
+    M = engine.local_frame_to_ecef(src_wkt, pos[0], pos[1], pos[2], epoch=epoch)
+    return M, src_path
+
+
+def nearest_anchor(prim, purpose=""):
+    """Walk ancestors (including self) to the nearest prim that is a georef anchor
+    (has crs:position + a resolvable binding). Returns that prim or None."""
+    p = prim
+    while p and p.IsValid():
+        if p.GetAttribute(CRS_POSITION_ATTR):
+            src, _, _, _ = crs_of_prim(p, purpose)
+            if src is not None:
+                return p
+        p = p.GetParent()
+    return None
+
+
+def resolve_with_injection(prim, target_crs, cache, purpose="", xform_cache=None):
+    """Resolve a prim's world transform under inject-don't-bake semantics.
+
+    Returns (Gf.Matrix4d world_to_local? no -> local-to-world, anchor_path) or
+    (None, None). Two cases:
+      * The prim is ITSELF a georef anchor -> its world transform IS the injected
+        anchor frame (orientation+position).
+      * The prim is a NON-georef descendant of a georef anchor -> world is the
+        anchor frame composed with the prim's authored local-to-anchor xform.
+        The local-to-anchor xform is read from the AUTHORED stage (the subtree's
+        ordinary Cartesian xformOps), relative to the anchor.
+    A prim with neither (no anchor up the chain) returns (None, None) -- it has no
+    georeferencing and stock USD composition already handles it.
+    """
+    anchor = nearest_anchor(prim, purpose)
+    if anchor is None:
+        return None, None
+    frame, anchor_path = anchor_frame(anchor, target_crs, cache, purpose)
+    if frame is None:
+        return None, None
+    if prim.GetPath() == anchor.GetPath():
+        return frame, anchor.GetPath()
+    # local-to-anchor: the descendant's transform expressed in the anchor's
+    # local frame = (anchor_world_authored)^-1 . descendant_world_authored,
+    # using the AUTHORED (Cartesian) stack only. The anchor's own authored xform
+    # is intentionally identity in the neutral scene, so this is just the
+    # descendant's local-to-world relative to the anchor.
+    xc = xform_cache if xform_cache is not None else UsdGeom.XformCache()
+    anchor_authored = xc.GetLocalToWorldTransform(anchor)
+    desc_authored = xc.GetLocalToWorldTransform(prim)
+    local_to_anchor = desc_authored * anchor_authored.GetInverse()
+    world = local_to_anchor * frame      # compose under the injected anchor frame
+    return world, anchor.GetPath()
 
 
 def main():
