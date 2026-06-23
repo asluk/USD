@@ -82,7 +82,7 @@ def author_samples_usd(stage, field, lat, lon, stride):
             t2m = float(field[i*stride, j*stride])
             xf = UsdGeom.Xform.Define(stage, f"/World/GeoSamples/p_{i}_{j}")
             p = xf.GetPrim()
-            p.ApplyAPI("CRSBindingAPI")   # real applied API schema (review fix #3a)
+            p.ApplyAPI("BindingAPI")   # real applied API schema (review fix #3a)
             bind_crs(p, geo_prim)
             pos = p.CreateAttribute("crs:position", Sdf.ValueTypeNames.Double3, custom=False)
             pos.Set(Gf.Vec3d(float(lo), float(la), 0.0))
@@ -107,7 +107,7 @@ def author_samples_sdf(stage, field, lat, lon, stride):
                 t2m = float(field[i*stride, j*stride])
                 ps = Sdf.PrimSpec(parent, f"p_{i}_{j}", Sdf.SpecifierDef, "Xform")
                 # mirror ApplyAPI in the Sdf path so both outputs stay identical
-                ps.SetInfo("apiSchemas", Sdf.TokenListOp.Create(prependedItems=["CRSBindingAPI"]))
+                ps.SetInfo("apiSchemas", Sdf.TokenListOp.Create(prependedItems=["BindingAPI"]))
 
                 rs = Sdf.RelationshipSpec(ps, "crs:binding", custom=False)
                 rs.targetPathList.explicitItems.append(Sdf.Path(GEO_CRS_PATH))

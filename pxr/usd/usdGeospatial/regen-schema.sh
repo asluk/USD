@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
-# regen-schema.sh -- regenerate the codeless geospatial-CRS schema registry files
-# (generatedSchema.usda + plugInfo.json) from schema/schema.usda using usdGenSchema.
+# regen-schema.sh -- regenerate the CODELESS usdGeospatial schema registry files
+# (generatedSchema.usda + plugInfo.json) from schema.usda using usdGenSchema.
 #
-# Why this script exists: the usd-core wheel ships pxr/Usd/usdGenSchema.py but does
-# NOT install it as a console script, does NOT bundle the jinja2 codegen templates,
-# and does NOT ship the base usd/schema.usda meta-schema. This bootstraps all three
-# without a full USD source build.
+# This is the usdGeospatial library (pxr/usd/usdGeospatial), file-layout-aligned
+# with Simon Haegler's mistafunk/USD `geospatial-prototype` branch, but authored
+# CODELESS (skipCodeGeneration = true) -> no C++ build required.
 #
-# Requirements: the repo .venv (usd-core, pyproj) + jinja2 (in ~/.local or venv).
+# The usd-core wheel ships pxr/Usd/usdGenSchema.py but NOT as a console script,
+# does NOT bundle the jinja2 codegen templates, and does NOT ship the base
+# usd/schema.usda meta-schema. This bootstraps all three without a full build.
+#
 # Usage:  ./regen-schema.sh            # regenerate in place
 #         ./regen-schema.sh --check    # regenerate to temp and diff (CI sync check)
 set -euo pipefail
 
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"           # .../schema
-EXAMPLE="$(cd "$HERE/.." && pwd)"
-REPO_ROOT="$(cd "$EXAMPLE/../../../.." && pwd)"             # geo-usd
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"        # .../pxr/usd/usdGeospatial
+REPO_ROOT="$(cd "$HERE/../../.." && pwd)"                   # geo-usd
 VENV="$REPO_ROOT/.venv"
 USDGENSCHEMA="$VENV/lib/python3.10/site-packages/pxr/Usd/usdGenSchema.py"
 USD_VERSION_TAG="v26.05"   # must match usd-core in the venv
@@ -22,8 +23,6 @@ TMPL_DIR="${USDGS_TEMPLATE_DIR:-/tmp/usdtmpl}"
 
 # shellcheck disable=SC1091
 source "$VENV/bin/activate"
-
-# jinja2 lives in ~/.local for this host; make it importable.
 export PYTHONPATH="${HOME}/.local/lib/python3.10/site-packages:${PYTHONPATH:-}"
 
 # --- 1. ensure codegen templates + base meta-schema are present ---------------
@@ -48,7 +47,7 @@ run_gen() {  # $1 = output dir
 
 substitute() {  # standalone plugInfo: resources next to plugInfo, root '.'
         # Also injects the SdfMetadata registration for the binding-strength field
-        # `bindCRSAs` (usdGenSchema does not emit SdfMetadata; it is hand-maintained,
+        # `bindCRSAs` (usdGenSchema does not emit SdfMetadata; hand-maintained,
         # mirroring how usdShade registers `bindMaterialAs`).
   sed -e 's#@PLUG_INFO_LIBRARY_PATH@##' \
       -e 's#@PLUG_INFO_RESOURCE_PATH@#resources#' \
