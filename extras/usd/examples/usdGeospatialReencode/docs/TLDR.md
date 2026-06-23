@@ -1,7 +1,7 @@
 # Geospatial CRS Prototype — Running TLDR
 
 _Living status doc. Updated as work proceeds. Maintained by claw1 (unattended runs)._
-_Last updated: 2026-06-23 ~05:35 UTC._
+_Last updated: 2026-06-23 ~05:55 UTC._
 
 ## One-paragraph status
 Adversarial review (`docs/codex-review.md`) flagged 3 top weaknesses; **all 3 fixed and
@@ -30,17 +30,21 @@ Lesson caught by canonical gen: a concrete typed schema needs `class Name "TypeN
 | 1 | multi-CRS proof circular | ✅ | `multi_crs_example.py` negative control diverges 1,655 km; binding-ignoring resolver → FAIL |
 | 2 | "coexists with Xformable" unimplemented | ✅ | `resolve_runtime.py` composes ancestor xforms; `test_ancestor_compose.py` T1/T2/T3 (7,482 km teeth) |
 | 3 | schema fiction + axis-order | ✅ | canonical codeless schema, `custom=False` truthful, compliance 0 errors; `docs/axis-order.md`; `verify.py` check E (teeth) |
-| F.1 | `crs:binding` was a bare rel, not MaterialBindingAPI-like | ✅ | strength (`bindCRSAs` weaker/stronger) + purpose (`crs:binding:<purpose>`) implemented; `test_binding_semantics.py` S1–S4 |
+| F.1 | `crs:binding` was a bare rel, not MaterialBindingAPI-like | ✅ | strength (`bindCRSAs` weaker/stronger) + purpose (`crs:binding:<purpose>`) + collection (`crs:binding:collection:<name>`); `test_binding_semantics.py` S1–S7 |
 
 ### Binding semantics (F.1) detail
-Now mirrors UsdShadeMaterialBindingAPI:
+Now mirrors UsdShadeMaterialBindingAPI in full:
 - **Purpose** in the relationship name: `crs:binding` (all-purpose) vs `crs:binding:<purpose>`.
   Purpose-specific wins for that purpose; falls back to all-purpose otherwise.
 - **Strength** via `bindCRSAs` relationship metadata: `weakerThanDescendants` (default,
   nearest wins) or `strongerThanDescendants` (ancestor overrides nearer descendant).
   Registered as `SdfMetadata` in `schema/plugInfo.json` (injected by `regen-schema.sh`,
   mirroring how usdShade registers `bindMaterialAs`).
-- Still TODO: collection-based binding (`crs:binding:collection:<name>`).
+- **Collection-based** binding: `crs:binding:collection:<name>` (two targets: collection
+  path + CRS prim). Resolves only for prims that are members of the bound `UsdCollectionAPI`;
+  direct bindings beat collection bindings. Token-count grammar matches MaterialBindingAPI.
+- Precedence (per prim): purpose direct > all-purpose direct > purpose collection >
+  all-purpose collection; nearest-ancestor with strength override across the chain.
 
 ## How to run (self-contained; schema auto-registers via `src/_schema_setup.py`)
 ```
@@ -55,14 +59,15 @@ bash schema/regen-schema.sh --check                     # schema resources in sy
 ```
 
 ## Open / next (Aaron decides)
-1. ~~MaterialBindingAPI strength/purpose parity~~ ✅ done (F.1); **collection-based binding**
-   (`crs:binding:collection:<name>`) still open.
+1. ~~MaterialBindingAPI strength/purpose/collection parity~~ ✅ done (F.1, S1–S7).
 2. EPSG-vs-WKT precedence on mismatch (currently WKT authoritative, documented).
 3. External-grid / datum-epoch / time-dependent CRS story.
 
 ## Changelog
-- 2026-06-23 ~05:35 — F.1 binding strength+purpose parity implemented + tested
-  (`test_binding_semantics.py` S1–S4); `bindCRSAs` SdfMetadata registered.
-- 2026-06-23 ~05:10 — usdGenSchema bootstrapped; schema regenerated canonically (concrete
-  CRS bug fixed); `regen-schema.sh` added; full suite re-verified green.
-- 2026-06-23 ~05:00 — fixes #1/#2/#3 complete & verified (see `docs/review-fixes-summary.md`).
+- 2026-06-23 ~05:55 — collection-based binding (`crs:binding:collection:<name>`) implemented;
+  `test_binding_semantics.py` extended to S5–S7 (member resolves, non-member none, direct
+  beats collection). Full MaterialBindingAPI parity.
+- 2026-06-23 ~05:35 — F.1 binding strength+purpose parity (`test_binding_semantics.py` S1–S4).
+- 2026-06-23 ~05:10 — usdGenSchema bootstrapped; schema regenerated canonically;
+  `regen-schema.sh` added.
+- 2026-06-23 ~05:00 — fixes #1/#2/#3 complete & verified.

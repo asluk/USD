@@ -54,6 +54,7 @@ def bind(prim, crs_prim, purpose="", strength=None):
 def pos(prim):
     prim.CreateAttribute("crs:position", Sdf.ValueTypeNames.Double3, False) \
         .Set(Gf.Vec3d(-117.0, 34.0, 0.0))
+    return prim
 
 
 def main(out="out/_test_binding.usda"):
@@ -80,6 +81,20 @@ def main(out="out/_test_binding.usda"):
     bind(purp, A); bind(purp, C, purpose="render")
     pt3 = UsdGeom.Xform.Define(stage, "/World/Purp/Pt").GetPrim(); pos(pt3)
 
+    # S5/S6/S7: collection-based binding.
+    # /World/Coll has a collection 'sites' including only In1/In2 (not Out).
+    # A collection binding crs:binding:collection:sites -> (collPath, GeoC).
+    coll_root = UsdGeom.Xform.Define(stage, "/World/Coll").GetPrim()
+    coll = Usd.CollectionAPI.Apply(coll_root, "sites")
+    in1 = UsdGeom.Xform.Define(stage, "/World/Coll/In1").GetPrim(); pos(in1)
+    in2 = UsdGeom.Xform.Define(stage, "/World/Coll/In2").GetPrim(); pos(in2)
+    outp = UsdGeom.Xform.Define(stage, "/World/Coll/Out").GetPrim(); pos(outp)
+    coll.CreateIncludesRel().SetTargets([in1.GetPath(), in2.GetPath()])
+    crel = coll_root.CreateRelationship("crs:binding:collection:sites", False)
+    crel.SetTargets([coll.GetCollectionPath(), C.GetPath()])
+    # S7: In1 ALSO has a direct binding to GeoB -> direct must beat collection.
+    bind(in1, B)
+
     stage.GetRootLayer().Save()
 
     def sel(prim, purpose=""):
@@ -91,6 +106,9 @@ def main(out="out/_test_binding.usda"):
     s3 = sel(pt3, "render")
     s4 = sel(pt3, "edit")
     s3all = sel(pt3, "")
+    s5 = sel(in2)          # collection member, no direct binding -> GeoC
+    s6 = sel(outp)         # NOT a member -> no binding (None)
+    s7 = sel(in1)          # member but has direct GeoB -> direct wins
 
     print(f"[author] {out}")
     print(f"S1 Region/Sub/Pt (default weaker)        -> {s1[0]}  (want GeoB)")
@@ -98,18 +116,27 @@ def main(out="out/_test_binding.usda"):
     print(f"S3 Purp/Pt purpose=render                -> {s3[0]}  (want GeoC)")
     print(f"S4 Purp/Pt purpose=edit (no binding)     -> {s4[0]}  (want GeoA fallback)")
     print(f"   Purp/Pt all-purpose                   -> {s3all[0]} (want GeoA)")
+    print(f"S5 Coll/In2 (collection member)          -> {s5[0]}  (want GeoC)")
+    print(f"S6 Coll/Out (NOT a member)               -> {s6[0]}  (want None)")
+    print(f"S7 Coll/In1 (member + direct GeoB)       -> {s7[0]}  (want GeoB; direct beats collection)")
 
     p1 = s1[0].endswith("GeoB")
     p2 = s2[0].endswith("GeoA") and s2[2] == "strongerThanDescendants"
     p3 = s3[0].endswith("GeoC")
     p4 = s4[0].endswith("GeoA") and s3all[0].endswith("GeoA")
-    ok = p1 and p2 and p3 and p4
+    p5 = s5[0].endswith("GeoC")
+    p6 = s6[0] == "None"
+    p7 = s7[0].endswith("GeoB")
+    ok = all([p1, p2, p3, p4, p5, p6, p7])
     print()
     print(f"[check] S1 nearest-wins (weaker default):        {p1}")
     print(f"[check] S2 strongerThanDescendants honoured:     {p2}")
     print(f"[check] S3 purpose-specific binding selected:    {p3}")
     print(f"[check] S4 purpose fallback to all-purpose:      {p4}")
-    print("\nRESULT:", "BINDING STRENGTH+PURPOSE SEMANTICS ✅" if ok else "FAIL ❌")
+    print(f"[check] S5 collection member resolves CRS:       {p5}")
+    print(f"[check] S6 non-member gets NO binding:           {p6}")
+    print(f"[check] S7 direct binding beats collection:      {p7}")
+    print("\nRESULT:", "BINDING STRENGTH+PURPOSE+COLLECTION SEMANTICS ✅" if ok else "FAIL ❌")
     return 0 if ok else 1
 
 

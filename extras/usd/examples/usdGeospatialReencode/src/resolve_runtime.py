@@ -54,22 +54,92 @@ CRS_POSITION_ATTR = "crs:position"
 BIND_STRENGTH_KEY = "bindCRSAs"          # metadata on the binding relationship
 WEAKER = "weakerThanDescendants"          # default
 STRONGER = "strongerThanDescendants"
+COLLECTION = "collection"
 
 
-def _binding_rel_for_purpose(prim, purpose):
-    """Return the binding relationship on `prim` for `purpose`, or None.
-    Purpose is encoded in the relationship name (MaterialBindingAPI style):
-      all-purpose  -> crs:binding
-      purpose 'x'  -> crs:binding:x  (wins over all-purpose for that purpose)
-    """
-    if purpose:
-        rel = prim.GetRelationship(f"{CRS_BINDING_REL}:{purpose}")
-        if rel and rel.GetTargets():
-            return rel
-    rel = prim.GetRelationship(CRS_BINDING_REL)
-    if rel and rel.GetTargets():
-        return rel
+def _crs_target_of(rel, stage):
+    """Return the CoordinateReferenceSystem target of a binding relationship.
+    Direct bindings have one target (the CRS prim). Collection bindings have two
+    (a collection path + the CRS prim); pick the one that is a CRS prim."""
+    for t in rel.GetTargets():
+        pr = stage.GetPrimAtPath(t)
+        if pr and pr.IsValid() and pr.GetTypeName() == "CoordinateReferenceSystem":
+            return pr
+    # fall back to last target (MaterialBindingAPI convention: CRS is 2nd)
+    tgts = rel.GetTargets()
+    return stage.GetPrimAtPath(tgts[-1]) if tgts else None
+
+
+def _collection_path_of(rel, stage):
+    """Return the collection-path target of a collection binding relationship."""
+    for t in rel.GetTargets():
+        pr = stage.GetPrimAtPath(t.GetPrimPath())
+        # a collection path looks like </Prim.collection:Name>
+        if "collection:" in t.pathString:
+            return t
     return None
+
+
+def _prim_in_collection(prim, collection_path):
+    """True if prim is a member of the UsdCollectionAPI at collection_path."""
+    try:
+        coll = Usd.CollectionAPI.GetCollection(prim.GetStage(), collection_path)
+        q = coll.ComputeMembershipQuery()
+        return q.IsPathIncluded(prim.GetPath())
+    except Exception:
+        return False
+
+
+def _binding_rel_for_purpose(prim, purpose, resolving_prim=None):
+    """Return (rel, is_collection) for the binding on `prim` applying to
+    `resolving_prim`, for `purpose`, or (None, False).
+
+    Precedence on a given prim (MaterialBindingAPI order):
+      purpose-specific direct  >  all-purpose direct
+      >  purpose-specific collection  >  all-purpose collection
+    For collection bindings the resolving prim must be a member of the bound
+    collection. Relationship-name token grammar:
+      crs:binding                         all-purpose direct
+      crs:binding:<purpose>               purpose direct
+      crs:binding:collection:<name>       all-purpose collection
+      crs:binding:collection:<purpose>:<name>  purpose collection
+    """
+    target = resolving_prim if resolving_prim is not None else prim
+    stage = prim.GetStage()
+
+    # 1/2. direct bindings
+    if purpose:
+        r = prim.GetRelationship(f"{CRS_BINDING_REL}:{purpose}")
+        if r and r.GetTargets() and COLLECTION != purpose:
+            return r, False
+    r = prim.GetRelationship(CRS_BINDING_REL)
+    if r and r.GetTargets():
+        return r, False
+
+    # 3/4. collection bindings -- scan all crs:binding:collection:* rels on prim
+    cands_purpose, cands_all = [], []
+    for rel in prim.GetRelationships():
+        name = rel.GetName()
+        if not name.startswith(f"{CRS_BINDING_REL}:{COLLECTION}:"):
+            continue
+        if not rel.GetTargets():
+            continue
+        toks = name.split(":")  # crs binding collection [purpose] name
+        # toks[0]=crs toks[1]=binding toks[2]=collection ...
+        rest = toks[3:]
+        rel_purpose = rest[0] if len(rest) == 2 else ""
+        cpath = _collection_path_of(rel, stage)
+        if cpath is None or not _prim_in_collection(target, cpath):
+            continue
+        if rel_purpose and rel_purpose == purpose:
+            cands_purpose.append(rel)
+        elif not rel_purpose:
+            cands_all.append(rel)
+    if purpose and cands_purpose:
+        return cands_purpose[0], True
+    if cands_all:
+        return cands_all[0], True
+    return None, False
 
 
 def _rel_strength(rel):
@@ -92,7 +162,7 @@ def crs_of_prim(prim, purpose=""):
     chain = []  # nearest-first: [(prim_path, rel, strength)]
     p = prim
     while p and p.IsValid():
-        rel = _binding_rel_for_purpose(p, purpose)
+        rel, _is_coll = _binding_rel_for_purpose(p, purpose, resolving_prim=prim)
         if rel is not None:
             chain.append((p.GetPath(), rel, _rel_strength(rel)))
         p = p.GetParent()
@@ -105,7 +175,7 @@ def crs_of_prim(prim, purpose=""):
             chosen = entry     # an ancestor declared itself stronger -> it wins
             # keep scanning: an even-higher stronger ancestor wins over this one
     bound_path, rel, strength = chosen
-    crs_prim = prim.GetStage().GetPrimAtPath(rel.GetTargets()[0])
+    crs_prim = _crs_target_of(rel, prim.GetStage())
     wkt = crs_prim.GetAttribute(CRS_WKT_ATTR).Get()
     return CRS.from_wkt(wkt), crs_prim.GetPath(), bound_path, strength
 
