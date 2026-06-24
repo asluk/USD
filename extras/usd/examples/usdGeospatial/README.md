@@ -88,7 +88,7 @@ subtree composes under it as ordinary USD.
   land to **0.0 mm**; the position-only placement is **410 m wrong** (so an orientation-
   ignoring resolver fails the test); and stock USD without injection puts the child
   **6.4×10⁶ m** from truth — the origin gap, quantified.
-- **Float32 localization falls out for free** (one-pager C-05): the large magnitude lives
+- **Float32 localization falls out for free:** the large magnitude lives
   in the double-precision injected anchor (~6.4×10⁶ m), the asset's vertices are small
   float32 *local* offsets. `src/test_float32_localization.py` shows absolute-float32 ECEF
   loses **162 mm** of precision at that magnitude while localized float32 keeps
@@ -137,8 +137,8 @@ cannot drift from the code.
   local-frame → ECEF transform — all without touching the authored xform stack.
 - `src/crs_engine.py` — the **projection-engine registration seam** (Simon's Esri-PR ask):
   projection support is a registry, not a hardcoded dependency. PROJ/pyproj is the *default*
-  registered engine; a deployment could register a GPU engine (cuProj — this is the C-04
-  insertion point) instead. The engine exposes both bulk
+  registered engine; a deployment could register a GPU engine (e.g. cuProj) instead.
+  The engine exposes both bulk
   `reproject(...)` **and** `local_frame_to_ecef(...)` (the basis/orientation at a point,
   which anchor injection needs). **WKT stays opaque to USD** — only the engine consumes it.
 
@@ -312,7 +312,7 @@ python3 src/render_figures.py           # regenerate all figures into docs/
   injects the rigid ENU/topocentric local-frame → ECEF transform (orientation + position)
   transiently, and descendants compose under it as ordinary USD — *not* a baked
   `resetXformStack`, *not* per-prim absolutes. Proven in `test_anchor_injection.py` and
-  `test_float32_localization.py` (C-05). The Python runtime is the implementation-agnostic
+  `test_float32_localization.py`. The Python runtime is the implementation-agnostic
   behavior reference.
 - **Done — the compiled Hydra production form.** The natural production runtime — a C++
   Hydra scene-index plugin (`../usdGeospatialSceneIndex/`) — now exists and resolves the
@@ -322,7 +322,7 @@ python3 src/render_figures.py           # regenerate all figures into docs/
   registers it like `hdParticleField` for a full `--examples` USD build.
 - **Done — projection-engine seam.** `crs_engine.py` makes PROJ/pyproj one *registered*
   engine (default), exposing reproject + local-frame basis; WKT stays opaque to USD. This
-  is the **C-04** insertion point for a GPU/cuProj engine.
+  is the natural insertion point for a GPU/cuProj engine.
 - **In scope, deferred:** a codeless `usdchecker`-discoverable validator plugin (Python
   `"Type":"python"`). `verify.py` A–F is the runnable validator today.
 - **Out of scope here (need other resources):** a draped raster/terrain basemap for the
