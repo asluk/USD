@@ -60,6 +60,19 @@ to 0.0 mm**, with the neutral scene carrying **no xformOps at all**. See
 > runtime-injected anchor — and demonstrates it rather than arguing it** (the equivalence
 > above, plus anchor injection below).
 
+> **A note on `resetXformStack` in the Hydra runtime — a runtime override, not authored
+> baking.** The compiled scene index (see *Two runtimes, one schema*) *does* set
+> `resetXformStack = true` on the xform it injects — which can look, at first glance, like
+> the very thing the design rejects. It is not, and the difference is **where the flag
+> lives.** What the design rejects is `resetXformStack` *authored into a layer*: every
+> downstream consumer then inherits it and the scene is no longer coordinate-neutral. Here
+> the flag sits on a **computed, transient Hydra data source**, never written into the
+> authored scene. The resolver has already composed ancestor transforms and returns the
+> prim's full world (ECEF) matrix, so the flag only tells Hydra *not to re-compose that
+> matrix under its parents* at flatten time. The authored stage carries no
+> `resetXformStack` and no baked coordinates — confirm it in
+> `testenv/world_neutral_relbinding.usda` (only `crs:` properties; zero `xformOp`).
+
 ## Anchor injection — coexisting with `UsdGeomXformable` (inject, don't bake)
 
 The design above handles georeferenced *leaves* (each prim carries its own
