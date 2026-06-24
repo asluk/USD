@@ -195,6 +195,13 @@ Bahn rail curves sitting on the geospatial tile ground planes, every position re
 
 ![railway rendered on tiles](docs/railway_render.png)
 
+The five single-point benchmarks each get their own visualization too — not just a dot on the
+map. Each panel resolves **two independent CRS authorings** (a geographic CRS *and* a projected
+CRS) into the *same* ECEF point, shown in that point's local ENU frame with its East/North axes;
+the sub-millimetre overlap the table reports becomes something you can see:
+
+![per-dataset gallery](docs/datasets_gallery.png)
+
 - **Spans the axes a runtime could secretly overfit:** geographic + five projected CRSs
   (UTM 18N, UTM 56S, NZTM2000, UTM 17S, UTM 33N); northern & southern hemisphere,
   equatorial, and high-latitude (~78°N, where projections stress); point, global-grid, and

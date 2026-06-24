@@ -22,6 +22,9 @@ Figures (all PR-story, all build-generated):
   8 railway_render.png     -- actual render of the real converted NVIDIA Deutsche Bahn asset:
                             geospatial tile ground planes + rail curves on top, all positions
                             resolved by resolve_runtime (rails on tiles, no Hydra/baking).
+  9 datasets_gallery.png   -- per-point panel for each single-point benchmark (NYC, Sydney,
+                            Wellington, Quito, Svalbard): two CRS authorings -> one ECEF point
+                            in local ENU + axes triad + sub-mm delta, plus a globe locator.
 
 Run from extras/usd/examples/usdGeospatial with the venv active.
 """
@@ -656,6 +659,110 @@ def fig_railway_render(out, stage_path="out/railway_georef.usda"):
     return out
 
 
+# --------------------------------------------------------------------------
+# Figure 9: DATASETS GALLERY -- give EVERY point dataset its own visualization,
+# not just a dot on the world map. Each panel shows, for one benchmark, the two
+# INDEPENDENT authorings (geographic CRS + a projected CRS) both resolved by the
+# runtime into the SAME ECEF point, rendered in that point's local ENU frame
+# with its East/North axes triad, plus a mini globe locating it. The sub-mm
+# overlap (the table's numbers) becomes something you can see.
+# --------------------------------------------------------------------------
+def fig_datasets_gallery(out):
+    import generalization_suite as gs
+    import resolve_runtime as rr
+    from pxr import Usd
+    from pyproj import CRS
+    from mpl_toolkits.mplot3d import Axes3D  # noqa
+    ECEF = CRS.from_epsg(4978)
+
+    # name, lon, lat, h, projected EPSG, hemisphere/latitude note
+    POINTS = [
+        ("NOAA NYC", -73.985656, 40.748817, 0.0, 32618, "UTM 18N \u00b7 N hemi"),
+        ("Sydney", 151.214000, -33.857000, 58.0, 32756, "UTM 56S \u00b7 S hemi"),
+        ("Wellington", 174.776200, -41.286500, 5.0, 2193, "NZTM2000 \u00b7 S hemi"),
+        ("Quito", -78.467800, -0.180700, 2850.0, 32717, "UTM 17S \u00b7 equator"),
+        ("Svalbard", 15.650000, 78.220000, 10.0, 32633, "UTM 33N \u00b7 ~78\u00b0N"),
+    ]
+
+    def resolve_two(lon, lat, h, epsg):
+        st = Usd.Stage.CreateInMemory()
+        geo = gs._author_point(st, "/World/Geo", 4979, (lon, lat, h))
+        E, N, H = gs._proj_en(lon, lat, h, epsg)
+        prj = gs._author_point(st, "/World/Proj", epsg, (E, N, H))
+        cache = {}
+        wg = np.array(rr.resolve_world_translation(geo, ECEF, cache)[0])
+        wp = np.array(rr.resolve_world_translation(prj, ECEF, cache)[0])
+        return wg, wp
+
+    a = 6378137.0; f = 1/298.257223563; e2 = f*(2-f)
+    def enu_basis(lon, lat):
+        lm = np.radians(lon); ph = np.radians(lat)
+        east = np.array([-np.sin(lm), np.cos(lm), 0.0])
+        north = np.array([-np.sin(ph)*np.cos(lm), -np.sin(ph)*np.sin(lm), np.cos(ph)])
+        up = np.array([np.cos(ph)*np.cos(lm), np.cos(ph)*np.sin(lm), np.sin(ph)])
+        return east, north, up
+
+    ncol = 3
+    nrow = 2
+    fig = plt.figure(figsize=(15, 9))
+    fig.suptitle("Every dataset visualized \u2014 two independent CRS authorings resolving to one "
+                 "point (local ENU)", fontsize=12, fontweight="bold")
+
+    for i, (nm, lon, lat, h, epsg, note) in enumerate(POINTS):
+        ax = fig.add_subplot(nrow, ncol, i + 1)
+        wg, wp = resolve_two(lon, lat, h, epsg)
+        east, north, up = enu_basis(lon, lat)
+        # project both resolved points into local E/N about the geographic one
+        def en(w):
+            v = np.array(w) - wg
+            return np.array([v @ east, v @ north])
+        eg = en(wg); ep = en(wp)
+        d_mm = np.linalg.norm(wg - wp) * 1e3
+        # ENU axes triad (unit -> shown at a few-metre scale)
+        L = 1.0
+        ax.annotate("", xy=(L, 0), xytext=(0, 0),
+                    arrowprops=dict(arrowstyle="->", color="#c0392b", lw=1.6))
+        ax.annotate("", xy=(0, L), xytext=(0, 0),
+                    arrowprops=dict(arrowstyle="->", color="#1b7837", lw=1.6))
+        ax.text(L*1.05, 0, "E", color="#c0392b", fontsize=8, va="center")
+        ax.text(0, L*1.05, "N", color="#1b7837", fontsize=8, ha="center")
+        # the two authorings
+        ax.scatter(*eg, s=160, marker="o", facecolors="none", edgecolors="#2c3e50",
+                   linewidths=2.0, zorder=5, label="geographic (EPSG:4979)")
+        ax.scatter(*ep, s=42, marker="x", color="#e67e22", linewidths=2.0, zorder=6,
+                   label=f"projected (EPSG:{epsg})")
+        ax.set_title(f"{nm}\n{note}", fontsize=9, fontweight="bold")
+        ax.set_xlabel("East (m)", fontsize=8); ax.set_ylabel("North (m)", fontsize=8)
+        ax.set_xlim(-1.6, 1.6); ax.set_ylim(-1.6, 1.6)
+        ax.set_aspect("equal"); ax.grid(True, color="#eef1f4")
+        ax.legend(loc="lower right", fontsize=6.5, framealpha=0.9)
+        ax.text(0.03, 0.95, f"\u0394 = {d_mm:.4f} mm", transform=ax.transAxes,
+                fontsize=8, va="top", fontweight="bold", color="#1b7837",
+                bbox=dict(boxstyle="round,pad=0.25", fc="#e7f4ea", ec="#1b7837"))
+
+    # last panel: a globe locating all of them + Earth-2 + railway
+    axg = fig.add_subplot(nrow, ncol, 6, projection="3d")
+    u = np.linspace(0, 2*np.pi, 40); v = np.linspace(0, np.pi, 20)
+    xs = np.outer(np.cos(u), np.sin(v)); ys = np.outer(np.sin(u), np.sin(v))
+    zs = np.outer(np.ones_like(u), np.cos(v))
+    axg.plot_surface(xs, ys, zs, color="#dfe7ee", alpha=0.55, linewidth=0)
+    locs = POINTS + [("Earth-2", 0.0, 20.0, 0, 0, "grid"),
+                     ("Railway", 10.21, 53.49, 0, 0, "asset")]
+    for nm, lon, lat, *_ in locs:
+        lm = np.radians(lon); ph = np.radians(lat)
+        axg.scatter([np.cos(ph)*np.cos(lm)], [np.cos(ph)*np.sin(lm)], [np.sin(ph)],
+                    s=32, zorder=5)
+        axg.text(np.cos(ph)*np.cos(lm)*1.1, np.cos(ph)*np.sin(lm)*1.1,
+                 np.sin(ph)*1.1, nm, fontsize=6.5)
+    axg.set_title("All 7 datasets on the WGS84 globe", fontsize=9)
+    axg.set_box_aspect((1, 1, 1)); axg.set_axis_off()
+
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    fig.savefig(out, dpi=120); plt.close(fig)
+    print(f"[9] datasets_gallery.png  {len(POINTS)} point datasets + globe locator")
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--stage", default="out/earth2_georef.usda")
@@ -671,6 +778,7 @@ def main():
     fig_coherence(args.stage, os.path.join(d, "coherence.png"))
     fig_generalization(os.path.join(d, "generalization.png"))
     fig_railway_render(os.path.join(d, "railway_render.png"))
+    fig_datasets_gallery(os.path.join(d, "datasets_gallery.png"))
     print("\nAll figures generated by the codeless usdGeospatial build \u2705")
 
 
