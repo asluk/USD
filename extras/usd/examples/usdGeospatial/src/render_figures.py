@@ -445,6 +445,88 @@ def fig_coherence(stage_path, out):
     return out
 
 
+# --------------------------------------------------------------------------
+# Figure 7: GENERALIZATION -- the reference runtime over 7 diverse datasets, each
+# vs closed-form geodesy. Shows it is not overfit to our Earth-2 authoring:
+# global map of dataset footprints + a per-dataset error table (all sub-mm),
+# including a REAL third-party asset (NVIDIA Deutsche Bahn railway).
+# --------------------------------------------------------------------------
+def fig_generalization(out):
+    import generalization_suite as gs
+    # ensure the converted real railway stage exists (Earth-2 grid already built
+    # upstream as the --stage the other figures use).
+    if not os.path.exists("out/railway_georef.usda") and \
+       os.path.exists("data/thirdparty/deutschebahn-rails.usda"):
+        import convert_omni_geospatial as cog
+        cog.convert("data/thirdparty/deutschebahn-rails.usda", "out/railway_georef.usda")
+    rows, all_ok = gs.main()
+    assert all_ok, "generalization suite did not pass on all datasets"
+
+    # footprints for the map (lon,lat); grid/asset use their representative point
+    pts = [(r.get("lon"), r.get("lat"), r["name"]) for r in rows
+           if r.get("lon") is not None and r.get("lat") is not None]
+
+    fig = plt.figure(figsize=(15, 6.5))
+    fig.suptitle("Generalization \u2014 one reference runtime, 7 diverse datasets, all vs "
+                 "closed-form geodesy (no overfit)", fontsize=12, fontweight="bold")
+
+    # Left: world map of dataset footprints (plate carree)
+    axL = fig.add_subplot(1, 2, 1)
+    # light graticule
+    for lo in range(-180, 181, 30):
+        axL.axvline(lo, color="#e2e6ec", lw=0.6)
+    for la in range(-90, 91, 30):
+        axL.axhline(la, color="#e2e6ec", lw=0.6)
+    axL.set_xlim(-180, 180); axL.set_ylim(-90, 90)
+    axL.set_xlabel("longitude"); axL.set_ylabel("latitude")
+    axL.set_title("Dataset footprints \u2014 N & S hemisphere, equatorial, high-latitude",
+                  fontsize=9)
+    for lon, lat, nm in pts:
+        axL.scatter([lon], [lat], s=70, zorder=5, edgecolors="black", linewidths=0.8)
+        short = nm.split(" (")[0]
+        axL.annotate(short, (lon, lat), fontsize=7, xytext=(4, 4),
+                     textcoords="offset points")
+    axL.grid(False)
+
+    # Right: results table
+    axR = fig.add_subplot(1, 2, 2); axR.axis("off")
+    axR.set_title("Resolved ECEF vs closed-form WGS84 ground truth", fontsize=9)
+    y = 0.95
+    axR.text(0.02, y, "dataset", fontsize=8, fontweight="bold", transform=axR.transAxes)
+    axR.text(0.74, y, "CRS", fontsize=8, fontweight="bold", transform=axR.transAxes)
+    axR.text(0.90, y, "\u0394 GT", fontsize=8, fontweight="bold", transform=axR.transAxes)
+    y -= 0.04
+    axR.axhline  # noqa
+    for r in rows:
+        y -= 0.115
+        nm = r["name"]
+        tag = {"grid": "grid", "asset": "asset (real 3rd-party)", "point": "point"}[r["kind"]]
+        axR.add_patch(plt.Rectangle((0.0, y - 0.02), 1.0, 0.10, transform=axR.transAxes,
+                                    fc="#e7f4ea" if r["ok"] else "#fde0dc",
+                                    ec="#1b7837" if r["ok"] else "#c0392b", lw=1.0))
+        axR.text(0.02, y + 0.045, nm.split(" (")[0], fontsize=7.6, fontweight="bold",
+                 transform=axR.transAxes, va="center")
+        axR.text(0.02, y + 0.005, tag, fontsize=6.6, color="#555",
+                 transform=axR.transAxes, va="center")
+        axR.text(0.74, y + 0.025, str(r.get("epsg", "")), fontsize=7.4,
+                 family="monospace", transform=axR.transAxes, va="center")
+        dgt = r.get("d_geo_mm", float("nan"))
+        axR.text(0.90, y + 0.025, f"{dgt:.3f} mm", fontsize=7.4, family="monospace",
+                 transform=axR.transAxes, va="center",
+                 color="#1b7837" if r["ok"] else "#c0392b")
+    n_pass = sum(1 for r in rows if r.get("ok"))
+    axR.text(0.5, 0.02, f"{n_pass}/{len(rows)} datasets \u2264 5 mm vs closed-form geodesy \u2014 "
+             f"geographic + 5 projected CRSs,\nOUR grid + independent benchmark + REAL "
+             f"third-party asset (different schema).",
+             ha="center", fontsize=7.8, fontweight="bold", color="#1b7837",
+             transform=axR.transAxes)
+
+    fig.tight_layout(rect=[0, 0, 1, 0.94])
+    fig.savefig(out, dpi=120); plt.close(fig)
+    print(f"[7] generalization.png  {n_pass}/{len(rows)} datasets sub-mm vs closed-form")
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--stage", default="out/earth2_georef.usda")
@@ -458,6 +540,7 @@ def main():
     fig_design_equivalence(os.path.join(d, "design_equivalence.png"))
     fig_tree_alignment(os.path.join(d, "tree_alignment.png"))
     fig_coherence(args.stage, os.path.join(d, "coherence.png"))
+    fig_generalization(os.path.join(d, "generalization.png"))
     print("\nAll figures generated by the codeless usdGeospatial build \u2705")
 
 

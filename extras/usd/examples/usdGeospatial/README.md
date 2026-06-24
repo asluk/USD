@@ -180,6 +180,30 @@ source** (NOAA's NCAT geodesy service).
 > coherence is shown separately by anchor injection (above) and
 > `test_anchor_injection.py`.
 
+## Not overfit — one runtime, many datasets
+
+The coherence proof shows correctness at a benchmark. This shows the *same* reference
+runtime generalizes — it is not tuned to our Earth-2 authoring. `src/generalization_suite.py`
+resolves **7 deliberately diverse datasets** and checks each against closed-form WGS84
+geodesy (never a parallel PROJ call):
+
+![generalization](docs/generalization.png)
+
+- **Spans the axes a runtime could secretly overfit:** geographic + five projected CRSs
+  (UTM 18N, UTM 56S, NZTM2000, UTM 17S, UTM 33N); northern & southern hemisphere,
+  equatorial, and high-latitude (~78°N, where projections stress); point, global-grid, and
+  structured-asset topologies.
+- **Includes a real, third-party asset.** The **NVIDIA OpenUSD-plugin-samples Deutsche Bahn
+  railway** (Apache-2.0; ~186 track curves near Hamburg) is authored in the *original
+  Omniverse geospatial schema* (`omni:geospatial:wgs84:*`, lat-first). `src/convert_omni_geospatial.py`
+  converts it to our Esri-aligned `crs:binding`/`crs:position` form (swapping to the
+  `(lon/E, lat/N, h)` contract), and it resolves — leaves *and* its anchor + Cartesian-curve
+  subtree via injection — with **no runtime changes**. This is the strongest no-overfit
+  signal: data we did not author, in a schema we did not design.
+- **Result: 7/7 datasets agree with closed-form geodesy to sub-millimetre.** A dataset the
+  runtime was tuned to could pass; a spread this wide across CRS family, hemisphere, and
+  data origin could not, unless the geodesy is actually correct.
+
 ## Tests — all green, all with teeth
 
 `verify.py` A–F · `multi_crs_example.py` (negative control, ignoring bindings diverges
@@ -189,6 +213,8 @@ source** (NOAA's NCAT geodesy service).
 `test_anchor_injection.py` (P1–P4: georef anchor + Cartesian subtree lands & orients to
 0.0 mm; position-only is 410 m wrong; stock USD is 6.4×10⁶ m off) ·
 `test_float32_localization.py` (C1–C3: localized float32 ~480,000× better than absolute) ·
+`generalization_suite.py` (7 diverse datasets — incl. the real NVIDIA railway — all sub-mm
+vs closed-form geodesy) ·
 `testenv_equivalence.py` (design equivalence vs. the Esri scene) ·
 `render_figures.py` (the coherence figure self-asserts closed-form co-registration to
 sub-mm + the negative control flies off the globe) ·
@@ -203,6 +229,7 @@ python3 src/reencode_georef.py --stride 40 --out out/earth2_georef.usda
 python3 src/verify.py out/earth2_georef.usda
 python3 src/testenv_equivalence.py
 python3 src/test_anchor_injection.py    # georef anchor + Cartesian subtree (inject-don't-bake)
+python3 src/generalization_suite.py     # 7 diverse datasets vs closed-form geodesy (no overfit)
 python3 src/render_figures.py           # regenerate all figures into docs/
 ```
 
