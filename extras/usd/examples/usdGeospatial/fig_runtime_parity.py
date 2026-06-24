@@ -125,7 +125,9 @@ def draw_rails_on_tiles(ax, tiles, rails, title_top, title_sub):
         nmin, nmax = c[:, 1].min(), c[:, 1].max()
         if tl["tex"]:
             img = np.asarray(Image.open(tl["tex"]).convert("RGB"))
-            ax.imshow(img, extent=[emin, emax, nmin, nmax], origin="lower",
+            # origin="upper": image row 0 (top) -> nmax (north), matching the tile's
+            # st convention (t=0 south). origin="lower" flips the texture N/S.
+            ax.imshow(img, extent=[emin, emax, nmin, nmax], origin="upper",
                       zorder=1, alpha=0.95, aspect="auto")
         else:
             ax.add_patch(plt.Rectangle((emin, nmin), emax - emin, nmax - nmin,

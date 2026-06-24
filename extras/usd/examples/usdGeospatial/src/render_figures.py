@@ -681,7 +681,10 @@ def fig_railway_render(out, stage_path="out/railway_georef.usda"):
         nmin, nmax = c[:, 1].min(), c[:, 1].max()
         if tl["tex"]:
             img = np.asarray(Image.open(tl["tex"]).convert("RGB"))
-            ax.imshow(img, extent=[emin, emax, nmin, nmax], origin="lower",
+            # origin="upper": image row 0 (top of the picture) maps to nmax (north),
+            # matching the tile's st convention (t=0 at the south corner). Using
+            # origin="lower" here flips the texture N/S (mirrored text).
+            ax.imshow(img, extent=[emin, emax, nmin, nmax], origin="upper",
                       zorder=1, alpha=0.95, aspect="auto")
         else:
             ax.add_patch(plt.Rectangle((emin, nmin), emax-emin, nmax-nmin,
