@@ -90,7 +90,10 @@ def collect_tiles_rails(stage, get_xform):
                     continue
                 corners = np.array([to_en(M.Transform(Gf.Vec3d(*p)), o, east, north)
                                     for p in pts])
-                tiles.append({"name": t.GetName(), "corners": corners})
+                stp = c.GetAttribute("primvars:st")
+                uvs = (np.array([list(uv) for uv in stp.Get()])
+                       if stp and stp.Get() else None)
+                tiles.append({"name": t.GetName(), "corners": corners, "uvs": uvs})
     rails = []
     rail_world = []     # raw ECEF points for parity stats
     for r in stage.Traverse():
@@ -115,6 +118,28 @@ def collect_tiles_rails(stage, get_xform):
     return tiles, rails, rail_world, (lon0, lat0)
 
 
+def _draw_uv_textured_quad(ax, img, corners_en, uvs, **imshow_kw):
+    """Place image pixel (s,t) at the world-EN corner carrying that st (honors
+    the asset's UsdUVTexture/st mapping for any quad orientation), via an affine
+    UV->EN transform; bbox fallback only if UVs are missing."""
+    import matplotlib.transforms as mtransforms
+    if uvs is None or corners_en is None or len(corners_en) < 4:
+        c = corners_en
+        ax.imshow(img, extent=[c[:, 0].min(), c[:, 0].max(),
+                               c[:, 1].min(), c[:, 1].max()],
+                  origin="upper", **imshow_kw)
+        return
+    S = np.column_stack([uvs[:, 0], uvs[:, 1], np.ones(len(uvs))])
+    A, *_ = np.linalg.lstsq(S, np.asarray(corners_en), rcond=None)  # (3,2)
+    im = ax.imshow(img, extent=[0, 1, 0, 1], origin="lower", **imshow_kw)
+    aff = mtransforms.Affine2D(matrix=np.array([
+        [A[0, 0], A[1, 0], A[2, 0]],
+        [A[0, 1], A[1, 1], A[2, 1]],
+        [0.0,     0.0,     1.0],
+    ]))
+    im.set_transform(aff + ax.transData)
+
+
 def draw_rails_on_tiles(ax, tiles, rails, title_top, title_sub):
     ax.set_title(f"{title_top}\n{title_sub}", fontsize=10.5, loc="left", pad=8)
     for tl in tiles:
@@ -125,10 +150,8 @@ def draw_rails_on_tiles(ax, tiles, rails, title_top, title_sub):
         nmin, nmax = c[:, 1].min(), c[:, 1].max()
         if tl["tex"]:
             img = np.asarray(Image.open(tl["tex"]).convert("RGB"))
-            # origin="upper": image row 0 (top) -> nmax (north), matching the tile's
-            # st convention (t=0 south). origin="lower" flips the texture N/S.
-            ax.imshow(img, extent=[emin, emax, nmin, nmax], origin="upper",
-                      zorder=1, alpha=0.95, aspect="auto")
+            # Faithful UV-mapped draw (asset st convention), not a bbox stretch.
+            _draw_uv_textured_quad(ax, img, c, tl.get("uvs"), zorder=1, alpha=0.95)
         else:
             ax.add_patch(plt.Rectangle((emin, nmin), emax - emin, nmax - nmin,
                          fc="#cdd6df", ec="#8a97a6", zorder=1))

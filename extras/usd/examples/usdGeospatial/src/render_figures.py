@@ -543,10 +543,43 @@ def fig_generalization(out):
 # This is the "rails on geospatial tiles" the original NVIDIA demo rendered,
 # reproduced through OUR codeless resolver (no Hydra, no external renderer).
 # --------------------------------------------------------------------------
+def _draw_uv_textured_quad(ax, img, corners_en, uvs, **imshow_kw):
+    """Draw a texture onto a quad using its ACTUAL st UVs -> world-EN mapping,
+    not a bbox stretch. Honors the asset's UsdUVTexture/st convention: image
+    pixel (s,t) is placed at the world corner carrying that (s,t), for any quad
+    orientation. UV (0,0) is the image's bottom-left, (1,1) its top-right.
+
+    For an affine (parallelogram) quad this is exact: we solve the 2x3 affine
+    A that maps unit-square UV space -> EN, set imshow on the unit square in a
+    UV-aligned data space, and compose A as the image transform. Falls back to
+    a bbox stretch only if UVs are missing."""
+    import matplotlib.transforms as mtransforms
+    if uvs is None or corners_en is None or len(corners_en) < 4:
+        c = corners_en
+        emin, emax = c[:, 0].min(), c[:, 0].max()
+        nmin, nmax = c[:, 1].min(), c[:, 1].max()
+        ax.imshow(img, extent=[emin, emax, nmin, nmax], origin="upper", **imshow_kw)
+        return
+    # Solve affine [E,N]^T = A @ [s,t,1]^T from the (>=3) corner correspondences.
+    S = np.column_stack([uvs[:, 0], uvs[:, 1], np.ones(len(uvs))])  # (n,3)
+    EN = np.asarray(corners_en)                                     # (n,2)
+    A, *_ = np.linalg.lstsq(S, EN, rcond=None)                      # (3,2): cols E,N
+    # imshow in UV space: extent [0,1]x[0,1], origin=lower so row0=t=0 (bottom).
+    im = ax.imshow(img, extent=[0, 1, 0, 1], origin="lower", **imshow_kw)
+    # Affine2D maps (s,t)->(E,N): [[a_e_s, a_e_t, a_e_1],[a_n_s, a_n_t, a_n_1]]
+    aff = mtransforms.Affine2D(matrix=np.array([
+        [A[0, 0], A[1, 0], A[2, 0]],
+        [A[0, 1], A[1, 1], A[2, 1]],
+        [0.0,     0.0,     1.0],
+    ]))
+    im.set_transform(aff + ax.transData)
+
+
 def _railway_local_geometry(stage_path="out/railway_georef.usda"):
     """Resolve tiles + rail curves into a shared local ENU frame centred on the
     railway centroid. Returns (tiles, rails, info). Each tile is a dict with
-    corner E/N (m) and the texture path; each rail is an (N,2) E/N polyline."""
+    corner E/N (m), per-corner st UVs, and the texture path; each rail is an
+    (N,2) E/N polyline."""
     from pxr import Usd, Gf
     import resolve_runtime as rr
     from pyproj import CRS
@@ -580,11 +613,15 @@ def _railway_local_geometry(stage_path="out/railway_georef.usda"):
         M, _ = rr.anchor_frame(t, ECEF, cache)
         tex = None
         corners = None
+        uvs = None
         for c in t.GetChildren():
             if c.GetTypeName() == "Mesh" and c.GetAttribute("points"):
                 pts = c.GetAttribute("points").Get()
                 corners = np.array([to_en(M.Transform(Gf.Vec3d(*p))) for p in pts])
-        tiles.append({"name": t.GetName(), "corners": corners})
+                stp = c.GetAttribute("primvars:st")
+                if stp and stp.Get():
+                    uvs = np.array([list(uv) for uv in stp.Get()])
+        tiles.append({"name": t.GetName(), "corners": corners, "uvs": uvs})
     # texture files (in vendor dir) keyed by MapGeo index if present
     import glob
     texdir = "data/thirdparty"
@@ -681,11 +718,11 @@ def fig_railway_render(out, stage_path="out/railway_georef.usda"):
         nmin, nmax = c[:, 1].min(), c[:, 1].max()
         if tl["tex"]:
             img = np.asarray(Image.open(tl["tex"]).convert("RGB"))
-            # origin="upper": image row 0 (top of the picture) maps to nmax (north),
-            # matching the tile's st convention (t=0 at the south corner). Using
-            # origin="lower" here flips the texture N/S (mirrored text).
-            ax.imshow(img, extent=[emin, emax, nmin, nmax], origin="upper",
-                      zorder=1, alpha=0.95, aspect="auto")
+            # Faithful UV-mapped draw: place image (s,t) at the world corner with
+            # that st (honors the asset's UsdUVTexture/st mapping for any quad
+            # orientation), instead of stretching the PNG into the E/N bbox.
+            _draw_uv_textured_quad(ax, img, c, tl.get("uvs"),
+                                   zorder=1, alpha=0.95)
         else:
             ax.add_patch(plt.Rectangle((emin, nmin), emax-emin, nmax-nmin,
                          fc="#cdd6df", ec="#8a97a6", zorder=1))
