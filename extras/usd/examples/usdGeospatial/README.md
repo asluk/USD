@@ -136,7 +136,7 @@ cannot drift from the code.
 - `src/crs_engine.py` — the **projection-engine registration seam** (Simon's Esri-PR ask):
   projection support is a registry, not a hardcoded dependency. PROJ/pyproj is the *default*
   registered engine; a deployment could register a GPU engine (cuProj — this is the C-04
-  insertion point) or a NanoUSD-side engine instead. The engine exposes both bulk
+  insertion point) instead. The engine exposes both bulk
   `reproject(...)` **and** `local_frame_to_ecef(...)` (the basis/orientation at a point,
   which anchor injection needs). **WKT stays opaque to USD** — only the engine consumes it.
 
@@ -227,5 +227,5 @@ python3 src/render_figures.py           # regenerate all figures into docs/
   `"Type":"python"`). `verify.py` A–F is the runnable validator today.
 - **Out of scope here (need other resources):** a draped raster/terrain basemap for the
   coherence figure (`cartopy` + a basemap/DEM asset); an end-to-end grid-*applied*
-  transform (GDAL + a bundled PROJ grid); the parallel **NanoUSD** implementation; the
-  compiled Hydra scene-index / OpenExec form of anchor injection.
+  transform (GDAL + a bundled PROJ grid); the compiled Hydra scene-index / OpenExec form
+  of anchor injection.

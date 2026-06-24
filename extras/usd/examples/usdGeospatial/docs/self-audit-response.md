@@ -33,7 +33,6 @@ doc records what was found and how each was resolved.
 
 - A compiled `usdchecker`-discoverable validator plugin (needs a C++ build).
 - An end-to-end grid-*applied* transform (needs GDAL / a real PROJ GeoTIFF grid).
-- The NanoUSD second implementation.
 
 (Cross-layer / list-edited binding coverage — previously listed here — is now
 closed by `src/test_binding_composition.py`: L1 sublayer override, L2 list-edit

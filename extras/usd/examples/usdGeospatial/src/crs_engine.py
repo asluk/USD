@@ -7,7 +7,7 @@ registration interface, à la UsdGeomRegisterComputeExtentFunction): the schema
 plugin is one thing; one-or-more projection ENGINES are registered separately,
 and the runtime asks a registered engine to do the geodesy. PROJ/pyproj is the
 DEFAULT engine here, not a hardcoded dependency -- a deployment could register a
-GPU engine (cuProj) or a NanoUSD-side engine instead. This is the C-04 insertion
+GPU engine (cuProj) instead. This is the C-04 insertion
 point.
 
 WKT STAYS OPAQUE TO USD (Simon line 838; Aaron agrees): USD never parses the

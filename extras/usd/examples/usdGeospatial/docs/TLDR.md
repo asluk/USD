@@ -113,7 +113,7 @@ bash ../../../../pxr/usd/usdGeospatial/regen-schema.sh --check  # schema resourc
    not pyproj directly.
 7. Deferred: codeless `usdchecker`-discoverable validator (Python plugin). Out of scope
    here: draped raster/terrain basemap (cartopy + asset), grid-*applied* transform
-   (GDAL + bundled grid), NanoUSD leg, compiled Hydra/OpenExec form of anchor injection.
+   (GDAL + bundled grid), compiled Hydra/OpenExec form of anchor injection.
 
 ## Tests / checks (all green, all with teeth)
 - `verify.py` A–F · `multi_crs_example.py` (negative control) · `test_ancestor_compose.py`
