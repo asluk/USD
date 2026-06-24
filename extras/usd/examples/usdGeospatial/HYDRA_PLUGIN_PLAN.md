@@ -84,9 +84,32 @@ full USD source build is available. The codeless venv (usd-core wheel) still can
 confirm a from-source USD build first.
 
 ## Proposed implementation plan (ordered)
-0. **Inputs to gather first:** confirm a from-source USD build (the codeless venv = usd-core wheel
-   has NO headers/libs for compiling plugins; `pxr_plugin` needs the full build). Target USD version.
-   Gaussians pointer is RESOLVED (`hdParticleField`, in-tree) — use as scaffolding template.
+
+### Phase 0 — BOOTSTRAP the build/render path on a known-good example (do this FIRST)
+Prove the entire from-source USD + usdview + in-tree-plugin + render loop works on Pixar's own
+`hdParticleField` BEFORE writing any geospatial code, so any environment problems surface on a
+known-good target, not on our new plugin. Steps:
+0a. **Build USD from source** (PixarAnimationStudios/OpenUSD dev) with imaging + usdview +
+    examples enabled: `python build_scripts/build_usd.py --usdview --examples <inst>` (pulls
+    PySide/PyOpenGL for usdview). This is the from-source build the whole phase needs; the
+    codeless usd-core venv cannot compile plugins.
+0b. **Confirm `hdParticleField` built** as a plugin under `<inst>/share/usd/examples/plugin/`
+    (it ships in the examples tree). Set `PXR_PLUGINPATH_NAME=$PXR_PLUGINPATH_NAME:<inst>/share/usd/examples/plugin/hdParticleField/resources`.
+0c. **Get a public 3DGS .ply** (a small Gaussian-splat point cloud — e.g. one of the standard
+    public 3DGS sample scenes) and **convert to USD** with the example's own
+    `py3dgsPlyToUsd.py` (a `.spz` path also exists via `py3dgsSpzToUsd.py`). License-check the
+    chosen splat asset before vendoring.
+0d. **Render in usdview** with the hdParticleField renderer selected (renderer discovery /
+    `--renderer`), **capture a screenshot**, and send it to Aaron. usdview needs GL/display —
+    on a headless host use an offscreen/virtual GL path (e.g. xvfb / EGL) or `usdrecord` with the
+    particleField renderer to produce the image.
+  → **Deliverable: a screenshot of a public gsplat .ply rendered in usdview via hdParticleField.**
+     This validates: from-source build OK, usdview OK, in-tree example plugin loads + renders OK,
+     `.ply→USD` converter pattern OK. Everything our scene-index plugin depends on, de-risked.
+
+### Phase 1+ — the geospatial scene-index plugin (after Phase 0 is green)
+0. **Inputs (now mostly known):** from-source USD build = established in Phase 0; target USD
+   version pinned; Gaussians pointer RESOLVED (`hdParticleField`).
 1. **Scaffold** an in-tree plugin mirroring `hdParticleField`'s layout: `CMakeLists.txt` with
    `pxr_plugin(...)`, `plugInfo.json`, `api.h`. BUT register an `HdSceneIndexPlugin` (+ API-schema
    adapters) — NOT an `HdRendererPlugin` (that part follows `omniGeoSceneIndex`, not Gaussians).
