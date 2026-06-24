@@ -189,6 +189,12 @@ geodesy (never a parallel PROJ call):
 
 ![generalization](docs/generalization.png)
 
+And the real third-party asset, **rendered through the codeless resolver itself** — the Deutsche
+Bahn rail curves sitting on the geospatial tile ground planes, every position resolved from
+`crs:binding`/`crs:position` (no Hydra, no external renderer, no baking):
+
+![railway rendered on tiles](docs/railway_render.png)
+
 - **Spans the axes a runtime could secretly overfit:** geographic + five projected CRSs
   (UTM 18N, UTM 56S, NZTM2000, UTM 17S, UTM 33N); northern & southern hemisphere,
   equatorial, and high-latitude (~78°N, where projections stress); point, global-grid, and

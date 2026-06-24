@@ -17,6 +17,11 @@ Figures (all PR-story, all build-generated):
                             plus 3 cross-CRS benchmark features (NOAA NCAT) co-registering
                             against CLOSED-FORM WGS84 ground truth, with a negative-control
                             ghost cloud (bindings ignored). Non-circular by construction.
+  7 generalization.png    -- no-overfit: the SAME runtime over 7 diverse datasets vs
+                            closed-form geodesy (all sub-mm), incl. a real 3rd-party asset.
+  8 railway_render.png     -- actual render of the real converted NVIDIA Deutsche Bahn asset:
+                            geospatial tile ground planes + rail curves on top, all positions
+                            resolved by resolve_runtime (rails on tiles, no Hydra/baking).
 
 Run from extras/usd/examples/usdGeospatial with the venv active.
 """
@@ -527,6 +532,130 @@ def fig_generalization(out):
     return out
 
 
+# --------------------------------------------------------------------------
+# Figure 8: RAILWAY RENDER -- an actual render of the REAL converted third-party
+# asset, drawn entirely from runtime-resolved geometry: the 3 geospatial tile
+# ground planes (quadnode-*.png imagery sampled onto them) with the ~1,470
+# Deutsche Bahn rail curves layered on top, in a shared local tangent frame.
+# This is the "rails on geospatial tiles" the original NVIDIA demo rendered,
+# reproduced through OUR codeless resolver (no Hydra, no external renderer).
+# --------------------------------------------------------------------------
+def _railway_local_geometry(stage_path="out/railway_georef.usda"):
+    """Resolve tiles + rail curves into a shared local ENU frame centred on the
+    railway centroid. Returns (tiles, rails, info). Each tile is a dict with
+    corner E/N (m) and the texture path; each rail is an (N,2) E/N polyline."""
+    from pxr import Usd, Gf
+    import resolve_runtime as rr
+    from pyproj import CRS
+    ECEF = CRS.from_epsg(4978)
+    st = Usd.Stage.Open(stage_path)
+    cache = {}
+
+    # shared local frame: ENU about the centroid of all georef positions
+    georef = [p for p in st.Traverse() if p.GetAttribute(rr.CRS_POSITION_ATTR)]
+    lons = np.array([p.GetAttribute(rr.CRS_POSITION_ATTR).Get()[0] for p in georef])
+    lats = np.array([p.GetAttribute(rr.CRS_POSITION_ATTR).Get()[1] for p in georef])
+    lon0, lat0 = float(lons.mean()), float(lats.mean())
+    a = 6378137.0; f = 1/298.257223563; e2 = f*(2-f)
+    def ecef(lon, lat, h=0.0):
+        lm = np.radians(lon); ph = np.radians(lat)
+        N = a/np.sqrt(1-e2*np.sin(ph)**2)
+        return np.array([(N+h)*np.cos(ph)*np.cos(lm), (N+h)*np.cos(ph)*np.sin(lm),
+                         (N*(1-e2)+h)*np.sin(ph)])
+    o = ecef(lon0, lat0)
+    lm = np.radians(lon0); ph = np.radians(lat0)
+    east = np.array([-np.sin(lm), np.cos(lm), 0.0])
+    north = np.array([-np.sin(ph)*np.cos(lm), -np.sin(ph)*np.sin(lm), np.cos(ph)])
+    def to_en(world):
+        v = np.array(world) - o
+        return np.array([v @ east, v @ north])
+
+    tiles = []
+    for t in st.Traverse():
+        if not (t.GetName().startswith("MapGeo") and t.GetAttribute(rr.CRS_POSITION_ATTR)):
+            continue
+        M, _ = rr.anchor_frame(t, ECEF, cache)
+        tex = None
+        corners = None
+        for c in t.GetChildren():
+            if c.GetTypeName() == "Mesh" and c.GetAttribute("points"):
+                pts = c.GetAttribute("points").Get()
+                corners = np.array([to_en(M.Transform(Gf.Vec3d(*p))) for p in pts])
+        tiles.append({"name": t.GetName(), "corners": corners})
+    # texture files (in vendor dir) keyed by MapGeo index if present
+    import glob
+    texdir = "data/thirdparty"
+    for tl in tiles:
+        idx = tl["name"].replace("MapGeo", "")
+        cand = os.path.join(texdir, f"quadnode-{idx}.png")
+        tl["tex"] = cand if os.path.exists(cand) else None
+
+    rails = []
+    for r in st.Traverse():
+        if not (r.GetName().startswith("CurveXform") and r.GetAttribute(rr.CRS_POSITION_ATTR)):
+            continue
+        M, _ = rr.anchor_frame(r, ECEF, cache)
+        for c in r.GetChildren():
+            if c.GetTypeName() == "BasisCurves" and c.GetAttribute("points"):
+                pts = c.GetAttribute("points").Get()
+                if pts:
+                    rails.append(np.array([to_en(M.Transform(Gf.Vec3d(*p))) for p in pts]))
+    return tiles, rails, {"lon0": lon0, "lat0": lat0}
+
+
+def fig_railway_render(out, stage_path="out/railway_georef.usda"):
+    if not os.path.exists(stage_path):
+        import convert_omni_geospatial as cog
+        cog.convert("data/thirdparty/deutschebahn-rails.usda", stage_path)
+    tiles, rails, info = _railway_local_geometry(stage_path)
+
+    fig, ax = plt.subplots(figsize=(11, 9))
+    fig.suptitle("Real third-party asset rendered through the codeless resolver \u2014 "
+                 "Deutsche Bahn rails on geospatial tiles", fontsize=12, fontweight="bold")
+    ax.set_title(f"NVIDIA OpenUSD-plugin-samples (Apache-2.0), converted to crs:binding/"
+                 f"crs:position \u00b7 local ENU about ({info['lat0']:.3f}\u00b0N, {info['lon0']:.3f}\u00b0E)",
+                 fontsize=9)
+
+    # tile ground planes, with the quadnode imagery sampled onto each quad
+    from PIL import Image
+    for tl in tiles:
+        c = tl["corners"]
+        if c is None:
+            continue
+        emin, emax = c[:, 0].min(), c[:, 0].max()
+        nmin, nmax = c[:, 1].min(), c[:, 1].max()
+        if tl["tex"]:
+            img = np.asarray(Image.open(tl["tex"]).convert("RGB"))
+            ax.imshow(img, extent=[emin, emax, nmin, nmax], origin="lower",
+                      zorder=1, alpha=0.95, aspect="auto")
+        else:
+            ax.add_patch(plt.Rectangle((emin, nmin), emax-emin, nmax-nmin,
+                         fc="#cdd6df", ec="#8a97a6", zorder=1))
+        ax.add_patch(plt.Rectangle((emin, nmin), emax-emin, nmax-nmin, fill=False,
+                     ec="#2c3e50", lw=1.2, zorder=3))
+        ax.text(emin+12, nmax-12, tl["name"], fontsize=8, va="top",
+                color="white", zorder=4,
+                bbox=dict(boxstyle="round,pad=0.2", fc="#2c3e50", ec="none", alpha=0.7))
+
+    # rail curves on top
+    for i, rl in enumerate(rails):
+        ax.plot(rl[:, 0], rl[:, 1], color="#ffcf33", lw=0.7, zorder=5,
+                solid_capstyle="round",
+                label="rail curves (resolved)" if i == 0 else None)
+
+    ax.set_xlabel("East (m, local ENU)"); ax.set_ylabel("North (m, local ENU)")
+    ax.set_aspect("equal"); ax.legend(loc="upper right", fontsize=8, framealpha=0.9)
+    ax.text(0.01, 0.01,
+            f"{len(tiles)} geospatial tile ground planes \u00b7 {len(rails)} rail curves \u00b7 "
+            f"all positions resolved by resolve_runtime from crs:binding (no Hydra, no baking)",
+            transform=ax.transAxes, fontsize=7.5, color="#333",
+            bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#ccc", alpha=0.85))
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    fig.savefig(out, dpi=120); plt.close(fig)
+    print(f"[8] railway_render.png  {len(tiles)} tiles + {len(rails)} rail curves (resolved)")
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--stage", default="out/earth2_georef.usda")
@@ -541,6 +670,7 @@ def main():
     fig_tree_alignment(os.path.join(d, "tree_alignment.png"))
     fig_coherence(args.stage, os.path.join(d, "coherence.png"))
     fig_generalization(os.path.join(d, "generalization.png"))
+    fig_railway_render(os.path.join(d, "railway_render.png"))
     print("\nAll figures generated by the codeless usdGeospatial build \u2705")
 
 
