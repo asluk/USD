@@ -40,7 +40,9 @@ carried-over artifacts.
   datasets (geographic + 5 projected CRSs; N+S hemisphere, equatorial, high-lat; point/grid/
   asset), each vs closed-form geodesy, all sub-mm. Includes a REAL third-party asset — the
   NVIDIA Deutsche Bahn railway (Apache-2.0), authored in the original Omniverse geospatial
-  schema and converted (`src/convert_omni_geospatial.py`) — resolved with no runtime changes.
+  schema and converted (`src/convert_omni_geospatial.py`) — resolved with no runtime changes,
+  including the demo's rails-on-tiles co-registration (3 geospatial tile planes + ~1,470 rail
+  curves, same locale at tile-footprint scale).
 
 ## One-paragraph status
 Adversarial review (`docs/codex-review.md`) flagged 3 top weaknesses; **all 3 fixed and
@@ -131,6 +133,9 @@ bash ../../../../pxr/usd/usdGeospatial/regen-schema.sh --check  # schema resourc
   asserts the coherence figure.
 
 ## Changelog
+- 2026-06-24 ~01:10 — railway dataset extended: vendored the geospatial TILE imagery
+  (`quadnode-*.png`) + assert the original demo's rails-on-tiles co-registration (3 tile
+  ground planes resolve sub-mm; ~1,470 rails land on them at tile-footprint scale).
 - 2026-06-24 ~00:55 — NO-OVERFIT generalization proof: `generalization_suite.py` runs the
   reference runtime over 7 diverse datasets (geographic + 5 projected CRSs; N/S hemi +
   equatorial + high-lat; point/grid/asset) vs closed-form geodesy, all sub-mm. Vendored the

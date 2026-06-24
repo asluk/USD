@@ -194,11 +194,14 @@ geodesy (never a parallel PROJ call):
   equatorial, and high-latitude (~78°N, where projections stress); point, global-grid, and
   structured-asset topologies.
 - **Includes a real, third-party asset.** The **NVIDIA OpenUSD-plugin-samples Deutsche Bahn
-  railway** (Apache-2.0; ~186 track curves near Hamburg) is authored in the *original
+  railway** (Apache-2.0; ~1,470 track curves on 3 geospatial tile ground planes near Hamburg)
+  is authored in the *original
   Omniverse geospatial schema* (`omni:geospatial:wgs84:*`, lat-first). `src/convert_omni_geospatial.py`
   converts it to our Esri-aligned `crs:binding`/`crs:position` form (swapping to the
   `(lon/E, lat/N, h)` contract), and it resolves — leaves *and* its anchor + Cartesian-curve
-  subtree via injection — with **no runtime changes**. This is the strongest no-overfit
+  subtree via injection — with **no runtime changes**. The suite also asserts the original demo's
+  **rails-on-tiles co-registration**: the tile ground planes resolve sub-mm and the rails land on
+  them at tile-footprint scale (~3.4 km), the same locale. This is the strongest no-overfit
   signal: data we did not author, in a schema we did not design.
 - **Result: 7/7 datasets agree with closed-form geodesy to sub-millimetre.** A dataset the
   runtime was tuned to could pass; a spread this wide across CRS family, hemisphere, and

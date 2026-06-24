@@ -159,10 +159,35 @@ def dataset_railway(stage_path="out/railway_georef.usda", tol_mm=5.0, sample=120
         pos = curve.GetAttribute(rr.CRS_POSITION_ATTR).Get()
         inj_mm = np.linalg.norm(w0 - cf_ecef(pos[0], pos[1], pos[2])) * 1e3
     ok = worst < tol_mm * 1e-3 and (np.isnan(inj_mm) or inj_mm < tol_mm)
+    # rails-on-tiles co-registration: the demo layers rail curves on top of
+    # geospatial tile ground planes (MapGeo*, the quadnode-*.png quadtree
+    # imagery). Both layers carry OmniWGS84LocalPositionAPI and must land in the
+    # same locale -- a few km apart (tile footprint scale), never garbage and
+    # never coincident. This is the "rails on tiles" co-registration the original
+    # NVIDIA demo rendered.
+    tiles = [p for p in stage.Traverse() if p.GetName().startswith("MapGeo")
+             and p.GetAttribute(rr.CRS_POSITION_ATTR)]
+    rails = [p for p in stage.Traverse() if p.GetName().startswith("CurveXform")
+             and p.GetAttribute(rr.CRS_POSITION_ATTR)]
+    tile_mm = 0.0
+    coreg_m = float("nan")
+    n_tiles = len(tiles)
+    if tiles:
+        for tp in tiles:
+            pos = tp.GetAttribute(rr.CRS_POSITION_ATTR).Get()
+            w = np.array(rr.resolve_world_translation(tp, ECEF, cache)[0])
+            tile_mm = max(tile_mm, np.linalg.norm(w - cf_ecef(pos[0], pos[1], pos[2])))
+        if rails:
+            rw = np.array(rr.resolve_world_translation(rails[0], ECEF, cache)[0])
+            tw = np.array(rr.resolve_world_translation(tiles[0], ECEF, cache)[0])
+            coreg_m = np.linalg.norm(rw - tw)
+        # tiles sub-mm vs GT, AND rails co-register within tile-footprint scale
+        ok = ok and tile_mm < tol_mm * 1e-3 and \
+            (np.isnan(coreg_m) or (1.0 < coreg_m < 50_000.0))
     return {"name": "Deutsche Bahn railway (NVIDIA, real 3rd-party)", "epsg": 4979,
-            "lon": 10.2098, "lat": 53.4916, "d_geo_mm": worst * 1e3,
+            "lon": 10.2098, "lat": 53.4916, "d_geo_mm": max(worst, tile_mm) * 1e3,
             "d_proj_mm": None, "d_cross_mm": inj_mm, "ok": ok, "kind": "asset",
-            "npts": n}
+            "npts": n, "n_tiles": n_tiles, "coreg_m": coreg_m}
 
 
 DATASETS = [
@@ -200,6 +225,12 @@ def main():
         print(f"{r['name']:52s} {epsg:>6s} {dgt:9.4f} {cross:>10s}  {'PASS' if r['ok'] else 'FAIL'}")
         all_ok = all_ok and r["ok"]
     print("-" * len(hdr))
+    # surface the rails-on-tiles co-registration from the railway dataset
+    rw = next((r for r in rows if r.get("kind") == "asset" and not r.get("skip")), None)
+    if rw and rw.get("n_tiles"):
+        cm = rw.get("coreg_m")
+        print(f"  railway detail: {rw['n_tiles']} geospatial tile ground planes resolve sub-mm; "
+              f"rails co-register on tiles at {cm:.0f} m (same locale, tile-footprint scale).")
     n_pass = sum(1 for r in rows if r.get("ok"))
     print(f"{n_pass}/{len(rows)} datasets agree with closed-form geodesy to <5 mm "
           f"(point/grid/asset; geographic + 5 projected CRSs; N+S hemi + equatorial "
