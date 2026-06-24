@@ -223,6 +223,11 @@ resolved from `crs:binding` / `crs:position` (no Hydra, no external renderer, no
 
 ![railway rendered on tiles](docs/railway_render.png)
 
+The rail curves resolve onto the tile ground planes, and each tile's imagery is placed
+through the asset's own `UsdUVTexture` / `st` mapping (`s`→East, `t`→North, `t = 0` at the
+south edge) — pixel `(s, t)` lands at the world corner carrying that UV, not stretched into a
+bounding box — so the basemap reads north-up and the rails register against it.
+
 Each of the five single-point benchmarks gets its own visualization too. Each panel resolves
 **two independent CRS authorings** (a geographic CRS *and* a projected CRS) into the *same*
 ECEF point, shown in that point's local ENU frame with its East / North axes; the
