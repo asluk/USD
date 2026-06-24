@@ -50,19 +50,46 @@ unflattened xform representation." So:
 - FIRST task in the new session = pin the **target USD/Hydra version** and check the current
   scene-index / xform-schema API against it before writing code.
 
-## "cf the Gaussians work" — NEED A POINTER
-Aaron referenced a "Gaussians" effort to mirror (likely a 3D Gaussian Splatting Hydra / scene-index
-or render-delegate prototype). NOT in this workspace and no memory hit. **Open question for the
-resume session:** get the Gaussians repo/branch/path from Aaron — use it as the structural template
-for (a) plugin scaffolding/CMake/`plugInfo.json`, (b) build & test harness, (c) how they handled
-Hydra-version drift. Mirror its layout/conventions.
+## "cf the Gaussians work" — POINTER RESOLVED ✅
+Aaron: the "Gaussians work" = Pixar's in-tree **`hdParticleField`** example:
+`extras/imaging/examples/hdParticleField/` in PixarAnimationStudios/OpenUSD (dev).
+Vendored read-only for reference at `/tmp/dev-hdpf/extras/imaging/examples/hdParticleField/`
+(re-fetch: `git clone --filter=blob:none --sparse https://github.com/PixarAnimationStudios/OpenUSD`
+then `git sparse-checkout set extras/imaging/examples/hdParticleField`).
+
+**What it is:** a sample **render delegate** for a `particleField` prim type — the reference for
+Gaussian-splat rendering, built to assist schema development. Registered as a plugin
+(`HdParticleFieldRendererPlugin : HdRendererPlugin`, `plugInfo.json`), usable in usdview via
+renderer discovery (`PXR_PLUGINPATH_NAME`). Files: `renderDelegate`, `renderer`, `gsRenderer`,
+`renderPass`, `renderBuffer`, `hd3DGaussianSplat`, `rendererPlugin`, `renderParam.h`,
+`CMakeLists.txt` (`pxr_plugin(...)`), `plugInfo.json`, plus `py3dgsPlyToUsd.py` / `py3dgsSpzToUsd.py`
+converters (mirror our `convert_omni_geospatial.py`).
+
+**⚠️ Key distinction — what to take vs not take from it:**
+- `hdParticleField` is a **render DELEGATE** (it draws pixels for a prim type). Our geospatial work
+  is a **scene-index FILTER** (it rewrites `xform`s; the renderer is unchanged). So Gaussians is
+  NOT the runtime model.
+- TAKE from Gaussians: the **in-tree plugin scaffolding pattern** — `extras/.../examples/<name>/`
+  layout, `pxr_plugin(...)` CMake macro (we build *inside* `asluk/USD` so this Just Works, no
+  external SDK needed), `plugInfo.json` registration, `PXR_PLUGINPATH_NAME` loading, and the
+  `.py` converter + example-scene convention. It is CURRENT (tracks dev Hydra) — better build
+  template than the NVIDIA plugin.
+- TAKE the RUNTIME model from `omniGeoSceneIndex` (the scene-index filtering + anchor xform compute),
+  but ported to current Hydra APIs.
+
+**Build implication (big):** because we work inside the OpenUSD source tree (`asluk/USD`), our
+plugin can live as a sibling in-tree example (e.g. `extras/usd/examples/usdGeospatialSceneIndex/` or
+under `pxr/imaging`) and compile with the SAME `pxr_plugin` machinery as hdParticleField — IF a
+full USD source build is available. The codeless venv (usd-core wheel) still can't compile it;
+confirm a from-source USD build first.
 
 ## Proposed implementation plan (ordered)
-0. **Inputs to gather first:** Gaussians repo pointer (template); confirmed C++ build env (USD build
-   from source or SDK — the codeless venv (usd-core wheel) has NO headers/libs for compiling
-   plugins); target USD version.
-1. **Scaffold** an out-of-tree Hydra scene-index plugin mirroring the Gaussians layout: CMake +
-   `plugInfo.json` (register `HdSceneIndexPlugin` + the API-schema adapters), `api.h` export macros.
+0. **Inputs to gather first:** confirm a from-source USD build (the codeless venv = usd-core wheel
+   has NO headers/libs for compiling plugins; `pxr_plugin` needs the full build). Target USD version.
+   Gaussians pointer is RESOLVED (`hdParticleField`, in-tree) — use as scaffolding template.
+1. **Scaffold** an in-tree plugin mirroring `hdParticleField`'s layout: `CMakeLists.txt` with
+   `pxr_plugin(...)`, `plugInfo.json`, `api.h`. BUT register an `HdSceneIndexPlugin` (+ API-schema
+   adapters) — NOT an `HdRendererPlugin` (that part follows `omniGeoSceneIndex`, not Gaussians).
 2. **Adapters** for OUR schema: read `crs:binding` (rel → CRS prim → WKT) + `crs:position` into
    Hydra data sources (replacing the `OmniWGS84*` adapters in the reference).
 3. **Engine call:** the C++ side needs the CRS engine. Decide: link PROJ directly, or call out to a
@@ -91,7 +118,10 @@ Hydra-version drift. Mirror its layout/conventions.
 ## Key paths
 - This repo/dir: `/home/horde/.openclaw/workspace-identifiers/geo-usd/extras/usd/examples/usdGeospatial/`
 - Codeless schema: `pxr/usd/usdGeospatial/`
-- Reference plugin (read-only): `/tmp/oups/src/hydra-plugins/omniGeoSceneIndex/` (sparse checkout of
-  NVIDIA-Omniverse/OpenUSD-plugin-samples; re-add with `git sparse-checkout add src/hydra-plugins`)
+- Reference plugin / RUNTIME model (read-only): `/tmp/oups/src/hydra-plugins/omniGeoSceneIndex/`
+  (sparse checkout of NVIDIA-Omniverse/OpenUSD-plugin-samples; re-add with
+  `git sparse-checkout add src/hydra-plugins`)
+- Reference SCAFFOLDING / build template (read-only): `/tmp/dev-hdpf/extras/imaging/examples/hdParticleField/`
+  (Pixar OpenUSD dev "Gaussians" example = the hdParticleField render delegate)
 - Python venv (NO C++ build headers): `source /home/horde/.openclaw/workspace-identifiers/geo-usd/.venv/bin/activate`
 - Memory: `memory/2026-06-24.md` (this session's detail), `MEMORY.md` (backlog index).
