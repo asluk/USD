@@ -131,7 +131,9 @@ def _draw_uv_textured_quad(ax, img, corners_en, uvs, **imshow_kw):
         return
     S = np.column_stack([uvs[:, 0], uvs[:, 1], np.ones(len(uvs))])
     A, *_ = np.linalg.lstsq(S, np.asarray(corners_en), rcond=None)  # (3,2)
-    im = ax.imshow(img, extent=[0, 1, 0, 1], origin="lower", **imshow_kw)
+    # origin="upper": image row 0 (picture top) -> t=1, bottom row -> t=0, per st.
+    # (origin="lower" flips the texture N/S -- the mirrored-tile bug.)
+    im = ax.imshow(img, extent=[0, 1, 0, 1], origin="upper", **imshow_kw)
     aff = mtransforms.Affine2D(matrix=np.array([
         [A[0, 0], A[1, 0], A[2, 0]],
         [A[0, 1], A[1, 1], A[2, 1]],

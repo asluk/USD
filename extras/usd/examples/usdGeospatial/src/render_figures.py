@@ -564,8 +564,11 @@ def _draw_uv_textured_quad(ax, img, corners_en, uvs, **imshow_kw):
     S = np.column_stack([uvs[:, 0], uvs[:, 1], np.ones(len(uvs))])  # (n,3)
     EN = np.asarray(corners_en)                                     # (n,2)
     A, *_ = np.linalg.lstsq(S, EN, rcond=None)                      # (3,2): cols E,N
-    # imshow in UV space: extent [0,1]x[0,1], origin=lower so row0=t=0 (bottom).
-    im = ax.imshow(img, extent=[0, 1, 0, 1], origin="lower", **imshow_kw)
+    # imshow in UV space: extent [0,1]x[0,1]. origin="upper" so image row 0
+    # (top of the picture) maps to t=1, and the bottom row to t=0 -- matching the
+    # st convention. (origin="lower" here puts the picture's TOP at t=0, flipping
+    # the texture N/S -- the mirrored-tile bug.) Verified by pixel sampling.
+    im = ax.imshow(img, extent=[0, 1, 0, 1], origin="upper", **imshow_kw)
     # Affine2D maps (s,t)->(E,N): [[a_e_s, a_e_t, a_e_1],[a_n_s, a_n_t, a_n_1]]
     aff = mtransforms.Affine2D(matrix=np.array([
         [A[0, 0], A[1, 0], A[2, 0]],
