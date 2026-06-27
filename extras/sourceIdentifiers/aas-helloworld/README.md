@@ -94,19 +94,26 @@ The hello-world runs end to end against **[Eclipse BaSyx](https://github.com/ecl
 2. A runtime consumer reads that id, injects the BaSyx endpoint at runtime, and resolves the three-hop chain — reaching the live shell and its submodels.
 3. The consumer parses the **CarbonFootprint** submodel ([IDTA 02023](https://industrialdigitaltwin.org/en/content-hub/aasspecifications), fields located by `semanticId` so it survives `idShort` variation between suppliers) and computes a cradle-to-gate Product Carbon Footprint:
 
-   | EN 15804 stage | kg CO₂e / piece |
+   | Life-cycle stage | kg CO₂e / piece |
    |---|---|
-   | A1 — raw materials | 180 |
-   | A2 — transport | 25 |
-   | A3 — manufacturing | 80 |
-   | **Cradle-to-gate (A1–A3)** | **285** ✔ complete |
-   | Use phase (B*), end-of-life (C*) | *not reported — flagged* |
+   | Raw materials | 180 |
+   | Transport to the factory | 25 |
+   | Manufacturing | 80 |
+   | **Carbon to *build* it** (cradle-to-gate) | **285** ✔ |
+   | Carbon to *run* it, and to *scrap* it | *not reported — marked missing, not zero* |
 
-Nothing is written back into the USD scene. The roll-up is computed in the consumer and handed to the application.
+The 285 kg is the carbon to **build** the motor. The carbon to **run** it (the electricity it draws over its life — usually the largest part) and to **scrap** it isn't in this shell, so the consumer marks those **missing rather than counting them as zero**. Nothing is written back into the USD scene — the roll-up is computed in the consumer and handed to the application.
 
-## Why gap-flagging is the point
+## What this gives a carbon-reduction effort
 
-A carbon roll-up you can put in a report has to distinguish "this component's footprint is zero" from "this component never reported a footprint." The consumer therefore treats coverage as a first-class output: it sums only the stages actually reported, and it names what's missing — a component with no PCF at all, an entry missing its CO₂e value, an incomplete cradle-to-gate, an unreported use phase. **A missing value is never silently coerced to zero.** That makes the aggregate reporting-grade and the gaps actionable — they tell you which supplier to chase. The roll-up logic is written to sum across many components, so it extends directly to a bill-of-materials.
+The prototype doesn't cut carbon — it produces the information a reduction effort runs on:
+
+- **A credible baseline.** A trustworthy total — missing data flagged, never silently counted as zero — is the number you measure reductions against. (A blank that quietly becomes a zero makes the footprint look smaller than it really is.)
+- **Hotspot ranking — where the carbon actually is.** The per-component and per-stage split (materials / transport / manufacturing) shows which parts dominate, so effort goes where it pays instead of spread thin.
+- **A supplier accountability list.** It names who hasn't reported — who to chase to complete the picture, and a concrete lever to ask for lower-carbon alternatives.
+- **A live feedback loop.** Because the data is pulled from source, a greener material or supplier shows up in the roll-up automatically — so you can prove a change worked.
+
+These targeting teeth show at **assembly scale** (the bill-of-materials step, next); on a single component the run proves the mechanism — live, trustworthy, gap-aware. The roll-up logic already sums across components, so it extends directly to a bill of materials.
 
 ## Roadmap
 
