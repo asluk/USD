@@ -1,8 +1,11 @@
-# usdGeospatialSceneIndex -- the Hydra production form of the geospatial runtime
+# usdGeospatialSceneIndex -- an illustrative Hydra runtime for the geospatial schema
 
-This is the **compiled Hydra scene index** that performs geospatial coordinate
-resolution at render time -- the production form of the Python reference runtime
-in `../usdGeospatial/src/resolve_runtime.py`. It filters a scene and rewrites the
+This is a **compiled Hydra scene index** that performs geospatial coordinate
+resolution at render time -- a second, illustrative runtime alongside the Python
+reference runtime in `../usdGeospatial/src/resolve_runtime.py`. It is modeled on
+the Gaussian-splat `hdParticleField` example: a reference that shows the schema
+resolving through Hydra, **not** a prescription of how a production renderer must
+consume it. It filters a scene and rewrites the
 `xform` of geospatially-bound prims (and dirties their children) so a renderer
 shows them in the right place **without baking transforms into the layer**
 ("inject, don't bake").

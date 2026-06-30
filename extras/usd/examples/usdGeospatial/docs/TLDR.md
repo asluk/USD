@@ -126,7 +126,7 @@ bash ../../../../pxr/usd/usdGeospatial/regen-schema.sh --check  # schema resourc
    anchor+building+roof land 0.0 mm; position-only is 410 m wrong; stock USD 6.4e6 m off).
    C-05 float32 localization in `test_float32_localization.py` (~480,000× better than
    absolute float32). Python = implementation-agnostic behavior reference; compiled Hydra
-   scene-index plugin is the production form (needs C++ build path, not set up here).
+   scene-index plugin is a second illustrative runtime (needs C++ build path, not set up here).
 6. ~~Projection-engine registration seam~~ ✅ DONE. `crs_engine.py`: PROJ/pyproj is one
    *registered* engine (default), exposing reproject + local-frame basis; WKT opaque to USD.
    C-04 insertion point for a GPU/cuProj engine. `resolve_runtime` now calls the engine,

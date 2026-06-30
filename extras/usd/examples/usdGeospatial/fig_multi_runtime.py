@@ -83,7 +83,7 @@ def main():
     box(ax, (5.95, 1.4), (4.0, 2.6),
         "(B)  Compiled Hydra scene index\n\n"
         "$\\tt{usdGeospatialSceneIndex}$ (C++)\n\n"
-        "production form\n"
+        "illustrative runtime\n"
         "HdSingleInputFilteringSceneIndexBase\n"
         "wraps Xformable prims, overrides\n"
         "HdXformSchema matrix locator,\n"

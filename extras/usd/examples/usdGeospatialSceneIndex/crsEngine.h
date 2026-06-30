@@ -13,7 +13,7 @@
 //     transform (orientation + position): world_ecef = M.Transform(local_xyz),
 //     using Gf row-vector convention (basis vectors in rows 0..2, origin row 3).
 //
-// This is the production form of crs_engine.PyprojEngine; PROJ is linked
+// This is a C++ form of crs_engine.PyprojEngine; PROJ is linked
 // directly (libproj). A different deployment could swap a GPU engine in behind
 // the same interface, exactly as the Python seam allows.
 //

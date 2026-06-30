@@ -1,5 +1,5 @@
 //
-// geospatialSceneIndex.h -- the production Hydra scene index.
+// geospatialSceneIndex.h -- an illustrative Hydra scene index for the geospatial schema.
 //
 // A filtering scene index that performs geospatial resolution at render time:
 // for any prim that resolves to a geospatial anchor (via crs:binding/crs:position),

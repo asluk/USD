@@ -4,7 +4,7 @@ fig_runtime_parity.py -- VISUAL parity proof: the same scene rendered through
 TWO viable runtime implementations of the same codeless schema:
 
    (A) Python reference runtime   -- resolve_runtime.py (oracle / behavior spec)
-   (B) C++ Hydra scene index      -- usdGeospatialSceneIndex (compiled production form)
+   (B) C++ Hydra scene index      -- usdGeospatialSceneIndex (compiled, illustrative runtime)
 
 Both consume the SAME authored stage (out/railway_georef.usda: real NVIDIA
 Deutsche Bahn rails on geospatial tiles, in our crs:binding/crs:position schema).

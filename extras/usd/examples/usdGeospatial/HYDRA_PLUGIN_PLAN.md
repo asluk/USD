@@ -21,7 +21,7 @@ Full suite green (12 checks), 9 self-generated figures, schema in sync.
 
 ## The goal of THIS phase
 Build a **Hydra scene index** that performs geospatial resolution at render time — the
-PRODUCTION form of what `resolve_runtime` does in Python. It filters a scene and rewrites the
+ILLUSTRATIVE C++ form of what `resolve_runtime` does in Python. It filters a scene and rewrites the
 `xform` of geospatially-bound prims (and dirties their children) so a renderer shows them in the
 right place WITHOUT baking transforms into the layer.
 
@@ -125,7 +125,7 @@ known-good target, not on our new plugin. Steps:
    the resolved transforms match the Python runtime / closed-form geodesy to sub-mm. The Python
    suite is the oracle — C++ must agree with it. Reuse `out/railway_georef.usda` etc.
 6. **Visual parity (optional, high-value):** if a renderer is available, capture an image and show
-   the rails-on-tiles render matches `railway_render.png` — closes the "production path produces the
+   the rails-on-tiles render matches `railway_render.png` — closes the "second runtime produces the
    same picture" loop.
 
 ## Hard constraints (carry over — do NOT violate)

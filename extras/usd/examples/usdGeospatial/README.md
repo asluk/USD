@@ -30,9 +30,10 @@ Two sibling directories, one schema:
 - **`usdGeospatial/`** (this directory) — the codeless schema, the **Python reference
   runtime** (`src/resolve_runtime.py`), the Earth-2 data converter, the test suite, and the
   figures.
-- **`../usdGeospatialSceneIndex/`** — the compiled **C++ Hydra scene-index plugin**, the
-  production form of the same runtime. It has its own README (Design, Files, Parity,
-  Building, Environment); this document points at it rather than duplicating it.
+- **`../usdGeospatialSceneIndex/`** — the compiled **C++ Hydra scene-index plugin**, a second,
+  illustrative form of the same runtime (modeled on the Gaussian-splat `hdParticleField`
+  example — a reference, not a prescribed renderer path). It has its own README (Design, Files,
+  Parity, Building, Environment); this document points at it rather than duplicating it.
 
 ## Alignment with the Esri prototype
 
@@ -140,7 +141,8 @@ composes under it as ordinary USD.
 
 The same coexist semantics are what a Hydra scene index, OpenExec, or an Omniverse runtime
 would each implement. The Python here pins the expected behavior; the compiled Hydra
-scene-index plugin (the natural production form) exists and agrees with it to sub-mm — see
+scene-index plugin (one illustrative consumer, modeled on the Gaussian `hdParticleField`
+example) exists and agrees with it to sub-mm — see
 [Two runtimes, one schema](#two-runtimes-one-schema).
 
 ## The evidence, honestly scoped
@@ -362,16 +364,18 @@ See `../usdGeospatialSceneIndex/README.md` for the full build environment.
 ## Status / scope
 
 - This is the **OpenUSD-side, codeless** reference: a pure-data schema plus a Python reference
-  runtime and a compiled C++ Hydra production runtime. The Esri C++ typed schema remains the
-  parallel artifact; this bundle backs the proposal's design calls (binding shape, no baked
-  `resetXformStack`, resolution-rule parity) with running code on a real dataset.
+  runtime and a compiled C++ Hydra scene-index runtime (an illustrative consumer, modeled on
+  the Gaussian-splat example — not a prescribed production renderer). The Esri C++ typed
+  schema remains the parallel artifact; this bundle backs the proposal's design calls (binding
+  shape, no baked `resetXformStack`, resolution-rule parity) with running code on a real dataset.
 - **Done — anchor injection (the coexist answer).** A georef anchor with a non-georef
   Cartesian subtree resolves correctly: `resolve_runtime.resolve_with_injection` injects the
   rigid ENU / topocentric local-frame → ECEF transform (orientation + position) transiently,
   and descendants compose under it as ordinary USD — *not* a baked `resetXformStack`, *not*
   per-prim absolutes. Proven in `test_anchor_injection.py` and `test_float32_localization.py`.
-- **Done — the compiled Hydra production form.** The natural production runtime — a C++ Hydra
-  scene-index plugin (`../usdGeospatialSceneIndex/`) — exists and resolves the same authored
+- **Done — the compiled Hydra scene-index form.** A second, illustrative runtime — a C++ Hydra
+  scene-index plugin (`../usdGeospatialSceneIndex/`), modeled on the Gaussian-splat example —
+  exists and resolves the same authored
   stages (anchor injection included) to **0.0 mm vs the Python oracle** (30/30) and **sub-mm
   visual parity** on the real railway asset. See [Two runtimes, one schema](#two-runtimes-one-schema).
   Built out-of-tree against a prebuilt USD here; the in-tree `CMakeLists.txt` registers it
