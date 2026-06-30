@@ -15,7 +15,10 @@ figures (`docs/multi_runtime.png`, `docs/runtime_parity.png`) are the cross-runt
 visuals and additionally require building and running the compiled **C++ Hydra** scene
 index. Both paths are spelled out exactly in [Running](#running).
 
+<!-- slide:title subtitle="a codeless CRS schema for OpenUSD, proven by two runtimes" -->
+
 ## What it is (and what it lands like)
+<!-- slide:text eyebrow="The proposal" title="A codeless geospatial CRS schema" body="Pure-data schema: a CRS prim + a binding API, skipCodeGeneration=true (no compiled types). | All resolution behavior lives in the example runtimes, not the schema. | Same shape as the landed Gaussian / particleField contribution: schema + sample runtime(s) + converter + docs. | Runtimes here: Python `resolve_runtime.py` and a C++ Hydra scene index." -->
 
 This mirrors the shape of the landed OpenUSD Gaussian / particleField contribution —
 *schema + sample runtime(s) + data converter + docs, shipped together*, with the schema as
@@ -49,7 +52,9 @@ who knows one immediately reads the other.
   build for the schema) and authors the scene coordinate-neutral, **resolving the binding at
   runtime**.
 
+<!-- slide:section title="The design call" subtitle="Resolve at runtime; keep the authored scene coordinate-neutral." -->
 ## The design call: resolve, don't bake
+<!-- slide:text eyebrow="Replace · wrap · or coexist?" title="Resolve, don't bake" body="`crs:binding` is a relationship resolved at runtime — not references-as-binding, not a baked `resetXformStack`. | The authored scene stays coordinate-neutral; a runtime reprojects and composes ancestor transforms. | This is the question the earlier effort stalled on — replace, wrap, or coexist with the `UsdGeomXformable` stack? The answer here is **coexist**. | Proven, not argued: the baked Esri scene and our neutral scene land the same corner to 0.0 mm." -->
 
 The central decision: **`crs:binding` is a relationship, resolved at runtime — not
 references-as-binding, not a baked `resetXformStack`.** The authored scene stays
@@ -108,6 +113,7 @@ The precedence ladder and strength override shown here are read **live** from
 drift from the code.
 
 ## Anchor injection — coexisting with `UsdGeomXformable` (inject, don't bake)
+<!-- slide:text eyebrow="Coexisting with UsdGeomXformable" title="Anchor injection: inject, don't bake" body="A georeferenced anchor with an ordinary Cartesian subtree (a building in local metres) — children have no `crs:position`. | The runtime injects the anchor's rigid local-frame→ECEF basis (full ENU orientation) at resolve time. | The subtree then composes under it **as ordinary `UsdGeomXformable`** — nothing baked into the layer. | `resetXformStack` lives only on a transient, computed Hydra data source, never the authored scene." -->
 
 The design above handles georeferenced *leaves* (each prim carries its own `crs:position`).
 The harder case — and the one stock USD gets wrong — is a georeferenced **anchor** with an
@@ -182,7 +188,10 @@ compiled C++ Hydra scene index: `src/render_figures.py` auto-runs the Hydra xfor
 its binary is present and **skips those two with a clear note if not** (they need a prebuilt
 USD). The exact command for the full set is in [Running](#running).
 
+<!-- slide:section title="The evidence" subtitle="Three proofs an independent reviewer can check." -->
+<!-- slide:image src="docs/railway_render.png" eyebrow="Proof · no overfit" title="Real third-party asset on real tiles" caption="An external Deutsche Bahn railway (~1,470 curves) authored in the original Omniverse schema, converted to crs:binding/crs:position, resolved onto three real geospatial tiles near Hamburg — no Hydra, no baking." -->
 ## 3D coherence — against an independent ground truth
+<!-- slide:image src="docs/coherence.png" eyebrow="Proof · co-registration" title="Three CRSs, one ECEF point" caption="The same monument authored three independent ways (geographic / UTM 18N / NY State Plane) from independent NOAA NCAT coordinates co-registers to one ECEF point to ≤ ~0.5 mm — checked against closed-form WGS84 geodesy, not a parallel PROJ call." -->
 
 The evidence above shows the resolver is *internally* consistent. This figure shows it is
 *externally* correct: schema-resolved geometry co-registers, in 3D, with a ground truth
@@ -255,6 +264,8 @@ sub-millimetre overlap the table reports becomes something you can see:
   runtime was tuned to could pass; a spread this wide across CRS family, hemisphere, and data
   origin could not, unless the geodesy is actually correct.
 
+<!-- slide:section title="One schema, two runtimes" subtitle="The schema is the contract; the behavior is plural." -->
+<!-- slide:image src="docs/multi_runtime.png" eyebrow="Proof · contract not implementation" title="Two independent runtimes, 0.0 mm" caption="The Python reference runtime and the compiled C++ Hydra scene index resolve the same authored stage to the same world, agreeing to 0.0 mm. A third runtime plugs into the same seam." -->
 ## Two runtimes, one schema
 
 This is the payoff of the whole design. The Python runtime above is the behavior **contract**.
@@ -300,6 +311,7 @@ plural.** A third runtime (OpenExec, a GPU / cuProj engine, an Omniverse runtime
 the same seam and is held to the same oracle.
 
 ### Where the Python reference runtime sits (no exact precedent — by design)
+<!-- slide:text eyebrow="No exact precedent — by design" title="Where the Python reference runtime sits" body="It's the codeless schema's **executable specification / conformance oracle** — 'given this stage, where does each prim end up?' | NOT proposed for USD core, NOT a runtime dependency, NOT Python-in-the-render-loop, NOT the prescribed consumer. | Real consumers (Hydra, OpenExec, Omniverse, GPU cuProj) implement the same contract; the Python is the spec they conform to. | New part: a runnable reference as the normative behavior for a codeless schema whose behavior is deliberately external." -->
 
 Because the schema is **codeless**, the resolution behavior must live *somewhere* outside the
 schema, and `resolve_runtime.py` is that behavior written down once in the most readable
@@ -408,7 +420,9 @@ See `../usdGeospatialSceneIndex/README.md` for the full build environment.
   (GDAL + a bundled PROJ grid); an OpenExec / GPU-cuProj runtime (a *third* implementation of
   the same seam — the Python and compiled-Hydra forms are done).
 
+<!-- slide:section title="Open questions" subtitle="What we'd most like the working group's read on." -->
 ## Open design questions for the working group
+<!-- slide:text eyebrow="For the working group" title="Open design questions" body="1. Is 'codeless schema + a runnable reference runtime as the behavior contract' the right shape — and where should that reference ultimately live? | 2. Is **coexist** the right relationship to `UsdGeomXformable` (neutral scene + runtime reconciliation) — versus hooking CRS resolution into `Xformable` directly?" -->
 
 The two calls we'd most like Esri's / the WG's read on:
 
