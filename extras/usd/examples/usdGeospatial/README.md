@@ -299,6 +299,24 @@ The takeaway is the schema claim itself: **the schema is the contract; the behav
 plural.** A third runtime (OpenExec, a GPU / cuProj engine, an Omniverse runtime) plugs into
 the same seam and is held to the same oracle.
 
+### Where the Python reference runtime sits (no exact precedent — by design)
+
+Because the schema is **codeless**, the resolution behavior must live *somewhere* outside the
+schema, and `resolve_runtime.py` is that behavior written down once in the most readable
+form: a pure-Python, dependency-light **executable specification / conformance oracle** for
+“given this authored stage, where does each prim end up?” It is **not** proposed for USD core,
+**not** a runtime dependency of the schema, **not** Python-in-the-render-loop, and **not** the
+prescribed way to consume the schema. A real consumer (Hydra scene index, OpenExec, an
+Omniverse / native runtime, a GPU cuProj path) implements the same contract in its own
+setting — the Python is the *spec they conform to*, not code they call.
+
+There isn't a clean precedent for this exact artifact. OpenUSD already ships reference/example
+code in Python under `extras/usd/examples/` (e.g. `usdSchemaExamples`, `usdResolverExample`,
+`usdMakeFileVariantModelAsset`) and the `extras/usd/tutorials`; what's genuinely new is using
+such a module as the **normative behavior reference for a codeless schema whose behavior is
+deliberately external** — the spec is *executable* rather than prose. That placement is a
+deliberate design choice, and one we'd specifically like the working group's read on.
+
 ## Tests — all green, all with teeth
 
 Every test file below is openable and runnable; here is what each one checks.
@@ -389,3 +407,17 @@ See `../usdGeospatialSceneIndex/README.md` for the full build environment.
   coherence figure (`cartopy` + a basemap / DEM asset); an end-to-end grid-*applied* transform
   (GDAL + a bundled PROJ grid); an OpenExec / GPU-cuProj runtime (a *third* implementation of
   the same seam — the Python and compiled-Hydra forms are done).
+
+## Open design questions for the working group
+
+The two calls we'd most like Esri's / the WG's read on:
+
+1. **Is “codeless schema + a runnable reference runtime as the behavior contract” the right
+   shape**, and where should that reference ultimately live (an `extras/usd/examples` module,
+   a separate conformance suite, prose in the spec)?
+2. **Is “coexist” the right relationship to `UsdGeomXformable`** — a coordinate-neutral
+   authored scene plus runtime reconciliation (this design) — versus any future move to hook
+   CRS resolution into `Xformable` directly? See
+   [The design call: resolve, don't bake](#the-design-call-resolve-dont-bake) and
+   [Anchor injection](#anchor-injection--coexisting-with-usdgeomxformable-inject-dont-bake)
+   for how the pieces coexist today.
