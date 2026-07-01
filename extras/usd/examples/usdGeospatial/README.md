@@ -107,8 +107,8 @@ the build if disagreement exceeds 1 mm**.
 ![Python vs Hydra transforms, same stage (Matplotlib plot)](docs/runtime_parity.png)
 
 **4 — It just works in usdview (real Hydra Storm render).** Beyond the plots: with only the built
-plugins on `PXR_PLUGINPATH_NAME` — **no `SetStage`, no hand-built scene-index chain, no app
-edits** — opening the georef scene in **usdview** (or `usdrecord`) draws the railway at its correct
+plugins on `PXR_PLUGINPATH_NAME` — **no application code, no hand-built scene-index chain** —
+opening the georef scene in **usdview** (or `usdrecord`) draws the railway at its correct
 ECEF position via Storm. The `crs:` data flows through Hydra and an auto-inserted scene index
 resolves it. This is a *real renderer image*, not a plot.
 
@@ -116,16 +116,15 @@ resolves it. This is a *real renderer image*, not a plot.
 
 ![usdview Storm auto-insert render (real render)](docs/railway_storm_autoinsert.png)
 
-How it works: `crs:` properties are custom attrs/rel on a codeless schema, so they never entered
+How it works: `crs:` properties are custom attrs/rel on a codeless schema, so they are absent from
 the default Hydra stream. A **keyless `UsdImagingAPISchemaAdapter`** (`apiSchemaName ""`, modeled on
 `coordSysAPIAdapter` and NVIDIA's `omniGeoSceneIndex`) surfaces `crs:position`/`crs:binding`/
-`crs:wkt` *into* Hydra for every prim; the scene index then resolves entirely from the Hydra data
-stream (a stage-free path added alongside the `SetStage` path, which is preserved as fallback).
-*Scope note (stated, not hidden):* the auto path resolves **direct** `crs:binding` (+ nearest /
-stronger); collection- and purpose-based strength remain stage-path only — the neutral railway /
-earth2 scenes use direct bindings, which is what auto-insert exercises. (Getting Storm to render also
-surfaced and fixed a real bug: the resolver's `UsdGeomXformCache` was not thread-safe, and Storm syncs
-rprims across TBB threads — a double-free — now guarded by a mutex.)
+`crs:wkt` *into* Hydra for every prim; the scene index resolves entirely from the Hydra data
+stream. *Scope note (stated, not hidden):* the auto path resolves **direct** `crs:binding`
+(+ nearest / stronger); collection- and purpose-based strength are resolved via the stage path — the
+neutral railway / earth2 scenes use direct bindings, which is what auto-insert exercises. The resolver
+is thread-safe: its `UsdGeomXformCache` is mutex-guarded, so Storm can sync rprims across TBB threads
+without a double-free.
 
 ## The design call: resolve, don't bake
 
@@ -225,12 +224,13 @@ goes wrong: **compose a child's offsets in the frame its anchor's CRS implies.**
   anchor→corner lever in a UTM-17N-under-UTM-30N test).
 
 The authored scene is identical either way; the runtime selects the frame from the bound CRS type
-(`crs_engine.is_projected`). This rule was **found by an adversarial head-to-head**
-(`test_coexist_vs_baked.py`) that rebuilds Simon Haegler's multi-CRS POC scene (MoMA in
+(`crs_engine.is_projected`). An adversarial head-to-head enforces this rule
+(`test_coexist_vs_baked.py`): it rebuilds Simon Haegler's multi-CRS POC scene (MoMA in
 NAD83/UTM-17N under a WGS84/UTM-30N anchor) both baked and neutral and measures each against an
-independent closed-form pyproj ground truth. Both approaches now land the corner at the same ECEF
-point to **0.0 mm**; an earlier revision that used the ENU lift for the projected anchor landed
-4.86 m off, and the harness caught it.
+independent closed-form pyproj ground truth. Composed in the CRS-implied frame, both approaches land
+the corner at the same ECEF point to **0.0 mm**; compose a projected anchor's child through the
+true-ENU basis instead of its grid plane and the corner lands 4.86 m off — the test asserts the
+frame selection so that error cannot pass silently.
 
 ## Non-geometric georeferenced data — visualize by composition, don't bake
 
@@ -306,7 +306,7 @@ renders empty, so the placement is unambiguously the runtime's, not the geometry
 <!-- slide:section title="Guard rails" subtitle="Coexist's costs are asset-structure invariants a validator can enforce." -->
 <!-- slide:text eyebrow="Enforceable, not showstoppers" title="Guard rails a validator can check" body="Coexist has no architectural showstopper — it matches baking to 0 mm when it composes in the CRS-implied frame. | Its residual costs are a small set of ASSET-STRUCTURE invariants, each mechanically checkable. | (1) anchor-vs-child is unambiguous; (2) child offsets are authored in the frame the bound CRS implies; (3) a CRS-requiring stage declares it so unaware consumers detect-and-refuse. | A neutral authored scene PRESERVES the semantic info a validator needs; a baked scene has already collapsed CRS intent into a matrix." -->
 
-The adversarial testing surfaced the honest shape of "coexist": it is **not** blocked by any
+The honest shape of "coexist" is that it is **not** blocked by any
 architectural showstopper — it reproduces the baked approach to 0.0 mm when it composes in the
 CRS-implied frame. Its residual costs are a small set of **asset-structure invariants**, and the
 important property is that **each is mechanically checkable by a validator** — the same conformance
@@ -444,9 +444,9 @@ Every test is openable and runnable; each has a real negative control or an inde
   puts georef prims at the origin. `testHydraAutoParity` adds the stage-free auto-insert path (30/30).
 - `pxr/usd/usdGeospatial/regen-schema.sh --check` — schema resources are in sync.
 
-### Running — two honest tiers
+### Running — two paths
 
-**Tier 1 — the codeless Python path (no external renderer):**
+**The codeless Python path (no external renderer):**
 
 ```bash
 source <repo>/.venv/bin/activate        # usd-core 26.5, pyproj 3.7.1 (PROJ 9.5.1)
@@ -460,10 +460,10 @@ python3 src/render_figures.py           # regenerate the Python-reference figure
 ```
 
 `render_figures.py` regenerates the nine Python-reference figures; it also produces
-`multi_runtime.png` / `runtime_parity.png` **if** the compiled C++ Hydra binary is already built
-(Tier 2), otherwise it skips those two with a clear note.
+`multi_runtime.png` / `runtime_parity.png` **if** the compiled C++ Hydra binary is already built,
+otherwise it skips those two with a clear note.
 
-**Tier 2 — the full two-runtime parity proof (needs a prebuilt USD):**
+**The full two-runtime parity proof (needs a prebuilt USD):**
 
 ```bash
 USD_INST=/path/to/usd/inst ../usdGeospatialSceneIndex/run_parity.sh
@@ -480,10 +480,11 @@ notes for reproducing the auto-insert usdview / usdrecord render.
 reference runtime and a compiled C++ Hydra scene-index runtime (an illustrative consumer, modeled on
 the Gaussian-splat example — not a prescribed production renderer). The Esri C++ typed schema
 remains the parallel artifact; this bundle backs the proposal's design calls (binding shape, no
-baked `resetXformStack`, resolution-rule parity) with running code on a real dataset. **Done:**
-anchor injection (the coexist answer); the head-to-head vs the baked approach (neutral reproduces it
-to 0.0 mm, hand-TRS edits survive, neutral resolve cost ~1.8 ms/prim); the compiled Hydra
-scene-index form with auto-insert into usdview; the projection-engine seam.
+baked `resetXformStack`, resolution-rule parity) with running code on a real dataset. It
+demonstrates: anchor injection (the coexist answer); a head-to-head against the baked approach in
+which neutral reproduces it to 0.0 mm, hand-TRS edits survive, and neutral resolve costs
+~1.8 ms/prim; the compiled Hydra scene-index form with auto-insert into usdview; and the
+projection-engine seam.
 
 **Out of scope here (need other resources):** a codeless `usdchecker`-discoverable validator plugin
 (`verify.py` is the runnable validator today); a draped raster / terrain basemap for the coherence
@@ -500,8 +501,8 @@ read on:
    conformance suite, prose in the spec)?
 2. **Is "coexist" the right relationship to `UsdGeomXformable`** — a coordinate-neutral authored
    scene plus runtime reconciliation — versus hooking CRS resolution into `Xformable` directly? The
-   head-to-head now shows neutral **reproduces the baked approach to 0.0 mm** on a real multi-CRS
-   scene, so the question is no longer "does coexist work?" but **"is the residual guard-rail set
+   head-to-head shows neutral **reproduces the baked approach to 0.0 mm** on a real multi-CRS
+   scene, so the question is not "does coexist work?" but **"is the residual guard-rail set
    (anchor-vs-child, compose-in-CRS-frame, requires-CRS marker) an acceptable conformance surface to
    standardize?"**
 
