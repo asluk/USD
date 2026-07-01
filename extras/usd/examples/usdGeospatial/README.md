@@ -232,6 +232,75 @@ independent closed-form pyproj ground truth. Both approaches now land the corner
 point to **0.0 mm**; an earlier revision that used the ENU lift for the projected anchor landed
 4.86 m off, and the harness caught it.
 
+## Non-geometric georeferenced data — visualize by composition, don't bake
+
+<!-- slide:section title="Non-geometric data" subtitle="A common geospatial case: data with no shape. Visualize it with a composition overlay — without touching or duplicating the data." -->
+<!-- slide:text eyebrow="A first-class use case" title="Non-geometric georeferenced data" body="Much geospatial data has NO intrinsic shape: scalar fields (temperature, elevation), sensor/telemetry networks, survey benchmarks. In USD it is a prim carrying `crs:position` + a value, no geometry. | Visualization is a CHOICE, not part of the data — so add it via USD COMPOSITION: keep the dataset pristine in a base layer; a separate overlay layer subLayers it and adds marker glyphs as geometry-only `over`s. | ZERO `crs:*` re-authored; the base stays byte-identical; pull the overlay and you are back to pure data. | The glyphs are Cartesian children at each prim's local origin — the auto-inserted scene index places them via the SAME anchor-injection path as any Cartesian subtree. Marker size is a stated DISPLAY parameter (like a scatter's point size), and the overlay can be sparse." -->
+
+A large share of real geospatial data has **no intrinsic shape**: a GFS temperature field, a
+sensor/telemetry network, LiDAR-derived measurements, survey benchmarks. In USD that is honestly a
+prim carrying `crs:position` (+ a data value like `primvars:t2m`) and **no geometry** — the data is
+not a mesh. Visualizing it is a *choice you make to understand non-visual data*, not something the
+data *is*. This is a common, first-class use case, and the codeless schema supports it cleanly.
+
+The right way to add a visualization is **USD composition**, not baking geometry into the dataset:
+
+- The **base layer** stays the pristine non-geometric dataset (e.g. `out/earth2_georef.usda`:
+  7,320 `crs:position` samples of GFS `t2m`, zero geometry).
+- A separate **overlay layer** (`src/visualize_field_glyphs.py` writes `out/earth2_glyphs.usda`)
+  `subLayers` the base and adds marker glyphs as **geometry-only `over` prims** — it re-authors
+  **zero `crs:*`**. The georeferencing composes down from the base:
+
+```usda
+#usda 1.0
+(
+    subLayers = [
+        @earth2_georef.usda@          # the pristine, non-geometric dataset
+    ]
+)
+
+over "World" { over "GeoSamples" {
+    over "p_0_0" {                    # 'over', not 'def' — no crs:* restated, no prim duplicated
+        def Points "glyph" {
+            point3f[] points = [(0, 0, 0)]   # at the georef prim's LOCAL origin
+            float[] widths = [60000]          # a stated DISPLAY parameter (like scatter s=), not a coordinate
+            color3f[] primvars:displayColor = [(0.78, 0.69, 0.04)]
+        }
+    }
+}}
+```
+
+Because each glyph is a Cartesian child at the georef prim's local origin, the auto-inserted scene
+index resolves it through the **same anchor-injection path** proven in `test_anchor_injection.py`
+(and used by the railway's Cartesian subtree) — **no new code path**. The base dataset is never
+opened for write (byte-identical before/after), the overlay is fully **removable**, and the same
+physical data is never **duplicated**. It also doubles as a proof that the codeless schema composes
+correctly across USD layers (`subLayers` + `over`).
+
+The payoff shows in the cross-visualizer parity: the *same* non-geometric field, resolved once,
+drawn by two independent visualizers — a Matplotlib scatter and a Hydra **Storm** render of the
+composed overlay — landing on the same globe. (Glyph coverage differs by construction: Matplotlib's
+round `s=` dot vs. Storm's `UsdGeomPoints` marker; the *resolved positions* are identical, the glyph
+style is a disclosed display choice.)
+
+<!-- slide:image src="docs/globe_visualizer_parity.png" eyebrow="Two visualizers, one field" title="Same non-geometric data, matplotlib vs Storm" caption="The earth2 GFS t2m field (7,320 crs:position samples, no geometry) visualized two ways: a Matplotlib scatter (left) and a Hydra Storm render of a composition-overlay of marker glyphs (right), placed by the auto-inserted scene index. Same resolved positions; glyph style is a disclosed display choice." -->
+
+![globe cross-visualizer parity](docs/globe_visualizer_parity.png)
+
+### Same runtime, many CRSs — the anti-overfit render set
+
+<!-- slide:image src="docs/multiCRS_glyph_renders.png" eyebrow="Proof · not overfit (renders)" title="One runtime, five CRS families, both hemispheres" caption="The SAME visualize_field_glyphs overlay + the SAME unchanged scene index place a glyph correctly across NYC (UTM 18N), Sydney (UTM 56S), Wellington (NZTM2000), Quito (~equator), and Svalbard (~78N) — zero code changes between locales. No-plugin controls render empty (the runtime does the placement)." -->
+
+The numeric no-overfit proof (§[The proofs](#the-proofs)) is broad but proven by *numbers*. The
+composition overlay lets us make it **visual** without inventing geometry: the *same*
+`visualize_field_glyphs` overlay driven by the *same unchanged scene index* places a marker glyph
+correctly across five CRS families, both hemispheres, and equator-to-78°N — **NYC** (UTM 18N),
+**Sydney** (UTM 56S), **Wellington** (NZTM2000), **Quito** (UTM 17S, ~equator), **Svalbard**
+(UTM 33N, ~78°N) — with **zero code changes** between locales. Each locale's no-plugin control
+renders empty, so the placement is unambiguously the runtime's, not the geometry's.
+
+![multi-CRS glyph render set](docs/multiCRS_glyph_renders.png)
+
 ## Guard rails: what "coexist" asks of an asset
 
 <!-- slide:section title="Guard rails" subtitle="Coexist's costs are asset-structure invariants a validator can enforce." -->
