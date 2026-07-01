@@ -8,6 +8,11 @@
                         "loadWithRenderer": "",
                         "priority": 0,
                         "displayName": "USD Geospatial Scene Index"
+                    },
+                    "UsdGeospatialAPISchemaAdapter" : {
+                        "bases": ["UsdImagingAPISchemaAdapter"],
+                        "isInternal": true,
+                        "apiSchemaName": ""
                     }
                 }
             },

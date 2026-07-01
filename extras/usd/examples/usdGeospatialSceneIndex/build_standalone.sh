@@ -20,12 +20,12 @@ g++ $CXXFLAGS $INCS "$HERE/testCrsEngine.cpp" "$HERE/crsEngine.cpp" \
     -L"$I/lib" -lusd_gf -lusd_tf -lusd_arch -lproj -Wl,-rpath,"$I/lib" -o "$OUT/testCrsEngine"
 
 echo "[build] geoResolver parity (stage-level)"
-g++ $CXXFLAGS $INCS "$HERE/testGeoResolver.cpp" "$HERE/geoResolver.cpp" "$HERE/crsEngine.cpp" \
+g++ $CXXFLAGS $INCS "$HERE/testGeoResolver.cpp" "$HERE/geoResolver.cpp" "$HERE/crsEngine.cpp" "$HERE/geospatialSchema.cpp" \
     $LDLIBS -o "$OUT/testGeoResolver"
 
 echo "[build] scene-index parity (through Hydra)"
 g++ $CXXFLAGS $INCS "$HERE/testSceneIndexParity.cpp" "$HERE/geospatialSceneIndex.cpp" \
-    "$HERE/geoResolver.cpp" "$HERE/crsEngine.cpp" \
+    "$HERE/geoResolver.cpp" "$HERE/crsEngine.cpp" "$HERE/geospatialSchema.cpp" \
     $LDLIBS -o "$OUT/testSceneIndexParity"
 
 echo "[build] done: $OUT/testCrsEngine  $OUT/testGeoResolver  $OUT/testSceneIndexParity"

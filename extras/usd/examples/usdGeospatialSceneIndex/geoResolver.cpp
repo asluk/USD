@@ -3,6 +3,7 @@
 //
 #include "geoResolver.h"
 #include "crsEngine.h"
+#include "geospatialSchema.h"
 
 #include <pxr/usd/usd/prim.h>
 #include <pxr/usd/usd/relationship.h>
@@ -10,6 +11,9 @@
 #include <pxr/usd/usd/collectionAPI.h>
 #include <pxr/usd/usdGeom/xform.h>
 #include <pxr/base/tf/stringUtils.h>
+#include <pxr/imaging/hd/xformSchema.h>
+#include <pxr/imaging/hd/dataSource.h>
+#include <pxr/imaging/hd/dataSourceTypeDefs.h>
 
 #include <algorithm>
 #include <vector>
@@ -249,6 +253,161 @@ bool GeoResolver::ResolveWithInjection(const UsdPrim& prim, GfMatrix4d* world,
     }
     GfMatrix4d localToAnchor = descAuthored * anchorAuthored.GetInverse();
     *world = localToAnchor * frame;  // compose under the injected anchor frame
+    return true;
+}
+
+// ===========================================================================
+// HYDRA-DATA-SOURCE PATH (stage-free)
+// ===========================================================================
+
+bool GeoResolver::_ReadGeoDS(const HdSceneIndexBaseRefPtr& si,
+                             const SdfPath& primPath,
+                             bool* hasPos, GfVec3d* pos,
+                             SdfPathVector* binding, bool* stronger) const
+{
+    if (!si) return false;
+    HdSceneIndexPrim prim = si->GetPrim(primPath);
+    if (!prim.dataSource) return false;
+    HdContainerDataSourceHandle geo =
+        HdContainerDataSource::Cast(
+            prim.dataSource->Get(UsdGeospatialSchemaTokens->geospatial));
+    if (!geo) return false;
+
+    if (hasPos) *hasPos = false;
+    if (auto pds = HdTypedSampledDataSource<GfVec3d>::Cast(
+            geo->Get(UsdGeospatialSchemaTokens->position))) {
+        if (pos) *pos = pds->GetTypedValue(0.0f);
+        if (hasPos) *hasPos = true;
+    }
+    if (binding) binding->clear();
+    if (auto bds = HdTypedSampledDataSource<VtArray<SdfPath>>::Cast(
+            geo->Get(UsdGeospatialSchemaTokens->binding))) {
+        VtArray<SdfPath> paths = bds->GetTypedValue(0.0f);
+        if (binding) binding->assign(paths.begin(), paths.end());
+    }
+    if (stronger) {
+        *stronger = false;
+        if (auto sds = HdTypedSampledDataSource<bool>::Cast(
+                geo->Get(UsdGeospatialSchemaTokens->bindingStronger))) {
+            *stronger = sds->GetTypedValue(0.0f);
+        }
+    }
+    return true;
+}
+
+bool GeoResolver::_WktOfHydra(const HdSceneIndexBaseRefPtr& si,
+                             const SdfPathVector& binding,
+                             std::string* wkt, double* epoch) const
+{
+    if (!si) return false;
+    // Prefer a target whose geospatial DS carries a wkt (the CRS prim).
+    for (const SdfPath& t : binding) {
+        HdSceneIndexPrim cp = si->GetPrim(t.GetPrimPath());
+        if (!cp.dataSource) continue;
+        HdContainerDataSourceHandle geo =
+            HdContainerDataSource::Cast(
+                cp.dataSource->Get(UsdGeospatialSchemaTokens->geospatial));
+        if (!geo) continue;
+        auto wds = HdTypedSampledDataSource<std::string>::Cast(
+            geo->Get(UsdGeospatialSchemaTokens->wkt));
+        if (!wds) continue;
+        std::string w = wds->GetTypedValue(0.0f);
+        if (w.empty()) continue;
+        if (wkt) *wkt = w;
+        if (epoch) {
+            *epoch = -1.0;
+            if (auto eds = HdTypedSampledDataSource<double>::Cast(
+                    geo->Get(UsdGeospatialSchemaTokens->epoch))) {
+                double e = eds->GetTypedValue(0.0f);
+                if (e != 0.0) *epoch = e;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+SdfPath GeoResolver::NearestAnchorHydra(const HdSceneIndexBaseRefPtr& si,
+                                        const SdfPath& primPath) const
+{
+    SdfPath p = primPath;
+    while (!p.IsEmpty() && p != SdfPath::AbsoluteRootPath()) {
+        bool hasPos = false; GfVec3d pos; SdfPathVector binding; bool stronger;
+        if (_ReadGeoDS(si, p, &hasPos, &pos, &binding, &stronger) &&
+            hasPos && !binding.empty()) {
+            std::string wkt;
+            if (_WktOfHydra(si, binding, &wkt, nullptr)) {
+                return p;
+            }
+        }
+        p = p.GetParentPath();
+    }
+    return SdfPath();
+}
+
+bool GeoResolver::_AnchorFrameHydra(const HdSceneIndexBaseRefPtr& si,
+                                    const SdfPath& anchorPath,
+                                    GfMatrix4d* frame) const
+{
+    bool hasPos = false; GfVec3d pos; SdfPathVector binding; bool stronger;
+    if (!_ReadGeoDS(si, anchorPath, &hasPos, &pos, &binding, &stronger) ||
+        !hasPos || binding.empty()) {
+        return false;
+    }
+    std::string wkt; double epoch = -1.0;
+    if (!_WktOfHydra(si, binding, &wkt, &epoch)) return false;
+    *frame = _engine.LocalFrameToEcef(wkt, pos[0], pos[1], pos[2], epoch);
+    return true;
+}
+
+// Compose the authored local-to-world from HdXformSchema matrices in `si`,
+// walking to the root. Honors resetXformStack (stops composing ancestors).
+GfMatrix4d GeoResolver::_AuthoredL2WHydra(const HdSceneIndexBaseRefPtr& si,
+                                          const SdfPath& primPath) const
+{
+    GfMatrix4d acc(1.0);
+    SdfPath p = primPath;
+    while (!p.IsEmpty() && p != SdfPath::AbsoluteRootPath()) {
+        HdSceneIndexPrim prim = si->GetPrim(p);
+        HdXformSchema xs = HdXformSchema::GetFromParent(prim.dataSource);
+        bool reset = false;
+        if (xs.IsDefined()) {
+            if (auto rds = xs.GetResetXformStack()) {
+                reset = rds->GetTypedValue(0.0f);
+            }
+            if (auto mds = xs.GetMatrix()) {
+                // Gf row-vector: local-to-world = local * parentLocalToWorld,
+                // accumulated child-first.
+                acc = acc * mds->GetTypedValue(0.0f);
+            }
+        }
+        if (reset) break;  // reset means ignore ancestors above this prim
+        p = p.GetParentPath();
+    }
+    return acc;
+}
+
+bool GeoResolver::ResolveWithInjectionHydra(const HdSceneIndexBaseRefPtr& si,
+                                            const SdfPath& primPath,
+                                            GfMatrix4d* world,
+                                            SdfPath* anchorPath) const
+{
+    SdfPath anchor = NearestAnchorHydra(si, primPath);
+    if (anchor.IsEmpty()) return false;
+    GfMatrix4d frame;
+    if (!_AnchorFrameHydra(si, anchor, &frame)) return false;
+    if (anchorPath) *anchorPath = anchor;
+
+    if (primPath == anchor) {
+        *world = frame;
+        return true;
+    }
+    // local-to-anchor = desc_authored * anchor_authored^-1 (Gf row-vector),
+    // computed from Hydra xform matrices (mirrors the stage path).
+    GfMatrix4d anchorAuthored = _AuthoredL2WHydra(si, anchor);
+    GfMatrix4d descAuthored   = _AuthoredL2WHydra(si, primPath);
+    GfMatrix4d localToAnchor = descAuthored * anchorAuthored.GetInverse();
+    *world = localToAnchor * frame;
     return true;
 }
 
