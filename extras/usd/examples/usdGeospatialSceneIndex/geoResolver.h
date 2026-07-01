@@ -29,6 +29,7 @@
 #include <pxr/base/gf/vec3d.h>
 
 #include <string>
+#include <mutex>
 
 PXR_NAMESPACE_OPEN_SCOPE
 
@@ -90,6 +91,10 @@ private:
     UsdStagePtr _stage;
     GeoCrsEngine& _engine;
     mutable UsdGeomXformCache _xformCache;
+    // UsdGeomXformCache is NOT thread-safe; Storm syncs rprims (and thus pulls
+    // our xform data source) across TBB worker threads in parallel. Guard all
+    // xform-cache access to prevent concurrent cache mutation (double-free).
+    mutable std::mutex _xformCacheMutex;
 };
 
 PXR_NAMESPACE_CLOSE_SCOPE

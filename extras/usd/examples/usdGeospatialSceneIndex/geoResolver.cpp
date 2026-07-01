@@ -218,6 +218,7 @@ bool GeoResolver::ResolveWorldTranslation(const UsdPrim& prim, GfVec3d* world,
     UsdPrim parent = prim.GetParent();
     GfMatrix4d a2w(1.0);
     if (parent && parent.IsValid()) {
+        std::lock_guard<std::mutex> lock(_xformCacheMutex);
         a2w = _xformCache.GetLocalToWorldTransform(parent);
     }
     *world = a2w.Transform(georef);
@@ -240,8 +241,12 @@ bool GeoResolver::ResolveWithInjection(const UsdPrim& prim, GfMatrix4d* world,
         return true;
     }
     // local-to-anchor = desc_authored * anchor_authored^-1   (Gf row-vector)
-    GfMatrix4d anchorAuthored = _xformCache.GetLocalToWorldTransform(anchor);
-    GfMatrix4d descAuthored = _xformCache.GetLocalToWorldTransform(prim);
+    GfMatrix4d anchorAuthored, descAuthored;
+    {
+        std::lock_guard<std::mutex> lock(_xformCacheMutex);
+        anchorAuthored = _xformCache.GetLocalToWorldTransform(anchor);
+        descAuthored = _xformCache.GetLocalToWorldTransform(prim);
+    }
     GfMatrix4d localToAnchor = descAuthored * anchorAuthored.GetInverse();
     *world = localToAnchor * frame;  // compose under the injected anchor frame
     return true;
