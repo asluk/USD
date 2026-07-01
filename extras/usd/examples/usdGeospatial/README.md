@@ -112,9 +112,9 @@ edits** — opening the georef scene in **usdview** (or `usdrecord`) draws the r
 ECEF position via Storm. The `crs:` data flows through Hydra and an auto-inserted scene index
 resolves it. This is a *real renderer image*, not a plot.
 
-<!-- slide:image src="docs/usdview_level1_autoinsert.png" eyebrow="Proof · real render, auto-insert" title="It just works in usdview (Storm)" caption="REAL Hydra Storm render (not a plot). Plugin on path → railway auto-resolves at ECEF in usdview (29% frame coverage). Negative control: plugin path removed → railway absent (usdview 1.3% UI chrome only; usdrecord 0.0%). The stage-free Hydra-auto path matches the oracle 30/30 at 0.0 mm (testHydraAutoParity)." -->
+<!-- slide:image src="docs/railway_storm_autoinsert.png" eyebrow="Proof · real render, auto-insert" title="It just works in usdview (Storm)" caption="Real Hydra Storm render (not a plot): with the plugin on the path, the railway auto-resolves at its ECEF position — no app code. Negative control (plugin removed): railway absent. The auto-insert path matches the oracle 30/30 at 0.0 mm (testHydraAutoParity)." -->
 
-![usdview Storm auto-insert render (real render)](docs/usdview_level1_autoinsert.png)
+![usdview Storm auto-insert render (real render)](docs/railway_storm_autoinsert.png)
 
 How it works: `crs:` properties are custom attrs/rel on a codeless schema, so they never entered
 the default Hydra stream. A **keyless `UsdImagingAPISchemaAdapter`** (`apiSchemaName ""`, modeled on
