@@ -3,6 +3,9 @@
     defaultPrim = "World"
     metersPerUnit = 1
     upAxis = "Z"
+    customLayerData = {
+        bool crsResolutionRequired = 1
+    }
 )
 
 def Xform "World"

@@ -167,6 +167,10 @@ def build_neutral(path, edit=None):
     st = Usd.Stage.CreateNew(path)
     st.SetMetadata("metersPerUnit", 1.0)
     UsdGeom.SetStageUpAxis(st, UsdGeom.Tokens.z)
+    # Guard rail G3: a coordinate-neutral scene carrying crs:binding declares that
+    # CRS resolution is required, so a CRS-unaware consumer can detect-and-refuse
+    # instead of silently placing content at the world origin. See verify.py / README.
+    st.GetRootLayer().customLayerData = {"crsResolutionRequired": True}
 
     world = UsdGeom.Xform.Define(st, "/World")
     st.SetDefaultPrim(world.GetPrim())

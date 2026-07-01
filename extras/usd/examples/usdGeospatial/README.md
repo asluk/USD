@@ -489,6 +489,35 @@ invariants directly against the declared CRS. A baked scene has already collapse
 mis-authored anchor is partly spent. `verify.py` is the runnable validator today; a codeless,
 `usdchecker`-discoverable validator plugin is the natural next step.
 
+### What breaks, and the fix (each guard rail, as a runnable before/after)
+<!-- slide:text eyebrow="Broken → fixed, measured" title="What breaks, and the fix" body="G1 anchor-vs-child: a corner authored as its OWN georef leaf and parented to be relative jumps to its own CRS point — 418.9 m off. Fix: author it as a plain Cartesian child (xformOp:translate) → 0.000 mm. | G2 compose-in-CRS-frame: a projected-anchor child composed through true-ENU bends by grid convergence — 4.86 m off. Fix: compose in the grid plane + reproject → 0.000 mm. | G3 requires-CRS marker: an unmarked scene under a CRS-unaware consumer lands 6,369 km off, silently. Fix: stamp customLayerData['crsResolutionRequired'] → the consumer detects-and-refuses. | Each is a runnable demo (src/test_illformed_assets.py), measured against closed-form geodesy." -->
+
+The invariants above are abstract until you see one violated. `src/test_illformed_assets.py`
+authors a deliberately **ill-formed asset** for each guard rail, shows the concrete failure
+measured against independent closed-form geodesy, then shows the **minimal authoring fix** and
+re-measures. `verify.py` (checks A/G) is the validator that would catch each one.
+
+1. **G1 — anchor-vs-child ambiguity.** *Broken:* `/World/NewYork/MoMa/Corner` is authored with
+   its **own** `crs:binding` + `crs:position` (as if an independent georeferenced leaf) and
+   parented under the building expecting relative placement. The resolver treats it as its own
+   anchor and it jumps to its own CRS point — **418.9 m** from the intended spot. *Fix:* delete
+   the corner's binding/position and author it as an ordinary Cartesian child
+   (`double3 xformOp:translate = (50, 100, 30)`); it then composes under `MoMa` → **0.000 mm**.
+   *Validator:* `verify.py` check **A2** flags a georef prim that also bakes an xformOp; a
+   `crs:position`-under-`crs:position` nesting without an override binding is the smell.
+2. **G2 — wrong composition frame.** *Broken:* a **projected** (UTM-17N) anchor's child offsets
+   are composed through the anchor's **true-ENU** basis (the natural mistake if you assume “local
+   metres == ENU”). Grid convergence + point-scale bend them **4.86 m** over a ~418 m lever.
+   *Fix:* compose the offset **in the grid plane** and reproject (grid add + reproject) — the
+   CRS-implied frame → **0.000 mm**. *Validator:* the runtime selects the frame from the bound
+   CRS type (`crs_engine.is_projected`); a validator asserts the two agree.
+3. **G3 — no requires-CRS marker.** *Broken:* a coexist scene with no stage marker, opened by a
+   **CRS-unaware** consumer (plain `UsdGeom.XformCache`, no resolver), silently places the
+   building at its bare local offset — **6,369 km** from truth, with no error. *Fix:* stamp
+   `customLayerData['crsResolutionRequired'] = true`; a conformant consumer now detects the marker
+   and **refuses / defers** to a resolver instead of misplacing. *Validator:* `verify.py` check
+   **G** fails any stage that carries `crs:binding` without the marker.
+
 <!-- slide:section title="Open questions" subtitle="What we'd most like the working group's read on." -->
 ## Open design questions for the working group
 <!-- slide:text eyebrow="For the working group" title="Open design questions" body="1. Is 'codeless schema + a runnable reference runtime as the behavior contract' the right shape — and where should that reference ultimately live? | 2. Is **coexist** the right relationship to `UsdGeomXformable` (neutral scene + runtime reconciliation) — versus hooking CRS resolution into `Xformable` directly? Given the head-to-head parity + the guard-rail set, is the residual validation surface acceptable to standardize?" -->

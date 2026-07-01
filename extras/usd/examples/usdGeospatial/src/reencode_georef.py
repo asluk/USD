@@ -137,6 +137,10 @@ def main():
     stage = Usd.Stage.CreateNew(args.out)
     UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
     UsdGeom.SetStageMetersPerUnit(stage, 1.0)
+    # Guard rail G3: this scene carries crs:binding, so declare that CRS resolution
+    # is required -- a CRS-unaware consumer can then detect-and-refuse instead of
+    # silently placing content at the world origin. See verify.py check G / README.
+    stage.GetRootLayer().customLayerData = {"crsResolutionRequired": True}
     world = UsdGeom.Xform.Define(stage, "/World")
     stage.SetDefaultPrim(world.GetPrim())
 

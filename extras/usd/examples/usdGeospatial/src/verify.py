@@ -35,11 +35,29 @@ def main(path="out/earth2_georef.usda"):
     stage = Usd.Stage.Open(path)
 
     # --- A. authored scene neutrality ---
-    txt = open(path).read()
-    if "xformOp:translate" in txt or "resetXformStack" in txt:
-        passed &= fail("authored scene contains baked transform/reset")
+    # Neutral != "no xformOps anywhere". Plain Cartesian CHILDREN of an anchor
+    # legitimately carry xformOp:translate (their local metre offsets) -- that is
+    # ordinary UsdGeomXformable that composes under the injected anchor frame.
+    # Neutrality means, precisely: (A1) NO resetXformStack is authored into the
+    # layer, and (A2) no georeferenced prim (one carrying crs:position) also bakes
+    # an xformOp onto ITSELF -- the georef lives in crs:position, not a transform.
+    if "resetXformStack" in open(path).read():
+        passed &= fail("A1. authored scene bakes resetXformStack (not coordinate-neutral)")
     else:
-        ok("A. authored scene is CRS-neutral (no xformOp:translate / resetXformStack)")
+        ok("A1. authored scene bakes no resetXformStack")
+    baked_anchor = 0
+    for p in stage.Traverse():
+        if p.GetAttribute("crs:position") and p.GetAttribute("crs:position").HasAuthoredValue():
+            order = p.GetAttribute("xformOpOrder")
+            ops = list(order.Get()) if (order and order.Get()) else []
+            if ops:
+                baked_anchor += 1
+                fail(f"A2. georef prim {p.GetPath()} bakes xformOp(s) {ops} onto itself "
+                     f"(the georef must live in crs:position, not a transform)")
+    if baked_anchor:
+        passed &= False
+    else:
+        ok("A2. no georef prim bakes an xformOp onto itself (Cartesian children may)")
 
     # --- B. binding + WKT validity ---
     samples = [p for p in stage.Traverse()
@@ -175,6 +193,28 @@ def main(path="out/earth2_georef.usda"):
            f"with authoritative crs:wkt (no silent mismatch)")
     else:
         ok("F. EPSG-vs-WKT precedence: no CRS prim carries both epsg+wkt to cross-check")
+
+    # --- G. requires-CRS-resolution marker (guard rail G3) ---
+    # A coexist scene is coordinate-neutral: a CRS-UNAWARE consumer that ignores
+    # crs:* would silently place georeferenced content at the world origin
+    # (thousands of km off). To let such a consumer detect-and-refuse instead of
+    # misplacing, a stage that carries ANY crs:binding must declare it via
+    # customLayerData['crsResolutionRequired'] = true. See README "Guard rails".
+    has_binding = any(
+        p.GetRelationship("crs:binding") and p.GetRelationship("crs:binding").GetTargets()
+        for p in stage.Traverse())
+    if has_binding:
+        cld = stage.GetRootLayer().customLayerData or {}
+        if cld.get("crsResolutionRequired") is True:
+            ok("G. requires-CRS marker: stage has crs:binding AND declares "
+               "customLayerData['crsResolutionRequired']=true (unaware consumers can refuse)")
+        else:
+            passed &= False
+            fail("G. stage has crs:binding but no customLayerData['crsResolutionRequired']=true "
+                 "marker -- a CRS-unaware consumer would silently misplace content. "
+                 "Fix: stage.SetMetadata('customLayerData', {'crsResolutionRequired': True})")
+    else:
+        ok("G. requires-CRS marker: no crs:binding on stage; marker not required")
 
     print("\nRESULT:", "ALL PASS ✅" if passed else "FAILURES ❌")
     return 0 if passed else 1
