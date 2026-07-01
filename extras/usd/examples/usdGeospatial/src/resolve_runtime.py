@@ -418,12 +418,42 @@ def resolve_with_injection(prim, target_crs, cache, purpose="", xform_cache=None
         return None, None
     if prim.GetPath() == anchor.GetPath():
         return frame, anchor.GetPath()
+    xc = xform_cache if xform_cache is not None else UsdGeom.XformCache()
+    # --- Projected-anchor path (compose IN-PLANE, do not lift through ENU) ---
+    # When the anchor's CRS is a PROJECTED (grid) CRS, the child's authored local
+    # offsets are grid-plane offsets in the anchor's units. Lifting them through
+    # the anchor's true-ENU basis (the geographic path) introduces a
+    # grid-convergence + point-scale error (~metres over a few hundred metres).
+    # Instead: add the child's local offset to the anchor's grid position and
+    # reproject that grid point straight to the target CRS. Matches closed-form
+    # geodesy to 0 mm while keeping the AUTHORED scene neutral (the offset is
+    # still read from ordinary Cartesian xformOps; nothing is baked).
+    src_crs, src_path, _, _ = crs_of_prim(anchor, purpose)
+    src_wkt = _wkt_of(src_crs) if src_crs is not None else None
+    engine = ce.get_engine()
+    if src_wkt is not None and engine.is_projected(src_wkt):
+        anchor_pos = anchor.GetAttribute(CRS_POSITION_ATTR).Get()
+        anchor_authored = xc.GetLocalToWorldTransform(anchor)
+        desc_authored = xc.GetLocalToWorldTransform(prim)
+        local_to_anchor = desc_authored * anchor_authored.GetInverse()
+        # the child origin's grid offset composes in-plane and reprojects;
+        # the child's own rotation/scale is preserved in the returned matrix.
+        offset = local_to_anchor.Transform(Gf.Vec3d(0, 0, 0))
+        epoch = _crs_prim_epoch(anchor.GetStage(), src_path)
+        dst_wkt = _wkt_of(target_crs)
+        X, Y, Z = engine.project_grid_offset_to_target(
+            src_wkt, dst_wkt,
+            (anchor_pos[0], anchor_pos[1], anchor_pos[2]),
+            (offset[0], offset[1], offset[2]), epoch=epoch)
+        world = Gf.Matrix4d(local_to_anchor)
+        world.SetTranslateOnly(Gf.Vec3d(X, Y, Z))
+        return world, anchor.GetPath()
+    # --- Geographic/ECEF-anchor path (topocentric ENU lift, as before) ---
     # local-to-anchor: the descendant's transform expressed in the anchor's
     # local frame = (anchor_world_authored)^-1 . descendant_world_authored,
     # using the AUTHORED (Cartesian) stack only. The anchor's own authored xform
     # is intentionally identity in the neutral scene, so this is just the
     # descendant's local-to-world relative to the anchor.
-    xc = xform_cache if xform_cache is not None else UsdGeom.XformCache()
     anchor_authored = xc.GetLocalToWorldTransform(anchor)
     desc_authored = xc.GetLocalToWorldTransform(prim)
     local_to_anchor = desc_authored * anchor_authored.GetInverse()

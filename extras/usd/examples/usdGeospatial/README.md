@@ -151,6 +151,33 @@ scene-index plugin (one illustrative consumer, modeled on the Gaussian `hdPartic
 example) exists and agrees with it to sub-mm — see
 [Two runtimes, one schema](#two-runtimes-one-schema).
 
+### Composition frame: projected vs. geographic anchors (a correctness rule, proven)
+<!-- slide:text eyebrow="Compose in the CRS-implied frame" title="Projected vs geographic anchors" body="A GEOGRAPHIC/ECEF anchor's child offsets are local metres → compose through the anchor's true-ENU basis (orientation matters; local +Z = ellipsoidal normal). | A PROJECTED (UTM/State-Plane) anchor's child offsets live in the grid plane → compose IN-PLANE (grid add + reproject), NOT through ENU. | UTM grid axes differ from true ENU by grid-convergence + point-scale — lifting grid offsets through ENU bends them ~4.86 m over a ~420 m lever. | Same neutral authored scene; the runtime picks the frame from the bound CRS type. Proven 0.0 mm both ways against closed-form geodesy." -->
+
+Coexist has one correctness rule the runtime must honor, and it is worth stating plainly
+because it is where a naïve implementation goes wrong: **compose a child's offsets in the
+frame its anchor's CRS implies.**
+
+- A **geographic / geocentric (ECEF) anchor** carries child offsets authored in local metres.
+  These compose through the anchor's **true-ENU / topocentric basis** — orientation matters, and
+  a subtree's local `+Z` follows the ellipsoidal normal (the NYC case above).
+- A **projected (UTM, State Plane, …) anchor** carries child offsets that live in the anchor's
+  **grid plane**. These must compose **in-plane** — add the offset to the anchor's grid
+  coordinates and reproject the resulting grid point — **not** lifted through a true-ENU basis.
+  UTM grid axes differ from true ENU by grid convergence + point scale, so lifting grid-authored
+  offsets through ENU introduces a real error (~**4.86 m** over a ~420 m anchor→corner lever in a
+  UTM-17N-under-UTM-30N test).
+
+The authored scene is identical either way (only `crs:binding` + `crs:position`, coordinate-
+neutral); the runtime selects the composition frame from the bound CRS type
+(`crs_engine.is_projected`). `resolve_runtime.resolve_with_injection` now does exactly this.
+This rule was **found by an adversarial head-to-head** (`test_coexist_vs_baked.py`) that rebuilds
+Simon Haegler's multi-CRS POC scene (MoMA in NAD83/UTM-17N nested under a WGS84/UTM-30N anchor)
+both ways — baked `resetXformStack` and neutral `crs:binding` — and measures each against an
+independent closed-form pyproj ground truth. Both approaches now land the building corner at the
+same ECEF point to **0.0 mm**; an earlier resolver revision that used the ENU lift for the
+projected anchor landed 4.86 m off, and the harness caught it.
+
 ## The evidence, honestly scoped
 
 The runtime and converter, with the figures they produce:
@@ -399,10 +426,19 @@ See `../usdGeospatialSceneIndex/README.md` for the full build environment.
   schema remains the parallel artifact; this bundle backs the proposal's design calls (binding
   shape, no baked `resetXformStack`, resolution-rule parity) with running code on a real dataset.
 - **Done — anchor injection (the coexist answer).** A georef anchor with a non-georef
-  Cartesian subtree resolves correctly: `resolve_runtime.resolve_with_injection` injects the
-  rigid ENU / topocentric local-frame → ECEF transform (orientation + position) transiently,
-  and descendants compose under it as ordinary USD — *not* a baked `resetXformStack`, *not*
-  per-prim absolutes. Proven in `test_anchor_injection.py` and `test_float32_localization.py`.
+  Cartesian subtree resolves correctly: `resolve_runtime.resolve_with_injection` composes the
+  subtree under the anchor's frame transiently — the true-ENU / topocentric basis for a
+  geographic anchor, or in-plane + reproject for a projected anchor — and descendants compose
+  as ordinary USD, *not* a baked `resetXformStack`, *not* per-prim absolutes. Proven in
+  `test_anchor_injection.py` and `test_float32_localization.py`.
+- **Done — head-to-head vs. the baked approach (coexist under adversarial test).**
+  `test_coexist_vs_baked.py` rebuilds Simon Haegler's multi-CRS POC scene (MoMA in NAD83/UTM-17N
+  under a WGS84/UTM-30N anchor) both baked and neutral, and measures each against independent
+  closed-form geodesy (no approach graded against the other). Neutral now **reproduces the baked
+  result to 0.0 mm**; hand-TRS edits survive in both; it quantified the CRS-unaware degradation of
+  both and the neutral resolve cost (~1.8 ms/prim). The test *found* the projected-anchor
+  composition rule (the ENU-lift error, since fixed) — see
+  [Composition frame](#composition-frame-projected-vs-geographic-anchors-a-correctness-rule-proven).
 - **Done — the compiled Hydra scene-index form.** A second, illustrative runtime — a C++ Hydra
   scene-index plugin (`../usdGeospatialSceneIndex/`), modeled on the Gaussian-splat example —
   exists and resolves the same authored
@@ -420,9 +456,42 @@ See `../usdGeospatialSceneIndex/README.md` for the full build environment.
   (GDAL + a bundled PROJ grid); an OpenExec / GPU-cuProj runtime (a *third* implementation of
   the same seam — the Python and compiled-Hydra forms are done).
 
+<!-- slide:section title="Guard rails" subtitle="Coexist's costs are asset-structure invariants a validator can enforce — a normal USD conformance surface." -->
+## Guard rails: what “coexist” asks of an asset (and how a validator enforces it)
+<!-- slide:text eyebrow="Enforceable, not showstoppers" title="Guard rails a validator can check" body="Coexist has no architectural showstopper — it matches baking to 0 mm when it composes in the CRS-implied frame. | Its residual costs are a small set of ASSET-STRUCTURE invariants, each mechanically checkable. | (1) anchor-vs-child is unambiguous; (2) child offsets are authored in the frame the bound CRS implies; (3) a CRS-requiring stage declares it so unaware consumers detect-and-refuse. | A neutral authored scene PRESERVES the semantic info a validator needs; a baked scene has already collapsed CRS intent into a matrix." -->
+
+The adversarial testing surfaced the honest shape of “coexist”: it is **not** blocked by any
+architectural showstopper — it reproduces the baked approach to 0.0 mm when it composes in the
+CRS-implied frame. Its residual costs are a small set of **asset-structure invariants**, and the
+important property is that **each is mechanically checkable by a validator** — exactly the
+conformance posture USD already uses for `UsdShade` bindings, `UsdSkel`, and core-spec rules.
+
+1. **Anchor-vs-child is unambiguous.** A prim either *is* a georeferenced anchor (carries
+   `crs:position` + a resolvable binding) or it is a plain Cartesian child of one. Two prims that
+   each own a `crs:position` cannot be made relative to each other by parenting + TRS — each
+   resolves against its own binding. *Validator rule:* flag a `crs:position` prim nested under
+   another `crs:position` prim without an explicit override binding.
+2. **Child offsets are authored in the frame the bound CRS implies** (projected → grid plane;
+   geographic → ENU / local metres). This is the composition rule above; a validator (or the
+   runtime contract) can assert the resolver path matches the bound CRS type so the grid-vs-ENU
+   mismatch cannot silently occur.
+3. **A CRS-requiring stage declares it.** Under a CRS-*unaware* consumer, *both* the neutral and
+   the baked scene misplace catastrophically (the head-to-head measured ~6.4×10⁶ m for neutral and
+   ~1.0×10⁷ m for baked — neither degrades gracefully). *Validator / marker rule:* a stage with any
+   `crs:binding` carries a “requires CRS resolution” signal so a conformant consumer can
+   **detect-and-refuse** rather than silently render thousands of km off. This is the single most
+   important guard rail and it applies regardless of baked vs. neutral.
+
+There is a real argument here *for* the neutral approach precisely on validator grounds: a neutral
+authored scene keeps `crs:binding` + `crs:position` **inspectable**, so a validator can check these
+invariants directly against the declared CRS. A baked scene has already collapsed CRS intent into a
+`resetXformStack` + `double3` matrix — the semantic information a validator would use to catch a
+mis-authored anchor is partly spent. `verify.py` is the runnable validator today; a codeless,
+`usdchecker`-discoverable validator plugin is the natural next step.
+
 <!-- slide:section title="Open questions" subtitle="What we'd most like the working group's read on." -->
 ## Open design questions for the working group
-<!-- slide:text eyebrow="For the working group" title="Open design questions" body="1. Is 'codeless schema + a runnable reference runtime as the behavior contract' the right shape — and where should that reference ultimately live? | 2. Is **coexist** the right relationship to `UsdGeomXformable` (neutral scene + runtime reconciliation) — versus hooking CRS resolution into `Xformable` directly?" -->
+<!-- slide:text eyebrow="For the working group" title="Open design questions" body="1. Is 'codeless schema + a runnable reference runtime as the behavior contract' the right shape — and where should that reference ultimately live? | 2. Is **coexist** the right relationship to `UsdGeomXformable` (neutral scene + runtime reconciliation) — versus hooking CRS resolution into `Xformable` directly? Given the head-to-head parity + the guard-rail set, is the residual validation surface acceptable to standardize?" -->
 
 The two calls we'd most like Esri's / the WG's read on:
 
@@ -431,7 +500,35 @@ The two calls we'd most like Esri's / the WG's read on:
    a separate conformance suite, prose in the spec)?
 2. **Is “coexist” the right relationship to `UsdGeomXformable`** — a coordinate-neutral
    authored scene plus runtime reconciliation (this design) — versus any future move to hook
-   CRS resolution into `Xformable` directly? See
+   CRS resolution into `Xformable` directly? The head-to-head now shows neutral **reproduces the
+   baked approach to 0.0 mm** on a real multi-CRS scene, so the question is no longer “does
+   coexist work?” but **“is the residual [guard-rail set](#guard-rails-what-coexist-asks-of-an-asset-and-how-a-validator-enforces-it)
+   (anchor-vs-child, compose-in-CRS-frame, requires-CRS marker) an acceptable conformance surface
+   to standardize?”** See
    [The design call: resolve, don't bake](#the-design-call-resolve-dont-bake) and
    [Anchor injection](#anchor-injection--coexisting-with-usdgeomxformable-inject-dont-bake)
    for how the pieces coexist today.
+
+<!-- slide:section title="What we need from you" subtitle="Concrete asks so the next iteration is grounded in your workflows, not our guesses." -->
+## What we'd ask of Esri and co-collaborators
+<!-- slide:text eyebrow="Asks" title="What we need from you" body="1. The Redlands BIM prototype scene + its validation script, so we can add a second real, contributor-authored case beside the multi-CRS POC. | 2. Confirmation / correction of the driving workflows: which of AECO site placement, multi-source GIS twins, multi-zone infrastructure, and geodetic sim must 'coexist' survive first? | 3. A read on the guard-rail set as a conformance surface (anchor-vs-child, compose-in-CRS-frame, a 'requires-CRS' stage marker + detect-and-refuse) and appetite for a codeless validator plugin. | 4. Where the reference runtime should live, and whether to abstract 'resetXformStack' out of the proposal text in favor of a behavior contract multiple runtimes honor." -->
+
+To make the next iteration concrete rather than speculative, the specific things that would
+help most:
+
+1. **The Redlands BIM prototype scene** (the BIM-model-at-site scene + Python validation script
+   referenced alongside the proposal). We pressure-tested against a re-authored version of the
+   public multi-CRS POC; a second, contributor-authored real scene would let us validate the
+   AECO site-placement workflow directly instead of by proxy.
+2. **Confirmation (or correction) of the driving workflows.** The proposal lists AECO/BIM,
+   GIS & digital twins, infrastructure across coordinate zones, and defense/simulation. Which
+   must *coexist* survive first, and are there edit/authoring workflows (hand-placement,
+   relocation, moving anchors, dynamic datums) we should be exercising that we are not?
+3. **A read on the guard-rail set as a conformance surface** — anchor-vs-child unambiguity,
+   compose-in-the-CRS-implied-frame, and a stage-level *requires-CRS-resolution* marker with
+   detect-and-refuse — plus appetite for a codeless, `usdchecker`-discoverable validator plugin
+   to enforce them.
+4. **Where the reference runtime should live**, and whether we can jointly **abstract
+   `resetXformStack` out of the proposal text** in favor of a documented behavior contract that
+   multiple runtimes (baked or neutral) honor — the position this prototype now demonstrates is
+   viable to 0.0 mm.

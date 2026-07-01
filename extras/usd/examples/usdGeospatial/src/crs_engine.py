@@ -105,6 +105,32 @@ class PyprojEngine:
         except Exception:
             return False
 
+    def is_projected(self, src_wkt):
+        """True if the source CRS is a projected (planar/grid) CRS. Child offsets
+        authored under a projected anchor live in the grid plane and must compose
+        IN-PLANE (grid add + reproject), NOT be lifted through a true-ENU basis
+        (which differs from grid axes by convergence + point-scale). See
+        `resolve_runtime.resolve_with_injection`."""
+        try:
+            return bool(self._crs(src_wkt).is_projected)
+        except Exception:
+            return False
+
+    def project_grid_offset_to_target(self, src_wkt, dst_wkt, anchor_xyz,
+                                      offset_enu, epoch=None):
+        """Compose a child's authored local offset under a PROJECTED anchor by
+        adding the offset in the anchor's grid plane, then reprojecting the
+        resulting grid point straight to the target CRS. `anchor_xyz` is the
+        anchor's authored (E,N,h) grid position; `offset_enu` is the child's
+        authored local (x=E, y=N, z=up) offset in metres. Returns the target-CRS
+        (X,Y,Z). This keeps grid-authored geometry exact (0 mm) instead of
+        incurring the grid-vs-ENU error of the topocentric lift."""
+        gx = anchor_xyz[0] + offset_enu[0]
+        gy = anchor_xyz[1] + offset_enu[1]
+        gz = anchor_xyz[2] + offset_enu[2]
+        X, Y, Z = self.reproject(src_wkt, dst_wkt, gx, gy, gz, epoch)
+        return X, Y, Z
+
     def _lonlat_of(self, src_wkt, x, y, z, epoch=None):
         """Return the geographic (lon,lat,h) footprint of an authored point,
         regardless of whether the source CRS is geographic or projected."""
