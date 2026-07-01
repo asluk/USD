@@ -495,7 +495,10 @@ mis-authored anchor is partly spent. `verify.py` is the runnable validator today
 The invariants above are abstract until you see one violated. `src/test_illformed_assets.py`
 authors a deliberately **ill-formed asset** for each guard rail, shows the concrete failure
 measured against independent closed-form geodesy, then shows the **minimal authoring fix** and
-re-measures. `verify.py` (checks A/G) is the validator that would catch each one.
+re-measures. `verify.py` (checks A/G) is the validator that would catch each one. The figures below
+are rendered from those exact numbers by `src/render_illformed.py` (left = broken, right = fixed;
+the green star is the geodesy-true target).
+<!-- slide:image src="docs/illformed_gallery.png" eyebrow="Broken → fixed, measured" title="What breaks in coexist, and the fix" caption="G1 anchor-vs-child 418 m → 0 mm · G2 wrong frame 4.86 m → 0 mm · G3 no marker 6,369 km silent → detect-and-refuse" -->
 
 1. **G1 — anchor-vs-child ambiguity.** *Broken:* `/World/NewYork/MoMa/Corner` is authored with
    its **own** `crs:binding` + `crs:position` (as if an independent georeferenced leaf) and
@@ -505,18 +508,55 @@ re-measures. `verify.py` (checks A/G) is the validator that would catch each one
    (`double3 xformOp:translate = (50, 100, 30)`); it then composes under `MoMa` → **0.000 mm**.
    *Validator:* `verify.py` check **A2** flags a georef prim that also bakes an xformOp; a
    `crs:position`-under-`crs:position` nesting without an override binding is the smell.
+
+![G1 anchor-vs-child: broken 418 m off vs fixed 0 mm](docs/illformed_g1.png)
 2. **G2 — wrong composition frame.** *Broken:* a **projected** (UTM-17N) anchor's child offsets
    are composed through the anchor's **true-ENU** basis (the natural mistake if you assume “local
    metres == ENU”). Grid convergence + point-scale bend them **4.86 m** over a ~418 m lever.
    *Fix:* compose the offset **in the grid plane** and reproject (grid add + reproject) — the
    CRS-implied frame → **0.000 mm**. *Validator:* the runtime selects the frame from the bound
    CRS type (`crs_engine.is_projected`); a validator asserts the two agree.
+
+![G2 wrong composition frame: broken 4.86 m off vs fixed 0 mm](docs/illformed_g2.png)
 3. **G3 — no requires-CRS marker.** *Broken:* a coexist scene with no stage marker, opened by a
    **CRS-unaware** consumer (plain `UsdGeom.XformCache`, no resolver), silently places the
    building at its bare local offset — **6,369 km** from truth, with no error. *Fix:* stamp
    `customLayerData['crsResolutionRequired'] = true`; a conformant consumer now detects the marker
    and **refuses / defers** to a resolver instead of misplacing. *Validator:* `verify.py` check
    **G** fails any stage that carries `crs:binding` without the marker.
+
+![G3 no requires-CRS marker: broken 6369 km off silently vs fixed detect-and-refuse](docs/illformed_g3.png)
+
+#### On the requires-CRS marker: expect pushback (and the layer-vs-prim debate)
+<!-- slide:text eyebrow="Anticipated debate" title="The marker: a tradeoff worth having" body="A 'requires-CRS' marker is the honest cost of coordinate-neutral coexist: it is what lets an unaware consumer fail LOUD instead of silently misplacing. | Expect pushback — it adds a discovery obligation, and a non-conformant consumer still ignores it (it is a contract, not an enforcement). | If embraced, the next debate is WHERE it lives: layer metadata (customLayerData) vs a prim-level applied schema. | Our lean: a stage/layer-level signal for cheap detect-and-refuse, optionally refined per-prim; but this is squarely a WG call." -->
+
+We expect the marker to be the most-debated part of this design, and that is fair — so, stated
+plainly:
+
+- **Why it exists.** Coordinate-neutral authoring is what preserves composability and keeps the
+  scene inspectable, but it is *also* what makes a CRS-unaware consumer misplace content silently
+  (G3). The marker is the price of neutrality: a cheap signal that lets such a consumer
+  **detect-and-refuse** (or defer to a resolver) rather than render 6,000 km off. The baked
+  approach doesn't need it — but pays instead with a non-neutral scene and (as the head-to-head
+  showed) an *even worse* silent failure when a grid `xformOp` is misread as ECEF.
+- **The fair objections.** It adds a discovery obligation to every conformant consumer; a
+  *non*-conformant consumer still ignores it (a marker is a **contract, not enforcement**); and it
+  is one more thing an author can forget (hence: a validator check, `verify.py` **G**, so it is
+  caught at authoring time, not render time).
+- **The layer-vs-prim question this will ignite.** Even if the marker is accepted, *where* it
+  lives is a genuine design debate:
+  - **Layer / stage metadata** (`customLayerData['crsResolutionRequired']`, used here): one cheap
+    O(1) lookup for a consumer to decide *before* traversal whether the stage needs a CRS
+    runtime. Good for detect-and-refuse; coarse (whole-stage), and `customLayerData` is
+    free-form (no schema-level typing/validation).
+  - **Prim-level applied schema** (e.g. an API schema on the CRS-bearing prims): typed,
+    validatable, and *local* — it can say precisely which subtrees need resolution, and composes
+    through references/sublayers like any other schema. But a consumer must traverse to discover
+    it, which defeats the cheap up-front refuse.
+  - **Our lean (a WG call, not a decree):** a stage/layer-level signal for the cheap up-front
+    check, *optionally* refined by prim-level typing where per-subtree granularity matters — i.e.
+    both, at different altitudes. We have implemented the layer-metadata form; the prim-schema
+    form is a small addition if the WG prefers it.
 
 <!-- slide:section title="Open questions" subtitle="What we'd most like the working group's read on." -->
 ## Open design questions for the working group
