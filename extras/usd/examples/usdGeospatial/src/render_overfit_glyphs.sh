@@ -2,7 +2,12 @@
 # render_overfit_glyphs.sh -- author 5 diverse-CRS non-geometric georef bases,
 # overlay a geometry-only glyph via visualize_field_glyphs.py, and render each
 # through the AUTO-INSERT scene index. SAME script, SAME plugin, ZERO code change
-# between locales. Produces docs/overfit_<name>_autoinsert.png + a montage.
+# between locales. Produces docs/overfit_<name>_autoinsert.png.
+# NOTE: the reviewer-facing anti-overfit FIGURE is now src/fig_multicrs_positions.py
+# (a Matplotlib plot of the five resolved ECEF positions). The per-locale renders
+# here frame a single centred glyph on black, so they are pixel-identical and were
+# retired as a montage; this script is kept as render infrastructure for a future
+# real-globe render montage (Option A).
 set -eo pipefail
 source /tmp/geoenv.sh
 source "$REPO/.venv/bin/activate" 2>/dev/null || true

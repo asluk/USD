@@ -287,19 +287,21 @@ style is a disclosed display choice.)
 
 ![globe cross-visualizer parity](docs/globe_visualizer_parity.png)
 
-### Same runtime, many CRSs — the anti-overfit render set
+### Same runtime, many CRSs — the anti-overfit position set
 
-<!-- slide:image src="docs/multiCRS_glyph_renders.png" eyebrow="Proof · not overfit (renders)" title="One runtime, five CRS families, both hemispheres" caption="The SAME visualize_field_glyphs overlay + the SAME unchanged scene index place a glyph correctly across NYC (UTM 18N), Sydney (UTM 56S), Wellington (NZTM2000), Quito (~equator), and Svalbard (~78N) — zero code changes between locales. No-plugin controls render empty (the runtime does the placement)." -->
+<!-- slide:image src="docs/multiCRS_glyph_renders.png" eyebrow="Proof · not overfit" title="One runtime, five CRS families, both hemispheres" caption="Matplotlib plot (not a render): where each locale's authored point resolves in ECEF, through ONE code path — NYC (UTM 18N), Sydney (UTM 56S), Wellington (NZTM2000), Quito (UTM 17S, ~equator), Svalbard (UTM 33N, ~78N). The only thing that changes between locales is the authored EPSG; the five points land 2,200+ km apart on the globe. Verified sub-mm vs closed-form WGS84 geodesy in generalization_suite.py." -->
 
-The numeric no-overfit proof (§[The proofs](#the-proofs)) is broad but proven by *numbers*. The
-composition overlay lets us make it **visual** without inventing geometry: the *same*
-`visualize_field_glyphs` overlay driven by the *same unchanged scene index* places a marker glyph
-correctly across five CRS families, both hemispheres, and equator-to-78°N — **NYC** (UTM 18N),
-**Sydney** (UTM 56S), **Wellington** (NZTM2000), **Quito** (UTM 17S, ~equator), **Svalbard**
-(UTM 33N, ~78°N) — with **zero code changes** between locales. Each locale's no-plugin control
-renders empty, so the placement is unambiguously the runtime's, not the geometry's.
+The numeric no-overfit proof (§[The proofs](#the-proofs)) is broad but stated in *numbers*. The
+figure below makes the same point *visible* without inventing geometry: it plots where each
+locale's authored point **resolves** in ECEF through **one code path** — lon/lat → the locale's
+projected CRS → ECEF, via PROJ (the registered default engine). The five span five CRS families,
+both hemispheres, and equator-to-78°N — **NYC** (UTM 18N), **Sydney** (UTM 56S), **Wellington**
+(NZTM2000), **Quito** (UTM 17S, ~equator), **Svalbard** (UTM 33N, ~78°N) — and the **only** thing
+that differs between them is the authored EPSG. The resolved points land 2,200+ km apart across the
+globe (no per-CRS special-casing anywhere), and each is verified sub-mm against closed-form WGS84
+geodesy in `generalization_suite.py`.
 
-![multi-CRS glyph render set](docs/multiCRS_glyph_renders.png)
+![multi-CRS resolved positions (Matplotlib plot)](docs/multiCRS_glyph_renders.png)
 
 ## Guard rails: what "coexist" asks of an asset
 
@@ -456,6 +458,7 @@ python3 src/verify.py out/earth2_georef.usda
 python3 src/testenv_equivalence.py
 python3 src/test_anchor_injection.py    # georef anchor + Cartesian subtree (inject-don't-bake)
 python3 src/generalization_suite.py     # 7 diverse datasets vs closed-form geodesy (no overfit)
+python3 src/fig_multicrs_positions.py   # anti-overfit figure: 5 CRS families resolve to distinct ECEF (one code path)
 python3 src/render_figures.py           # regenerate the Python-reference figures into docs/
 ```
 
