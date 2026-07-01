@@ -509,7 +509,8 @@ the green star is the geodesy-true target).
    *Validator:* `verify.py` check **A2** flags a georef prim that also bakes an xformOp; a
    `crs:position`-under-`crs:position` nesting without an override binding is the smell.
 
-![G1 anchor-vs-child: broken 418 m off vs fixed 0 mm](docs/illformed_g1.png)
+![G1 anchor-vs-child: broken 418.9 m off vs fixed 0 mm](docs/illformed_g1.png)
+
 2. **G2 — wrong composition frame.** *Broken:* a **projected** (UTM-17N) anchor's child offsets
    are composed through the anchor's **true-ENU** basis (the natural mistake if you assume “local
    metres == ENU”). Grid convergence + point-scale bend them **4.86 m** over a ~418 m lever.
@@ -518,6 +519,7 @@ the green star is the geodesy-true target).
    CRS type (`crs_engine.is_projected`); a validator asserts the two agree.
 
 ![G2 wrong composition frame: broken 4.86 m off vs fixed 0 mm](docs/illformed_g2.png)
+
 3. **G3 — no requires-CRS marker.** *Broken:* a coexist scene with no stage marker, opened by a
    **CRS-unaware** consumer (plain `UsdGeom.XformCache`, no resolver), silently places the
    building at its bare local offset — **6,369 km** from truth, with no error. *Fix:* stamp

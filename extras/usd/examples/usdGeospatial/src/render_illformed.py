@@ -65,7 +65,12 @@ def _localized_pair(broken_ecef, fixed_ecef):
     lon, lat, gt = _truth_lonlat()
     pts = np.vstack([broken_ecef, fixed_ecef, gt])
     e, n = _enu_local(pts, gt, lon, lat)
-    return (e[0], n[0]), (e[1], n[1]), (e[2], n[2])  # broken, fixed, truth (=0,0)
+    # panel positions (ENU, for plotting only) + AUTHORITATIVE 3D ECEF errors
+    # (the exact quantities test_illformed_assets.py measures vs pyproj geodesy),
+    # so figure labels never drift from the test/prose numbers.
+    err_b = float(np.linalg.norm(np.asarray(broken_ecef) - gt))
+    err_f = float(np.linalg.norm(np.asarray(fixed_ecef) - gt))
+    return (e[0], n[0]), (e[1], n[1]), (e[2], n[2]), err_b, err_f  # broken, fixed, truth, errs
 
 
 def _scatter_panel(ax, title, target_en, obj_en, err_m, is_broken, note,
@@ -134,9 +139,7 @@ def data_g1():
 
 def fig_g1(out):
     broken, fixed = data_g1()
-    b_en, f_en, t_en = _localized_pair(broken, fixed)
-    err_b = float(np.hypot(*np.subtract(b_en, t_en)))
-    err_f = float(np.hypot(*np.subtract(f_en, t_en)))
+    b_en, f_en, t_en, err_b, err_f = _localized_pair(broken, fixed)
     fig, (axL, axR) = plt.subplots(1, 2, figsize=(12, 5.4))
     fig.suptitle("G1  Anchor-vs-child ambiguity", fontsize=13, fontweight="bold")
     _scatter_panel(axL, "BROKEN: Corner owns its own crs:position", t_en, b_en, err_b,
@@ -172,9 +175,7 @@ def data_g2():
 
 def fig_g2(out):
     broken, fixed = data_g2()
-    b_en, f_en, t_en = _localized_pair(broken, fixed)
-    err_b = float(np.hypot(*np.subtract(b_en, t_en)))
-    err_f = float(np.hypot(*np.subtract(f_en, t_en)))
+    b_en, f_en, t_en, err_b, err_f = _localized_pair(broken, fixed)
     fig, (axL, axR) = plt.subplots(1, 2, figsize=(12, 5.4))
     fig.suptitle("G2  Wrong composition frame (projected anchor)", fontsize=13,
                  fontweight="bold")
