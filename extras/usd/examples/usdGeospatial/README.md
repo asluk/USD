@@ -1,404 +1,381 @@
 # usdGeospatial — a codeless CRS schema for OpenUSD, proven by two runtimes
 
-A **codeless** geospatial Coordinate Reference System (CRS) schema for OpenUSD. The schema
-is a pure **data contract** — not tied to any one implementation. We prove that by shipping
-**two independent runtimes** that resolve the *same* authored scene to the *same* world
-(Earth-Centered, Earth-Fixed / ECEF) and **agree to sub-millimetre**: a **Python reference
-runtime** and a compiled **C++ Hydra scene-index plugin**. The schema is file- and
-name-aligned with **Simon Haegler's (Esri) `geospatial-prototype`**, so the two read as the
+A **codeless** geospatial Coordinate Reference System (CRS) schema for OpenUSD: a CRS prim plus
+a binding API, `skipCodeGeneration = true`, so the schema is a pure **data contract** and all
+resolution behavior lives in the example runtimes — not in the schema. It is name- and
+layout-aligned with **Simon Haegler's (Esri) `geospatial-prototype`**, so the two read as the
 *same* proposal artifact, with one deliberate design difference: **binding is resolved at
 runtime, not baked into the scene.**
 
-A note on reproducibility **and on what you're looking at**, up front, because it matters for
-review: **every figure in this document is a Matplotlib plot** — a diagram or scatter/line plot
-of coordinates the runtime computed, drawn with Matplotlib (`matplotlib.use("Agg")`), **not a
-Hydra/Storm render and not a screenshot of a renderer.** They visualize *resolved numbers*, so
-they prove the resolver is correct, not that any GPU renderer drew them. Most regenerate from the
-codeless **Python** build with one command and no external renderer. Two figures
-(`docs/multi_runtime.png`, `docs/runtime_parity.png`) are the cross-runtime parity visuals and
-additionally require building and running the compiled **C++ Hydra** scene index (but are still
-Matplotlib plots of the matrices it produces, not renderer output). Both paths are spelled out
-exactly in [Running](#running). A separate Hydra **Storm** render proof point is tracked
-separately from these plots.
+We prove the contract by shipping **two independent runtimes** that resolve the *same* authored
+scene to the *same* world (Earth-Centered, Earth-Fixed / ECEF) and **agree to 0.0 mm**: a
+**Python reference runtime** (the oracle) and a compiled **C++ Hydra scene-index plugin** that
+auto-inserts into usdview.
+
+> **On the figures, up front (it matters for review):** every embedded *figure* in this document
+> is a **Matplotlib plot** of coordinates the runtime computed (`matplotlib.use("Agg")`) — a
+> diagram or scatter/line plot of *resolved numbers*, **not** a renderer screenshot. They prove
+> the resolver is correct, not that a GPU drew them. The one exception, called out explicitly, is
+> the **Hydra Storm render proof** (§[The proofs](#the-proofs)), which *is* real renderer output.
 
 <!-- slide:title subtitle="a codeless CRS schema for OpenUSD, proven by two runtimes" -->
 
-## What it is (and what it lands like)
-<!-- slide:text eyebrow="The proposal" title="A codeless geospatial CRS schema" body="Pure-data schema: a CRS prim + a binding API, skipCodeGeneration=true (no compiled types). | All resolution behavior lives in the example runtimes, not the schema. | Same shape as the landed Gaussian / particleField contribution: schema + sample runtime(s) + converter + docs. | Runtimes here: Python `resolve_runtime.py` and a C++ Hydra scene index." -->
+## What it is
 
-This mirrors the shape of the landed OpenUSD Gaussian / particleField contribution —
-*schema + sample runtime(s) + data converter + docs, shipped together*, with the schema as
-pure data and all runtime behavior in the example(s). Here the schema is `usdGeospatial`
-(codeless), the runtimes are the Python `resolve_runtime.py` and the C++ Hydra scene index,
-and the dataset is real OSS Earth-2 / GFS `t2m`.
+The schema is `usdGeospatial` (codeless). It defines two things and nothing else:
 
-## Repository layout
+- **`CoordinateReferenceSystem`** (typed prim): `crs:wkt` (OGC WKT2, authoritative) plus optional
+  `crs:epsg`, `crs:displayName`, `crs:epoch` (dynamic CRS), `crs:gridFiles` (external PROJ grids).
+- **`BindingAPI`** (single-apply, `canOnlyApplyTo Xformable`): `crs:position` — always
+  `(lon/E, lat/N, h)` — plus `rel crs:binding` → a `CoordinateReferenceSystem`.
 
-Two sibling directories, one schema:
+That is the whole proposed surface. Because it is codeless, `usdGenSchema` emits only
+`generatedSchema.usda` + `plugInfo.json` (no compiled C++ types); USD loads the typed prim and the
+applied API from those, so `crs:*` properties authored with `custom=False` are **truthfully**
+schema-defined. This mirrors the shape of the landed OpenUSD Gaussian / `hdParticleField`
+contribution — *schema + sample runtime(s) + data converter + docs, shipped together*, with the
+schema as pure data and all behavior in the example(s). Here the runtimes are the Python
+`resolve_runtime.py` and the C++ Hydra scene index, and the dataset is real OSS Earth-2 / GFS `t2m`.
 
-- **`usdGeospatial/`** (this directory) — the codeless schema, the **Python reference
-  runtime** (`src/resolve_runtime.py`), the Earth-2 data converter, the test suite, and the
-  figures.
+<!-- slide:text eyebrow="The proposal" title="A codeless geospatial CRS schema" body="Pure-data schema: a CRS prim + a binding API, `skipCodeGeneration=true` (no compiled types). | All resolution behavior lives in the example runtimes, not the schema. | Same shape as the landed Gaussian / particleField contribution: schema + sample runtime(s) + converter + docs. | Two runtimes here: Python `resolve_runtime.py` (oracle) and a C++ Hydra scene index that auto-inserts into usdview." -->
+
+**Repository layout — two sibling directories, one schema:**
+
+- **`usdGeospatial/`** (this directory) — the codeless schema, the **Python reference runtime**
+  (`src/resolve_runtime.py`), the Earth-2 data converter, the test suite, and the figures.
 - **`../usdGeospatialSceneIndex/`** — the compiled **C++ Hydra scene-index plugin**, a second,
-  illustrative form of the same runtime (modeled on the Gaussian-splat `hdParticleField`
-  example — a reference, not a prescribed renderer path). It has its own README (Design, Files,
-  Parity, Building, Environment); this document points at it rather than duplicating it.
+  illustrative runtime (modeled on the Gaussian-splat `hdParticleField` example — a reference, not
+  a prescribed renderer path). It has its own README (Design, Files, Parity, Building, Environment).
 
-## Alignment with the Esri prototype
+## The proofs
 
-The schema library is name- and layout-aligned with the Esri C++ prototype, so a reviewer
-who knows one immediately reads the other.
+Lead with these; everything after is *how* and *why*. Each is checkable by an independent reviewer
+and non-circular — ground truth is closed-form WGS84 geodesy (first principles) and **NOAA NCAT**
+benchmark coordinates, never a parallel PROJ call graded against itself.
 
-![tree alignment](docs/tree_alignment.png)
+<!-- slide:section title="The proofs" subtitle="Four things an independent reviewer can check." -->
 
-- Same library path `pxr/usd/usdGeospatial/`, same prims (`CoordinateReferenceSystem`,
-  `BindingAPI` single-apply), same properties (`crs:wkt`/`wellKnownText`, `crs:binding`).
-- **The one difference:** the Esri branch is a C++ typed schema whose `Bind()` *bakes* a
-  `resetXformStack` and uses references-as-binding. This variant is **codeless** (no C++
-  build for the schema) and authors the scene coordinate-neutral, **resolving the binding at
-  runtime**.
+**1 — No overfit: a real third-party asset on real tiles.** The **NVIDIA OpenUSD-plugin-samples
+Deutsche Bahn railway** (Apache-2.0; ~1,470 track curves on 3 geospatial tiles near Hamburg) is
+authored in the *original Omniverse* geospatial schema (`omni:geospatial:wgs84:*`, lat-first).
+`src/convert_omni_geospatial.py` converts it to our `crs:binding`/`crs:position` form and it
+resolves — leaves *and* its anchor + Cartesian-curve subtree via injection — with **no runtime
+changes**. Data we did not author, in a schema we did not design.
 
-<!-- slide:section title="The design call" subtitle="Resolve at runtime; keep the authored scene coordinate-neutral." -->
-## The design call: resolve, don't bake
-<!-- slide:text eyebrow="Replace · wrap · or coexist?" title="Resolve, don't bake" body="`crs:binding` is a relationship resolved at runtime — not references-as-binding, not a baked `resetXformStack`. | The authored scene stays coordinate-neutral; a runtime reprojects and composes ancestor transforms. | This is the question the earlier effort stalled on — replace, wrap, or coexist with the `UsdGeomXformable` stack? The answer here is **coexist**. | Proven, not argued: the baked Esri scene and our neutral scene land the same corner to 0.0 mm." -->
-
-The central decision: **`crs:binding` is a relationship, resolved at runtime — not
-references-as-binding, not a baked `resetXformStack`.** The authored scene stays
-coordinate-neutral; a runtime reprojects `crs:position` into the target CRS and composes
-ancestor transforms.
-
-![design equivalence](docs/design_equivalence.png)
-
-This answers the question the earlier geospatial-in-USD effort stalled on: how do
-georeferenced transforms reconcile with the pre-existing `UsdGeomXformable` stack — *replace*
-it, *wrap* it, or *coexist*? That is the `resetXformStack` debate. Baking a `resetXformStack`
-answers "replace," at the cost of a non-neutral scene and lost composability. This schema
-answers **"coexist," via a runtime-injected anchor — and demonstrates it rather than arguing
-it.** `src/testenv_equivalence.py` rebuilds the Esri prototype's New York / MoMA scene two
-ways — the baked `resetXformStack` + stacked `xformOp:translate`, and our neutral
-`crs:binding` + `crs:position` — and the building corner lands at the **same ECEF point to
-0.0 mm**, with the neutral scene carrying **no xformOps at all**
-(`testenv/world_baked_resetxformstack.usda` vs. `testenv/world_neutral_relbinding.usda`).
-
-**Where `resetXformStack` lives is the whole point.** The compiled Hydra scene index *does*
-set `resetXformStack = true` on the xform it injects — which can look, at first glance, like
-the very thing this design rejects. It is not. What the design rejects is `resetXformStack`
-**authored into a layer**: every downstream consumer then inherits it and the scene is no
-longer coordinate-neutral. In the scene index, the flag sits on a **computed, transient
-Hydra data source**, never written into the authored scene. The resolver has already composed
-ancestor transforms and returns the prim's full world (ECEF) matrix, so the flag only tells
-Hydra *not to re-compose that matrix under its parents* at flatten time. The authored stage
-carries **zero `resetXformStack` and zero `xformOp`** — only `crs:` properties. You can read
-this directly in `testenv/world_neutral_relbinding.usda`.
-
-## The schema (pure data)
-
-- **`CoordinateReferenceSystem`** (typed prim): `crs:wkt` (OGC WKT2, authoritative) plus
-  optional `crs:epsg`, `crs:displayName`, `crs:epoch` (dynamic CRS), `crs:gridFiles`
-  (external PROJ grids).
-- **`BindingAPI`** (single-apply, `canOnlyApplyTo Xformable`): `crs:position` (always
-  `(lon/E, lat/N, h)`) + `rel crs:binding` → a `CoordinateReferenceSystem`.
-
-Codeless ⇒ `usdGenSchema` emits only `generatedSchema.usda` + `plugInfo.json`; USD loads the
-typed prim and the applied API from those, so `crs:*` properties authored with `custom=False`
-are **truthfully** schema-defined. The schema is generated canonically via `usdGenSchema`
-(bootstrapped without a full USD build — see `pxr/usd/usdGeospatial/regen-schema.sh`, with
-`--check` for CI sync).
-
-## Binding semantics — full MaterialBindingAPI parity
-
-Resolution rules mirror `UsdShadeMaterialBindingAPI`: **strength** (`bindCRSAs` =
-weaker / strongerThanDescendants), **purpose** (`crs:binding:<purpose>`), and **collection**
-(`crs:binding:collection:...`, where a collection binding beats a direct binding at the same
-prim).
-
-![binding semantics](docs/binding_semantics.png)
-
-The precedence ladder and strength override shown here are read **live** from
-`resolve_runtime.crs_of_prim`; the figure self-asserts it equals the resolver, so it cannot
-drift from the code.
-
-## Anchor injection — coexisting with `UsdGeomXformable` (inject, don't bake)
-<!-- slide:text eyebrow="Coexisting with UsdGeomXformable" title="Anchor injection: inject, don't bake" body="A georeferenced anchor with an ordinary Cartesian subtree (a building in local metres) — children have no `crs:position`. | The runtime injects the anchor's rigid local-frame→ECEF basis (full ENU orientation) at resolve time. | The subtree then composes under it **as ordinary `UsdGeomXformable`** — nothing baked into the layer. | `resetXformStack` lives only on a transient, computed Hydra data source, never the authored scene." -->
-
-The design above handles georeferenced *leaves* (each prim carries its own `crs:position`).
-The harder case — and the one stock USD gets wrong — is a georeferenced **anchor** with an
-ordinary, non-georeferenced **Cartesian subtree** (a building modelled in local metres, a
-moving asset with internal structure). A plain child has no `crs:position`, so the resolver
-never touches it and **standard composition renders it at the world origin** — the anchor's
-georeferencing lives in `crs:position`, which the xform stack never reads.
-
-The fix is to **inject** the anchor's frame at runtime, not bake it: the anchor's
-`crs:position` + bound CRS define a **rigid local-frame → ECEF transform**, and the subtree
-composes under it as ordinary USD.
-
-- **Orientation, not just position.** The injected frame is the full ENU / topocentric basis
-  at the anchor (east-north-up), not merely the translated ECEF point. A subtree's local `+Z`
-  must point along the *ellipsoidal normal* (up), which at, e.g., NYC is ~49° off ECEF `+Z` —
-  a position-only resolver lays every asset on its side everywhere but the pole.
-  (`src/crs_engine.py` supplies this basis; ENU for geographic anchors, the projected plane
-  for projected anchors.)
-- **Transient, never written.** Injection happens in a *computed* representation
-  (`resolve_runtime.resolve_with_injection`); the authored stage is untouched. Writing a
-  resolved `.usda` would just be baking at a different layer.
-- **Proven against closed-form geodesy** in `src/test_anchor_injection.py`: a building
-  authored 1000 m E / 500 m N and a roof +20 m up land to **0.0 mm**; the position-only
-  placement is **410 m wrong** (so an orientation-ignoring resolver fails the test); and stock
-  USD without injection puts the child **6.4×10⁶ m** from truth — the origin gap, quantified.
-- **Float32 localization falls out for free.** The large magnitude lives in the
-  double-precision injected anchor (~6.4×10⁶ m); the asset's vertices stay small float32
-  *local* offsets. `src/test_float32_localization.py` shows absolute-float32 ECEF loses
-  **162 mm** of precision at that magnitude while localized float32 keeps **0.0003 mm** —
-  a ~**480,000×** improvement.
-
-The same coexist semantics are what a Hydra scene index, OpenExec, or an Omniverse runtime
-would each implement. The Python here pins the expected behavior; the compiled Hydra
-scene-index plugin (one illustrative consumer, modeled on the Gaussian `hdParticleField`
-example) exists and agrees with it to sub-mm — see
-[Two runtimes, one schema](#two-runtimes-one-schema).
-
-### Composition frame: projected vs. geographic anchors (a correctness rule, proven)
-<!-- slide:text eyebrow="Compose in the CRS-implied frame" title="Projected vs geographic anchors" body="A GEOGRAPHIC/ECEF anchor's child offsets are local metres → compose through the anchor's true-ENU basis (orientation matters; local +Z = ellipsoidal normal). | A PROJECTED (UTM/State-Plane) anchor's child offsets live in the grid plane → compose IN-PLANE (grid add + reproject), NOT through ENU. | UTM grid axes differ from true ENU by grid-convergence + point-scale — lifting grid offsets through ENU bends them ~4.86 m over a ~420 m lever. | Same neutral authored scene; the runtime picks the frame from the bound CRS type. Proven 0.0 mm both ways against closed-form geodesy." -->
-
-Coexist has one correctness rule the runtime must honor, and it is worth stating plainly
-because it is where a naïve implementation goes wrong: **compose a child's offsets in the
-frame its anchor's CRS implies.**
-
-- A **geographic / geocentric (ECEF) anchor** carries child offsets authored in local metres.
-  These compose through the anchor's **true-ENU / topocentric basis** — orientation matters, and
-  a subtree's local `+Z` follows the ellipsoidal normal (the NYC case above).
-- A **projected (UTM, State Plane, …) anchor** carries child offsets that live in the anchor's
-  **grid plane**. These must compose **in-plane** — add the offset to the anchor's grid
-  coordinates and reproject the resulting grid point — **not** lifted through a true-ENU basis.
-  UTM grid axes differ from true ENU by grid convergence + point scale, so lifting grid-authored
-  offsets through ENU introduces a real error (~**4.86 m** over a ~420 m anchor→corner lever in a
-  UTM-17N-under-UTM-30N test).
-
-The authored scene is identical either way (only `crs:binding` + `crs:position`, coordinate-
-neutral); the runtime selects the composition frame from the bound CRS type
-(`crs_engine.is_projected`). `resolve_runtime.resolve_with_injection` now does exactly this.
-This rule was **found by an adversarial head-to-head** (`test_coexist_vs_baked.py`) that rebuilds
-Simon Haegler's multi-CRS POC scene (MoMA in NAD83/UTM-17N nested under a WGS84/UTM-30N anchor)
-both ways — baked `resetXformStack` and neutral `crs:binding` — and measures each against an
-independent closed-form pyproj ground truth. Both approaches now land the building corner at the
-same ECEF point to **0.0 mm**; an earlier resolver revision that used the ENU lift for the
-projected anchor landed 4.86 m off, and the harness caught it.
-
-## The evidence, honestly scoped
-
-The runtime and converter, with the figures they produce:
-
-- `src/reencode_georef.py` — converts the OSS Earth-2 / GFS `t2m` field into a
-  **georeferenced** USD (real WKT CRS + `crs:position`), not a baked radius-100 sphere. Two
-  authoring paths (didactic + `Sdf` batch) produce **byte-identical** output.
-- `src/resolve_runtime.py` — the CRS-aware runtime: traverses bindings (inheritance,
-  strength, purpose, collection), reprojects via a registered **projection engine**, composes
-  ancestor Cartesian transforms, and (for anchors) injects the rigid local-frame → ECEF
-  transform — all without touching the authored xform stack.
-- `src/crs_engine.py` — the **projection-engine registration seam**: projection support is a
-  registry, not a hardcoded dependency. PROJ / pyproj is the *default* registered engine; a
-  deployment could register a GPU engine (e.g. cuProj) instead. The engine exposes both bulk
-  `reproject(...)` **and** `local_frame_to_ecef(...)` (the basis / orientation at a point,
-  which anchor injection needs). **WKT stays opaque to USD** — only the engine consumes it.
-
-![evidence](docs/evidence.png)
-
-The resolved ECEF geometry shows WGS84 flattening (equatorial radius a = 6 378 137 m vs polar
-b = 6 356 752 m) — a true georeferenced Earth, not a baked sphere. Every plotted vertex came
-through the `crs:position` → PROJ → ECEF pipeline of `resolve_runtime`.
-
-![hero globe](docs/globe.png)
-
-The hero globe is the same point set, plotted (Matplotlib 3D) as a globe colored by GFS `t2m` —
-again, every vertex resolved by the shipped runtime, never authored as geometry. (A plot of
-resolved positions, not a renderer image.)
-
-**Reproducibility — the honest split.** These Python-reference figures regenerate from the
-codeless Python build, **one command, no external renderer**: `tree_alignment`,
-`design_equivalence`, `binding_semantics`, `evidence`, `globe`, `coherence`,
-`generalization`, `railway_render`, `datasets_gallery`. The two **cross-runtime parity**
-figures (`multi_runtime`, `runtime_parity`) **additionally** require building and running the
-compiled C++ Hydra scene index: `src/render_figures.py` auto-runs the Hydra xform dumper if
-its binary is present and **skips those two with a clear note if not** (they need a prebuilt
-USD). The exact command for the full set is in [Running](#running).
-
-<!-- slide:section title="The evidence" subtitle="Three proofs an independent reviewer can check." -->
-<!-- slide:image src="docs/railway_render.png" eyebrow="Proof · no overfit" title="Real third-party asset on real tiles" caption="Matplotlib plot (not a Hydra/Storm render): an external Deutsche Bahn railway (~1,470 curves) authored in the original Omniverse schema, converted to crs:binding/crs:position, resolved onto three real geospatial tiles near Hamburg — no Hydra, no baking." -->
-## 3D coherence — against an independent ground truth
-<!-- slide:image src="docs/coherence.png" eyebrow="Proof · co-registration" title="Three CRSs, one ECEF point" caption="The same monument authored three independent ways (geographic / UTM 18N / NY State Plane) from independent NOAA NCAT coordinates co-registers to one ECEF point to ≤ ~0.5 mm — checked against closed-form WGS84 geodesy, not a parallel PROJ call." -->
-
-The evidence above shows the resolver is *internally* consistent. This figure shows it is
-*externally* correct: schema-resolved geometry co-registers, in 3D, with a ground truth
-derived from **closed-form WGS84 geodesy** (first principles, independent of PROJ), using
-cross-CRS benchmark features whose coordinates come from an **independent authoritative
-source** (NOAA's NCAT geodesy service).
-
-![coherence](docs/coherence.png)
-
-- **Global (left):** the Earth-2 `t2m` cloud, resolved by `resolve_runtime`, drawn on a
-  graticule that is itself projected by closed-form geodesy — the temperature field sits on
-  the correct latitudes / poles. The red blob at the origin is the *same* cloud resolved while
-  **ignoring `crs:binding`** (the negative control): with no source CRS, the raw `(lon, lat, h)`
-  is mis-read as Cartesian metres and collapses ~6,400 km off the globe.
-- **Cross-CRS (right):** the *same* monument near the Empire State Building, authored three
-  ways — geographic (EPSG:4979), UTM 18N (EPSG:32618), and NY State Plane (EPSG:32118) — each
-  from independent NOAA coordinates (**not** by inverting one transform). All three resolve
-  through the schema to the **same ECEF point**, matching the closed-form ground truth to
-  **sub-millimetre** (≤ ~0.5 mm; the residual is real conformal-projection grid noise). An
-  axis-order or geodesy bug has nowhere to hide, because the reference side makes no
-  `always_xy` assumption to cancel against.
-
-> **Scope of this proof:** graticule + benchmark co-registration, **not** a draped
-> satellite / terrain raster basemap (that needs `cartopy` + a basemap / DEM asset — logged as
-> roadmap). And it demonstrates **point / leaf** coherence; **anchor + Cartesian-subtree**
-> coherence is shown separately by anchor injection (above) and `test_anchor_injection.py`.
-
-## Not overfit — one schema, many datasets
-
-The coherence proof shows correctness at a benchmark. This shows the *same* reference runtime
-generalizes — it is not tuned to our Earth-2 authoring. `src/generalization_suite.py` resolves
-**7 deliberately diverse datasets** and checks each against closed-form WGS84 geodesy (never a
-parallel PROJ call):
-
-![generalization](docs/generalization.png)
-
-And the real third-party asset, **plotted from positions resolved by the codeless Python resolver
-itself** (a Matplotlib figure, not a Hydra/Storm render) — the Deutsche Bahn rail curves sitting
-on the geospatial tile ground planes, every position resolved from `crs:binding` / `crs:position`
-(no Hydra, no external renderer, no baking):
+<!-- slide:image src="docs/railway_render.png" eyebrow="Proof · no overfit" title="Real third-party asset on real tiles" caption="Matplotlib plot (not a render): an external Deutsche Bahn railway (~1,470 curves) authored in the original Omniverse schema, converted to crs:binding/crs:position, resolved onto three real geospatial tiles near Hamburg." -->
 
 ![railway resolved onto tiles (Matplotlib plot)](docs/railway_render.png)
 
-The rail curves resolve onto the tile ground planes, and each tile's imagery is placed
-through the asset's own `UsdUVTexture` / `st` mapping (`s`→East, `t`→North, `t = 0` at the
-south edge) — pixel `(s, t)` lands at the world corner carrying that UV, not stretched into a
-bounding box — so the basemap reads north-up and the rails register against it.
+**2 — Co-registration against an independent authority.** The same monument near the Empire State
+Building, authored three independent ways — geographic (EPSG:4979), UTM 18N (EPSG:32618), and
+NY State Plane (EPSG:32118) — each from independent **NOAA NCAT** coordinates (not by inverting one
+transform) — all resolve through the schema to the **same ECEF point**, matching closed-form WGS84
+geodesy to **≤ ~0.5 mm** (the residual is real conformal-projection grid noise). The negative
+control (resolve while *ignoring* `crs:binding`) collapses ~6,400 km off the globe. An axis-order or
+geodesy bug has nowhere to hide, because the reference side makes no `always_xy` assumption to
+cancel against.
 
-Each of the five single-point benchmarks gets its own visualization too. Each panel resolves
-**two independent CRS authorings** (a geographic CRS *and* a projected CRS) into the *same*
-ECEF point, shown in that point's local ENU frame with its East / North axes; the
-sub-millimetre overlap the table reports becomes something you can see:
+<!-- slide:image src="docs/coherence.png" eyebrow="Proof · co-registration" title="Three CRSs, one ECEF point" caption="The same monument authored three ways (geographic / UTM 18N / NY State Plane) from independent NOAA NCAT coordinates co-registers to one ECEF point to ≤ ~0.5 mm — vs closed-form WGS84 geodesy, not a parallel PROJ call. Red blob = negative control (bindings ignored)." -->
 
-![per-dataset gallery](docs/datasets_gallery.png)
+![coherence](docs/coherence.png)
 
-- **Spans the axes a runtime could secretly overfit:** geographic + five projected CRSs
-  (UTM 18N, UTM 56S, NZTM2000, UTM 17S, UTM 33N); northern & southern hemisphere, equatorial,
-  and high-latitude (~78°N, where projections stress); point, global-grid, and
-  structured-asset topologies.
-- **Includes a real, third-party asset.** The **NVIDIA OpenUSD-plugin-samples Deutsche Bahn
-  railway** (Apache-2.0; ~1,470 track curves on 3 geospatial tile ground planes near Hamburg)
-  is authored in the *original Omniverse geospatial schema* (`omni:geospatial:wgs84:*`,
-  lat-first). `src/convert_omni_geospatial.py` converts it to our Esri-aligned
-  `crs:binding` / `crs:position` form (swapping to the `(lon/E, lat/N, h)` contract), and it
-  resolves — leaves *and* its anchor + Cartesian-curve subtree via injection — with **no
-  runtime changes**. The suite also asserts the original demo's **rails-on-tiles
-  co-registration**: the tile ground planes resolve sub-mm and the rails land on them at
-  tile-footprint scale (~3.4 km), the same locale. This is the strongest no-overfit signal:
-  data we did not author, in a schema we did not design.
-- **Result: 7/7 datasets agree with closed-form geodesy to sub-millimetre.** A dataset the
-  runtime was tuned to could pass; a spread this wide across CRS family, hemisphere, and data
-  origin could not, unless the geodesy is actually correct.
+> **Scope of this proof:** graticule + benchmark co-registration, **not** a draped satellite /
+> terrain raster basemap (roadmap). It demonstrates **point / leaf** coherence; **anchor +
+> Cartesian-subtree** coherence is shown by anchor injection (§[Coexisting with
+> UsdGeomXformable](#coexisting-with-usdgeomxformable-inject-dont-bake)).
 
-<!-- slide:section title="One schema, two runtimes" subtitle="The schema is the contract; the behavior is plural." -->
-<!-- slide:image src="docs/multi_runtime.png" eyebrow="Proof · contract not implementation" title="Two independent runtimes, 0.0 mm" caption="The Python reference runtime and the compiled C++ Hydra scene index resolve the same authored stage to the same world, agreeing to 0.0 mm. A third runtime plugs into the same seam." -->
-## Two runtimes, one schema
-
-This is the payoff of the whole design. The Python runtime above is the behavior **contract**.
-The point of a codeless schema is that the contract is *data*, not a particular implementation
-— so any number of runtimes can resolve the same authored stage and must land on the same
-world. We ship a second, independent runtime to prove exactly that: a compiled **C++ Hydra
-scene-index plugin** (`../usdGeospatialSceneIndex/`).
-
-![one schema, two runtimes](docs/multi_runtime.png)
-
-The two runtimes share *nothing* but the authored schema:
-
-- **(A) Python reference** — `src/resolve_runtime.py`, the oracle, projecting via
-  `crs_engine.PyprojEngine` (pyproj / PROJ).
-- **(B) Compiled Hydra scene index** — `usdGeospatialSceneIndex` (C++), an
-  `HdSingleInputFilteringSceneIndexBase` that wraps `Xformable` prims, overrides the
-  `HdXformSchema` matrix locator a renderer pulls, and dirties descendants on anchor change —
-  projecting via a PROJ-linked C engine (`GeoCrsEngine`). Different language, different
-  pipeline layer, different engine binding.
-
-`../usdGeospatialSceneIndex/run_parity.sh` runs the full end-to-end proof — non-circular
-(ground truth is closed-form geodesy, not a parallel PROJ call) and with teeth (negative
-control: **without** the scene index, stock Hydra puts these georef prims at the origin):
+**3 — One schema, two independent runtimes (0.0 mm).** The point of a codeless schema is that the
+contract is *data*, not one implementation — so any number of runtimes must land on the same world.
+The Python reference and the compiled **C++ Hydra scene index** share *nothing* but the authored
+schema (different language, pipeline layer, and PROJ binding), yet resolve the same authored stage
+to the same world. `../usdGeospatialSceneIndex/run_parity.sh` reports:
 
 - **CRS engine vs closed-form geodesy:** 9/9 datasets, **0.0 mm**
 - **Stage-level resolver vs Python oracle + ground truth:** 30/30, **0.0 mm**
-- **Hydra scene index (xform pulled via `HdXformSchema`, as a renderer would) vs oracle +
-  ground truth:** 30/30, **0.0 mm**
+- **Hydra scene index (xform pulled via `HdXformSchema`, as a renderer would) vs oracle + ground
+  truth:** 30/30, **0.0 mm**; negative control: **without** the scene index, stock Hydra puts
+  these georef prims at the origin.
 
-And the *visual* parity — the real NVIDIA Deutsche Bahn rails-on-tiles asset, plotted
-side-by-side (Matplotlib) from the transforms each runtime produces on the **same** authored
-stage, with the per-vertex disagreement quantified:
+Visual parity on the real railway: across **3,526 rail vertices** + tile corners the two runtimes
+agree to **median 0.40 mm, worst 0.68 mm**; `fig_runtime_parity.py` self-asserts this and **fails
+the build if disagreement exceeds 1 mm**.
+
+<!-- slide:image src="docs/multi_runtime.png" eyebrow="Proof · contract not implementation" title="Two independent runtimes, 0.0 mm" caption="The Python reference runtime and the compiled C++ Hydra scene index resolve the same authored stage to the same world, agreeing to 0.0 mm. A third runtime plugs into the same seam." -->
+
+![one schema, two runtimes](docs/multi_runtime.png)
 
 ![Python vs Hydra transforms, same stage (Matplotlib plot)](docs/runtime_parity.png)
 
-Across **3,526 rail vertices** + tile corners, the two runtimes agree to **median 0.40 mm,
-worst 0.68 mm** — sub-millimetre. `fig_runtime_parity.py` self-asserts this and **fails the
-build if disagreement exceeds 1 mm**, so the figure can never drift from the code. The
-remaining sub-mm residual is real conformal-projection grid noise, not a behavioral split.
+**4 — It just works in usdview (real Hydra Storm render).** Beyond the plots: with only the built
+plugins on `PXR_PLUGINPATH_NAME` — **no `SetStage`, no hand-built scene-index chain, no app
+edits** — opening the georef scene in **usdview** (or `usdrecord`) draws the railway at its correct
+ECEF position via Storm. The `crs:` data flows through Hydra and an auto-inserted scene index
+resolves it. This is a *real renderer image*, not a plot.
 
-The takeaway is the schema claim itself: **the schema is the contract; the behavior is
-plural.** A third runtime (OpenExec, a GPU / cuProj engine, an Omniverse runtime) plugs into
-the same seam and is held to the same oracle.
+<!-- slide:image src="docs/usdview_level1_autoinsert.png" eyebrow="Proof · real render, auto-insert" title="It just works in usdview (Storm)" caption="REAL Hydra Storm render (not a plot). Plugin on path → railway auto-resolves at ECEF in usdview (29% frame coverage). Negative control: plugin path removed → railway absent (usdview 1.3% UI chrome only; usdrecord 0.0%). The stage-free Hydra-auto path matches the oracle 30/30 at 0.0 mm (testHydraAutoParity)." -->
+
+![usdview Storm auto-insert render (real render)](docs/usdview_level1_autoinsert.png)
+
+How it works: `crs:` properties are custom attrs/rel on a codeless schema, so they never entered
+the default Hydra stream. A **keyless `UsdImagingAPISchemaAdapter`** (`apiSchemaName ""`, modeled on
+`coordSysAPIAdapter` and NVIDIA's `omniGeoSceneIndex`) surfaces `crs:position`/`crs:binding`/
+`crs:wkt` *into* Hydra for every prim; the scene index then resolves entirely from the Hydra data
+stream (a stage-free path added alongside the `SetStage` path, which is preserved as fallback).
+*Scope note (stated, not hidden):* the auto path resolves **direct** `crs:binding` (+ nearest /
+stronger); collection- and purpose-based strength remain stage-path only — the neutral railway /
+earth2 scenes use direct bindings, which is what auto-insert exercises. (Getting Storm to render also
+surfaced and fixed a real bug: the resolver's `UsdGeomXformCache` was not thread-safe, and Storm syncs
+rprims across TBB threads — a double-free — now guarded by a mutex.)
+
+## The design call: resolve, don't bake
+
+<!-- slide:section title="The design call" subtitle="Resolve at runtime; keep the authored scene coordinate-neutral." -->
+
+The central decision: **`crs:binding` is a relationship, resolved at runtime — not
+references-as-binding, not a baked `resetXformStack`.** The authored scene stays
+coordinate-neutral; a runtime reprojects `crs:position` into the target CRS and composes ancestor
+transforms. This answers the question the earlier geospatial-in-USD effort stalled on: how do
+georeferenced transforms reconcile with the pre-existing `UsdGeomXformable` stack — *replace* it,
+*wrap* it, or *coexist*? Baking a `resetXformStack` answers "replace," at the cost of a non-neutral
+scene and lost composability. This schema answers **"coexist," via a runtime-injected anchor — and
+demonstrates it rather than arguing it.**
+
+<!-- slide:text eyebrow="Replace · wrap · or coexist?" title="Resolve, don't bake" body="`crs:binding` is a relationship resolved at runtime — not references-as-binding, not a baked `resetXformStack`. | The authored scene stays coordinate-neutral; a runtime reprojects and composes ancestor transforms. | This is the question the earlier effort stalled on — replace, wrap, or coexist with the `UsdGeomXformable` stack? The answer here is **coexist**. | Proven, not argued: the baked Esri scene and our neutral scene land the same corner to 0.0 mm." -->
+
+![design equivalence](docs/design_equivalence.png)
+
+`src/testenv_equivalence.py` rebuilds the Esri prototype's New York / MoMA scene two ways — the
+baked `resetXformStack` + stacked `xformOp:translate`, and our neutral `crs:binding` +
+`crs:position` — and the building corner lands at the **same ECEF point to 0.0 mm**, with the
+neutral scene carrying **no xformOps at all** (`testenv/world_baked_resetxformstack.usda` vs.
+`testenv/world_neutral_relbinding.usda`).
+
+**Where `resetXformStack` lives is the whole point.** The compiled Hydra scene index *does* set
+`resetXformStack = true` on the xform it injects — which can look like the very thing this design
+rejects. It is not. What the design rejects is `resetXformStack` **authored into a layer** (every
+downstream consumer then inherits it and the scene is no longer coordinate-neutral). In the scene
+index, the flag sits on a **computed, transient Hydra data source**, never written into the
+authored scene: the resolver has already composed ancestor transforms and returns the prim's full
+world (ECEF) matrix, so the flag only tells Hydra *not to re-compose that matrix under its parents*
+at flatten time. The authored stage carries **zero `resetXformStack` and zero `xformOp`** — only
+`crs:` properties (read `testenv/world_neutral_relbinding.usda` directly).
+
+**Alignment with the Esri prototype.** The schema library is name- and layout-aligned with the Esri
+C++ prototype — same library path `pxr/usd/usdGeospatial/`, same prims, same properties — so a
+reviewer who knows one reads the other. The one difference is exactly the design call above: the
+Esri branch is a C++ typed schema whose `Bind()` *bakes* a `resetXformStack`; this variant is
+codeless and resolves the binding at runtime.
+
+![tree alignment](docs/tree_alignment.png)
+
+**Binding semantics — full MaterialBindingAPI parity.** Resolution rules mirror
+`UsdShadeMaterialBindingAPI`: **strength** (`bindCRSAs` = weaker / strongerThanDescendants),
+**purpose** (`crs:binding:<purpose>`), and **collection** (`crs:binding:collection:...`, where a
+collection binding beats a direct binding at the same prim). The precedence ladder below is read
+*live* from `resolve_runtime.crs_of_prim`; the figure self-asserts it equals the resolver, so it
+cannot drift from the code.
+
+![binding semantics](docs/binding_semantics.png)
+
+## Coexisting with UsdGeomXformable (inject, don't bake)
+
+<!-- slide:text eyebrow="Coexisting with UsdGeomXformable" title="Anchor injection: inject, don't bake" body="A georeferenced anchor with an ordinary Cartesian subtree (a building in local metres) — children have no `crs:position`. | The runtime injects the anchor's rigid local-frame→ECEF basis (full ENU orientation) at resolve time. | The subtree then composes under it **as ordinary `UsdGeomXformable`** — nothing baked into the layer. | `resetXformStack` lives only on a transient, computed Hydra data source, never the authored scene." -->
+
+The design above handles georeferenced *leaves* (each prim carries its own `crs:position`). The
+harder case — the one stock USD gets wrong — is a georeferenced **anchor** with an ordinary,
+non-georeferenced **Cartesian subtree** (a building modelled in local metres). A plain child has no
+`crs:position`, so standard composition renders it **at the world origin** — the anchor's
+georeferencing lives in `crs:position`, which the xform stack never reads.
+
+The fix is to **inject** the anchor's frame at runtime, not bake it: the anchor's `crs:position` +
+bound CRS define a **rigid local-frame → ECEF transform**, and the subtree composes under it as
+ordinary USD.
+
+- **Orientation, not just position.** The injected frame is the full ENU / topocentric basis at the
+  anchor (east-north-up), not merely the translated ECEF point. A subtree's local `+Z` must point
+  along the *ellipsoidal normal*, which at NYC is ~49° off ECEF `+Z` — a position-only resolver
+  lays every asset on its side everywhere but the pole. (`src/crs_engine.py` supplies this basis.)
+- **Transient, never written.** Injection happens in a *computed* representation
+  (`resolve_runtime.resolve_with_injection`); the authored stage is untouched.
+- **Proven against closed-form geodesy** (`src/test_anchor_injection.py`): a building 1000 m E /
+  500 m N and a roof +20 m up land to **0.0 mm**; position-only is **410 m** wrong; stock USD
+  without injection puts the child **6.4×10⁶ m** off — the origin gap, quantified.
+- **Float32 localization falls out for free.** The large magnitude lives in the double-precision
+  injected anchor (~6.4×10⁶ m); the asset's vertices stay small float32 *local* offsets.
+  `src/test_float32_localization.py` shows absolute-float32 ECEF loses **162 mm** at that magnitude
+  while localized float32 keeps **0.0003 mm** — a ~**480,000×** improvement.
+
+Hand-tweaks survive: because we inject-don't-bake, the authored subtree stays clean Cartesian, so a
+DCC's native TRS gizmos Just Work on children — a point in favor of coexist over baked-
+`resetXformStack`, where hand-edits fight a baked matrix.
+
+### Composition frame: projected vs. geographic anchors (a correctness rule, proven)
+
+<!-- slide:text eyebrow="Compose in the CRS-implied frame" title="Projected vs geographic anchors" body="A GEOGRAPHIC/ECEF anchor's child offsets are local metres → compose through the anchor's true-ENU basis (orientation matters; local +Z = ellipsoidal normal). | A PROJECTED (UTM/State-Plane) anchor's child offsets live in the grid plane → compose IN-PLANE (grid add + reproject), NOT through ENU. | UTM grid axes differ from true ENU by grid-convergence + point-scale — lifting grid offsets through ENU bends them ~4.86 m over a ~420 m lever. | Same neutral authored scene; the runtime picks the frame from the bound CRS type. Proven 0.0 mm both ways against closed-form geodesy." -->
+
+Coexist has one correctness rule the runtime must honor, because it is where a naïve implementation
+goes wrong: **compose a child's offsets in the frame its anchor's CRS implies.**
+
+- A **geographic / geocentric (ECEF) anchor** carries child offsets in local metres → compose
+  through the anchor's **true-ENU / topocentric basis** (the NYC case above).
+- A **projected (UTM, State Plane, …) anchor** carries child offsets in the anchor's **grid plane**
+  → compose **in-plane** (add the offset to the anchor's grid coordinates and reproject), **not**
+  lifted through ENU. UTM grid axes differ from true ENU by grid convergence + point scale, so
+  lifting grid-authored offsets through ENU introduces a real error (~**4.86 m** over a ~420 m
+  anchor→corner lever in a UTM-17N-under-UTM-30N test).
+
+The authored scene is identical either way; the runtime selects the frame from the bound CRS type
+(`crs_engine.is_projected`). This rule was **found by an adversarial head-to-head**
+(`test_coexist_vs_baked.py`) that rebuilds Simon Haegler's multi-CRS POC scene (MoMA in
+NAD83/UTM-17N under a WGS84/UTM-30N anchor) both baked and neutral and measures each against an
+independent closed-form pyproj ground truth. Both approaches now land the corner at the same ECEF
+point to **0.0 mm**; an earlier revision that used the ENU lift for the projected anchor landed
+4.86 m off, and the harness caught it.
+
+## Guard rails: what "coexist" asks of an asset
+
+<!-- slide:section title="Guard rails" subtitle="Coexist's costs are asset-structure invariants a validator can enforce." -->
+<!-- slide:text eyebrow="Enforceable, not showstoppers" title="Guard rails a validator can check" body="Coexist has no architectural showstopper — it matches baking to 0 mm when it composes in the CRS-implied frame. | Its residual costs are a small set of ASSET-STRUCTURE invariants, each mechanically checkable. | (1) anchor-vs-child is unambiguous; (2) child offsets are authored in the frame the bound CRS implies; (3) a CRS-requiring stage declares it so unaware consumers detect-and-refuse. | A neutral authored scene PRESERVES the semantic info a validator needs; a baked scene has already collapsed CRS intent into a matrix." -->
+
+The adversarial testing surfaced the honest shape of "coexist": it is **not** blocked by any
+architectural showstopper — it reproduces the baked approach to 0.0 mm when it composes in the
+CRS-implied frame. Its residual costs are a small set of **asset-structure invariants**, and the
+important property is that **each is mechanically checkable by a validator** — the same conformance
+posture USD already uses for `UsdShade` bindings, `UsdSkel`, and core-spec rules. A neutral authored
+scene keeps `crs:binding` + `crs:position` **inspectable**, so a validator can check these against
+the declared CRS; a baked scene has already collapsed CRS intent into a matrix. `verify.py` is the
+runnable validator today; a codeless, `usdchecker`-discoverable validator plugin is the natural next
+step.
+
+`src/test_illformed_assets.py` authors a deliberately **ill-formed asset** for each guard rail,
+shows the concrete failure against independent closed-form geodesy, then shows the **minimal
+authoring fix** and re-measures (figures by `src/render_illformed.py`; left = broken, right =
+fixed).
+
+<!-- slide:image src="docs/illformed_gallery.png" eyebrow="Broken → fixed, measured" title="What breaks in coexist, and the fix" caption="G1 anchor-vs-child 418.9 m → 0 mm · G2 wrong frame 4.86 m → 0 mm · G3 no marker 6,369 km silent → detect-and-refuse" -->
+
+1. **G1 — anchor-vs-child ambiguity.** *Broken:* `/World/NewYork/MoMa/Corner` authored with its
+   **own** `crs:binding` + `crs:position` (as if an independent georeferenced leaf) and parented
+   under the building expecting relative placement — it jumps to its own CRS point, **418.9 m** off.
+   *Fix:* delete the corner's binding/position and author it as an ordinary Cartesian child
+   (`double3 xformOp:translate = (50, 100, 30)`) → **0.000 mm**. *Validator:* `verify.py` check
+   **A2** flags a georef prim that also bakes an xformOp; a `crs:position`-under-`crs:position`
+   nesting without an override binding is the smell.
+
+![G1 anchor-vs-child: broken 418.9 m off vs fixed 0 mm](docs/illformed_g1.png)
+
+2. **G2 — wrong composition frame.** *Broken:* a **projected** (UTM-17N) anchor's child offsets
+   composed through the anchor's **true-ENU** basis. Grid convergence + point-scale bend them
+   **4.86 m** over a ~418 m lever. *Fix:* compose the offset **in the grid plane** and reproject →
+   **0.000 mm**. *Validator:* the runtime selects the frame from the bound CRS type
+   (`crs_engine.is_projected`); a validator asserts the two agree.
+
+![G2 wrong composition frame: broken 4.86 m off vs fixed 0 mm](docs/illformed_g2.png)
+
+3. **G3 — no requires-CRS marker.** *Broken:* a coexist scene with no stage marker, opened by a
+   **CRS-unaware** consumer (plain `UsdGeom.XformCache`, no resolver), silently places the building
+   at its bare local offset — **6,369 km** from truth, with no error. *Fix:* stamp
+   `customLayerData['crsResolutionRequired'] = true`; a conformant consumer detects it and
+   **refuses / defers** to a resolver. *Validator:* `verify.py` check **G** fails any stage that
+   carries `crs:binding` without the marker.
+
+![G3 no requires-CRS marker: broken 6369 km off silently vs fixed detect-and-refuse](docs/illformed_g3.png)
+
+**On the requires-CRS marker: expect pushback (and a layer-vs-prim debate).**
+
+<!-- slide:text eyebrow="Anticipated debate" title="The marker: a tradeoff worth having" body="A 'requires-CRS' marker is the honest cost of coordinate-neutral coexist: it is what lets an unaware consumer fail LOUD instead of silently misplacing. | Expect pushback — it adds a discovery obligation, and a non-conformant consumer still ignores it (it is a contract, not an enforcement). | If embraced, the next debate is WHERE it lives: layer metadata (customLayerData) vs a prim-level applied schema. | Our lean: a stage/layer-level signal for cheap detect-and-refuse, optionally refined per-prim; but this is squarely a WG call." -->
+
+- **Why it exists.** Coordinate-neutral authoring preserves composability and keeps the scene
+  inspectable, but it is also what makes a CRS-unaware consumer misplace content silently (G3). The
+  marker is the price of neutrality: a cheap signal that lets such a consumer **detect-and-refuse**
+  rather than render 6,000 km off. The baked approach doesn't need it — but pays instead with a
+  non-neutral scene and an *even worse* silent failure (the head-to-head measured ~6.4×10⁶ m for
+  neutral vs ~1.0×10⁷ m for baked when a grid `xformOp` is misread as ECEF).
+- **The fair objections.** It adds a discovery obligation to every conformant consumer; a
+  *non*-conformant consumer still ignores it (a marker is a **contract, not enforcement**); and it
+  is one more thing an author can forget — hence the `verify.py` **G** check, caught at authoring
+  time, not render time.
+- **The layer-vs-prim question.** Even if accepted, *where* it lives is a genuine debate: **layer /
+  stage metadata** (`customLayerData['crsResolutionRequired']`, used here) is one cheap O(1) lookup
+  before traversal, but coarse and free-form; a **prim-level applied schema** is typed, validatable,
+  and local, but a consumer must traverse to discover it. **Our lean (a WG call, not a decree):** a
+  stage/layer-level signal for the cheap up-front check, optionally refined by prim-level typing
+  where per-subtree granularity matters. We implemented the layer-metadata form; the prim-schema
+  form is a small addition.
+
+## Runtimes, tests, and running
+
+<!-- slide:section title="One schema, two runtimes" subtitle="The schema is the contract; the behavior is plural." -->
+
+**Two runtimes, one schema.** The Python runtime is the behavior **contract**; the point of a
+codeless schema is that the contract is data, so any number of runtimes resolve the same authored
+stage and must land on the same world. The two ship together and share *nothing* but the schema:
+
+- **(A) Python reference** — `src/resolve_runtime.py`, the oracle, projecting via
+  `crs_engine.PyprojEngine` (pyproj / PROJ). Traverses bindings (inheritance, strength, purpose,
+  collection), reprojects, composes ancestor Cartesian transforms, and (for anchors) injects the
+  rigid local-frame → ECEF transform — without touching the authored xform stack. The
+  **projection engine is a registration seam** (`src/crs_engine.py`): PROJ / pyproj is the
+  *default* registered engine; a deployment could register a GPU engine (e.g. cuProj). WKT stays
+  **opaque to USD** — only the engine consumes it.
+- **(B) Compiled Hydra scene index** — `../usdGeospatialSceneIndex` (C++), an
+  `HdSingleInputFilteringSceneIndexBase` that wraps `Xformable` prims, overrides the `HdXformSchema`
+  matrix locator a renderer pulls, and dirties descendants on anchor change — projecting via a
+  PROJ-linked C engine (`GeoCrsEngine`). Different language, pipeline layer, and engine binding; it
+  auto-inserts into usdview (§[The proofs](#the-proofs)).
+
+<!-- slide:image src="docs/runtime_parity.png" eyebrow="Proof · sub-mm parity" title="Same stage, two runtimes, quantified" caption="Matplotlib plot: Python vs Hydra transforms on the same authored railway stage — 3,526 rail vertices + tile corners agree to median 0.40 mm, worst 0.68 mm. fig_runtime_parity.py fails the build if disagreement exceeds 1 mm." -->
+
+The takeaway is the schema claim itself: **the schema is the contract; the behavior is plural.** A
+third runtime (OpenExec, a GPU / cuProj engine, an Omniverse runtime) plugs into the same seam and
+is held to the same oracle.
 
 ### Where the Python reference runtime sits (no exact precedent — by design)
+
 <!-- slide:text eyebrow="No exact precedent — by design" title="Where the Python reference runtime sits" body="It's the codeless schema's **executable specification / conformance oracle** — 'given this stage, where does each prim end up?' | NOT proposed for USD core, NOT a runtime dependency, NOT Python-in-the-render-loop, NOT the prescribed consumer. | Real consumers (Hydra, OpenExec, Omniverse, GPU cuProj) implement the same contract; the Python is the spec they conform to. | New part: a runnable reference as the normative behavior for a codeless schema whose behavior is deliberately external." -->
 
 Because the schema is **codeless**, the resolution behavior must live *somewhere* outside the
-schema, and `resolve_runtime.py` is that behavior written down once in the most readable
-form: a pure-Python, dependency-light **executable specification / conformance oracle** for
-“given this authored stage, where does each prim end up?” It is **not** proposed for USD core,
-**not** a runtime dependency of the schema, **not** Python-in-the-render-loop, and **not** the
-prescribed way to consume the schema. A real consumer (Hydra scene index, OpenExec, an
-Omniverse / native runtime, a GPU cuProj path) implements the same contract in its own
-setting — the Python is the *spec they conform to*, not code they call.
+schema, and `resolve_runtime.py` is that behavior written down once in the most readable form: a
+pure-Python, dependency-light **executable specification / conformance oracle** for "given this
+authored stage, where does each prim end up?" It is **not** proposed for USD core, **not** a runtime
+dependency, **not** Python-in-the-render-loop, and **not** the prescribed way to consume the schema.
+A real consumer (Hydra scene index, OpenExec, an Omniverse / native runtime, a GPU cuProj path)
+implements the same contract in its own setting — the Python is the *spec they conform to*.
 
-There isn't a clean precedent for this exact artifact. OpenUSD already ships reference/example
-code in Python under `extras/usd/examples/` (e.g. `usdSchemaExamples`, `usdResolverExample`,
-`usdMakeFileVariantModelAsset`) and the `extras/usd/tutorials`; what's genuinely new is using
-such a module as the **normative behavior reference for a codeless schema whose behavior is
-deliberately external** — the spec is *executable* rather than prose. That placement is a
-deliberate design choice, and one we'd specifically like the working group's read on.
+There isn't a clean precedent for this exact artifact. OpenUSD already ships reference/example code
+in Python under `extras/usd/examples/` (`usdSchemaExamples`, `usdResolverExample`, …); what's
+genuinely new is using such a module as the **normative behavior reference for a codeless schema
+whose behavior is deliberately external** — the spec is *executable* rather than prose. That
+placement is a deliberate design choice, and one we'd specifically like the working group's read on.
 
-## Tests — all green, all with teeth
+### Tests — all green, all with teeth
 
-Every test file below is openable and runnable; here is what each one checks.
+Every test is openable and runnable; each has a real negative control or an independent ground truth.
 
-- `verify.py` — the runnable validator: confirms the schema is truthfully codeless (`crs:*`
-  authored with `custom=False` resolve as schema-defined), among other authoring checks.
-- `multi_crs_example.py` — negative control: resolving while ignoring bindings diverges
-  >100 km from truth.
-- `test_ancestor_compose.py` — ancestor-transform composition; the negative control diverges
-  ~7,482 km without it.
-- `test_binding_semantics.py` — MaterialBinding-style precedence: strength, purpose, and
-  collection resolution rules.
-- `test_binding_composition.py` — cross-layer binding and list-edit composition behavior.
-- `test_dynamic_crs.py` — dynamic-CRS (`crs:epoch`) resolution.
-- `test_grid_files.py` — `crs:gridFiles` (external PROJ grid) handling.
-- `test_anchor_injection.py` — georef anchor + Cartesian subtree lands and orients to 0.0 mm;
-  position-only is 410 m wrong; stock USD is 6.4×10⁶ m off.
-- `test_float32_localization.py` — localized float32 is ~480,000× more precise than absolute
-  float32 ECEF at globe magnitude.
-- `generalization_suite.py` — 7 diverse datasets (including the real NVIDIA railway), all
-  sub-mm vs closed-form geodesy.
-- `testenv_equivalence.py` — design equivalence vs. the Esri baked-`resetXformStack` scene
-  (same ECEF, neutral scene has zero xformOps).
-- `render_figures.py` — the coherence figure self-asserts closed-form co-registration to
-  sub-mm and the negative control flies off the globe; `fig_runtime_parity` fails the build if
-  Python-vs-Hydra disagreement exceeds 1 mm.
-- `../usdGeospatialSceneIndex/run_parity.sh` — the compiled C++ scene index: CRS engine 9/9,
-  stage resolver 30/30, Hydra scene index via `HdXformSchema` 30/30 — all 0.0 mm vs the Python
-  oracle + closed-form ground truth; negative control: stock Hydra puts georef prims at the
-  origin.
+- `verify.py` — the runnable validator: confirms the schema is truthfully codeless (`crs:*` with
+  `custom=False` resolve as schema-defined), plus authoring checks (incl. the G marker).
+- `multi_crs_example.py` — negative control: ignoring bindings diverges >100 km.
+- `test_ancestor_compose.py` — ancestor-transform composition; negative control diverges ~7,482 km.
+- `test_binding_semantics.py` / `test_binding_composition.py` — MaterialBinding-style precedence
+  (strength, purpose, collection) and cross-layer / list-edit composition.
+- `test_dynamic_crs.py` / `test_grid_files.py` — dynamic-CRS (`crs:epoch`) and external PROJ grids.
+- `test_anchor_injection.py` — georef anchor + Cartesian subtree lands & orients to 0.0 mm;
+  position-only 410 m wrong; stock USD 6.4×10⁶ m off.
+- `test_float32_localization.py` — localized float32 ~480,000× more precise than absolute float32.
+- `test_coexist_vs_baked.py` — neutral reproduces the baked approach to 0.0 mm; found the
+  projected-anchor composition rule.
+- `test_illformed_assets.py` — G1/G2/G3 broken→fixed, each measured against closed-form geodesy.
+- `generalization_suite.py` — 7 diverse datasets (incl. the real NVIDIA railway), all sub-mm.
+- `testenv_equivalence.py` — design equivalence vs the baked-`resetXformStack` scene (0.0 mm,
+  neutral scene has zero xformOps).
+- `render_figures.py` — the coherence figure self-asserts sub-mm co-registration; `fig_runtime_parity`
+  fails the build if Python-vs-Hydra disagreement exceeds 1 mm.
+- `../usdGeospatialSceneIndex/run_parity.sh` — the compiled C++ scene index: CRS engine 9/9, stage
+  resolver 30/30, Hydra SI via `HdXformSchema` 30/30 — all 0.0 mm; negative control: stock Hydra
+  puts georef prims at the origin. `testHydraAutoParity` adds the stage-free auto-insert path (30/30).
 - `pxr/usd/usdGeospatial/regen-schema.sh --check` — schema resources are in sync.
 
-## Running
-
-Two honest tiers.
+### Running — two honest tiers
 
 **Tier 1 — the codeless Python path (no external renderer):**
 
@@ -413,205 +390,69 @@ python3 src/generalization_suite.py     # 7 diverse datasets vs closed-form geod
 python3 src/render_figures.py           # regenerate the Python-reference figures into docs/
 ```
 
-`render_figures.py` regenerates the nine Python-reference figures. It will also produce
-`multi_runtime.png` and `runtime_parity.png` **if** the compiled C++ Hydra binary is already
-built (see Tier 2); otherwise it skips those two with a clear note.
+`render_figures.py` regenerates the nine Python-reference figures; it also produces
+`multi_runtime.png` / `runtime_parity.png` **if** the compiled C++ Hydra binary is already built
+(Tier 2), otherwise it skips those two with a clear note.
 
-**Tier 2 — the full two-runtime parity proof (needs a prebuilt USD):** build and run the
-compiled C++ Hydra scene index, then the parity figures regenerate too.
+**Tier 2 — the full two-runtime parity proof (needs a prebuilt USD):**
 
 ```bash
 USD_INST=/path/to/usd/inst ../usdGeospatialSceneIndex/run_parity.sh
 ```
 
-See `../usdGeospatialSceneIndex/README.md` for the full build environment.
+See `../usdGeospatialSceneIndex/README.md` for the full build environment, and the same directory's
+notes for reproducing the auto-insert usdview / usdrecord render.
 
-## Status / scope
-
-- This is the **OpenUSD-side, codeless** reference: a pure-data schema plus a Python reference
-  runtime and a compiled C++ Hydra scene-index runtime (an illustrative consumer, modeled on
-  the Gaussian-splat example — not a prescribed production renderer). The Esri C++ typed
-  schema remains the parallel artifact; this bundle backs the proposal's design calls (binding
-  shape, no baked `resetXformStack`, resolution-rule parity) with running code on a real dataset.
-- **Done — anchor injection (the coexist answer).** A georef anchor with a non-georef
-  Cartesian subtree resolves correctly: `resolve_runtime.resolve_with_injection` composes the
-  subtree under the anchor's frame transiently — the true-ENU / topocentric basis for a
-  geographic anchor, or in-plane + reproject for a projected anchor — and descendants compose
-  as ordinary USD, *not* a baked `resetXformStack`, *not* per-prim absolutes. Proven in
-  `test_anchor_injection.py` and `test_float32_localization.py`.
-- **Done — head-to-head vs. the baked approach (coexist under adversarial test).**
-  `test_coexist_vs_baked.py` rebuilds Simon Haegler's multi-CRS POC scene (MoMA in NAD83/UTM-17N
-  under a WGS84/UTM-30N anchor) both baked and neutral, and measures each against independent
-  closed-form geodesy (no approach graded against the other). Neutral now **reproduces the baked
-  result to 0.0 mm**; hand-TRS edits survive in both; it quantified the CRS-unaware degradation of
-  both and the neutral resolve cost (~1.8 ms/prim). The test *found* the projected-anchor
-  composition rule (the ENU-lift error, since fixed) — see
-  [Composition frame](#composition-frame-projected-vs-geographic-anchors-a-correctness-rule-proven).
-- **Done — the compiled Hydra scene-index form.** A second, illustrative runtime — a C++ Hydra
-  scene-index plugin (`../usdGeospatialSceneIndex/`), modeled on the Gaussian-splat example —
-  exists and resolves the same authored
-  stages (anchor injection included) to **0.0 mm vs the Python oracle** (30/30) and **sub-mm
-  visual parity** on the real railway asset. See [Two runtimes, one schema](#two-runtimes-one-schema).
-  Built out-of-tree against a prebuilt USD here; the in-tree `CMakeLists.txt` registers it
-  like `hdParticleField` for a full `--examples` USD build.
-- **Done — projection-engine seam.** `crs_engine.py` makes PROJ / pyproj one *registered*
-  engine (default), exposing reproject + local-frame basis; WKT stays opaque to USD. This is
-  the natural insertion point for a GPU / cuProj engine.
-- **In scope, deferred:** a codeless `usdchecker`-discoverable validator plugin (Python
-  `"Type":"python"`). `verify.py` is the runnable validator today.
-- **Out of scope here (need other resources):** a draped raster / terrain basemap for the
-  coherence figure (`cartopy` + a basemap / DEM asset); an end-to-end grid-*applied* transform
-  (GDAL + a bundled PROJ grid); an OpenExec / GPU-cuProj runtime (a *third* implementation of
-  the same seam — the Python and compiled-Hydra forms are done).
-
-<!-- slide:section title="Guard rails" subtitle="Coexist's costs are asset-structure invariants a validator can enforce — a normal USD conformance surface." -->
-## Guard rails: what “coexist” asks of an asset (and how a validator enforces it)
-<!-- slide:text eyebrow="Enforceable, not showstoppers" title="Guard rails a validator can check" body="Coexist has no architectural showstopper — it matches baking to 0 mm when it composes in the CRS-implied frame. | Its residual costs are a small set of ASSET-STRUCTURE invariants, each mechanically checkable. | (1) anchor-vs-child is unambiguous; (2) child offsets are authored in the frame the bound CRS implies; (3) a CRS-requiring stage declares it so unaware consumers detect-and-refuse. | A neutral authored scene PRESERVES the semantic info a validator needs; a baked scene has already collapsed CRS intent into a matrix." -->
-
-The adversarial testing surfaced the honest shape of “coexist”: it is **not** blocked by any
-architectural showstopper — it reproduces the baked approach to 0.0 mm when it composes in the
-CRS-implied frame. Its residual costs are a small set of **asset-structure invariants**, and the
-important property is that **each is mechanically checkable by a validator** — exactly the
-conformance posture USD already uses for `UsdShade` bindings, `UsdSkel`, and core-spec rules.
-
-1. **Anchor-vs-child is unambiguous.** A prim either *is* a georeferenced anchor (carries
-   `crs:position` + a resolvable binding) or it is a plain Cartesian child of one. Two prims that
-   each own a `crs:position` cannot be made relative to each other by parenting + TRS — each
-   resolves against its own binding. *Validator rule:* flag a `crs:position` prim nested under
-   another `crs:position` prim without an explicit override binding.
-2. **Child offsets are authored in the frame the bound CRS implies** (projected → grid plane;
-   geographic → ENU / local metres). This is the composition rule above; a validator (or the
-   runtime contract) can assert the resolver path matches the bound CRS type so the grid-vs-ENU
-   mismatch cannot silently occur.
-3. **A CRS-requiring stage declares it.** Under a CRS-*unaware* consumer, *both* the neutral and
-   the baked scene misplace catastrophically (the head-to-head measured ~6.4×10⁶ m for neutral and
-   ~1.0×10⁷ m for baked — neither degrades gracefully). *Validator / marker rule:* a stage with any
-   `crs:binding` carries a “requires CRS resolution” signal so a conformant consumer can
-   **detect-and-refuse** rather than silently render thousands of km off. This is the single most
-   important guard rail and it applies regardless of baked vs. neutral.
-
-There is a real argument here *for* the neutral approach precisely on validator grounds: a neutral
-authored scene keeps `crs:binding` + `crs:position` **inspectable**, so a validator can check these
-invariants directly against the declared CRS. A baked scene has already collapsed CRS intent into a
-`resetXformStack` + `double3` matrix — the semantic information a validator would use to catch a
-mis-authored anchor is partly spent. `verify.py` is the runnable validator today; a codeless,
-`usdchecker`-discoverable validator plugin is the natural next step.
-
-### What breaks, and the fix (each guard rail, as a runnable before/after)
-<!-- slide:text eyebrow="Broken → fixed, measured" title="What breaks, and the fix" body="G1 anchor-vs-child: a corner authored as its OWN georef leaf and parented to be relative jumps to its own CRS point — 418.9 m off. Fix: author it as a plain Cartesian child (xformOp:translate) → 0.000 mm. | G2 compose-in-CRS-frame: a projected-anchor child composed through true-ENU bends by grid convergence — 4.86 m off. Fix: compose in the grid plane + reproject → 0.000 mm. | G3 requires-CRS marker: an unmarked scene under a CRS-unaware consumer lands 6,369 km off, silently. Fix: stamp customLayerData['crsResolutionRequired'] → the consumer detects-and-refuses. | Each is a runnable demo (src/test_illformed_assets.py), measured against closed-form geodesy." -->
-
-The invariants above are abstract until you see one violated. `src/test_illformed_assets.py`
-authors a deliberately **ill-formed asset** for each guard rail, shows the concrete failure
-measured against independent closed-form geodesy, then shows the **minimal authoring fix** and
-re-measures. `verify.py` (checks A/G) is the validator that would catch each one. The figures below
-are rendered from those exact numbers by `src/render_illformed.py` (left = broken, right = fixed;
-the green star is the geodesy-true target).
-<!-- slide:image src="docs/illformed_gallery.png" eyebrow="Broken → fixed, measured" title="What breaks in coexist, and the fix" caption="G1 anchor-vs-child 418 m → 0 mm · G2 wrong frame 4.86 m → 0 mm · G3 no marker 6,369 km silent → detect-and-refuse" -->
-
-1. **G1 — anchor-vs-child ambiguity.** *Broken:* `/World/NewYork/MoMa/Corner` is authored with
-   its **own** `crs:binding` + `crs:position` (as if an independent georeferenced leaf) and
-   parented under the building expecting relative placement. The resolver treats it as its own
-   anchor and it jumps to its own CRS point — **418.9 m** from the intended spot. *Fix:* delete
-   the corner's binding/position and author it as an ordinary Cartesian child
-   (`double3 xformOp:translate = (50, 100, 30)`); it then composes under `MoMa` → **0.000 mm**.
-   *Validator:* `verify.py` check **A2** flags a georef prim that also bakes an xformOp; a
-   `crs:position`-under-`crs:position` nesting without an override binding is the smell.
-
-![G1 anchor-vs-child: broken 418.9 m off vs fixed 0 mm](docs/illformed_g1.png)
-
-2. **G2 — wrong composition frame.** *Broken:* a **projected** (UTM-17N) anchor's child offsets
-   are composed through the anchor's **true-ENU** basis (the natural mistake if you assume “local
-   metres == ENU”). Grid convergence + point-scale bend them **4.86 m** over a ~418 m lever.
-   *Fix:* compose the offset **in the grid plane** and reproject (grid add + reproject) — the
-   CRS-implied frame → **0.000 mm**. *Validator:* the runtime selects the frame from the bound
-   CRS type (`crs_engine.is_projected`); a validator asserts the two agree.
-
-![G2 wrong composition frame: broken 4.86 m off vs fixed 0 mm](docs/illformed_g2.png)
-
-3. **G3 — no requires-CRS marker.** *Broken:* a coexist scene with no stage marker, opened by a
-   **CRS-unaware** consumer (plain `UsdGeom.XformCache`, no resolver), silently places the
-   building at its bare local offset — **6,369 km** from truth, with no error. *Fix:* stamp
-   `customLayerData['crsResolutionRequired'] = true`; a conformant consumer now detects the marker
-   and **refuses / defers** to a resolver instead of misplacing. *Validator:* `verify.py` check
-   **G** fails any stage that carries `crs:binding` without the marker.
-
-![G3 no requires-CRS marker: broken 6369 km off silently vs fixed detect-and-refuse](docs/illformed_g3.png)
-
-#### On the requires-CRS marker: expect pushback (and the layer-vs-prim debate)
-<!-- slide:text eyebrow="Anticipated debate" title="The marker: a tradeoff worth having" body="A 'requires-CRS' marker is the honest cost of coordinate-neutral coexist: it is what lets an unaware consumer fail LOUD instead of silently misplacing. | Expect pushback — it adds a discovery obligation, and a non-conformant consumer still ignores it (it is a contract, not an enforcement). | If embraced, the next debate is WHERE it lives: layer metadata (customLayerData) vs a prim-level applied schema. | Our lean: a stage/layer-level signal for cheap detect-and-refuse, optionally refined per-prim; but this is squarely a WG call." -->
-
-We expect the marker to be the most-debated part of this design, and that is fair — so, stated
-plainly:
-
-- **Why it exists.** Coordinate-neutral authoring is what preserves composability and keeps the
-  scene inspectable, but it is *also* what makes a CRS-unaware consumer misplace content silently
-  (G3). The marker is the price of neutrality: a cheap signal that lets such a consumer
-  **detect-and-refuse** (or defer to a resolver) rather than render 6,000 km off. The baked
-  approach doesn't need it — but pays instead with a non-neutral scene and (as the head-to-head
-  showed) an *even worse* silent failure when a grid `xformOp` is misread as ECEF.
-- **The fair objections.** It adds a discovery obligation to every conformant consumer; a
-  *non*-conformant consumer still ignores it (a marker is a **contract, not enforcement**); and it
-  is one more thing an author can forget (hence: a validator check, `verify.py` **G**, so it is
-  caught at authoring time, not render time).
-- **The layer-vs-prim question this will ignite.** Even if the marker is accepted, *where* it
-  lives is a genuine design debate:
-  - **Layer / stage metadata** (`customLayerData['crsResolutionRequired']`, used here): one cheap
-    O(1) lookup for a consumer to decide *before* traversal whether the stage needs a CRS
-    runtime. Good for detect-and-refuse; coarse (whole-stage), and `customLayerData` is
-    free-form (no schema-level typing/validation).
-  - **Prim-level applied schema** (e.g. an API schema on the CRS-bearing prims): typed,
-    validatable, and *local* — it can say precisely which subtrees need resolution, and composes
-    through references/sublayers like any other schema. But a consumer must traverse to discover
-    it, which defeats the cheap up-front refuse.
-  - **Our lean (a WG call, not a decree):** a stage/layer-level signal for the cheap up-front
-    check, *optionally* refined by prim-level typing where per-subtree granularity matters — i.e.
-    both, at different altitudes. We have implemented the layer-metadata form; the prim-schema
-    form is a small addition if the WG prefers it.
+## Status, scope, and open questions
 
 <!-- slide:section title="Open questions" subtitle="What we'd most like the working group's read on." -->
-## Open design questions for the working group
+
+**Status.** This is the **OpenUSD-side, codeless** reference: a pure-data schema plus a Python
+reference runtime and a compiled C++ Hydra scene-index runtime (an illustrative consumer, modeled on
+the Gaussian-splat example — not a prescribed production renderer). The Esri C++ typed schema
+remains the parallel artifact; this bundle backs the proposal's design calls (binding shape, no
+baked `resetXformStack`, resolution-rule parity) with running code on a real dataset. **Done:**
+anchor injection (the coexist answer); the head-to-head vs the baked approach (neutral reproduces it
+to 0.0 mm, hand-TRS edits survive, neutral resolve cost ~1.8 ms/prim); the compiled Hydra
+scene-index form with auto-insert into usdview; the projection-engine seam.
+
+**Out of scope here (need other resources):** a codeless `usdchecker`-discoverable validator plugin
+(`verify.py` is the runnable validator today); a draped raster / terrain basemap for the coherence
+figure (`cartopy` + a DEM asset); an end-to-end grid-*applied* transform (GDAL + a bundled PROJ
+grid); an OpenExec / GPU-cuProj *third* runtime.
+
 <!-- slide:text eyebrow="For the working group" title="Open design questions" body="1. Is 'codeless schema + a runnable reference runtime as the behavior contract' the right shape — and where should that reference ultimately live? | 2. Is **coexist** the right relationship to `UsdGeomXformable` (neutral scene + runtime reconciliation) — versus hooking CRS resolution into `Xformable` directly? Given the head-to-head parity + the guard-rail set, is the residual validation surface acceptable to standardize?" -->
 
-The two calls we'd most like Esri's / the WG's read on:
+**Open design questions for the working group** — the two calls we'd most like Esri's / the WG's
+read on:
 
-1. **Is “codeless schema + a runnable reference runtime as the behavior contract” the right
-   shape**, and where should that reference ultimately live (an `extras/usd/examples` module,
-   a separate conformance suite, prose in the spec)?
-2. **Is “coexist” the right relationship to `UsdGeomXformable`** — a coordinate-neutral
-   authored scene plus runtime reconciliation (this design) — versus any future move to hook
-   CRS resolution into `Xformable` directly? The head-to-head now shows neutral **reproduces the
-   baked approach to 0.0 mm** on a real multi-CRS scene, so the question is no longer “does
-   coexist work?” but **“is the residual [guard-rail set](#guard-rails-what-coexist-asks-of-an-asset-and-how-a-validator-enforces-it)
-   (anchor-vs-child, compose-in-CRS-frame, requires-CRS marker) an acceptable conformance surface
-   to standardize?”** See
-   [The design call: resolve, don't bake](#the-design-call-resolve-dont-bake) and
-   [Anchor injection](#anchor-injection--coexisting-with-usdgeomxformable-inject-dont-bake)
-   for how the pieces coexist today.
+1. **Is "codeless schema + a runnable reference runtime as the behavior contract" the right shape**,
+   and where should that reference ultimately live (an `extras/usd/examples` module, a separate
+   conformance suite, prose in the spec)?
+2. **Is "coexist" the right relationship to `UsdGeomXformable`** — a coordinate-neutral authored
+   scene plus runtime reconciliation — versus hooking CRS resolution into `Xformable` directly? The
+   head-to-head now shows neutral **reproduces the baked approach to 0.0 mm** on a real multi-CRS
+   scene, so the question is no longer "does coexist work?" but **"is the residual guard-rail set
+   (anchor-vs-child, compose-in-CRS-frame, requires-CRS marker) an acceptable conformance surface to
+   standardize?"**
 
 <!-- slide:section title="What we need from you" subtitle="Concrete asks so the next iteration is grounded in your workflows, not our guesses." -->
-## What we'd ask of Esri and co-collaborators
-<!-- slide:text eyebrow="Asks" title="What we need from you" body="1. The Redlands BIM prototype scene + its validation script, so we can add a second real, contributor-authored case beside the multi-CRS POC. | 2. Confirmation / correction of the driving workflows: which of AECO site placement, multi-source GIS twins, multi-zone infrastructure, and geodetic sim must 'coexist' survive first? | 3. A read on the guard-rail set as a conformance surface (anchor-vs-child, compose-in-CRS-frame, a 'requires-CRS' stage marker + detect-and-refuse) and appetite for a codeless validator plugin. | 4. Where the reference runtime should live, and whether to lift the 'resetXformStack' *semantic* out of the authored-layer text into a documented behavior contract multiple runtimes honor. We are not rejecting the semantic (both our runtimes honor it — Hydra sets it on a transient computed source, the Python resolver composes it implicitly at each anchor); we are declining to bake it into the authored scene." -->
+<!-- slide:text eyebrow="Asks" title="What we need from you" body="1. The Redlands BIM prototype scene + its validation script, so we can add a second real, contributor-authored case beside the multi-CRS POC. | 2. Confirmation / correction of the driving workflows: which of AECO site placement, multi-source GIS twins, multi-zone infrastructure, and geodetic sim must 'coexist' survive first? | 3. A read on the guard-rail set as a conformance surface (anchor-vs-child, compose-in-CRS-frame, a 'requires-CRS' stage marker + detect-and-refuse) and appetite for a codeless validator plugin. | 4. Where the reference runtime should live, and whether to lift the 'resetXformStack' *semantic* out of the authored-layer text into a documented behavior contract multiple runtimes honor." -->
 
-To make the next iteration concrete rather than speculative, the specific things that would
-help most:
+**What we'd ask of Esri and co-collaborators**, to make the next iteration concrete:
 
-1. **The Redlands BIM prototype scene** (the BIM-model-at-site scene + Python validation script
-   referenced alongside the proposal). We pressure-tested against a re-authored version of the
-   public multi-CRS POC; a second, contributor-authored real scene would let us validate the
-   AECO site-placement workflow directly instead of by proxy.
-2. **Confirmation (or correction) of the driving workflows.** The proposal lists AECO/BIM,
-   GIS & digital twins, infrastructure across coordinate zones, and defense/simulation. Which
-   must *coexist* survive first, and are there edit/authoring workflows (hand-placement,
-   relocation, moving anchors, dynamic datums) we should be exercising that we are not?
-3. **A read on the guard-rail set as a conformance surface** — anchor-vs-child unambiguity,
-   compose-in-the-CRS-implied-frame, and a stage-level *requires-CRS-resolution* marker with
-   detect-and-refuse — plus appetite for a codeless, `usdchecker`-discoverable validator plugin
-   to enforce them.
-4. **Where the reference runtime should live**, and whether we can jointly **lift the
-   `resetXformStack` *semantic* out of the authored-layer text** into a documented behavior
-   contract that multiple runtimes (baked or neutral) honor. To be precise: we are *not*
-   rejecting `resetXformStack` as a semantic — both runtimes here honor it (the Hydra scene
-   index sets `resetXformStack = true` on a transient computed data source; the Python resolver
-   composes the equivalent fresh-basis behavior implicitly at each anchor). What we decline is
-   *baking it into the authored scene*, because that is what spends composability — the position
-   this prototype demonstrates is viable to 0.0 mm.
+1. **The Redlands BIM prototype scene** (BIM-model-at-site scene + Python validation script) so we
+   can validate the AECO site-placement workflow directly, not by proxy.
+2. **Confirmation (or correction) of the driving workflows** — AECO/BIM, GIS & digital twins,
+   infrastructure across coordinate zones, defense/simulation: which must *coexist* survive first,
+   and what edit/authoring workflows (hand-placement, relocation, moving anchors, dynamic datums)
+   should we be exercising?
+3. **A read on the guard-rail set as a conformance surface** (anchor-vs-child, compose-in-CRS-frame,
+   requires-CRS marker + detect-and-refuse) plus appetite for a codeless `usdchecker`-discoverable
+   validator plugin.
+4. **Where the reference runtime should live**, and whether to jointly **lift the `resetXformStack`
+   *semantic* out of the authored-layer text** into a documented behavior contract multiple runtimes
+   honor. To be precise: we are *not* rejecting `resetXformStack` as a semantic — both runtimes here
+   honor it (Hydra sets it on a transient computed data source; the Python resolver composes the
+   equivalent fresh-basis behavior implicitly at each anchor). What we decline is *baking it into
+   the authored scene*, because that is what spends composability.
