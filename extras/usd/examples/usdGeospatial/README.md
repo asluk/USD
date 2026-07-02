@@ -18,7 +18,7 @@ auto-inserts into usdview.
 > the resolver is correct, not that a GPU drew them. The one exception, called out explicitly, is
 > the **Hydra Storm render proof** (§[The proofs](#the-proofs)), which *is* real renderer output.
 >
-> **What Matplotlib is doing here (to avoid a category error):** it is **not** "consuming a USD
+> **What Matplotlib is doing here:** it is **not** "consuming a USD
 > stage." It sits in the *same seat* as a Hydra renderer or an analytics pass — a plain **consumer
 > of the resolver's output** (normalized ECEF). A compliant implementation produces the correct
 > ECEF; what draws or analyzes it is agnostic. The USD-native version of exactly this point is the
@@ -92,8 +92,8 @@ cancel against.
 
 **3 — One schema, two independent runtimes (0.0 mm) — a first conformance pass.** *Correctness*
 is carried by Proof 2: the match against **NOAA NCAT + closed-form WGS84 geodesy**, which are
-independent authorities, not this proposal's own code. What *this* proof adds is a different thing,
-and we're careful about the claim: two implementations agreeing to 0.0 mm shows the **contract is
+independent authorities, not this proposal's own code. What *this* proof adds is different:
+two implementations agreeing to 0.0 mm shows the **contract is
 unambiguous enough to build twice and get the same answer** — robustness, and a first conformance
 pass — **not**, by itself, that the semantics are correct (two implementations of the same misreading
 would also agree perfectly). Correctness comes from the independent authority; the two-runtime
