@@ -17,6 +17,12 @@ auto-inserts into usdview.
 > diagram or scatter/line plot of *resolved numbers*, **not** a renderer screenshot. They prove
 > the resolver is correct, not that a GPU drew them. The one exception, called out explicitly, is
 > the **Hydra Storm render proof** (§[The proofs](#the-proofs)), which *is* real renderer output.
+>
+> **What Matplotlib is doing here (to avoid a category error):** it is **not** "consuming a USD
+> stage." It sits in the *same seat* as a Hydra renderer or an analytics pass — a plain **consumer
+> of the resolver's output** (normalized ECEF). A compliant implementation produces the correct
+> ECEF; what draws or analyzes it is agnostic. The USD-native version of exactly this point is the
+> **usdview-on-earth2 Storm render** below — same resolved data, drawn by a real Hydra chain.
 
 <!-- slide:title subtitle="a codeless CRS schema for OpenUSD, proven by two runtimes" -->
 
@@ -84,13 +90,20 @@ cancel against.
 > Cartesian-subtree** coherence is shown by anchor injection (§[Coexisting with
 > UsdGeomXformable](#coexisting-with-usdgeomxformable-inject-dont-bake)).
 
-**3 — One schema, two independent runtimes (0.0 mm).** The point of a codeless schema is that the
+**3 — One schema, two independent runtimes (0.0 mm) — a first conformance pass.** *Correctness*
+is carried by Proof 2: the match against **NOAA NCAT + closed-form WGS84 geodesy**, which are
+independent authorities, not this proposal's own code. What *this* proof adds is a different thing,
+and we're careful about the claim: two implementations agreeing to 0.0 mm shows the **contract is
+unambiguous enough to build twice and get the same answer** — robustness, and a first conformance
+pass — **not**, by itself, that the semantics are correct (two implementations of the same misreading
+would also agree perfectly). Correctness comes from the independent authority; the two-runtime
+agreement shows the *data contract* is well-specified. The point of a codeless schema is that the
 contract is *data*, not one implementation — so any number of runtimes must land on the same world.
 The Python reference and the compiled **C++ Hydra scene index** share *nothing* but the authored
 schema (different language, pipeline layer, and PROJ binding), yet resolve the same authored stage
 to the same world. `../usdGeospatialSceneIndex/run_parity.sh` reports:
 
-- **CRS engine vs closed-form geodesy:** 9/9 datasets, **0.0 mm**
+- **CRS engine vs closed-form geodesy (the correctness authority):** 9/9 datasets, **0.0 mm**
 - **Stage-level resolver vs Python oracle + ground truth:** 30/30, **0.0 mm**
 - **Hydra scene index (xform pulled via `HdXformSchema`, as a renderer would) vs oracle + ground
   truth:** 30/30, **0.0 mm**; negative control: **without** the scene index, stock Hydra puts
@@ -100,7 +113,7 @@ Visual parity on the real railway: across **3,526 rail vertices** + tile corners
 agree to **median 0.40 mm, worst 0.68 mm**; `fig_runtime_parity.py` self-asserts this and **fails
 the build if disagreement exceeds 1 mm**.
 
-<!-- slide:image src="docs/multi_runtime.png" eyebrow="Proof · contract not implementation" title="Two independent runtimes, 0.0 mm" caption="The Python reference runtime and the compiled C++ Hydra scene index resolve the same authored stage to the same world, agreeing to 0.0 mm. A third runtime plugs into the same seam." -->
+<!-- slide:image src="docs/multi_runtime.png" eyebrow="Proof · contract not implementation" title="Two independent runtimes, 0.0 mm" caption="Robustness / first conformance pass (correctness is Proof 2 vs NCAT + closed-form geodesy): the Python reference runtime and the compiled C++ Hydra scene index resolve the same authored stage to the same world, agreeing to 0.0 mm — the data contract is unambiguous enough to build twice the same way. A third runtime plugs into the same seam." -->
 
 ![one schema, two runtimes](docs/multi_runtime.png)
 
@@ -315,8 +328,20 @@ important property is that **each is mechanically checkable by a validator** —
 posture USD already uses for `UsdShade` bindings, `UsdSkel`, and core-spec rules. A neutral authored
 scene keeps `crs:binding` + `crs:position` **inspectable**, so a validator can check these against
 the declared CRS; a baked scene has already collapsed CRS intent into a matrix. `verify.py` is the
-runnable validator today; a codeless, `usdchecker`-discoverable validator plugin is the natural next
-step.
+runnable validator today; a codeless, `usdchecker`-discoverable validator **plugin is a near-term
+deliverable, not just a roadmap item** — it is what turns these guard rails from
+*detectable-in-principle* into *detected-in-practice* in an ordinary `usdchecker` run, and it is the
+mechanism that makes the coexist tradeoff (below) safe.
+
+> **The tradeoff we are making with eyes open.** Coexist deliberately gives up the "open the stage
+> and it just works" property *for a CRS-unaware consumer*: such a consumer sees a coordinate-neutral
+> scene and, without the resolver, places prims wrong. We accept this because the alternative is
+> worse. Baking *looks* like "just works," but its failure mode is **silent and unrecoverable** — the
+> CRS intent is already collapsed into a matrix, so a wrong or mismatched assumption cannot be
+> detected or undone. Coexist's failure mode is **loud and recoverable**: the `requires-CRS` marker
+> (G3) + the `usdchecker` validator let an unaware consumer *detect and refuse* rather than
+> mis-place, and the authored scene still carries the CRS intent a validator (or a later resolver)
+> can act on. Loud-and-recoverable over silent-and-unrecoverable is the whole trade.
 
 `src/test_illformed_assets.py` authors a deliberately **ill-formed asset** for each guard rail,
 shows the concrete failure against independent closed-form geodesy, then shows the **minimal
@@ -403,21 +428,29 @@ is held to the same oracle.
 
 ### Where the Python reference runtime sits (no exact precedent — by design)
 
-<!-- slide:text eyebrow="No exact precedent — by design" title="Where the Python reference runtime sits" body="It's the codeless schema's **executable specification / conformance oracle** — 'given this stage, where does each prim end up?' | NOT proposed for USD core, NOT a runtime dependency, NOT Python-in-the-render-loop, NOT the prescribed consumer. | Real consumers (Hydra, OpenExec, Omniverse, GPU cuProj) implement the same contract; the Python is the spec they conform to. | New part: a runnable reference as the normative behavior for a codeless schema whose behavior is deliberately external." -->
+<!-- slide:text eyebrow="No exact precedent — by design" title="Where the Python reference runtime sits" body="It's the codeless schema's **conformance oracle** — 'given this stage, where does each prim end up?' — pinned to closed-form geodesy, that compliant implementations should match. | NOT the specification: the normative behavior belongs in **prose** (proposed into the Esri proposal); the Python is the oracle that expresses it, not the source of truth. | NOT proposed for USD core, NOT a runtime dependency, NOT Python-in-the-render-loop, NOT the prescribed consumer. | Precedent: AOUSD's core-spec-supplemental — Python sample impls + a compliance framework, spec normative and impl illustrative — is exactly this shape." -->
 
 Because the schema is **codeless**, the resolution behavior must live *somewhere* outside the
-schema, and `resolve_runtime.py` is that behavior written down once in the most readable form: a
-pure-Python, dependency-light **executable specification / conformance oracle** for "given this
-authored stage, where does each prim end up?" It is **not** proposed for USD core, **not** a runtime
+schema. That behavior is **normative as prose** (what we propose to write into the Esri proposal);
+`resolve_runtime.py` is that same contract written down once in the most readable *runnable* form:
+a pure-Python, dependency-light **conformance oracle** — pinned to closed-form geodesy — for "given
+this authored stage, where does each prim end up?" It is a *conformance oracle, not the
+specification*: compliant implementations should **match its output**, but the source of truth is
+the prose contract, not the Python. (Note this is separable from codelessness — a *typed* schema
+would need the same behavior contract; codeless just makes it unavoidable to state one.) It is
+**not** proposed for USD core, **not** a runtime
 dependency, **not** Python-in-the-render-loop, and **not** the prescribed way to consume the schema.
 A real consumer (Hydra scene index, OpenExec, an Omniverse / native runtime, a GPU cuProj path)
-implements the same contract in its own setting — the Python is the *spec they conform to*.
+implements the same contract in its own setting — the Python is the *oracle they conform to*.
 
-There isn't a clean precedent for this exact artifact. OpenUSD already ships reference/example code
-in Python under `extras/usd/examples/` (`usdSchemaExamples`, `usdResolverExample`, …); what's
-genuinely new is using such a module as the **normative behavior reference for a codeless schema
-whose behavior is deliberately external** — the spec is *executable* rather than prose. That
-placement is a deliberate design choice, and one we'd specifically like the working group's read on.
+There isn't a clean precedent for this exact artifact *in the OpenUSD repo* — but there is one right
+next door. OpenUSD already ships reference/example code
+in Python under `extras/usd/examples/` (`usdSchemaExamples`, `usdResolverExample`, …); and **AOUSD's
+`core-spec-supplemental`** is precisely this shape — Python sample implementations plus a compliance
+framework, with the **spec normative and the implementation illustrative**. We follow that model:
+a runnable **conformance oracle** for a codeless schema whose behavior is deliberately external, with
+the normative statement living in prose. That placement is a deliberate design choice, and one we'd
+specifically like the working group's read on.
 
 ### Tests — all green, all with teeth
 
@@ -489,8 +522,11 @@ which neutral reproduces it to 0.0 mm, hand-TRS edits survive, and neutral resol
 ~1.8 ms/prim; the compiled Hydra scene-index form with auto-insert into usdview; and the
 projection-engine seam.
 
-**Out of scope here (need other resources):** a codeless `usdchecker`-discoverable validator plugin
-(`verify.py` is the runnable validator today); a draped raster / terrain basemap for the coherence
+**Committed near-term (not in this drop, but next):** the codeless `usdchecker`-discoverable
+validator plugin (`verify.py` is the runnable validator today) — it is what makes the coexist
+tradeoff safe in practice, so we are treating it as a deliverable rather than a maybe.
+
+**Out of scope here (need other resources):** a draped raster / terrain basemap for the coherence
 figure (`cartopy` + a DEM asset); an end-to-end grid-*applied* transform (GDAL + a bundled PROJ
 grid); an OpenExec / GPU-cuProj *third* runtime.
 
@@ -510,7 +546,7 @@ read on:
    standardize?"**
 
 <!-- slide:section title="What we need from you" subtitle="Concrete asks so the next iteration is grounded in your workflows, not our guesses." -->
-<!-- slide:text eyebrow="Asks" title="What we need from you" body="1. The Redlands BIM prototype scene + its validation script, so we can add a second real, contributor-authored case beside the multi-CRS POC. | 2. Confirmation / correction of the driving workflows: which of AECO site placement, multi-source GIS twins, multi-zone infrastructure, and geodetic sim must 'coexist' survive first? | 3. A read on the guard-rail set as a conformance surface (anchor-vs-child, compose-in-CRS-frame, a 'requires-CRS' stage marker + detect-and-refuse) and appetite for a codeless validator plugin. | 4. Where the reference runtime should live, and whether to lift the 'resetXformStack' *semantic* out of the authored-layer text into a documented behavior contract multiple runtimes honor." -->
+<!-- slide:text eyebrow="Asks" title="What we need from you" body="1. The Redlands BIM prototype scene + its validation script, so we can add a second real, contributor-authored case beside the multi-CRS POC. | 2. Confirmation / correction of the driving workflows: which of AECO site placement, multi-source GIS twins, multi-zone infrastructure, and geodetic sim must 'coexist' survive first? | 3. A read on the guard-rail set as a conformance surface (anchor-vs-child, compose-in-CRS-frame, a 'requires-CRS' stage marker + detect-and-refuse) — which we intend to enforce via a committed codeless `usdchecker` validator plugin. | 4. Where the reference runtime should live, and whether to lift the 'resetXformStack' *semantic* out of the authored-layer text into a documented behavior contract multiple runtimes honor." -->
 
 **What we'd ask of Esri and co-collaborators**, to make the next iteration concrete:
 
@@ -521,8 +557,9 @@ read on:
    and what edit/authoring workflows (hand-placement, relocation, moving anchors, dynamic datums)
    should we be exercising?
 3. **A read on the guard-rail set as a conformance surface** (anchor-vs-child, compose-in-CRS-frame,
-   requires-CRS marker + detect-and-refuse) plus appetite for a codeless `usdchecker`-discoverable
-   validator plugin.
+   requires-CRS marker + detect-and-refuse). We intend to ship a codeless `usdchecker`-discoverable
+   validator plugin as the enforcement mechanism — a read on the guard-rail set *as the thing that
+   plugin should check* is what we most want.
 4. **Where the reference runtime should live**, and whether to jointly **lift the `resetXformStack`
    *semantic* out of the authored-layer text** into a documented behavior contract multiple runtimes
    honor. To be precise: we are *not* rejecting `resetXformStack` as a semantic — both runtimes here
