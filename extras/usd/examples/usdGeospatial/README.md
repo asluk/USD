@@ -426,6 +426,14 @@ The takeaway is the schema claim itself: **the schema is the contract; the behav
 third runtime (OpenExec, a GPU / cuProj engine, an Omniverse runtime) plugs into the same seam and
 is held to the same oracle.
 
+<!-- slide:text eyebrow="Reproducible · cross-platform" title="The second runtime builds like any USD example" body="`build_usd.py --usdGeospatial` fetches and builds PROJ, then the C++ Hydra plugin, behind one opt-in flag — the `hdParticleField` pattern, no bespoke setup. | Parity is a `ctest` (`testUsdGeospatialParity`): CRS engine + stage resolver + Hydra scene index + stage-free auto-insert, all 0.0 mm. | Validated on Linux **and** Windows — the contract builds twice, the same way, on two platforms." -->
+
+And it builds like any other OpenUSD example: `build_usd.py --usdGeospatial --examples` fetches and
+builds PROJ and the C++ Hydra plugin behind one opt-in flag — the same shape as `hdParticleField`,
+on Linux and Windows alike — and `ctest -R testUsdGeospatialParity` runs the whole parity proof
+(CRS engine, stage resolver, Hydra scene index, and the stage-free auto-insert path). The second
+runtime isn't a Linux-only lab artifact; it's a normal, opt-in part of the build.
+
 ### Where the Python reference runtime sits (no exact precedent — by design)
 
 <!-- slide:text eyebrow="No exact precedent — by design" title="Where the Python reference runtime sits" body="It's the codeless schema's **conformance oracle** — 'given this stage, where does each prim end up?' — pinned to closed-form geodesy, that compliant implementations should match. | NOT the specification: the normative behavior belongs in **prose** (proposed into the Esri proposal); the Python is the oracle that expresses it, not the source of truth. | NOT proposed for USD core, NOT a runtime dependency, NOT Python-in-the-render-loop, NOT the prescribed consumer. | Precedent: AOUSD's core-spec-supplemental — Python sample impls + a compliance framework, spec normative and impl illustrative — is exactly this shape." -->
@@ -474,17 +482,18 @@ Every test is openable and runnable; each has a real negative control or an inde
   neutral scene has zero xformOps).
 - `render_figures.py` — the coherence figure self-asserts sub-mm co-registration; `fig_runtime_parity`
   fails the build if Python-vs-Hydra disagreement exceeds 1 mm.
-- `../usdGeospatialSceneIndex/run_parity.sh` — the compiled C++ scene index: CRS engine 9/9, stage
-  resolver 30/30, Hydra SI via `HdXformSchema` 30/30 — all 0.0 mm; negative control: stock Hydra
-  puts georef prims at the origin. `testHydraAutoParity` adds the stage-free auto-insert path (30/30).
+- `ctest -R testUsdGeospatialParity` (cross-platform; also `run_parity.sh`) — the compiled C++ scene
+  index: CRS engine 9/9, stage resolver 30/30, Hydra SI via `HdXformSchema` 30/30 — all 0.0 mm;
+  negative control: stock Hydra puts georef prims at the origin. `testHydraAutoParity` adds the
+  stage-free auto-insert path (30/30).
 - `pxr/usd/usdGeospatial/regen-schema.sh --check` — schema resources are in sync.
 
 ### Running — two paths
 
-**The codeless Python path (no external renderer):**
+**The codeless Python path (no external renderer)** — any Python with `pxr` (a usd-core wheel or a
+USD build) plus `pyproj`, `numpy`, `matplotlib`:
 
 ```bash
-source <repo>/.venv/bin/activate        # usd-core 26.5, pyproj 3.7.1 (PROJ 9.5.1)
 cd extras/usd/examples/usdGeospatial
 python3 src/reencode_georef.py --stride 40 --out out/earth2_georef.usda
 python3 src/verify.py out/earth2_georef.usda
@@ -496,17 +505,21 @@ python3 src/render_figures.py           # regenerate the Python-reference figure
 ```
 
 `render_figures.py` regenerates the nine Python-reference figures; it also produces
-`multi_runtime.png` / `runtime_parity.png` **if** the compiled C++ Hydra binary is already built,
-otherwise it skips those two with a clear note.
+`multi_runtime.png` / `runtime_parity.png` if the compiled C++ Hydra binary is available (built as
+below), otherwise it skips those two with a clear note.
 
-**The full two-runtime parity proof (needs a prebuilt USD):**
+**The full two-runtime parity proof — an opt-in, cross-platform build.** The C++ Hydra scene index
+builds like any other OpenUSD example: one flag makes `build_usd.py` fetch and build PROJ, then the
+plugin and its parity tests. Validated on Linux and Windows.
 
 ```bash
-USD_INST=/path/to/usd/inst ../usdGeospatialSceneIndex/run_parity.sh
+python build_scripts/build_usd.py --usdGeospatial --examples --tests <inst>   # builds PROJ + plugin + tests
+ctest --test-dir <build> -R testUsdGeospatialParity                            # engine + resolver + Hydra SI + auto-insert, 0.0 mm
 ```
 
-See `../usdGeospatialSceneIndex/README.md` for the full build environment, and the same directory's
-notes for reproducing the auto-insert usdview / usdrecord render.
+The plugin installs discoverable via `PXR_PLUGINPATH_NAME`; opening the georef scene in `usdview` /
+`usdrecord` then auto-resolves it. `run_parity.py` (invoked by that ctest) is also runnable
+standalone. See `../usdGeospatialSceneIndex/README.md` for details and the auto-insert render notes.
 
 ## Status, scope, and open questions
 

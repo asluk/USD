@@ -18,7 +18,7 @@ Inputs:
 
 Output: docs/runtime_parity.png
 """
-import os, sys, numpy as np, matplotlib.pyplot as plt
+import os, sys, tempfile, numpy as np, matplotlib.pyplot as plt
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -30,7 +30,10 @@ from pyproj import CRS
 ECEF = CRS.from_epsg(4978)
 
 STAGE = os.path.join(HERE, "out", "railway_georef.usda")
-HYDRA_TSV = "/tmp/hydra_railway_xforms.tsv"
+# Portable: honor GEO_HYDRA_TSV (set by render_figures.py), else the system temp
+# dir -- not a hardcoded /tmp (so this works on Windows/macOS too).
+HYDRA_TSV = os.environ.get(
+    "GEO_HYDRA_TSV", os.path.join(tempfile.gettempdir(), "hydra_railway_xforms.tsv"))
 OUT = os.path.join(HERE, "docs", "runtime_parity.png")
 TEXDIR = os.path.join(HERE, "data", "thirdparty")
 

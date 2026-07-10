@@ -666,17 +666,25 @@ def fig_runtime_parity(out, stage_path="out/railway_georef.usda"):
     plugin lives in ../usdGeospatialSceneIndex/)."""
     here = os.path.dirname(os.path.abspath(__file__))
     repo_dir = os.path.abspath(os.path.join(here, ".."))
-    tsv = "/tmp/hydra_railway_xforms.tsv"
-    dumper = "/tmp/dumpHydraXforms"
+    import tempfile, shutil
+    # Portable locations (no hardcoded /tmp): GEO_HYDRA_TSV / GEO_HYDRA_DUMPER
+    # override; otherwise the system temp dir + PATH lookup. dumpHydraXforms is
+    # built with the example (installed under <inst>/tests).
+    tsv = os.environ.get("GEO_HYDRA_TSV",
+                         os.path.join(tempfile.gettempdir(), "hydra_railway_xforms.tsv"))
+    os.environ["GEO_HYDRA_TSV"] = tsv  # fig_runtime_parity.py reads the same file
+    _exe = "dumpHydraXforms" + (".exe" if os.name == "nt" else "")
+    dumper = (os.environ.get("GEO_HYDRA_DUMPER") or shutil.which("dumpHydraXforms")
+              or os.path.join(tempfile.gettempdir(), _exe))
     needs = (not os.path.exists(tsv)) or \
             (os.path.getmtime(tsv) < os.path.getmtime(os.path.join(repo_dir, stage_path)))
     if needs and os.path.exists(dumper):
-        print("[B] re-running Hydra xform dumper -> /tmp/hydra_railway_xforms.tsv")
+        print(f"[B] re-running Hydra xform dumper -> {tsv}")
         env = dict(os.environ)
         env["PXR_PLUGINPATH_NAME"] = (os.path.abspath(os.path.join(
             repo_dir, "..", "..", "..", "..", "pxr", "usd", "usdGeospatial",
-            "resources")) + ":" + env.get("PXR_PLUGINPATH_NAME", ""))
-        env.setdefault("PROJ_DATA", "/usr/share/proj")
+            "resources")) + os.pathsep + env.get("PXR_PLUGINPATH_NAME", ""))
+        # PROJ_DATA is left to the environment (portable); no /usr/share/proj.
         import subprocess
         with open(tsv, "w") as f:
             r = subprocess.run([dumper, os.path.join(repo_dir, stage_path)],

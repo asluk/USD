@@ -7,7 +7,10 @@
 #
 # Usage: probe_autoinsert.py <stage.usda> <primPath>
 import sys
-from pxr import Usd, UsdImagingGL, Gf, Sdf, Hd, HdGp  # noqa
+# NOTE: only Usd/UsdImagingGL/Gf/Sdf are needed here. (Earlier revisions also
+# imported Hd/HdGp, which are not wrapped for Python in every USD build and would
+# raise ImportError before this probe could run.)
+from pxr import Usd, UsdImagingGL, Gf, Sdf  # noqa
 
 def main():
     stagePath, primPath = sys.argv[1], sys.argv[2]

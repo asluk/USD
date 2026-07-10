@@ -69,14 +69,18 @@ the scene index is doing real work; the 0.0 mm is not vacuous.
 The Python suite / closed-form geodesy is the **oracle**; the C++ must agree.
 
 ## Building
-- **In-tree** (canonical): drop into an OpenUSD source build with `--examples`
-  and ensure PROJ is found; `CMakeLists.txt` uses the `pxr_plugin` macro exactly
-  like `hdParticleField`.
-- **Out-of-tree / parity** (de-risked path used here): `USD_INST=<inst>
-  ./build_standalone.sh` builds the three parity tests against an installed USD
-  + system `libproj`. Then `./run_parity.sh`.
+- **Opt-in via `build_usd.py`** (canonical, cross-platform): one flag builds it like any
+  OpenUSD example. `build_usd.py --usdGeospatial --examples --tests <inst>` fetches and builds
+  PROJ (and its SQLite3 dependency), then this plugin and its parity tests — no manually
+  installed PROJ. `CMakeLists.txt` uses the `pxr_plugin` macro exactly like `hdParticleField`
+  and links `PROJ::proj`, found by `find_package(PROJ)` under `-DPXR_ENABLE_GEOSPATIAL_SUPPORT=ON`.
+- **Run the parity proof:** `ctest -R testUsdGeospatialParity` — the CRS engine, stage resolver,
+  Hydra scene index, and the stage-free auto-insert path, all 0.0 mm. `run_parity.py` is the same
+  proof runnable standalone (`USD_INST=<inst> GEO_TEST_BIN=<inst>/tests python run_parity.py`).
+- `build_standalone.sh` / `run_parity.sh` remain as thin Linux shell drivers.
 
 ## Environment
-- Built + verified against the from-source OpenUSD dev build (USD 0.26.8) at
-  `/tmp/usd-build/inst`; PROJ 8.2.1 (`libproj-dev`); schema registry via
-  `PXR_PLUGINPATH_NAME=<repo>/pxr/usd/usdGeospatial/resources`.
+- Built + verified against a from-source OpenUSD build (USD 0.26.8) with **PROJ 9.4.1** built by
+  `build_usd.py`; validated on Linux and Windows (MSVC). Schema registry via
+  `PXR_PLUGINPATH_NAME=<repo>/pxr/usd/usdGeospatial/resources` plus the built plugin's own
+  `resources` dir (added automatically by the ctest / `run_parity.py`); `PROJ_DATA=<inst>/share/proj`.

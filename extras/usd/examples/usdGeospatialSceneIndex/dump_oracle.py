@@ -90,6 +90,16 @@ def main():
     rail = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                         "..", "usdGeospatial", "out", "railway_georef.usda")
     rail = os.path.abspath(rail)
+    # Auto-convert the committed real railway asset if it hasn't been built yet,
+    # so the oracle always carries the inject-don't-bake / orientation rows (the
+    # 30-row parity set: 9 points + 16 rail samples + 5 anchor frames).
+    if not os.path.exists(rail):
+        deutschebahn = os.path.abspath(os.path.join(
+            os.path.dirname(rail), "..", "data", "thirdparty", "deutschebahn-rails.usda"))
+        if os.path.exists(deutschebahn):
+            import convert_omni_geospatial as cog
+            os.makedirs(os.path.dirname(rail), exist_ok=True)
+            cog.convert(deutschebahn, rail)
     if os.path.exists(rail):
         stage = Usd.Stage.Open(rail)
         cache={}

@@ -102,7 +102,7 @@ MARKER = re.compile(r'<!--\s*slide:(\w+)\s*(.*?)-->')
 
 
 def build_slides():
-    lines = open(README).read().splitlines()
+    lines = open(README, encoding="utf-8").read().splitlines()
     marks = [(i, m.group(1), parse_attrs(m.group(2)))
              for i, ln in enumerate(lines) for m in [MARKER.search(ln)] if m]
     slides = []
@@ -240,7 +240,7 @@ def main():
     slides = build_slides()
     doc = (f"<!doctype html><html><head><meta charset='utf-8'><style>{CSS}</style></head>"
            f"<body>{render(slides)}</body></html>")
-    with open(OUT, "w") as f:
+    with open(OUT, "w", encoding="utf-8") as f:
         f.write(doc)
     print(f"wrote {OUT} ({len(slides)} slides, {len(doc)//1024}KB)")
     print("order:", " ".join(s[0].lower() for s in slides))
