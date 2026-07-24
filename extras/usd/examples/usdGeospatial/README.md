@@ -76,12 +76,12 @@ changes**. Data we did not author, in a schema we did not design.
 Building, authored three independent ways — geographic (EPSG:4979), UTM 18N (EPSG:32618), and
 NY State Plane (EPSG:32118) — each from independent **NOAA NCAT** coordinates (not by inverting one
 transform) — all resolve through the schema to the **same ECEF point**, matching closed-form WGS84
-geodesy to **≤ ~0.5 mm** (the residual is real conformal-projection grid noise). The negative
+geodesy to **worst ~0.54 mm** (the residual is real conformal-projection grid noise). The negative
 control (resolve while *ignoring* `crs:binding`) collapses ~6,400 km off the globe. An axis-order or
 geodesy bug has nowhere to hide, because the reference side makes no `always_xy` assumption to
 cancel against.
 
-<!-- slide:image src="docs/coherence.png" eyebrow="Proof · co-registration" title="Three CRSs, one ECEF point" caption="The same monument authored three ways (geographic / UTM 18N / NY State Plane) from independent NOAA NCAT coordinates co-registers to one ECEF point to ≤ ~0.5 mm — vs closed-form WGS84 geodesy, not a parallel PROJ call. Red blob = negative control (bindings ignored)." -->
+<!-- slide:image src="docs/coherence.png" eyebrow="Proof · co-registration" title="Three CRSs, one ECEF point" caption="The same monument authored three ways (geographic / UTM 18N / NY State Plane) from independent NOAA NCAT coordinates co-registers to one ECEF point to worst ~0.54 mm — vs closed-form WGS84 geodesy, not a parallel PROJ call. Red blob = negative control (bindings ignored)." -->
 
 ![coherence](docs/coherence.png)
 
@@ -110,8 +110,9 @@ to the same world. `../usdGeospatialSceneIndex/run_parity.sh` reports:
   these georef prims at the origin.
 
 Visual parity on the real railway: across **3,526 rail vertices** + tile corners the two runtimes
-agree to **median 0.40 mm, worst 0.68 mm**; `fig_runtime_parity.py` self-asserts this and **fails
-the build if disagreement exceeds 1 mm**.
+agree to **median 0.40 mm, worst 0.68 mm**; the `testUsdGeospatialRuntimeParity` ctest converts the
+railway asset, dumps the compiled scene index's Hydra xforms, and **fails the build if the
+per-vertex disagreement exceeds 1 mm** (`fig_runtime_parity.py --check`).
 
 <!-- slide:image src="docs/multi_runtime.png" eyebrow="Proof · contract not implementation" title="Two independent runtimes, 0.0 mm" caption="Robustness / first conformance pass (correctness is Proof 2 vs NCAT + closed-form geodesy): the Python reference runtime and the compiled C++ Hydra scene index resolve the same authored stage to the same world, agreeing to 0.0 mm — the data contract is unambiguous enough to build twice the same way. A third runtime plugs into the same seam." -->
 
@@ -420,7 +421,7 @@ stage and must land on the same world. The two ship together and share *nothing*
   PROJ-linked C engine (`GeoCrsEngine`). Different language, pipeline layer, and engine binding; it
   auto-inserts into usdview (§[The proofs](#the-proofs)).
 
-<!-- slide:image src="docs/runtime_parity.png" eyebrow="Proof · sub-mm parity" title="Same stage, two runtimes, quantified" caption="Matplotlib plot: Python vs Hydra transforms on the same authored railway stage — 3,526 rail vertices + tile corners agree to median 0.40 mm, worst 0.68 mm. fig_runtime_parity.py fails the build if disagreement exceeds 1 mm." -->
+<!-- slide:image src="docs/runtime_parity.png" eyebrow="Proof · sub-mm parity" title="Same stage, two runtimes, quantified" caption="Matplotlib plot: Python vs Hydra transforms on the same authored railway stage — 3,526 rail vertices + tile corners agree to median 0.40 mm, worst 0.68 mm. The testUsdGeospatialRuntimeParity ctest fails the build if disagreement exceeds 1 mm." -->
 
 The takeaway is the schema claim itself: **the schema is the contract; the behavior is plural.** A
 third runtime (OpenExec, a GPU / cuProj engine, an Omniverse runtime) plugs into the same seam and
@@ -480,28 +481,41 @@ Every test is openable and runnable; each has a real negative control or an inde
 - `generalization_suite.py` — 7 diverse datasets (incl. the real NVIDIA railway), all sub-mm.
 - `testenv_equivalence.py` — design equivalence vs the baked-`resetXformStack` scene (0.0 mm,
   neutral scene has zero xformOps).
-- `render_figures.py` — the coherence figure self-asserts sub-mm co-registration; `fig_runtime_parity`
-  fails the build if Python-vs-Hydra disagreement exceeds 1 mm.
+- `render_figures.py` — the coherence figure self-asserts sub-mm co-registration.
 - `ctest -R testUsdGeospatialParity` (cross-platform; also `run_parity.sh`) — the compiled C++ scene
   index: CRS engine 9/9, stage resolver 30/30, Hydra SI via `HdXformSchema` 30/30 — all 0.0 mm;
   negative control: stock Hydra puts georef prims at the origin. `testHydraAutoParity` adds the
   stage-free auto-insert path (30/30).
+- `ctest -R testUsdGeospatialRuntimeParity` — the railway two-runtime gate: converts the real
+  railway asset, dumps the compiled scene index's Hydra xforms, and runs `fig_runtime_parity.py
+  --check`, which fails the build if the Python-vs-Hydra per-vertex disagreement exceeds 1 mm
+  (measured: median 0.40 mm, worst 0.68 mm across 3,526 rail verts).
 - `pxr/usd/usdGeospatial/regen-schema.sh --check` — schema resources are in sync.
 
 ### Running — two paths
 
 **The codeless Python path (no external renderer)** — any Python with `pxr` (a usd-core wheel or a
-USD build) plus `pyproj`, `numpy`, `matplotlib`:
+USD build) plus the base packages in `requirements.txt` (`pyproj`, `numpy`, `matplotlib`, `Pillow`).
+These scripts are self-contained — they carry their own committed data and self-assert:
 
 ```bash
 cd extras/usd/examples/usdGeospatial
-python3 src/reencode_georef.py --stride 40 --out out/earth2_georef.usda
-python3 src/verify.py out/earth2_georef.usda
+pip install -r requirements.txt         # base deps (+ xarray/netCDF4 for the optional Earth-2 step)
 python3 src/testenv_equivalence.py
 python3 src/test_anchor_injection.py    # georef anchor + Cartesian subtree (inject-don't-bake)
 python3 src/generalization_suite.py     # 7 diverse datasets vs closed-form geodesy (no overfit)
 python3 src/fig_multicrs_positions.py   # anti-overfit figure: 5 CRS families resolve to distinct ECEF (one code path)
-python3 src/render_figures.py           # regenerate the Python-reference figures into docs/
+```
+
+*Optional — the Earth-2 GFS example + figure regeneration.* `reencode_georef.py` additionally needs
+`xarray` + `netCDF4` (also in `requirements.txt`) and a GFS NetCDF input (`data/gfs_t2m.nc`, **not
+committed** — bring your own GFS `t2m` grid, or synthesize one). It produces the
+`out/earth2_georef.usda` stage that `verify.py` and `render_figures.py` consume:
+
+```bash
+python3 src/reencode_georef.py --stride 40 --out out/earth2_georef.usda   # needs xarray + netCDF4 + a GFS .nc
+python3 src/verify.py out/earth2_georef.usda                              # CI oracle on the reencoded stage
+python3 src/render_figures.py                                            # regenerate the Python-reference figures into docs/
 ```
 
 `render_figures.py` regenerates the nine Python-reference figures; it also produces
@@ -514,7 +528,8 @@ plugin and its parity tests. Validated on Linux and Windows.
 
 ```bash
 python build_scripts/build_usd.py --usdGeospatial --examples --tests <inst>   # builds PROJ + plugin + tests
-ctest --test-dir <build> -R testUsdGeospatialParity                            # engine + resolver + Hydra SI + auto-insert, 0.0 mm
+ctest --test-dir <build> -R testUsdGeospatial                                 # parity (engine+resolver+Hydra SI+auto-insert, 0.0 mm)
+                                                                              # + runtime parity (railway two-runtime gate, <1 mm)
 ```
 
 The plugin installs discoverable via `PXR_PLUGINPATH_NAME`; opening the georef scene in `usdview` /

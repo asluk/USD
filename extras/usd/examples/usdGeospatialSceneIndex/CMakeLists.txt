@@ -135,4 +135,20 @@ if (PXR_BUILD_TESTS)
             GEO_SRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
         EXPECTED_RETURN_CODE 0
     )
+
+    # The VISUAL two-runtime parity gate on the REAL railway stage: convert the
+    # shipped asset, dump the compiled Hydra scene index's xforms, and self-assert
+    # the Python-reference-vs-Hydra per-vertex disagreement stays sub-mm (fails the
+    # build if it exceeds GEO_TOL_MM). Reuses the dumpHydraXforms exe built above.
+    pxr_test_scripts(run_runtime_parity.py)
+    pxr_register_test(testUsdGeospatialRuntimeParity
+        PYTHON
+        COMMAND "${CMAKE_INSTALL_PREFIX}/tests/run_runtime_parity"
+        ENV
+            USD_INST=${CMAKE_INSTALL_PREFIX}
+            GEO_TEST_BIN=${CMAKE_INSTALL_PREFIX}/tests
+            GEO_SRC_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+            GEO_TOL_MM=1.0
+        EXPECTED_RETURN_CODE 0
+    )
 endif()

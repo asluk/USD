@@ -18,8 +18,14 @@ Inputs:
 
 Output: docs/runtime_parity.png
 """
-import os, sys, tempfile, numpy as np, matplotlib.pyplot as plt
-from PIL import Image
+import os, sys, tempfile, argparse
+import numpy as np
+try:                                    # matplotlib/PIL are only needed to DRAW the
+    import matplotlib.pyplot as plt     # figure; --check mode (the ctest parity gate)
+    from PIL import Image               # is numpy-only, so it runs on a headless box
+except Exception:                       # without a plotting stack installed.
+    plt = None
+    Image = None
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "src"))
@@ -29,12 +35,19 @@ from pxr import Usd, Gf
 from pyproj import CRS
 ECEF = CRS.from_epsg(4978)
 
-STAGE = os.path.join(HERE, "out", "railway_georef.usda")
+# STAGE/OUT/TOL honor an env override so the parity ctest driver
+# (../usdGeospatialSceneIndex/run_runtime_parity.py) can point at a scene it
+# generated in a work dir and a throwaway figure path -- without touching the
+# committed docs/ figure -- and set the gate threshold explicitly.
+STAGE = os.environ.get("GEO_RAILWAY_STAGE", os.path.join(HERE, "out", "railway_georef.usda"))
 # Portable: honor GEO_HYDRA_TSV (set by render_figures.py), else the system temp
 # dir -- not a hardcoded /tmp (so this works on Windows/macOS too).
 HYDRA_TSV = os.environ.get(
     "GEO_HYDRA_TSV", os.path.join(tempfile.gettempdir(), "hydra_railway_xforms.tsv"))
-OUT = os.path.join(HERE, "docs", "runtime_parity.png")
+OUT = os.environ.get("GEO_RUNTIME_PARITY_OUT", os.path.join(HERE, "docs", "runtime_parity.png"))
+# The gate: worst per-vertex Python-vs-Hydra disagreement must stay under this (mm).
+# Wired as ctest testUsdGeospatialRuntimeParity; the process exits non-zero above it.
+TOL_MM = float(os.environ.get("GEO_PARITY_TOL_MM", "1.0"))
 TEXDIR = os.path.join(HERE, "data", "thirdparty")
 
 
@@ -174,18 +187,14 @@ def draw_rails_on_tiles(ax, tiles, rails, title_top, title_sub):
     ax.grid(alpha=0.25, zorder=0)
 
 
-def main():
-    stage = Usd.Stage.Open(STAGE)
+def measure(stage, hydra):
+    """Per-vertex Python-vs-Hydra parity from the same authored stage. numpy-only
+    (no matplotlib/PIL) so the parity gate runs on a headless box."""
     cache = {}
 
     def py_xform(prim):
         M, _ = rr.anchor_frame(prim, ECEF, cache)
         return M
-
-    if not os.path.exists(HYDRA_TSV):
-        sys.exit(f"missing {HYDRA_TSV}; build & run dumpHydraXforms first "
-                 "(see ../usdGeospatialSceneIndex/run_parity.sh)")
-    hydra = load_hydra_xforms(HYDRA_TSV)
 
     def hy_xform(prim):
         return hydra.get(str(prim.GetPath()))
@@ -198,15 +207,12 @@ def main():
     print(f"  hydra : {len(tiles_hy)} tiles, {len(rails_hy)} rails")
 
     # per-vertex parity (ECEF, not the projected ENU)
-    per_rail_max_mm = []
     n = min(len(rw_py), len(rw_hy))
     all_d = []
     for a, b in zip(rw_py[:n], rw_hy[:n]):
         if a.shape != b.shape:
             continue
-        d = np.linalg.norm(a - b, axis=1) * 1e3  # mm
-        per_rail_max_mm.append(d.max() if d.size else 0.0)
-        all_d.append(d)
+        all_d.append(np.linalg.norm(a - b, axis=1) * 1e3)  # mm
     all_d = np.concatenate(all_d) if all_d else np.array([0.0])
     worst_mm = float(all_d.max())
     median_mm = float(np.median(all_d))
@@ -219,6 +225,20 @@ def main():
         d = np.linalg.norm(ta["corners"] - tb["corners"], axis=1) * 1e3
         if d.size:
             tile_max_mm = max(tile_max_mm, float(d.max()))
+
+    return dict(tiles_py=tiles_py, rails_py=rails_py, tiles_hy=tiles_hy, rails_hy=rails_hy,
+                all_d=all_d, worst_mm=worst_mm, median_mm=median_mm,
+                tile_max_mm=tile_max_mm, info=info)
+
+
+def _draw_figure(R):
+    """Render docs/runtime_parity.png (side-by-side runtimes + histogram) from a
+    measure() result. matplotlib/PIL are only reached here, never in --check mode."""
+    tiles_py, rails_py = R["tiles_py"], R["rails_py"]
+    tiles_hy, rails_hy = R["tiles_hy"], R["rails_hy"]
+    all_d = R["all_d"]
+    worst_mm, median_mm, tile_max_mm, info = (
+        R["worst_mm"], R["median_mm"], R["tile_max_mm"], R["info"])
 
     # ---------------- figure ----------------
     fig = plt.figure(figsize=(16.0, 9.6), constrained_layout=False)
@@ -266,10 +286,34 @@ def main():
 
     fig.savefig(OUT, dpi=150, facecolor="white")
     print(f"[fig_runtime_parity] -> {OUT}")
-    print(f"[fig_runtime_parity] worst per-vertex = {worst_mm:.4f} mm")
-    if worst_mm > 1.0:
-        sys.exit("PARITY FAIL (>1 mm)")
+
+
+def main(check_only=False):
+    if not os.path.exists(STAGE):
+        sys.exit(f"missing stage {STAGE}; generate the railway scene first "
+                 "(../usdGeospatialSceneIndex/run_runtime_parity.py does this)")
+    stage = Usd.Stage.Open(STAGE)
+    if not os.path.exists(HYDRA_TSV):
+        sys.exit(f"missing {HYDRA_TSV}; build & run dumpHydraXforms first "
+                 "(see ../usdGeospatialSceneIndex/run_parity.py)")
+    hydra = load_hydra_xforms(HYDRA_TSV)
+    R = measure(stage, hydra)
+    if not check_only:
+        if plt is None:
+            print("[fig_runtime_parity] matplotlib/PIL unavailable; skipping figure "
+                  "(the parity numbers above still gate)")
+        else:
+            _draw_figure(R)
+    print(f"[fig_runtime_parity] worst per-vertex = {R['worst_mm']:.4f} mm  (tol {TOL_MM:g} mm)")
+    if R["worst_mm"] > TOL_MM:
+        sys.exit(f"PARITY FAIL (>{TOL_MM:g} mm)")
 
 
 if __name__ == "__main__":
-    main()
+    ap = argparse.ArgumentParser(
+        description="Python-vs-Hydra runtime parity: figure (default) or gate (--check).")
+    ap.add_argument("--check", action="store_true",
+                    help="gate only: measure parity, exit non-zero if worst > tol; no figure "
+                         "(used by ctest testUsdGeospatialRuntimeParity).")
+    a = ap.parse_args()
+    main(check_only=a.check)
