@@ -528,9 +528,16 @@ plugin and its parity tests. Validated on Linux and Windows.
 
 ```bash
 python build_scripts/build_usd.py --usdGeospatial --examples --tests <inst>   # builds PROJ + plugin + tests
+python -m pip install pyproj numpy                                            # SAME interpreter build_usd.py used (see note)
 ctest --test-dir <build> -R testUsdGeospatial                                 # parity (engine+resolver+Hydra SI+auto-insert, 0.0 mm)
                                                                               # + runtime parity (railway two-runtime gate, <1 mm)
 ```
+
+The parity ctests check the compiled C++ runtime against the **Python reference runtime**, so they
+invoke Python (the interpreter `build_usd.py` built USD against) to generate the oracle and convert
+the railway asset. That interpreter needs `pyproj` + `numpy` — a subset of `requirements.txt`, and
+*not* matplotlib, since the gate runs numpy-only. Install them into that Python before `ctest`,
+otherwise the tests error at import (not a build failure — a missing test dependency).
 
 The plugin installs discoverable via `PXR_PLUGINPATH_NAME`; opening the georef scene in `usdview` /
 `usdrecord` then auto-resolves it. `run_parity.py` (invoked by that ctest) is also runnable
