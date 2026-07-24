@@ -16,7 +16,16 @@
 PXR_NAMESPACE_OPEN_SCOPE
  
 TF_DECLARE_WEAK_AND_REF_PTRS(HdsiBackPlateSceneIndex);
- 
+
+/// \class HdsiBackPlateSceneIndex
+///
+/// The back plate scene index converts back plate prims into mesh and material
+/// prims that align with the specifications outlined in:
+/// https://github.com/PixarAnimationStudios/OpenUSD-proposals/tree/main/proposals/back-plates
+/// 
+/// TODO: Add support for opacity, depth maps, color-grading, and animated
+/// materials.
+/// 
 class HdsiBackPlateSceneIndex :
     public HdSingleInputFilteringSceneIndexBase
 {
@@ -53,10 +62,9 @@ protected:
 
 private:
     void
-    _RemoveSubtree(
+    _RemoveBackPlateChildren(
         const SdfPath &primPath,
         SdfPathSet * const removedBackPlatePrims);
- 
     void
     _AddBackPlateChildren(
         const SdfPath &primPath,
@@ -72,11 +80,16 @@ private:
         const SdfPath &plateInstancePath,
         const TfToken &plateChildType) const;
     
-    using _ChildrenNames = std::unordered_set<TfToken,TfToken::HashFunctor>;
-    using _PathToDirectChildrenMap = std::map<SdfPath, _ChildrenNames>;
+    bool
+    _IsBackPlateInMap(
+        const SdfPath &platePath) const;
 
-    // Stores the direct descendents' names of each prim path
-    _PathToDirectChildrenMap _pathToDirectChildrenMap;
+    using _BackPlates = std::unordered_set<TfToken,TfToken::HashFunctor>;
+    using _CameraToBackPlatesMap = std::map<SdfPath, _BackPlates>;
+
+    // Maps the camera prim path to all the names of the back plate instances 
+    // associated with it. 
+    _CameraToBackPlatesMap _cameraToBackPlates;
 };
  
 PXR_NAMESPACE_CLOSE_SCOPE

@@ -58,7 +58,7 @@ TF_DEFINE_PRIVATE_TOKENS(
     (sRGB)
 
     // Color Space Transform Node Type, Inputs and Output
-    (TransformColor_2)
+    (UsdTransformColor)
     (ColorIn)
     (srcK0)
     (srcPhi)
@@ -534,12 +534,12 @@ _CreateColorTransformNode(
     prefix += sourceColorSpace.GetName().GetString() + "_";
     prefix += renderingColorSpace.GetName().GetString();
 
-    // Create a TransformColor_2 node
+    // Create a UsdTransformColor node
     const TfToken tNode(TfStringPrintf("%s_%s_%s",
         prefix.c_str(),
         interface->GetMaterialPrimPath().GetName().c_str(),
         paramName.GetText()));
-    interface->SetNodeType(tNode, _tokens->TransformColor_2);
+    interface->SetNodeType(tNode, _tokens->UsdTransformColor);
 
     // Source Color Space Inputs
     auto [srcK0, srcPhi] = sourceColorSpace.GetTransferFunctionParams();
@@ -555,7 +555,7 @@ _CreateColorTransformNode(
     const GfVec3f tRow2 = tMatrix.GetRow(1);
     const GfVec3f tRow3 = tMatrix.GetRow(2);
 
-    // Set variables on TransformColor_2 node
+    // Set variables on UsdTransformColor node
     interface->SetNodeParameterValue(tNode, _tokens->srcK0, VtValue(srcK0));
     interface->SetNodeParameterValue(tNode, _tokens->srcPhi, VtValue(srcPhi));
     interface->SetNodeParameterValue(tNode, _tokens->srcGamma, VtValue(srcGamma));
@@ -592,7 +592,7 @@ _GetSdrInputType(const TfToken& nodeType, const TfToken& inputName)
 // color space.
 // It uses GfColorSpace to convert authored color values from the source color
 // space to the rendering color space.
-// It adds a TransformColor_2 nodes (which is based on the same underlying
+// It adds a UsdTransformColor node (which is based on the same underlying
 // functions used in GfColorSpace) to translate color values that are coming
 // from textures - connections to a node with an asset input.
 static void

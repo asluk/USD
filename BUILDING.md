@@ -136,11 +136,10 @@ Support for Python can optionally be disabled by specifying the cmake flag
 
 By default, Python bindings are installed into the standard Python site-packages
 directory under `CMAKE_INSTALL_PREFIX`. This directory varies depending on the
-platform and version of Python used to build USD. Typical locations are:
+platform and version of Python used to build USD:
 
-- Linux/MacOS:
+- Linux / macOS:
   - `<prefix>/lib/pythonX.Y/site-packages`
-  - `<prefix>/lib64/pythonX.Y/site-packages`
 
 - Windows:
   - `<prefix>/Lib/site-packages`

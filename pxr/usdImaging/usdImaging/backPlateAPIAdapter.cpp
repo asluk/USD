@@ -42,17 +42,31 @@ UsdImagingBackPlateAPIAdapter::GetImagingSubprimData(
     TfToken plateVisibility = HdBackPlateSchemaTokens->solo;
     backPlate.GetPlateVisibilityAttr().Get(&plateVisibility);
 
+    HdDataSourceLocator plateLocator = 
+        HdCameraSchema::GetBackPlateLocator().Append(appliedInstanceName);
+
     HdContainerDataSourceHandle backPlateDs =
         HdBackPlateSchema::Builder()
             .SetScaleTweak(
                 UsdImagingDataSourceAttribute<GfVec2f>::New(
-                    backPlate.GetScaleTweakAttr(), stageGlobals)) 
+                    backPlate.GetScaleTweakAttr(), 
+                    stageGlobals, 
+                    prim.GetPath(),
+                    plateLocator.Append(HdBackPlateSchemaTokens->scaleTweak))) 
             .SetRotateXYZTweak(
                 UsdImagingDataSourceAttribute<GfVec3f>::New(
-                    backPlate.GetRotateXYZTweakAttr(), stageGlobals))
+                    backPlate.GetRotateXYZTweakAttr(), 
+                    stageGlobals,
+                    prim.GetPath(),
+                    plateLocator.Append(
+                        HdBackPlateSchemaTokens->rotateXYZTweak))) 
             .SetTranslateTweak(
                 UsdImagingDataSourceAttribute<GfVec3f>::New(
-                    backPlate.GetTranslateTweakAttr(), stageGlobals))
+                    backPlate.GetTranslateTweakAttr(),
+                    stageGlobals,
+                    prim.GetPath(),
+                    plateLocator.Append(
+                        HdBackPlateSchemaTokens->translateTweak))) 
             .SetImage(
                 UsdImagingDataSourceAttribute<SdfAssetPath>::New(
                     backPlate.GetImageAttr(), stageGlobals))
@@ -108,8 +122,8 @@ UsdImagingBackPlateAPIAdapter::InvalidateImagingSubprim(
 
     for (const TfToken &propertyName : properties) {
         if (TfStringStartsWith(propertyName.GetString(), prefix)) {
-            return HdDataSourceLocator(
-                HdBackPlateSchemaTokens->backPlate, appliedInstanceName);
+            return HdCameraSchema::GetBackPlateLocator()
+                .Append(appliedInstanceName);
         }
     }
     return HdDataSourceLocatorSet();

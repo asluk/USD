@@ -15,7 +15,7 @@ Our test machines have the following software versions installed.
 | -------------- | -------------------- | ---------------------------- | ------------------------------ |
 | OS             | AlmaLinux 9.5        | 15.4.1                       | Windows 11                     |
 | C++ Compiler   | gcc 11.5.0           | Apple clang 16.0.0 (Xcode 16)| Visual Studio 2022 17.14       |
-| CMake          | 3.26.5               | 3.26.5                       | 3.26.4                         |
+| CMake          | 3.30.4               | 3.27.9                       | 3.27.9                         |
 | Python         | 3.9.16               | 3.9.13                       | 3.9.13                         |
 | Intel TBB      | 2020.3               | 2020.3                       | 2020.3                         |
 | OneTBB         | 2021.9               | 2021.9                       | 2021.9                         |
@@ -30,7 +30,7 @@ Our test machines have the following software versions installed.
 | RenderMan      | 26.3, 27.0           | 26.3, 27.0                   | 26.3, 27.0                     |
 | Alembic        | 1.8.5                | 1.8.5                        | 1.8.5                          |
 | OpenEXR        | 3.1.13               | 3.1.13                       | 3.1.13                         |
-| MaterialX      | 1.39.4               | 1.39.4                       | 1.39.4                         |
+| MaterialX      | 1.39.5               | 1.39.5                       | 1.39.5                         |
 | Jinja2         | 3.1.2                |                              |                                |
 | Flex           | 2.5.39               |                              |                                |
 | Bison          | 2.4.1                |                              |                                |

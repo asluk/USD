@@ -63,15 +63,15 @@ TF_DEFINE_PRIVATE_TOKENS(_materialNodeParamsTokens,
 
 //////////////////////////// Helper Functions //////////////////////////////////
 static inline SdfPath
-_BuildPlatePrimPath(const SdfPath &primPath,
+_BuildBackPlatePrimPath(const SdfPath &cameraPrimPath,
                     const TfToken &instanceName,
                     const TfToken &childName)
 {
-    return primPath.AppendChild(instanceName).AppendChild(childName);
+    return cameraPrimPath.AppendChild(instanceName).AppendChild(childName);
 }
 
 static inline HdBackPlateSchema 
-_GetBackPlateSchema(TfToken const instanceName, 
+_GetBackPlateSchema(TfToken const &instanceName, 
                     HdContainerDataSourceHandle const &primDataSource) 
 {
     HdCameraSchema cam = HdCameraSchema::GetFromParent(primDataSource);
@@ -85,7 +85,7 @@ _GetDefaultTypedValue(const DataSourceHandle &dataSource,
                       HdSampledDataSource::Time const shutterOffset,
                       T* result) 
 {
-    if (!dataSource && !result) {
+    if (!dataSource || !result) {
         return false;
     }
     *result = dataSource->GetTypedValue(shutterOffset);
@@ -175,7 +175,7 @@ _ComputeLocalXform(HdContainerDataSourceHandle const &primDataSource,
         cam.GetFocusDistance(), shutterOffset, &focusDistance))
     {
         return GfMatrix4d(1.0);
-    };
+    }
     
     GfVec3d translate(0.0);
     GfVec3f rotate(0.0);
@@ -649,7 +649,7 @@ HdsiBackPlateSceneIndex::HdsiBackPlateSceneIndex(
 {
 }
 
-HdSceneIndexObserver::AddedPrimEntries
+static HdSceneIndexObserver::AddedPrimEntries
 _ToAddedPrimEntries(const SdfPathSet &paths)
 {
     HdSceneIndexObserver::AddedPrimEntries entries;
@@ -667,7 +667,7 @@ _ToAddedPrimEntries(const SdfPathSet &paths)
     return entries;
 }
 
-HdSceneIndexObserver::RemovedPrimEntries
+static HdSceneIndexObserver::RemovedPrimEntries
 _ToRemovedPrimEntries(const SdfPathSet &paths)
 {
     HdSceneIndexObserver::RemovedPrimEntries entries;
@@ -683,11 +683,11 @@ HdsiBackPlateSceneIndex::_GetMeshOrMaterialSiPrim(
     const SdfPath &plateInstancePath,
     const TfToken &plateChildType) const
 {
-    TfToken instanceName = plateInstancePath.GetElementToken();
+    const TfToken instanceName = plateInstancePath.GetElementToken();
 
-    SdfPath key = plateInstancePath.GetParentPath();
+    const SdfPath cameraPrimPath = plateInstancePath.GetParentPath();
     HdContainerDataSourceHandle cameraDs = 
-        _GetInputSceneIndex()->GetPrim(key).dataSource;
+        _GetInputSceneIndex()->GetPrim(cameraPrimPath).dataSource;
     if (plateChildType == _backPlatePrimsTokens->mesh) {
         return {HdPrimTypeTokens->mesh, _BuildMeshPrimDataSource(
             plateInstancePath, instanceName, cameraDs)};
@@ -699,6 +699,19 @@ HdsiBackPlateSceneIndex::_GetMeshOrMaterialSiPrim(
     return HdSceneIndexPrim();
 }
 
+bool
+HdsiBackPlateSceneIndex::_IsBackPlateInMap(const SdfPath &platePath) const {
+    const SdfPath cameraPath = platePath.GetParentPath();
+    const auto it = _cameraToBackPlates.find(cameraPath);
+    if (it != _cameraToBackPlates.end() && !it->second.empty()) {
+        const _BackPlates &backPlates = it->second;
+        const TfToken instanceName = platePath.GetElementToken();
+        const auto plateIt = backPlates.find(instanceName);
+        return plateIt != backPlates.end();
+    }
+    return false;
+}
+
 HdSceneIndexPrim
 HdsiBackPlateSceneIndex::GetPrim(const SdfPath &primPath) const
 {
@@ -707,11 +720,17 @@ HdsiBackPlateSceneIndex::GetPrim(const SdfPath &primPath) const
         return _GetInputSceneIndex()->GetPrim(primPath);
     }
 
-    SdfPath parentPath = primPath.GetParentPath();
-    const auto mapIt = _pathToDirectChildrenMap.find(parentPath);
-    if (mapIt != _pathToDirectChildrenMap.end() && !mapIt->second.empty()) {
+    // Check if we have back plate prim path and return an empty prim if so.
+    if (_IsBackPlateInMap(primPath)) {
+        return HdSceneIndexPrim({TfToken(),
+            HdRetainedContainerDataSource::New()});
+    }
+    
+    // Check if we have a back plate child prim path
+    const SdfPath platePath = primPath.GetParentPath();
+    if (_IsBackPlateInMap(platePath)) {
         HdSceneIndexPrim prim = 
-            _GetMeshOrMaterialSiPrim(parentPath, primPath.GetElementToken());
+            _GetMeshOrMaterialSiPrim(platePath, primPath.GetElementToken());
         if (prim) {
             return prim;
         }
@@ -725,24 +744,39 @@ HdsiBackPlateSceneIndex::GetChildPrimPaths(
 {
     TRACE_FUNCTION();
 
-    const auto mapIt = _pathToDirectChildrenMap.find(primPath);
-    if (mapIt != _pathToDirectChildrenMap.end() && !mapIt->second.empty()) {
-        SdfPathVector paths;
-        for (const TfToken &name : mapIt->second) {
-            paths.push_back(primPath.AppendElementToken(name));
+    // Case 1: The prim path is the camera prim's path. Return all back plate
+    // instances.
+    const auto it = _cameraToBackPlates.find(primPath);
+    if (it != _cameraToBackPlates.end()) {
+        SdfPathVector paths =
+            _GetInputSceneIndex()->GetChildPrimPaths(primPath);
+        for (const TfToken &name : it->second) {
+            paths.push_back(primPath.AppendChild(name));
         }
         return paths;
     }
+
+    // Case 2: The prim path is a back plate path. Return mesh and material
+    // children prims.
+    if (_IsBackPlateInMap(primPath)){
+        const SdfPath meshPath = 
+            primPath.AppendChild(_backPlatePrimsTokens->mesh);
+        const SdfPath materialPath = 
+            primPath.AppendChild(_backPlatePrimsTokens->material);
+        return {meshPath, materialPath};
+    }
+
+    // Case 3: Any other prim including back plate mesh/material prims
     return _GetInputSceneIndex()->GetChildPrimPaths(primPath);
 }
 
 void
 HdsiBackPlateSceneIndex::_AddBackPlateChildren(
-    const SdfPath &primPath,
+    const SdfPath &cameraPrimPath,
     SdfPathSet * const addedBackPlatePrims)
 {
     HdCameraSchema cameraSchema = HdCameraSchema::GetFromParent(
-        _GetInputSceneIndex()->GetPrim(primPath).dataSource);
+        _GetInputSceneIndex()->GetPrim(cameraPrimPath).dataSource);
     if (!cameraSchema) {
         return;
     }
@@ -750,28 +784,27 @@ HdsiBackPlateSceneIndex::_AddBackPlateChildren(
     HdBackPlateContainerSchema backPlatesSchema = cameraSchema.GetBackPlate();
     TfTokenVector names = backPlatesSchema.GetNames();
     
+    _BackPlates backPlates;
     for (const TfToken & name : names){
-        SdfPath meshPath = 
-            _BuildPlatePrimPath(primPath, name, _backPlatePrimsTokens->mesh);
-        SdfPath materialPath = _BuildPlatePrimPath(primPath, name, 
-            _backPlatePrimsTokens->material);
-
         if (addedBackPlatePrims) {
+            const SdfPath meshPath = _BuildBackPlatePrimPath(cameraPrimPath,
+                name,_backPlatePrimsTokens->mesh);
+            const SdfPath materialPath = _BuildBackPlatePrimPath(cameraPrimPath,
+                name, _backPlatePrimsTokens->material);
+            addedBackPlatePrims->insert(cameraPrimPath.AppendChild(name));
             addedBackPlatePrims->insert(meshPath);
             addedBackPlatePrims->insert(materialPath);
         }
-
-        _pathToDirectChildrenMap[primPath.AppendElementToken(name)].insert(
-            _backPlatePrimsTokens->mesh);
-        _pathToDirectChildrenMap[primPath.AppendElementToken(name)].insert(
-            _backPlatePrimsTokens->material);
-        _pathToDirectChildrenMap[primPath].insert(name);
+        backPlates.insert(name);
+    }
+    if (!backPlates.empty()) {
+        _cameraToBackPlates.emplace(cameraPrimPath, backPlates);
     }
 }
 
 void
 HdsiBackPlateSceneIndex::_DirtyBackPlateChildren(
-    const SdfPath &primPath,
+    const SdfPath &cameraPrimPath,
     HdSceneIndexObserver::DirtiedPrimEntries * const dirtiedBackPlatePrims)
 {
     if (!dirtiedBackPlatePrims) {
@@ -779,7 +812,7 @@ HdsiBackPlateSceneIndex::_DirtyBackPlateChildren(
     }
 
     HdCameraSchema cameraSchema = HdCameraSchema::GetFromParent(
-        _GetInputSceneIndex()->GetPrim(primPath).dataSource);
+        _GetInputSceneIndex()->GetPrim(cameraPrimPath).dataSource);
     if (!cameraSchema) {
         return;
     }
@@ -788,8 +821,8 @@ HdsiBackPlateSceneIndex::_DirtyBackPlateChildren(
     TfTokenVector names = backPlatesSchema.GetNames();
     
     for (const TfToken & name : names){
-        SdfPath meshPath = 
-            _BuildPlatePrimPath(primPath, name, _backPlatePrimsTokens->mesh);
+        const SdfPath meshPath = _BuildBackPlatePrimPath(cameraPrimPath, name,
+            _backPlatePrimsTokens->mesh);
         dirtiedBackPlatePrims->push_back({
             meshPath,
             HdDataSourceLocatorSet({
@@ -800,20 +833,20 @@ HdsiBackPlateSceneIndex::_DirtyBackPlateChildren(
 }
 
 void
-HdsiBackPlateSceneIndex::_RemoveSubtree(
+HdsiBackPlateSceneIndex::_RemoveBackPlateChildren(
     const SdfPath &primPath,
     SdfPathSet * const removedBackPlatePrims)
 {
-    auto it = _pathToDirectChildrenMap.find(primPath);
-    bool foundPrim = it != _pathToDirectChildrenMap.end();
-
-    while (it != _pathToDirectChildrenMap.end() && 
-           it->first.HasPrefix(primPath)) {
-        it = _pathToDirectChildrenMap.erase(it);
-    }
-
-    if (foundPrim && removedBackPlatePrims) {
-        removedBackPlatePrims->insert(primPath);
+    auto it = _cameraToBackPlates.lower_bound(primPath);
+    while (it != _cameraToBackPlates.end() && 
+            it->first.HasPrefix(primPath)) {
+        if (removedBackPlatePrims) {
+            for (const TfToken & name : it->second) {
+                removedBackPlatePrims->insert(
+                    it->first.AppendChild(name));
+            }
+        }
+        it = _cameraToBackPlates.erase(it);
     }
 }
 
@@ -830,7 +863,7 @@ HdsiBackPlateSceneIndex::_PrimsAdded(
     SdfPathSet removedBackPlatePrims;
 
     for (const HdSceneIndexObserver::AddedPrimEntry &entry : entries) {
-        _RemoveSubtree(
+        _RemoveBackPlateChildren(
             entry.primPath,
             isObserved ? &removedBackPlatePrims : nullptr);
         _AddBackPlateChildren(
@@ -860,13 +893,13 @@ HdsiBackPlateSceneIndex::_PrimsRemoved(
 {
     TRACE_FUNCTION();
 
-    if (!_pathToDirectChildrenMap.empty()) {
+    if (!_cameraToBackPlates.empty()) {
         for (const HdSceneIndexObserver::RemovedPrimEntry &entry : entries) {
-            _RemoveSubtree(entry.primPath, nullptr);
+            _RemoveBackPlateChildren(entry.primPath, nullptr);
         }
     }
 
-    if (! _IsObserved()) {
+    if (!_IsObserved()) {
         return;
     }
 
@@ -882,14 +915,14 @@ HdsiBackPlateSceneIndex::_PrimsDirtied(
 
     const bool isObserved = _IsObserved();
 
+    HdSceneIndexObserver::DirtiedPrimEntries dirtiedBackPlatePrims;
     SdfPathSet addedBackPlatePrims;
     SdfPathSet removedBackPlatePrims;
-    HdSceneIndexObserver::DirtiedPrimEntries dirtiedBackPlatePrims;
 
     for (const HdSceneIndexObserver::DirtiedPrimEntry &entry : entries) {
         if (entry.dirtyLocators.Intersects(
-                HdBackPlateSchema::GetDefaultLocator())) {
-            _RemoveSubtree(
+                HdCameraSchema::GetBackPlateLocator())) {
+            _RemoveBackPlateChildren(
                 entry.primPath,
                 isObserved ? &removedBackPlatePrims : nullptr);
             _AddBackPlateChildren(
@@ -897,10 +930,12 @@ HdsiBackPlateSceneIndex::_PrimsDirtied(
                 isObserved ? &addedBackPlatePrims : nullptr);
         }
         if (entry.dirtyLocators.Intersects(
-                HdCameraSchema::GetDefaultLocator())) {
+                HdCameraSchema::GetDefaultLocator()) ||
+            entry.dirtyLocators.Intersects(
+                HdXformSchema::GetDefaultLocator())) {
             _DirtyBackPlateChildren(
                 entry.primPath,
-                 isObserved ? &dirtiedBackPlatePrims : nullptr);
+                isObserved ? &dirtiedBackPlatePrims : nullptr);
         }
     }
 

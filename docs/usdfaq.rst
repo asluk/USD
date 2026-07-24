@@ -690,6 +690,66 @@ when assembled into an aggregate or scene), and the reality for Pixar is that we
 rarely instance single gprims, rather instancing entire models or parts of
 models.
 
+Why Am I Unable to Author Opinions on a Relocated Prim Path?
+############################################################
+
+If you are seeing warnings similar to the following when trying to author an 
+opinion, or create a new prim at a given path:
+
+.. code-block:: none
+   
+   Warning: In </A/Relocated/Prim/Path>: The layer @your-layer.usda@ has an 
+   invalid opinion at the relocation source path </Path/That/Gets/Relocated>, 
+   which will be ignored.
+
+This means you attempted to author an opinion on a prim path that was 
+**relocated**. Paths most often get relocated when a user moves or renames 
+a prim that is defined across a reference or other composition arc, so we must 
+add another composition arc called a "relocates" in the referencing layer to 
+instruct the composition engine to remap all the referenced scene description 
+on-the-fly.
+
+For example, the following layer has a referenced :sdfpath:`/Prim1/PrimB` that 
+is relocated to :sdfpath:`/Prim1/RelocatedPrim` in the layer. The attempt to 
+author an opinion for :sdfpath:`/Prim1/PrimB.attr1` will result in the 
+previously mentioned warning, and the attribute opinion will be ignored.
+
+.. code-block:: usda
+
+    #usda 1.0
+    (
+        relocates = {
+            </Prim1/PrimB> : </Prim1/RelocatedPrim>
+        }
+    )
+
+    def "Prim1" (
+        references = @/path/to/another-layer.usda@</Prim1>
+    ) 
+    {
+        def "PrimB"
+        {
+            # We can't have local opinions for /Prim1/PrimB because this has 
+            # been relocated in this LayerStack
+            bool attr1 = False
+        }
+    }
+
+When a prim is relocated, the original 'source' prim path is marked so that no 
+opinions can be authored at that path, or any path that has that path prefix. 
+This "marker" is sometimes referred to as a "tombstone". Tombstones are created 
+to ensure there's one, and only one location in the layer namespace that can 
+have opinions, to avoid ambiguity. Tombstones carry through any subsequent 
+reference operations, so any further references of a prim path that contains a 
+tombstone will continue to prohibit authoring at that tombstone path. For 
+example, in the previous example a prim that referenced :sdfpath:`/Prim1` would 
+still not be allowed to author an opinion at 
+:sdfpath:`/PrimC/PrimChild/ReferencingPrim/PrimB`.
+
+For more details and examples about relocates, see 
+:ref:`Relocates <usdglossary-relocates>`. For more details about using the
+namespace editor to move or rename prims, see :ref:`namespace_editing`.
+
 Build and Runtime Issues
 ========================
 

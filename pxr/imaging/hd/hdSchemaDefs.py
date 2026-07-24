@@ -1256,9 +1256,7 @@
                  be found at usdGeom/backPlateAPI.h''',
         SCHEMA_INCLUDES = [
             '{{LIBRARY_PATH}}/schemaTypeDefs'],
-        ADD_DEFAULT_LOCATOR = True,
         MEMBERS = [
-            ('ALL_MEMBERS', '', dict(ADD_LOCATOR = True)),
             ('scaleTweak', T_VEC2F, {}),
             ('rotateXYZTweak', T_VEC3F, {}),
             ('translateTweak', T_VEC3F, {}),
