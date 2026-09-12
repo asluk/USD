@@ -98,8 +98,9 @@ on a mesh whose vertices are small local offsets:
 
 **A real third-party asset, and the case that matters most.** The Deutsche Bahn
 railway, Apache-2.0, 1,476 track curves on three geospatial tile ground planes near
-Hamburg, around 10.2098, 53.4916. **The asset and its tile imagery are provided with
-this brief** — use that copy, and do not go looking for where it came from.
+Hamburg, around 10.2098, 53.4916. **The asset and its tile imagery sit
+beside this brief, in `railway/`** — use that copy, and do not go looking for where
+it came from.
 
 It is authored with `OmniWGS84ReferencePositionAPI` on a root anchor carrying
 `omni:geospatial:wgs84:reference:referencePosition`, and
