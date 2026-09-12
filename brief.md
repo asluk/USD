@@ -203,16 +203,29 @@ result than passing all of them.
    scenes do not catch. Where a claim is about one architecture — what it caches,
    when it invalidates — say which one it is about.
 
-   No figure may be hand-drawn or hand-placed. If it cannot be generated, it is
-   not evidence.
+   **A figure is generated from the data it is captioned with, or it is not a
+   figure.** No diagrams. An illustration of an architecture proves nothing and
+   must not be presented where a measurement belongs. The number in a caption is
+   the number computed from that figure's own inputs — not a better number from a
+   different scene.
+
+   **A figure whose inputs are missing fails the run.** It does not skip, warn, or
+   quietly leave the previous version in place. The figures most likely to be
+   unavailable are the ones that need both implementations built, which makes them
+   the ones that must never silently not happen.
 5. **A README that carries the story.** What this is, what it proves, how to run
    it. Do not re-argue the design — the proposal owns that, cite it. Cover design
    in one circumstance only: where the proposal left a gap you had to fill to run.
    Name the gap, say what you chose, mark it as owed back to the proposal. No
    marketing register.
-6. **A deck derived from the README**, via invisible HTML-comment slide markers in
-   the README that a script parses. The README stays the single source; the deck is
-   a curated projection of it, never a separate document.
+6. **A deck that is the figures.** One claim per slide. The figure is the slide;
+   a title and at most one sentence sit under it. If a slide has no figure, it has
+   no reason to exist, with the single exception of the gap list.
+
+   **Do not project the README into slides.** A deck generated from prose is
+   prose, and it is read rather than seen. Generate it from the same measurements
+   the figures come from, so a wrong number cannot survive in one and not the
+   other.
 7. **A PR body that is a guided tour of the code.** Minimal. One entry point, three
    or four stops each with a line on why it exists, the two or three places the
    code takes a position, which test backs which claim, and what is deferred. Not a
