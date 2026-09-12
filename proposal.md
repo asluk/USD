@@ -171,6 +171,13 @@ The supported types are:
 | 3D Geocentric (ECEF) | `GEODCRS` | X, Y, Z | ITRF2020 |
 | 3D Engineering / Local | `DERIVEDPROJCRS` | Local X, Y, Z | Site calibration grid |
 
+3D means a complete vertical reference, not an assumed one. A definition that
+names only a horizontal coordinate system does not become 3D by being authored
+on a prim whose translate has three components: the third number would carry no
+datum and no unit, and two readers would be free to take it as ellipsoidal or
+orthometric height. A runtime handed a 2D definition reports failure rather than
+supplying the missing half.
+
 For dynamic datums (time-dependent reference frames),
 WKT 2 supports the `COORDINATEMETADATA` wrapper
 with `FRAMEEPOCH` and `EPOCH` clauses
@@ -253,6 +260,12 @@ GEODCRS["Y-Up Local Tangent Plane at Eiffel Tower",
     AXIS["X", east], AXIS["Y", up], AXIS["Z", south],
     LENGTHUNIT["metre", 1]]
 ```
+
+These two examples show what WKT can express. Their Y-up and south-pointing
+axes sit outside the authoring convention in
+[What a resolved world transform is](#what-a-resolved-world-transform-is), which
+is canonical east-north-up with `upAxis = "Z"`; supporting them would mean
+specifying their complete axis mapping first.
 
 #### Derived CRS with affine site calibration
 
@@ -448,41 +461,48 @@ It is a `token` (not `string`) to enable efficient caching and comparison.
 
 ```usda
 def CoordinateReferenceSystem "WGS84_UTM11N" (
-    doc = "WGS 84 / UTM zone 11N (EPSG:32611)"
+    doc = "WGS 84 / UTM zone 11N (EPSG:32611) + EGM2008 height (EPSG:3855)"
 )
 {
-    uniform token crs:wkt = """PROJCRS["WGS 84 / UTM zone 11N",
-        BASEGEOGCRS["WGS 84",
-            DATUM["World Geodetic System 1984",
-                ELLIPSOID["WGS 84",6378137,298.257223563,
-                    LENGTHUNIT["metre",1.0]]],
-            PRIMEMERIDIAN["Greenwich",0,
-                ANGLEUNIT["degree",0.0174532925199433]],
-            ID["EPSG",4326]],
-        CONVERSION["UTM zone 11N",
-            METHOD["Transverse Mercator",
-                ID["EPSG",9807]],
-            PARAMETER["Latitude of natural origin",0,
-                ANGLEUNIT["degree",0.0174532925199433],
-                ID["EPSG",8801]],
-            PARAMETER["Longitude of natural origin",-117,
-                ANGLEUNIT["degree",0.0174532925199433],
-                ID["EPSG",8802]],
-            PARAMETER["Scale factor at natural origin",0.9996,
-                SCALEUNIT["unity",1.0],
-                ID["EPSG",8805]],
-            PARAMETER["False easting",500000,
-                LENGTHUNIT["metre",1.0],
-                ID["EPSG",8806]],
-            PARAMETER["False northing",0,
-                LENGTHUNIT["metre",1.0],
-                ID["EPSG",8807]]],
-        CS[Cartesian,2],
-            AXIS["(E)",east,ORDER[1],
-                LENGTHUNIT["metre",1.0]],
-            AXIS["(N)",north,ORDER[2],
-                LENGTHUNIT["metre",1.0]],
-        ID["EPSG",32611]]"""
+    uniform token crs:wkt = """COMPOUNDCRS["WGS 84 / UTM zone 11N + EGM2008 height",
+        PROJCRS["WGS 84 / UTM zone 11N",
+            BASEGEOGCRS["WGS 84",
+                DATUM["World Geodetic System 1984",
+                    ELLIPSOID["WGS 84",6378137,298.257223563,
+                        LENGTHUNIT["metre",1.0]]],
+                PRIMEMERIDIAN["Greenwich",0,
+                    ANGLEUNIT["degree",0.0174532925199433]],
+                ID["EPSG",4326]],
+            CONVERSION["UTM zone 11N",
+                METHOD["Transverse Mercator",
+                    ID["EPSG",9807]],
+                PARAMETER["Latitude of natural origin",0,
+                    ANGLEUNIT["degree",0.0174532925199433],
+                    ID["EPSG",8801]],
+                PARAMETER["Longitude of natural origin",-117,
+                    ANGLEUNIT["degree",0.0174532925199433],
+                    ID["EPSG",8802]],
+                PARAMETER["Scale factor at natural origin",0.9996,
+                    SCALEUNIT["unity",1.0],
+                    ID["EPSG",8805]],
+                PARAMETER["False easting",500000,
+                    LENGTHUNIT["metre",1.0],
+                    ID["EPSG",8806]],
+                PARAMETER["False northing",0,
+                    LENGTHUNIT["metre",1.0],
+                    ID["EPSG",8807]]],
+            CS[Cartesian,2],
+                AXIS["(E)",east,ORDER[1],
+                    LENGTHUNIT["metre",1.0]],
+                AXIS["(N)",north,ORDER[2],
+                    LENGTHUNIT["metre",1.0]],
+            ID["EPSG",32611]],
+        VERTCRS["EGM2008 height",
+            VDATUM["EGM2008 geoid"],
+            CS[vertical,1],
+                AXIS["gravity-related height (H)",up,
+                    LENGTHUNIT["metre",1.0]],
+            ID["EPSG",3855]]]"""
 }
 ```
 
@@ -502,8 +522,14 @@ public:
         VtValue const &defaultValue = VtValue(),
         bool writeSparsely = false) const;
 
-    /// Walk up the prim hierarchy from `prim` and return the WKT token
-    /// of the first ancestor (or self) with a valid crs:wkt attribute.
+    /// Return the WKT token of the CRS in effect on `prim`: walk the composed
+    /// prim and its ancestors to the nearest authored crs:binding
+    /// relationship, validate its composed target list, and read crs:wkt from
+    /// the single CoordinateReferenceSystem prim it targets. Geometry
+    /// ancestors are not searched for crs:wkt, and an invalid nearest binding
+    /// is an error rather than a reason to continue to a farther one. Binding
+    /// is read from composed prims, including opinions introduced by
+    /// references and inherits.
     static TfToken ComputeCoordinateReferenceSystem(UsdPrim const &prim);
 };
 ```
@@ -524,11 +550,16 @@ A single-apply API schema that binds a CRS to a `UsdGeomXformable` prim.
 A relationship rather than a reference. A reference would compose the CRS prim's
 contents into the bound prim, putting `crs:wkt` on geometry and copying the
 definition to every site that uses it; a relationship names the definition and
-leaves it in one place. It also composes as a single opinion, so a binding
-authored in a stronger layer replaces a weaker one instead of leaving residue.
+leaves it in one place.
 
-Exactly one target is expected. An empty target list and multiple targets are
-both authoring errors rather than an unbinding mechanism.
+Relationship targets compose as a list, not as a scalar. `Bind()` authors an
+explicit one-target list, and an explicit list in a stronger layer does replace
+what weaker layers contributed. An ordinary target addition does not: it
+composes with them, so a prim can end up carrying two targets without any single
+layer having authored two. Exactly one composed target is expected. An empty
+target list and multiple targets are both authoring errors rather than an
+unbinding mechanism, which is what keeps a choice between two CRS definitions
+from being settled by the order they happen to compose in.
 
 **Binding does not modify the prim's transform stack.** `Bind()` authors the
 relationship and nothing else. That a bound prim's `xformOp:translate` reads as
@@ -548,7 +579,8 @@ public:
     UsdRelationship CreateCRSBindingRel() const;
     UsdRelationship GetCRSBindingRel() const;
 
-    /// Author crs:binding to a CRS prim in the composed stage.
+    /// Author crs:binding as an explicit one-target relationship list
+    /// naming a CRS prim in the composed stage.
     bool Bind(UsdGeospatialCoordinateReferenceSystem const &crs) const;
 };
 ```
@@ -557,7 +589,8 @@ public:
 
 The following example places a simplified building
 at the Esri headquarters in Redlands, California (34.0561°N, 117.1956°W),
-using WGS 84 / UTM zone 11N (EPSG:32611).
+using WGS 84 / UTM zone 11N (EPSG:32611) compounded with EGM2008 height
+(EPSG:3855), so the translate's third component carries a datum and a unit.
 
 ```usda
 #usda 1.0
@@ -636,18 +669,16 @@ Key observations:
 def "CRS" {
     def CoordinateReferenceSystem "WGS84_UTM11N"
     {
-        uniform token crs:wkt = """PROJCRS["WGS 84 / UTM zone 11N",
-            BASEGEOGCRS["WGS 84", ...],
-            CONVERSION["UTM zone 11N", ...],
-            ID["EPSG",32611]]"""
+        uniform token crs:wkt = """COMPOUNDCRS["WGS 84 / UTM zone 11N + EGM2008 height",
+            PROJCRS["WGS 84 / UTM zone 11N", ..., ID["EPSG",32611]],
+            VERTCRS["EGM2008 height", ..., ID["EPSG",3855]]]"""
     }
 
     def CoordinateReferenceSystem "WGS84_UTM18N"
     {
-        uniform token crs:wkt = """PROJCRS["WGS 84 / UTM zone 18N",
-            BASEGEOGCRS["WGS 84", ...],
-            CONVERSION["UTM zone 18N", ...],
-            ID["EPSG",32618]]"""
+        uniform token crs:wkt = """COMPOUNDCRS["WGS 84 / UTM zone 18N + EGM2008 height",
+            PROJCRS["WGS 84 / UTM zone 18N", ..., ID["EPSG",32618]],
+            VERTCRS["EGM2008 height", ..., ID["EPSG",3855]]]"""
     }
 
     def CoordinateReferenceSystem "NAD83_CA_Zone5_ftUS"
@@ -728,10 +759,36 @@ There are several runtime situations where coordinates defined in different CRS 
 We propose to introduce an internal abstraction to compute coordinate transformations from one CRS to another:
 
 ```text
-transform(inout ArrayVector3d coordinates, in WKT crsIn, in WKT crsOut)
+Status transform(inout ArrayVector3d coordinates, in WKT crsIn, in WKT crsOut)
 ```
 
 The OpenUSD plugin system is employed to register implementations.
+
+**A conversion reports whether it succeeded, and a failed conversion yields no
+placement.** The abstraction stays as narrow as it is — it moves coordinates and
+nothing else — but a call that returns nothing cannot be told apart from a call
+that did nothing, and the runtime above it is required to report failure rather
+than place content it could not convert.
+
+**Converting an array is all or nothing.** A call that cannot convert every
+input fails, rather than returning some inputs converted and the rest untouched.
+An untouched coordinate is indistinguishable from a converted one: for a
+conversion that shifts by 1000 m, a two-point batch whose second point falls
+outside the operation's domain of validity and is left in place returns a
+perfectly plausible number 1000 m from the intended one, in an array the caller
+has been told succeeded.
+
+**`Status` carries which coordinate operation ran and what accuracy the engine
+attributes to it.** Success alone does not identify the operation, and two
+operations between the same pair of CRSs can differ legitimately — two datum
+operations put the same anchor 2 m apart in exact arithmetic, before any
+floating-point behaviour enters. Where a required resource is unavailable that
+is a failure, not a quiet substitution of a lower-accuracy operation that
+reports success.
+
+A per-element status interface, and recovering the elements that could be
+converted, are optimizations an implementation can add later without changing
+any of the above.
 
 ### Target CRS and runtime reprojection
 
@@ -813,16 +870,53 @@ on. Picking one silently would place the whole scene somewhere nobody asked for,
 so this is handled the same way as any other transform that cannot be computed,
 and it is an authoring-time error a checker catches.
 
-A prim whose CRS already *is* the target is left alone rather than sent on an
-identity round trip through the transformation engine, which would only
-introduce noise into content that needed no work.
+A prim whose CRS already *is* the target skips the CRS-to-CRS point conversion
+rather than being sent on an identity round trip through the transformation
+engine, which would only introduce noise into content that needed no work. It
+skips nothing else: anchor detection, absolute placement, the anchor frame, unit
+conversion and the factoring of the output transform all still apply. Same CRS
+does not mean no work — the explicit-anchor rule holds whether or not a
+conversion runs.
 
 #### What an anchor establishes
 
 The nearest prim at or above a given prim that carries **its own** binding and an
-authored transform is that prim's **anchor**. What the anchor contributes to the
-prim's world transform is a *frame* — orientation and translation — not just a
-position.
+authored anchor translate is that prim's **anchor**. What the anchor contributes
+to the prim's world transform is a *frame* — orientation and translation — not
+just a position.
+
+An anchor's `xformOpOrder` holds exactly one operation, an active authored
+`double3 xformOp:translate`, optionally preceded by `!resetXformStack!`.
+Rotation, scale, pivots, further translations and general matrix operations
+belong on ordinary children.
+
+The restriction is there because "the authored transform" and "the translate"
+are not the same number, and reading one where the other was meant is silent. An
+anchor authored `[rotateZ 90°, translate (100,0,0)]` has an ordinary local origin
+at `(0,100,0)`; taking the raw translate as the absolute position puts it at
+`(100,0,0)`, 141.42 m away, and both readings can be argued from a rule that
+says only "an authored transform". The reverse order `[translate, rotateZ]` does
+put the origin at `(100,0,0)`, but dropping the rotation still swings a
+ten-metre child by 14.14 m. A pivot pair — pivot `(10,0,0)`, `rotateZ 90°`,
+inverse pivot — puts the origin at `(10,-10,0)`, which no single op in the stack
+resembles. And a translate attribute that is not listed in `xformOpOrder`
+contributes nothing at all, so a resolver that scans for translate-like
+properties reads a position the stage does not have.
+
+None of those stacks are exotic; they are what a DCC writes. The alternative to
+the restriction is a rule for factoring an arbitrary stack into a geospatial
+position and a remainder, which has no good answer once the coordinates are
+partly angular — whether the position is the evaluated origin, one distinguished
+op, or a factor of the composed matrix, and what the rest of the affine part
+then means. Keeping the anchor a translation-only `Xform` puts the arbitrary
+stack on the child, where it is ordinary USD and nothing has to interpret it.
+
+A stack that does not meet this is diagnosed rather than partially interpreted,
+and so is a binding with no anchor translate. A translate of `(0,0,0)` is a
+valid anchor wherever zero is a valid coordinate in that CRS; it is a position,
+not missing data. An opinion that arrived by reference, sublayer or inherit is
+authored on the composed prim like any other, and where it came from does not
+disqualify it.
 
 A binding therefore does two things, and they are worth separating because the
 material-binding parallel suggests the wrong answer on the second. An **inherited**
@@ -851,35 +945,16 @@ the *source* CRS, which the runtime already has in hand:
 | Geographic or geocentric | The topocentric (east-north-up) basis at the anchor position, originating at that position expressed in the target CRS | Local metric offsets in that topocentric frame |
 | Projected (UTM, State Plane, site-calibrated, …) | The anchor's grid plane | Offsets in the anchor's grid coordinates and units |
 
-For a projected anchor, a descendant's origin is computed by adding its offset
-to the anchor's position *in grid coordinates* and transforming that grid point
-into the target CRS — not by lifting the offset through the anchor's topocentric
-basis. Grid axes are not topocentric axes; they differ by grid convergence and
-point scale. Lifting grid-authored offsets through a true east-north-up basis
-produces a systematic error that grows with the lever from the anchor to the
-geometry. Selecting the frame from the source CRS instead puts both paths on the
-same point.
+Grid axes are not topocentric axes — they differ by grid convergence and by
+point scale — so lifting a grid-authored offset through a true east-north-up
+basis produces a systematic error that grows with the lever from the anchor to
+the geometry. Selecting the frame from the *source* CRS is what removes it.
 
-This is also the specific answer to the objection that composing a local
+This is also most of the answer to the objection that composing a local
 transform onto an anchor position "is not correct in the general case for a
-spherical target CRS." It is not correct in general — choosing the composition
-frame from the source CRS is what makes it correct.
-
-One qualification worth stating plainly: an orientation basis is only meaningful
-when the target CRS is geocentric. For a planar target the orientation is
-implicit in the target's own grid, and the anchor contributes position only.
-
-Below the anchor, everything is plain USD. For a prim `D` under an anchor `A`:
-
-```text
-world(D) = localToAnchor(D) ∘ anchorFrame(A)
-```
-
-where `localToAnchor(D)` is `D`'s ordinary authored transform expressed relative
-to `A`, computed from the standard `UsdGeomXformable` stack with no geospatial
-interpretation applied to it at all. In the projected case the translation is
-computed in-plane as described above, while rotation and scale come from
-`localToAnchor(D)` unchanged.
+spherical target CRS." Choosing the composition frame from the source CRS
+removes the part of that error that was a choice. What is left is the
+approximation stated below, which is bounded and measured rather than open.
 
 A prim carrying its *own* position and binding is an anchor in its own right,
 and its ancestors' georeferencing does not additionally accumulate onto it: two
@@ -890,6 +965,183 @@ Authoring a building corner as an independent georeferenced leaf, where relative
 placement was intended, misplaces it by the whole distance between the two
 georeferenced positions; re-authoring it as an ordinary Cartesian child places
 it exactly.
+
+#### What a resolved world transform is
+
+**A resolved world matrix is an affine approximation about its anchor.** At each
+evaluation time the runtime computes one affine map from the anchor's source
+coordinate domain into the output Cartesian frame, and every ordinary descendant
+composes its unchanged local-to-anchor matrix onto that same map. Descendant
+origins are not converted one at a time.
+
+Write `g_A(d)` for the conversion of a displacement `d`, expressed in the
+anchor's source frame as the table above defines it, into output Cartesian
+coordinates, units and axes included. For a projected anchor that is the CRS
+conversion of `a + d`; for a geographic or geocentric anchor it is the
+conversion of the point reached by lifting `d` through the anchor's
+east-north-up basis in the source geocentric space. Then, with row vectors:
+
+```text
+b_A = g_A(0)        the anchor's position in the output frame
+J_A = Dg_A(0)       the derivative of the conversion there
+F_A = the affine map with linear part J_A and translation b_A
+
+world(D, t) = localToAnchor(D, t) * F_A(t)
+```
+
+`localToAnchor(D)` is `D`'s ordinary authored transform relative to `A`, from the
+standard `UsdGeomXformable` stack, with no geospatial interpretation applied to
+it at all. Below the anchor, everything is plain USD — and one map per anchor is
+what makes that true rather than nearly true.
+
+**The cost, stated and measured.** The map is exact at the anchor and its error
+is second order in the distance from it. Source UTM 31N promoted to 3D, target
+WGS 84 geocentric, anchor at `(500000, 0, 0)`: a point 1 km along the grid east
+axis converts exactly to `(6369343.549664, 334804.923976, 0)` m and resolves
+through the anchor frame to `(6369343.628009, 334804.928089, 0)` m — 7.85 cm
+apart. That is the difference between a curved map and its tangent. No amount of
+precision reduces it, and it is reported separately from transformation-engine
+error because the two have different causes and different remedies.
+
+Second order in distance makes this a locality budget rather than a correctness
+problem. A stated maximum displacement error implies a maximum anchored extent,
+and content larger than that is authored as several anchored regions — which is
+tiling, and is what georeferenced data already does for reasons that have
+nothing to do with this. Adjacent anchors approximate a shared edge from
+opposite directions and need not close there. This description sets no number:
+an implementation states the extent over which its frames hold to a stated
+error, and a deliverable states the budget it was authored to.
+
+**Why one map and not a conversion per descendant.** Two encodings of the same
+marker — a geometry point at `(1000, 0, 0)` on an identity child, and the same
+point at the origin of a child translated `(1000, 0, 0)` — are the same
+placement in ordinary USD, and moving a displacement between an op and a vertex
+is an ordinary asset refactor. A rule that converts descendant origins while
+leaving vertices as local offsets puts those two encodings in different places,
+so reparenting a light or collapsing an op moves the building. One map per
+anchor is what keeps them equal, and with them rigid assets, cameras, instancing,
+inverse and relative queries, and ordinary bounds.
+
+**The linear part is not optional and is not an orthonormal basis.** `J_A`
+carries the rotation between the source and target grids and the unit scale
+between them, and both change where a descendant lands.
+
+Units first. A projected anchor on a foot grid in a metre stage translates
+`1000` grid units; a child marker sits `10` further along. The physical position
+is `1010 × 1200/3937 = 307.848616` m. Converting the anchor alone and adding the
+raw offset gives `304.800610 + 10 = 314.800610` m — 6.95 m out, at ten feet from
+the anchor. The offset passes through `J_A` like everything else. Mixed
+horizontal and vertical units convert component-wise rather than by one scalar,
+and a combination that cannot be expressed that way is a failure rather than an
+approximation.
+
+Rotation second, and this is where a planar target is not the easy case it
+looks. Take a site conversion that turns the grid a quarter turn:
+`F(x, y, z) = (−y, x, z)`. An anchor at `(100, 200, 0)` with a child tip `10`
+along source `+x` has ordinary source world point `(110, 200, 0)`, which converts
+to `(−200, 110, 0)`. A frame carrying position only puts it at `(−190, 100, 0)`
+— 14.14 m away, with no curvature and no geocentric target anywhere in the
+problem. An anchor's orientation is implicit in the target's grid only when the
+source and target grids are the same grid. Scale and shear in a site conversion
+survive in `J_A` for the same reason. Authored child rotations and scales are
+unchanged as factors; their resolved world effect is not independent of the map.
+
+**Axes.** Geographic anchor tuples are longitude, latitude, height; conventional
+projected tuples are easting, northing, height; geocentric tuples are geocentric
+X, Y, Z. The engine adapter normalizes once, at the boundary. For a geocentric
+anchor the local axes are the east-north-up basis the table above gives and not
+geocentric X, Y, Z: a child offset `(10, 0, 0)` under an anchor at
+`(6378137, 0, 0)` points east, along geocentric `+Y`, and reading it along `+X`
+is 14.14 m away even when source and target CRS are the same one.
+
+This version's authoring convention is canonical east-north-up local anchor axes
+with `upAxis = "Z"`. A WKT axis assignment that does not map onto it needs an
+explicit supported mapping or a diagnostic, and an imported Y-up asset is
+corrected by an ordinary rotation beneath the anchor — stage up-axis metadata
+does not apply that rotation itself, and a Y-up tip at `(0, 10, 0)` is 14.14 m
+from the Z-up `(0, 0, 10)` it was meant to be.
+
+**Exact point conversion is a separate operation.** A world matrix is affine and
+a CRS conversion is not, so a matrix cannot carry the conversion. The choice was
+never between exact transforms and approximate ones; it was between an
+approximate transform and no transform, and with no transform there are no
+bounds, no physics, no instancing and no round trip through a DCC. Exactness is
+relocated rather than given up: converting a point exactly stays available as
+its own operation, returning coordinates in the requested CRS, and that is where
+a survey question is answered. Where the geometry itself has to be exact across
+a long extent, the answer is a reprojected representation baked with its error
+budget stated, or smaller anchored regions — not a world matrix promising
+something it cannot represent.
+
+An implementation may compute `J_A` analytically or by controlled numerical
+differentiation, and states the accuracy of the frame it produced. What it does
+not do is substitute an unrelated orthonormal basis and report success. A source
+map that is not defined and differentiable over the extent in use does not yield
+a frame, and that is a reported failure like any other.
+
+**Bounds come from the same representation.** Resolved bounds are computed from
+the resolved matrices, at the same evaluation time and in the same output frame
+as the transforms they accompany. An extent authored in a prim's own frame stays
+valid, because resolution does not move geometry within that frame — a unit
+box's local `[−0.5, +0.5]` is as useful afterwards as before. An extent computed
+over source-space world positions does not survive: that same box under an
+anchor at 100 and an independently anchored parent at 20 has a source world
+interval of `[119.5, 120.5]` and a resolved one of `[19.5, 20.5]`, so a
+source-space aggregate hint reused as though it were resolved is 100 m out.
+
+Local extents stay local and in float and global placement stays in the
+double-precision matrices, for the same reason the geometry does. At
+`6378137.1` m a float32 rounds away about 0.1 m, where a float32 offset of `0.1`
+under a double translation of that magnitude holds to around 2 × 10⁻⁹ m.
+Rebuilding a world-space `float3[] extent` would hand back exactly the precision
+the two-tier scheme exists to keep.
+
+#### Inverse and relative queries
+
+A world-to-local query in the resolved view inverts that prim's resolved world
+matrix. A relative query between two independently anchored prims uses their
+resolved matrices, in the same target frame and at the same evaluation time —
+`W(P) * inverse(W(Q))` with row vectors — rather than walking the source
+hierarchy across the anchor boundary between them. An inverse world matrix is
+the inverse of the affine map; it is not the inverse of exact point conversion.
+
+The gap is the same one as everywhere else in this section. With `/A` at 100 and
+an independently anchored `/A/B` at 20, the source local-to-world is `T(120)`,
+and its inverse sends the resolved world point 20 to local −100 where the
+resolved matrix sends it to local zero. A picking tool cannot invert the source
+cache to undo what the resolved view drew.
+
+Where the inverse does not exist the query reports failure rather than returning
+something. A child scale of `(0, 1, 1)` sends both `(8, 2, 0)` and `(0, 2, 0)`
+to the same point and no inverse recovers which was meant;
+`GfMatrix4d::GetInverse()` returns a sentinel for a singular matrix rather than
+a geometric answer, and passing that on as a placement is worse than failing.
+Forward evaluation of the same transform is unaffected and stays a separate
+operation.
+
+#### Instancing
+
+Point-instance positions and prototype transforms are ordinary local data,
+evaluated before the instancer's resolved world transform. A prototype's storage
+location does not georeference its instances. `/A` translating 100, with an
+instancer holding one position `(3, 0, 0)` referencing `/Library/Tree` whose
+local translation is 7, puts that instance at 110, and `/Library`'s own
+translation of 1000 does not participate — that is ordinary OpenUSD. A resolver
+that georeferences the stored prototype first, because `/Library` happens to
+carry an anchor, puts it at 1110 instead.
+
+So in this version a point-instancer prototype subgraph carries no active CRS
+anchor. Independently geolocated instances are authored as separately anchored
+placements. Native instances share local data and geometry as they always have,
+while resolved placement is computed in each instance's composed namespace
+context: a shared prototype under anchors at 100 and 200 cannot share a cached
+*world* matrix, because a local tip at 1 belongs at 101 in one and 201 in the
+other. Local matrices and geometry remain shareable, which is the part that
+matters for memory.
+
+A geographic distribution too large for one anchor frame is partitioned into
+separately anchored regions — the same locality budget as everywhere else, not a
+per-instance CRS attribute.
 
 #### Everything that is not an anchor
 
@@ -911,9 +1163,36 @@ nothing about how it is authored, parented, or moved.
 resolution is a computed view and nothing resolved was written into the scene, no
 stored placement goes stale and no other prim needs revisiting.
 
-**Moving an anchor moves everything beneath it; moving a child does not move its
-anchor.** Those are different edits with different reach, and which one is being
-made is determined by whether the prim carries its own binding.
+**Moving an anchor moves everything whose transform dependency reaches it;
+moving a child does not move its anchor.** Those are different edits with
+different reach, and which one is being made is determined by whether the prim
+carries its own binding. A descendant that is an anchor in its own right does
+not move — the same statement as two georeferenced positions in one chain not
+accumulating.
+
+**Binding lookup and transform accumulation are two walks, and only one of them
+stops at a reset.** A binding lookup may pass a prim that resets its transform
+stack; transform accumulation may not. Where an unbound descendant resets its
+stack somewhere between itself and its anchor, its ordinary world position no
+longer depends on the anchor, and there is nothing anchor-relative left to
+compose. This version reports that as an unsupported configuration: author an
+independent anchor there, or remove the reset where relative placement was what
+was meant.
+
+The failure it prevents is concrete. `/A` translates 100 and `/A/D` translates
+20 and resets its stack; `D`'s ordinary world position is 20.
+`ComputeRelativeTransform(D, A)` returns the matrix **and** a reset flag, and
+taking the matrix while discarding the flag composes 20 onto a resolved 100 and
+places `D` at 120 — 100 m from where the composed stage puts it. OpenUSD already
+evaluates `[translate:old=100, !resetXformStack!, translate:new=3]` to 3 rather
+than 103. Descendant stack evaluation is OpenUSD's, and the error comes from
+re-implementing it simply enough to lose the reset.
+
+Reinterpreting a reset as "reset to the nearest anchor" would be worse than
+diagnosing it: it changes what an existing authored scene means, and the content
+that carries those resets was authored against the ordinary rule. Namespace
+containers that are not `Xformable` are not reset boundaries and stop neither
+walk; they contribute no local matrix and that is all.
 
 **A prim's frame is determinable from the composed stage without resolving it.** A
 tool that needs to know what one metre east means at a particular prim can ask
@@ -930,7 +1209,7 @@ in a tool without that widget, the object still moves — it moves in the frame 
 than along the surface, and nothing marks the difference. That is the same division
 this description keeps everywhere: the scene carries state, not behavior.
 
-#### Precision, axis order, units, and epoch
+#### Precision, axis order, units, time and epoch
 
 **Precision.** CRS coordinates, anchor positions, anchor frames and resolved
 world transforms are carried in double precision, and resolved absolute
@@ -960,9 +1239,52 @@ still a perfectly valid coordinate.
 `metersPerUnit`. Where the two differ, the runtime converts when producing world
 transforms rather than assuming metres.
 
+**Time.** Anchor positions and ordinary local transforms are resolved at the
+caller's `UsdTimeCode`, through the composed stage's own value resolution and
+interpolation, and the conversion runs on the values that come back. Not the
+other way round.
+
+Converting at the neighbouring samples and interpolating the results is a
+different operation, and the difference is not small. A geographic anchor on the
+equator swinging from longitude −1° at time code 0 to +1° at time code 2 has the
+value `(0°, 0°, 0)` at time code 1, which is `(6378137, 0, 0)` m in WGS 84
+geocentric coordinates. Converting the two endpoints and interpolating their
+translations gives `(6377165.578842, 0, 0)` m — 971.42 m inward, the midpoint of
+a chord rather than a point on the ellipsoid. That is a sampling-order error
+rather than engine precision, and no amount of extra precision reduces it.
+
+A uniform CRS definition does not make the frame time-independent. `crs:wkt` is
+`uniform` because a CRS does not vary over a mesh or over time; the anchor's
+translate does vary, so the frame derived from it is recomputed at each
+requested time.
+
+Where a runtime bakes an animation down to matrices it states the interval it
+sampled and the approximation that introduces, because interpolating baked
+matrices is not the operation the paragraph above describes and nothing
+downstream can tell the two apart from the matrices alone.
+
 **Epoch.** Where a CRS carries a coordinate epoch — dynamic datums — the runtime
 passes it to the transformation engine as the time coordinate of a 4D transform.
 Where none is authored, it does not invent one.
+
+Coordinate epoch is a property of the coordinates and it comes from the CRS's
+coordinate metadata. It is not `UsdTimeCode`, it is not derived from
+`timeCodesPerSecond`, and it is not the datum's frame reference epoch. Those are
+three different quantities, and substituting one for another is silent. Take a
+dynamic operation that moves a point by 0.1 m per year: a point at `x = 100` m
+with coordinate epoch 2026 resolves to 100.6 m at every animation time where `x`
+is fixed. Reading the epoch off time code 24 instead gives −99.6 m, 200.2 m
+away. Reading it off the frame epoch of 2020 gives 100 m, 0.6 m away — the
+second mistake is the one that reaches production, because nothing about the
+result looks wrong.
+
+Both source and target coordinate metadata are carried through to the
+transformation engine, which needs them to select an operation at all. An
+operation that requires an epoch it was not given reports failure rather than
+assuming one. An object with animated coordinates inside a fixed coordinate
+epoch is ordinary and is supported; observations at genuinely changing epochs
+need an explicit representation later, rather than an interpretation of USD
+frames that nobody authored.
 
 #### When the transform cannot be computed
 
@@ -1026,6 +1348,28 @@ the first question a GIS or AECO pipeline asks, and the answer here is
 structural rather than a promise: the description is stated over the composed
 stage, and nothing in it refers to a render path.
 
+**There are two answers for the same prim, and this names both.** An ordinary
+query on the authored stage returns the ordinary answer. `/A` translating 100
+with `/A/B` translating 20, both bound and both anchors, puts `/A/B` at 120,
+because that is what the authored stack says and `UsdGeomXformable` and
+`UsdGeomXformCache` go on saying it. A CRS-resolved query returns 20, because
+under the explicit-anchor rule `/A/B` states an absolute position. The two are
+100 m apart with no reprojection anywhere in the problem — both prims are bound
+to the target.
+
+Neither is wrong; they answer different questions over different things.
+Resolution is an explicit conversion from the authored stage into a Cartesian
+view in a stated target frame. Queries on the authored stage keep their existing
+results unchanged. Queries in the resolved view, or queries that ask for
+resolution, get resolved ones, in which every anchor contributes an absolute
+matrix and its parent's transform is not applied again.
+
+What cannot be promised is that a consumer reading the authored stage without
+knowing about CRS gets georeferenced placement. That is the whole reason a stage
+declares the dependency. What is promised is that every reader of the converted
+view agrees, and one shared conversion serving render, query, physics and export
+is what delivers it.
+
 What the transformation engine is asked to do is narrow, and deliberately so.
 The abstraction above it moves coordinates from one CRS to another. Deriving the
 anchor's orientation basis, selecting the frame from the kind of source CRS,
@@ -1044,6 +1388,13 @@ which is what keeps the CRS intent inspectable — once placement has been baked
 into a matrix, the intent has collapsed and there is nothing left to check
 against.
 
+A resolved placement depends on more than the prim's transform stack: the
+binding relationship and the prim it targets, the WKT authored there, any
+coordinate epoch, the target CRS supplied by the caller, and the resources the
+engine used. That set is worth stating because an implementer cannot read it off
+the authored scene, and it is what a result is a function of. When to recompute
+is the caller's problem, as it already is for `UsdGeomXformCache`.
+
 That also settles what this costs a runtime that does not want it, which is
 nothing. No existing transform evaluation has to change and nothing has to be
 intercepted: the behavior is computed over the composed stage by something a
@@ -1061,14 +1412,35 @@ because the two can read as contradictory and are not — *not re-composing unde
 the parents* is required; *recording that in an authored layer* is what the
 previous paragraph rules out.
 
-Flattening into a target CRS is this same evaluation with the results written
-out, and produces the same world transforms as a resolve pass over the same
-stage with the same target. A stage flattened this way records the target CRS it
-was flattened into, drops the resolution-required declaration since resolution
-is no longer needed, and keeps the CRS definitions and original bindings where
-it can — discarding them makes the flattening irreversible and throws away what
-a checker or a later re-resolve would need. Resolving an already-resolved stage
-changes nothing: the transformation is not applied a second time.
+Baking into a target CRS is this same evaluation with the results written out,
+and produces the same world transforms as a resolve pass over the same stage
+with the same target. It is not `UsdStage::Flatten()`, which merges composition
+and evaluates nothing geospatial — flattening an anchor at 100 with an
+independently anchored child at 20 still gives 120 where a bake gives 20.
+
+A baked stage reproduces the resolved view with ordinary transforms, consistent
+units and valid bounds, and it carries no active CRS binding that a resolver
+could read as a fresh source anchor. That is the failure worth designing
+against: under a source conversion that shifts by 1000 m, an anchor authored at
+100 bakes correctly to 1100, and a resolver that finds the original binding
+still live reads 1100 as another source coordinate and produces 2100. Comparing
+the source and target WKT does not catch it, because they differ by
+construction.
+
+So the target it was baked into is recorded as ordinary provenance — the target
+WKT and the output metric — rather than as a live binding with a second
+"ignore this one" state layered over it. The original bindings and definitions
+are kept as inert provenance, or kept in the source asset, which is the
+authoritative reversible representation; the bake is the interoperable
+deliverable. Capability claims are recomputed from what was delivered, so the
+resolution-required declaration goes with the bindings that implied it. Changing
+target later goes back to the source rather than reinterpreting provenance as a
+binding.
+
+Resolving a baked stage therefore changes nothing, and that is a property of the
+representation rather than a promise. Reversibility is not: a bake that sampled
+an animation, or that baked a nonlinear conversion into geometry, is not
+recovered from its output, and the source asset is what covers that.
 
 #### How closely independent runtimes agree
 
@@ -1094,6 +1466,14 @@ needs that number; they do not need it to be the same number as everyone else's,
 and nothing here makes a particular number the difference between an
 implementation of this schema and something else.
 
+A stated figure means nothing without the operation that produced it, which is
+why the abstraction reports which coordinate operation ran. Two implementations
+differing by 2 m because they selected different datum operations and two
+implementations differing by 2 m in floating-point accumulation are not the same
+result, and an adopter needs to know which one they are reading. Separating
+operation choice, the accuracy of the source survey, and numerical deviation is
+what makes the number comparable at all.
+
 For orientation, and not as a requirement: the survey control this data derives
 from is generally good to centimetres, so agreement at the millimetre scale sits
 comfortably below the accuracy of the source.
@@ -1107,16 +1487,26 @@ home.
 
 | Invariant | Cost of violating it |
 |---|---|
-| Anchor-versus-child is unambiguous: a prim carrying a position beneath another such prim is flagged unless it declares an overriding binding | Misplacement by the whole anchor-to-leaf distance |
+| An anchor's `xformOpOrder` is one active authored `xformOp:translate`, optionally preceded by `!resetXformStack!` | The anchor is read off a stack that does not mean what it says — 141 m for a rotation before the translate |
+| A prim with a binding of its own carries that anchor translate | A binding with no position to place |
+| A `crs:binding` composes to exactly one target, on a prim that carries a valid CRS definition | Resolver failure at load, or a silent choice between two CRSs made by target order |
+| An unbound descendant does not reset its transform stack between itself and its anchor | 100 m, composed onto an anchor the prim does not depend on |
 | Descendant offsets are authored in the frame the anchor's CRS implies | Systematic misplacement, growing with the lever |
 | A stage carrying CRS bindings declares that resolution is required | Silent placement near the planet's centre |
-| A binding resolves to a prim that actually carries a valid CRS definition | Resolver failure at load |
-| A stage carrying CRS bindings binds one at its `defaultPrim`, so no prim is outside the scene's frame | Content placed outside any frame |
+| A stage carrying CRS bindings roots its placed content at its `defaultPrim` and binds a CRS there | Content in a sibling subtree placed outside any frame, and missing from the dependency declaration that would have warned about it |
 | A stage that expects to resolve without a caller-supplied target binds a geocentric or projected CRS at its `defaultPrim` | No usable target: geographic is not a resolve target |
-| A georeferenced prim does not also carry a conflicting authored transform | Ambiguous placement |
 
 A coordinate-neutral authored scene is what makes these checkable at all: the
 CRS intent is still present as data.
+
+What a checker cannot key on is intent. Whether an ordinary child translation
+was meant as an absolute coordinate is not in the file — `/A/D` translating 20
+beneath an anchor at 100 is exactly what a correctly authored child looks like,
+and flagging it, or encouraging an overriding binding to silence the flag, moves
+it from 120 to 20. Magnitude does not separate the two cases either, since a
+site-local CRS has small coordinates and a long asset has large offsets.
+Suspicion of that kind is a warning that changes nothing by itself; every row
+above is something the composed stage answers.
 
 #### What this description does not settle
 
@@ -1136,7 +1526,9 @@ meaning with latitude. This description does not cover it, and a runtime asked
 for one reports that rather than producing a plausible-looking result.
 Geographic CRSs remain fully supported as sources, and as an output encoding for
 a point query. The Target CRS is a caller or runtime choice and is never
-authored into a scene, so covering this later breaks no content.
+authored into an unresolved source scene — a baked deliverable records the
+target it was baked into, as provenance — so covering this later breaks no
+content.
 
 **External grid files.** WKT2 names transformation grids — geoid grids for
 vertical datums, NADCON, proprietary grids — without embedding them, so a
@@ -1212,9 +1604,11 @@ The alternative reaches the same placement and costs more than it looks.
 `Bind()` calling `SetResetXformStack()` **writes `!resetXformStack!` into the
 prim's `xformOpOrder` in the layer**, which puts a runtime decision into the
 scene description: every consumer of that layer inherits it, changing it later
-means rewriting content, and the authoring-time checks lose the data they check
-against, because a scene that has already had placement folded into it no longer
-carries the CRS intent to check.
+means rewriting content, and a policy that belongs in one implementation now
+sits in every file ever authored against it. The cost is where the decision is
+recorded, not what recording it destroys — an authored reset changes ancestor
+inheritance and nothing else, and the binding and the CRS definition survive it
+intact.
 
 ### Declaring the dependency
 
@@ -1247,8 +1641,39 @@ Three properties of the mechanism make it a good fit:
   merged result. A pipeline step or save hook can produce the declaration; nobody
   hand-authors it.
 
-The declaration lands in `customData` on a prim under the key `profilesInfo`, so a
-consumer reads it from the stage root without traversing.
+The declaration lands in `customData` under the key `profilesInfo` on the
+composed `defaultPrim`, so a consumer reads it from one known place without
+traversing.
+
+That is only a usable discovery point if what it summarizes sits beneath it, and
+`PopulateCapabilityUsages()` walks descendants. A `defaultPrim` is not the
+transform parent of its siblings. `/World` bound and translating 100, with a
+sibling `/Other` translating 20, leaves `/Other` at 20 in ordinary USD — outside
+any frame, and absent from a summary written at `/World`. An unaware consumer
+reads a declaration that says nothing about the content it is about to place
+wrong, and draws `/Other` at its raw numbers rather than the thousand-metre-away
+position a resolve would have produced.
+
+This version closes that by fixing the convention rather than building an
+aggregation facility: **a stage's placed content is one subtree, rooted at the
+composed `defaultPrim`, and that prim carries a binding.** A stage with no
+`defaultPrim` designates one before the declaration means anything, and placed
+content in sibling subtrees is not supported in this version.
+
+CRS definition libraries are not placed content and sit outside that subtree.
+The `/CRS` library pattern above is exactly that shape, and a rule requiring
+every prim on the stage to inherit a placement binding would reject a library of
+definitions for no reason. So a checker keeps two questions apart: whether the
+summary covers the deliverable, and whether every placed object has an anchor
+above it. They fail differently, and the first is the one an unaware consumer
+depends on.
+
+Several placed root subtrees would mean aggregating their claims at the
+discovery point and validating each subtree's own anchor — a larger mechanism
+than anything else here, against a convention that costs an author one reparent.
+A caller-supplied target CRS is unaffected either way: the root binding says what
+the source coordinates mean, which is a different question from which target a
+resolve pass runs into.
 
 #### The capability identifier
 
@@ -1466,9 +1891,10 @@ and informed the final design.
    A dynamic CRS carries its coordinate epoch in its own WKT
    (see [Appendix A](#appendix-a-wkt-examples)), so that needs no
    parameter of its own.
-   What is still open is how failure is reported: the signature returns
-   nothing, and a transform that cannot be computed should be surfaced
-   rather than quietly skipped.
+   Failure reporting is answered by
+   [The transformation abstraction](#the-transformation-abstraction):
+   the call returns a status, array conversion is all or nothing,
+   and the status names the coordinate operation that ran.
 
 4. **WKT validation.**
    Should OpenUSD validate WKT strings at authoring time?
@@ -1604,41 +2030,52 @@ Working prototype implementations exist:
 These are reference encodings of common CRS types. The two examples worked
 against the case study are in [WKT examples](#wkt-examples) above.
 
-### WGS 84 / UTM zone 11N (EPSG:32611)
+### WGS 84 / UTM zone 11N (EPSG:32611) + EGM2008 height (EPSG:3855)
+
+A projected CRS is two-dimensional on its own. The 3D requirement is met by
+compounding it with a vertical CRS, which is what gives the third coordinate a
+datum and a unit.
 
 ```lisp
-PROJCRS["WGS 84 / UTM zone 11N",
-    BASEGEOGCRS["WGS 84",
-        DATUM["World Geodetic System 1984",
-            ELLIPSOID["WGS 84",6378137,298.257223563,
-                LENGTHUNIT["metre",1.0]]],
-        PRIMEMERIDIAN["Greenwich",0,
-            ANGLEUNIT["degree",0.0174532925199433]],
-        ID["EPSG",4326]],
-    CONVERSION["UTM zone 11N",
-        METHOD["Transverse Mercator",
-            ID["EPSG",9807]],
-        PARAMETER["Latitude of natural origin",0,
-            ANGLEUNIT["degree",0.0174532925199433],
-            ID["EPSG",8801]],
-        PARAMETER["Longitude of natural origin",-117,
-            ANGLEUNIT["degree",0.0174532925199433],
-            ID["EPSG",8802]],
-        PARAMETER["Scale factor at natural origin",0.9996,
-            SCALEUNIT["unity",1.0],
-            ID["EPSG",8805]],
-        PARAMETER["False easting",500000,
-            LENGTHUNIT["metre",1.0],
-            ID["EPSG",8806]],
-        PARAMETER["False northing",0,
-            LENGTHUNIT["metre",1.0],
-            ID["EPSG",8807]]],
-    CS[Cartesian,2],
-        AXIS["(E)",east,ORDER[1],
-            LENGTHUNIT["metre",1.0]],
-        AXIS["(N)",north,ORDER[2],
-            LENGTHUNIT["metre",1.0]],
-    ID["EPSG",32611]]
+COMPOUNDCRS["WGS 84 / UTM zone 11N + EGM2008 height",
+    PROJCRS["WGS 84 / UTM zone 11N",
+        BASEGEOGCRS["WGS 84",
+            DATUM["World Geodetic System 1984",
+                ELLIPSOID["WGS 84",6378137,298.257223563,
+                    LENGTHUNIT["metre",1.0]]],
+            PRIMEMERIDIAN["Greenwich",0,
+                ANGLEUNIT["degree",0.0174532925199433]],
+            ID["EPSG",4326]],
+        CONVERSION["UTM zone 11N",
+            METHOD["Transverse Mercator",
+                ID["EPSG",9807]],
+            PARAMETER["Latitude of natural origin",0,
+                ANGLEUNIT["degree",0.0174532925199433],
+                ID["EPSG",8801]],
+            PARAMETER["Longitude of natural origin",-117,
+                ANGLEUNIT["degree",0.0174532925199433],
+                ID["EPSG",8802]],
+            PARAMETER["Scale factor at natural origin",0.9996,
+                SCALEUNIT["unity",1.0],
+                ID["EPSG",8805]],
+            PARAMETER["False easting",500000,
+                LENGTHUNIT["metre",1.0],
+                ID["EPSG",8806]],
+            PARAMETER["False northing",0,
+                LENGTHUNIT["metre",1.0],
+                ID["EPSG",8807]]],
+        CS[Cartesian,2],
+            AXIS["(E)",east,ORDER[1],
+                LENGTHUNIT["metre",1.0]],
+            AXIS["(N)",north,ORDER[2],
+                LENGTHUNIT["metre",1.0]],
+        ID["EPSG",32611]],
+    VERTCRS["EGM2008 height",
+        VDATUM["EGM2008 geoid"],
+        CS[vertical,1],
+            AXIS["gravity-related height (H)",up,
+                LENGTHUNIT["metre",1.0]],
+        ID["EPSG",3855]]]
 ```
 
 ### Compound CRS: NAD83 / California zone 5 (ftUS) + NAVD88 height
@@ -1746,11 +2183,18 @@ Every figure below comes from a runnable test rather than an estimate. The scene
 behind most of them is a building in NAD83 / UTM 17N under a WGS 84 / UTM 30N
 anchor, with roughly a 420 m lever from anchor to corner.
 
+The implementations these come from convert each descendant's grid position
+directly, so the figures measure frame selection and carrier equivalence and do
+not include the affine approximation the world-transform contract states. Those
+are separate quantities on purpose, and the one row below that is not from a
+test says so.
+
 | What was measured | Result | Source |
 |---|---|---|
 | Resolving an anchor as a position only, with no frame | 410 m misplacement | `test_anchor_injection.py` |
 | Projected offsets lifted through a topocentric basis instead of the anchor's grid | 4.86 m misplacement | `test_coexist_vs_baked.py` |
 | Selecting the composition frame from the source CRS instead | 0.0 mm | `test_coexist_vs_baked.py` |
+| The affine anchor frame against exact conversion, 1 km from the anchor | 7.85 cm | worked case in [What a resolved world transform is](#what-a-resolved-world-transform-is) |
 | A georeferenced leaf authored where a Cartesian child was intended | 418.9 m misplacement | `test_illformed_assets.py` (G1) |
 | Absolute float32 geocentric positions at Earth-surface magnitude | 162 mm lost | `test_float32_localization.py` |
 | The same geometry as localized float32 offsets under a double-precision anchor | 0.0003 mm | `test_float32_localization.py` |
