@@ -358,13 +358,15 @@ Two new schemas are introduced:
 
 | Schema | Type | Purpose |
 |--------|------|---------|
-| `GeospatialCRS` | Typed (IsA) | Defines a CRS as a first-class USD prim |
-| `GeospatialCRSBindingAPI` | Applied (HasA) | Binds a CRS prim to a `UsdGeomXformable` |
+| `CoordinateReferenceSystem` | Typed (IsA) | Defines a CRS as a first-class USD prim |
+| `CRSBindingAPI` | Applied (HasA) | Binds a CRS prim to a `UsdGeomXformable` |
 
 This two-schema approach separates the CRS *definition*
 from the CRS *usage*,
-allowing a single CRS definition to be shared
-across many prims and scenes via USD references.
+so that a single CRS definition is named by many prims
+rather than copied onto each of them.
+A CRS library layer is brought into a scene the usual way, by reference or
+sublayer; the binding itself is a relationship and composes as one.
 
 ### CRS library pattern
 
@@ -373,10 +375,10 @@ CRS definitions are intended to live in shared **library layers**
 
 ```
 crs_library.usda
-├── /CRS/WGS84_UTM11N       (GeospatialCRS)
-├── /CRS/NAD83_UTM11N        (GeospatialCRS)
-├── /CRS/NAD83_CA_Zone5      (GeospatialCRS)
-└── /CRS/WGS84_Geographic3D  (GeospatialCRS)
+├── /CRS/WGS84_UTM11N        (CoordinateReferenceSystem)
+├── /CRS/NAD83_UTM11N        (CoordinateReferenceSystem)
+├── /CRS/NAD83_CA_Zone5      (CoordinateReferenceSystem)
+└── /CRS/WGS84_Geographic3D  (CoordinateReferenceSystem)
 ```
 
 This pattern is analogous to shared material libraries in M&E workflows.
@@ -385,16 +387,23 @@ and users can create custom ones for local/site-specific CRS definitions.
 
 ### CRS binding and inheritance
 
-The `GeospatialCRSBindingAPI` is applied to a `UsdGeomXformable` prim
-and references a `GeospatialCRS` prim (from the same stage or an external layer).
+The `CRSBindingAPI` is applied to a `UsdGeomXformable` prim.
+It declares one relationship, `crs:binding`, targeting a
+`CoordinateReferenceSystem` prim on the same stage or in a layer the stage
+composes.
 
 CRS bindings inherit down the prim hierarchy.
-A prim without a direct CRS binding
-resolves its CRS by walking up to the nearest ancestor
-that has one — analogous to `UsdShadeMaterialBindingAPI` resolution.
+A prim without its own binding resolves its CRS by walking up to the nearest
+ancestor that has one, and that nearest binding wins outright.
+`UsdShadeMaterialBindingAPI` works the same way, and the resemblance stops
+there: there are no purpose-restricted bindings, no collection-based bindings
+and no binding-strength metadata. What those add is a way for several bindings
+to compete for one prim, which for an appearance is ordinary authoring and for a
+coordinate reference system means somebody is wrong about what the coordinates
+mean. That is for a checker to catch, not for a precedence order to resolve.
 
 A child prim may override its parent's CRS
-by applying its own `GeospatialCRSBindingAPI` with a different CRS reference.
+by applying its own `CRSBindingAPI` targeting a different CRS.
 This is how multi-CRS scenes are composed
 (e.g., one subtree in UTM zone 11N, another in UTM zone 18N).
 
@@ -419,7 +428,7 @@ relative to that anchor, staying well within float32 range.
 
 ## Detailed design
 
-### GeospatialCRS typed schema
+### CoordinateReferenceSystem typed schema
 
 A concrete typed schema that defines a CRS as a first-class USD prim.
 
@@ -499,38 +508,48 @@ public:
 };
 ```
 
-### GeospatialCRSBindingAPI applied schema
+### CRSBindingAPI applied schema
 
 A single-apply API schema that binds a CRS to a `UsdGeomXformable` prim.
 
-**Schema type name:** `BindingAPI`
+**Schema type name:** `CRSBindingAPI`
 **Can only apply to:** `Xformable`
 
-**Behavior:**
+**Relationships:**
 
-When `Bind()` is called, the schema:
-1. Adds a USD **reference** to the specified `GeospatialCRS` prim
-   (internal or external).
-2. Calls `SetResetXformStack()` on the prim,
-   ensuring `!resetXformStack!` appears in the `xformOpOrder`,
-   so the prim's `xformOp:translate` is interpreted
-   as an absolute position in the bound CRS.
+| Relationship | API Name | Targets | Description |
+|--------------|----------|---------|-------------|
+| `crs:binding` | `crsBinding` | one `CoordinateReferenceSystem` prim | The CRS the bound prim's coordinates are expressed in |
+
+A relationship rather than a reference. A reference would compose the CRS prim's
+contents into the bound prim, putting `crs:wkt` on geometry and copying the
+definition to every site that uses it; a relationship names the definition and
+leaves it in one place. It also composes as a single opinion, so a binding
+authored in a stronger layer replaces a weaker one instead of leaving residue.
+
+Exactly one target is expected. An empty target list and multiple targets are
+both authoring errors rather than an unbinding mechanism.
+
+**Binding does not modify the prim's transform stack.** `Bind()` authors the
+relationship and nothing else. That a bound prim's `xformOp:translate` reads as
+an absolute position in the bound CRS is a rule the runtime applies when it
+resolves; it is not recorded in the layer. See
+[Transform stack and resetXformStack](#transform-stack-and-resetxformstack).
 
 **C++ API:**
 
 ```cpp
-class UsdGeospatialBindingAPI : public UsdAPISchemaBase {
+class UsdGeospatialCRSBindingAPI : public UsdAPISchemaBase {
 public:
-    static UsdGeospatialBindingAPI Apply(const UsdPrim &prim);
+    static UsdGeospatialCRSBindingAPI Apply(const UsdPrim &prim);
     static bool CanApply(const UsdPrim &prim,
                          std::string *whyNot = nullptr);
 
-    /// Bind via internal reference to a CRS prim on the same stage.
-    bool Bind(UsdGeospatialCoordinateReferenceSystem const &crs) const;
+    UsdRelationship CreateCRSBindingRel() const;
+    UsdRelationship GetCRSBindingRel() const;
 
-    /// Bind via external reference to a CRS prim in another layer.
-    bool Bind(std::string const &layerPath,
-              SdfPath const &crsPrimPath) const;
+    /// Author crs:binding to a CRS prim in the composed stage.
+    bool Bind(UsdGeospatialCoordinateReferenceSystem const &crs) const;
 };
 ```
 
@@ -550,11 +569,11 @@ using WGS 84 / UTM zone 11N (EPSG:32611).
 
 # ── Stage root: CRS-bound to UTM 11N ────────────────────────────────
 def Xform "World" (
-    apiSchemas = ["GeospatialCRSBindingAPI"]
-    references = [@./crs_library.usda@</CRS/WGS84_UTM11N>]
+    apiSchemas = ["CRSBindingAPI"]
 )
 {
-    uniform token[] xformOpOrder = ["!resetXformStack!", "xformOp:translate"]
+    rel crs:binding = </CRS/WGS84_UTM11N>
+    uniform token[] xformOpOrder = ["xformOp:translate"]
 
     # Esri HQ — UTM 11N coordinates (metres)
     double3 xformOp:translate = (481948.63, 3768393.52, 400)
@@ -571,11 +590,11 @@ def Xform "World" (
 
     # ── Different CRS zone in the same scene ─────────────────────────
     def Xform "NewYorkCity" (
-        apiSchemas = ["GeospatialCRSBindingAPI"]
-        references = [@./crs_library.usda@</CRS/WGS84_UTM18N>]
+        apiSchemas = ["CRSBindingAPI"]
     )
     {
-        uniform token[] xformOpOrder = ["!resetXformStack!", "xformOp:translate"]
+        rel crs:binding = </CRS/WGS84_UTM18N>
+        uniform token[] xformOpOrder = ["xformOp:translate"]
         # Times Square — UTM 18N coordinates (metres)
         double3 xformOp:translate = (583960, 4507523, 10)
 
@@ -645,7 +664,7 @@ def "CRS" {
 
 ```cpp
 #include "pxr/usd/usdGeospatial/coordinateReferenceSystem.h"
-#include "pxr/usd/usdGeospatial/bindingAPI.h"
+#include "pxr/usd/usdGeospatial/crsBindingAPI.h"
 #include "pxr/usd/usdGeom/xform.h"
 
 // Define a CRS prim
@@ -655,7 +674,7 @@ crs.CreateWellKnownTextAttr().Set(VtValue(TfToken(wktString)));
 
 // Create a geolocated Xform
 auto xform = UsdGeomXform::Define(stage, SdfPath("/World"));
-auto api = UsdGeospatialBindingAPI::Apply(xform.GetPrim());
+auto api = UsdGeospatialCRSBindingAPI::Apply(xform.GetPrim());
 api.Bind(crs);
 
 // Set geospatial coordinates (UTM 11N, metres)
@@ -685,7 +704,7 @@ crs.CreateWellKnownTextAttr().Set(wkt_string)
 # Bind to Xform
 world = UsdGeom.Xform.Define(stage, "/World")
 stage.SetDefaultPrim(world.GetPrim())
-api = UsdGeospatial.BindingAPI.Apply(world.GetPrim())
+api = UsdGeospatial.CRSBindingAPI.Apply(world.GetPrim())
 api.Bind(crs)
 
 # Set geospatial position
@@ -739,12 +758,11 @@ not part of this description.
 
 #### Which CRS applies to a prim
 
-The binding is a relationship — `rel crs:binding` on the prim, pointing at a
-`GeospatialCRS` prim in the composed stage — in parallel to how `UsdShade` binds
-a material. Composition and binding stay orthogonal and both use mechanisms USD
-already has: the relationship is the binding edge, and the CRS prim it points at
-may itself have arrived by a `references` or `payload` arc from a shared library
-layer. Nothing bespoke, and no asset-path attribute in the binding path.
+The binding is the `crs:binding` relationship declared by `CRSBindingAPI`.
+Composition and binding stay orthogonal and both use mechanisms USD already has:
+the relationship is the binding edge, and the CRS prim it points at may itself
+have arrived by a `references` or `payload` arc from a shared library layer.
+Nothing bespoke, and no asset-path attribute in the binding path.
 
 A prim's CRS is found by walking from the prim toward the root of the composed
 stage and taking the nearest authored binding. A georeferenced scene binds at its
@@ -752,22 +770,27 @@ root, so every prim in it inherits one — a prim with nothing bound at or above
 is a scene with content outside its own frame, which is an authoring defect rather
 than a mode this description supports.
 
-Where several ancestors carry bindings, the nearest one wins — unless an
-ancestor's binding declares itself stronger than its descendants, in which case
-that ancestor wins, and if several do, the outermost. Purpose-restricted and
-collection-based bindings resolve with the same precedence ladder as
-`UsdShadeMaterialBindingAPI`:
+Where several ancestors carry bindings, the nearest one wins. There is no
+further ladder: no purpose-restricted bindings, no collection-based bindings, no
+binding strength by which an ancestor overrides its descendants, and no analogue
+of `GeomSubsets`.
 
-> purpose-specific collection **>** purpose-specific direct **>**
-> all-purpose collection **>** all-purpose direct
+Those mechanisms exist so that several bindings can compete for one prim, and
+that is the wrong shape here. A material binding assigns an appearance, which is
+arbitrary and legitimately multi-valued — the same mesh can have a preview look
+and a final look, which is what purposes are for. A CRS binding records what a
+prim's coordinates already mean, and there is one answer. A preview CRS is not a
+thing; the variability that would reach for one is a choice of **target**, which
+is a caller's parameter and is described below. Collection bindings would also
+cost the property that makes resolution cheap to reason about: the answer for a
+prim is found by walking its ancestors and stopping, where a collection anywhere
+on the stage could otherwise claim it. And two different bindings competing for
+one prim does not mean a precedence question, it means somebody is wrong about
+what the coordinates mean — which a checker should catch rather than a ladder
+silently settle.
 
-with the lexicographically smallest binding name breaking ties among competing
-collection bindings at one prim. `GeomSubsets` have no analogue here and are not
-part of the ladder.
-
-This is deliberate reuse rather than convergent design: someone who already
-understands material binding should not have to learn a second, subtly different
-resolution model in order to place a building.
+What is reused is the part worth reusing: someone who understands material
+binding already understands this one. Nearest authored binding wins.
 
 It also means inheriting the cost shape. Resolving a prim's CRS is an ancestor
 walk, a relationship hop to a prim that may be anywhere in the composed stage, and
@@ -1118,7 +1141,7 @@ authored into a scene, so covering this later breaks no content.
 **External grid files.** WKT2 names transformation grids — geoid grids for
 vertical datums, NADCON, proprietary grids — without embedding them, so a
 transform that needs one needs the file. Resolving those is not covered here. An
-asset-path property on the `GeospatialCRS` prim is the natural way to carry them
+asset-path property on the `CoordinateReferenceSystem` prim is the natural way to carry them
 and is additive: a CRS without one behaves exactly as described above.
 
 **Units and axes that vary within a stage.** `metersPerUnit` and `upAxis` are
@@ -1192,9 +1215,6 @@ scene description: every consumer of that layer inherits it, changing it later
 means rewriting content, and the authoring-time checks lose the data they check
 against, because a scene that has already had placement folded into it no longer
 carries the CRS intent to check.
-
-The schema description and the worked examples above still author it. Bringing
-them in line is an edit to make, not a question to settle.
 
 ### Declaring the dependency
 
@@ -1274,7 +1294,7 @@ a stronger arc can override a weaker arc's CRS binding.
 
 ### Relationship to UsdGeom
 
-The `GeospatialCRSBindingAPI` is restricted to `UsdGeomXformable` prims.
+The `CRSBindingAPI` is restricted to `UsdGeomXformable` prims.
 It does not modify `UsdGeomMesh`, `UsdGeomPoints`, or other geometry schemas.
 Geometry prims remain unchanged —
 their vertex positions are always local offsets
@@ -1343,7 +1363,7 @@ would facilitate round-trip exchange between the two formats.
 IFC (Industry Foundation Classes) is the open standard for BIM data.
 IFC 5 is evaluating USD as a potential geometry backbone.
 IFC's `IfcMapConversion` and `IfcProjectedCRS` entities
-map directly to this proposal's `GeospatialCRS` and `GeospatialCRSBindingAPI`.
+map directly to this proposal's `CoordinateReferenceSystem` and `CRSBindingAPI`.
 A standard USD CRS mechanism would simplify IFC-to-USD conversion.
 
 ### CityGML and OGC 3D Tiles
@@ -1409,7 +1429,7 @@ This was rejected because:
 | **A: Primvar** | `asset primvars:geolocation:crs` | Auto-inheritance via primvar system | Requires custom asset-path resolution; non-standard prim types |
 | **B: String primvar + inherits** | `string primvars:geolocation:crs:wkt` + `inherits` | Simplest implementation; leverages both inherits and primvar inheritance | WKT duplicated on every inheriting prim in flattened stage |
 | **C: Abstract class + plain attribute** | `class` prims with `crs:wkt` attribute | Idiomatic USD class usage | No automatic inheritance for plain attributes; requires manual parent-walking |
-| **D: Typed prim + applied API (this proposal)** | `GeospatialCRS` prim + `GeospatialCRSBindingAPI` | Clean separation of definition and usage; reference-based binding; API-driven inheritance | Requires new schema registration |
+| **D: Typed prim + applied API (this proposal)** | `CoordinateReferenceSystem` prim + `CRSBindingAPI` | Clean separation of definition and usage; one relationship naming a shared definition; inheritance by ancestor walk | Requires new schema registration |
 
 Approach D was selected because it provides the cleanest separation
 of concerns, composes naturally through USD references,
