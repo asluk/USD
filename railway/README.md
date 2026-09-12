@@ -12,10 +12,12 @@ beside it so the conversion can be checked.
 
 ## The GeoJSON is the ground truth
 
-`1kmE4334N3375.geojson` is what the rails were before any of this: 1,473
-`LineString` features, EPSG:4326 declared, coordinates **longitude-first** as
-`[lon, lat, height]`, each feature carrying an `object_id` and properties such as
-`type: Rail_Left` and `material: metal`.
+`1kmE4334N3375.geojson` is what this scene was before any of this: 1,473 features —
+**186 `LineString`, 1,231 `Polygon`, 56 `MultiPolygon`** — EPSG:4326 declared,
+coordinates **longitude-first** as `[lon, lat, height]`, each feature carrying an
+`object_id` and properties such as `type: Rail_Left` and `material: metal`. Most of
+it is areal rather than linear, so "1,473 rails" would be wrong; the rails are the
+186 linestrings.
 
 The correspondence to the USD asset is exact and checkable:
 

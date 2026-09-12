@@ -140,9 +140,9 @@ implementation drifting apart on real data is a failure mode that small syntheti
 scenes do not catch.
 
 **Check the railway against its source, not against the USD.** `railway/` carries
-`1kmE4334N3375.geojson`, the data the asset was made from: 1,473 `LineString`
-features, EPSG:4326, longitude-first, one per rail, linked to the USD prims by
-`object_id`. That is the ground truth. Resolve a vertex, compute where its GeoJSON
+`1kmE4334N3375.geojson`, the data the asset was made from: 1,473 features —
+186 `LineString`, 1,231 `Polygon`, 56 `MultiPolygon` — EPSG:4326, longitude-first,
+linked to the USD prims by `object_id`. That is the ground truth. Resolve a vertex, compute where its GeoJSON
 coordinate actually is by closed-form geodesy, and compare.
 
 Two reasons this is the check that means something. You control both the
