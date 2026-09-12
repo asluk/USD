@@ -116,9 +116,9 @@ The original is authored latitude-first — its root reads
 `(53.4915918, 10.2097897, 49.4831324)` — and the converted copy is swapped to
 longitude-first. If you compare the two, that is why.
 
-Treat this one as the headline rather than another row in a table. It is real
-survey-derived data, published before the proposal existed and authored in an
-earlier NVIDIA geospatial schema. So converting it into the schema you are
+Treat this one as the headline rather than another row in a table. It is real-world
+data, published before the proposal existed and authored in an earlier NVIDIA
+geospatial schema. So converting it into the schema you are
 implementing is part of the exercise.
 
 That is what makes it the strongest evidence against overfitting in this set:
@@ -139,14 +139,22 @@ shown to agree, on the same points, to the stated tolerance. Two paths in one
 implementation drifting apart on real data is a failure mode that small synthetic
 scenes do not catch.
 
-**Ground truth comes from the original, not from the converted copy.** For the
-railway, derive the expected position of any rail or tile from the coordinates in
-`deutschebahn-rails.usda` — the file nobody has touched — and check your resolved
-result against that. Not against `deutschebahn-rails-usdgeospatial.usda`, which is
-a conversion and could be wrong, and not against what your own runtime produced
-earlier. This matters because you control both the conversion and the
-implementation, so a check that compares one against the other can be satisfied
-from either end and demonstrates nothing.
+**Take coordinates from the original, and the answer from geodesy.** For the
+railway, read the authored coordinates out of `deutschebahn-rails.usda` — the copy
+nobody in this exercise has modified — compute where those coordinates are by
+closed-form geodesy, and check your resolved result against that. Not against
+`deutschebahn-rails-usdgeospatial.usda`, which is a conversion and could be wrong,
+and not against what your own runtime produced earlier. You control both the
+conversion and the implementation, so a check comparing one to the other can be
+satisfied from either end and demonstrates nothing.
+
+Note what that does and does not establish. It establishes that your
+implementation places an authored coordinate where that coordinate actually is,
+which is the thing being tested. It does not establish that the coordinate matches
+the real railway: this asset was itself produced from earlier source data that is
+no longer available, so the `.usda` is the earliest artifact anyone here has, not a
+survey record. That is fine for the purpose — a coordinate reference system
+implementation is judged on whether it honours the coordinates it is given.
 
 **Go further than this list.** These are the cases one implementation happens to
 cover, not a definition of enough. Look for more data, and deliberately look for
