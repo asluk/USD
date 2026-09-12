@@ -5,9 +5,35 @@ beside it so the conversion can be checked.
 
 | File | What it is |
 |---|---|
+| `1kmE4334N3375.geojson` | **The source data, and the ground truth.** Use this to check results |
 | `deutschebahn-rails-usdgeospatial.usda` | The asset in the schema being implemented |
-| `deutschebahn-rails.usda` | The original, in the earlier Omniverse geospatial schema |
+| `deutschebahn-rails.usda` | An earlier conversion, in the earlier Omniverse geospatial schema |
 | `quadnode-0/1/4.png` | Quadtree ground imagery the tiles are textured with |
+
+## The GeoJSON is the ground truth
+
+`1kmE4334N3375.geojson` is what the rails were before any of this: 1,473
+`LineString` features, EPSG:4326 declared, coordinates **longitude-first** as
+`[lon, lat, height]`, each feature carrying an `object_id` and properties such as
+`type: Rail_Left` and `material: metal`.
+
+The correspondence to the USD asset is exact and checkable:
+
+- 1,473 features, 1,473 prims carrying an `ObjectId`, every one matched, none left
+  over. The three `MapGeo` tiles are imagery and are not in the GeoJSON, which is
+  why the asset has 1,476 georeferenced prims and the GeoJSON has 1,473 features.
+- Vertex counts agree per feature — the first is 325 in both.
+- The first coordinate is `[10.209789719148057, 53.491591843133264, 49.483132426833073]`
+  in the GeoJSON and `(53.491591843133264, 10.209789719148057, 49.48313242683307)` in
+  the USD asset. Same numbers, transposed, which is the axis-order swap made
+  visible.
+
+**Every vertex has a geodetic position here, not just the anchor.** The USD asset
+carries one geodetic position per curve and 324 local Cartesian offsets; the
+GeoJSON carries all 325 as coordinates. So a resolved vertex can be checked
+against closed-form geodesy applied to its GeoJSON coordinate, which exercises the
+anchor frame, the local offsets and their composition at once rather than testing
+anchor placement alone.
 
 ## Provenance
 
