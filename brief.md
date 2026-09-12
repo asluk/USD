@@ -139,6 +139,15 @@ shown to agree, on the same points, to the stated tolerance. Two paths in one
 implementation drifting apart on real data is a failure mode that small synthetic
 scenes do not catch.
 
+**Ground truth comes from the original, not from the converted copy.** For the
+railway, derive the expected position of any rail or tile from the coordinates in
+`deutschebahn-rails.usda` — the file nobody has touched — and check your resolved
+result against that. Not against `deutschebahn-rails-usdgeospatial.usda`, which is
+a conversion and could be wrong, and not against what your own runtime produced
+earlier. This matters because you control both the conversion and the
+implementation, so a check that compares one against the other can be satisfied
+from either end and demonstrates nothing.
+
 **Go further than this list.** These are the cases one implementation happens to
 cover, not a definition of enough. Look for more data, and deliberately look for
 cases that would break what you have built — antimeridian crossings, polar
