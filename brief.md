@@ -100,13 +100,15 @@ on a mesh whose vertices are small local offsets:
 railway, Apache-2.0, 1,476 track curves on three geospatial tile ground planes near
 Hamburg, around 10.2098, 53.4916. **The asset and its tile imagery sit
 beside this brief, in `railway/`** — use that copy, and do not go looking for where
-it came from.
+it came from. It is there twice: `deutschebahn-rails-usdgeospatial.usda`, already
+converted into the schema you are implementing, and the original beside it in the
+earlier schema. Use the converted one; `railway/README.md` records what the
+conversion decided and why, which is worth reading because several of those
+decisions are ones you would otherwise have to make yourself.
 
-It is authored with `OmniWGS84ReferencePositionAPI` on a root anchor carrying
-`omni:geospatial:wgs84:reference:referencePosition`, and
-`OmniWGS84LocalPositionAPI` on each curve group. **The ordering is latitude-first**
-— the anchor reads `(53.4915918, 10.2097897, 49.4831324)` — which is one of the
-things converting it will make you deal with.
+The original is authored latitude-first — its root reads
+`(53.4915918, 10.2097897, 49.4831324)` — and the converted copy is swapped to
+longitude-first. If you compare the two, that is why.
 
 Treat this one as the headline rather than another row in a table. It is real
 survey-derived data, published before the proposal existed and authored in an
