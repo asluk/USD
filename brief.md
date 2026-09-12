@@ -2,48 +2,42 @@
 
 **This file is the prompt.** It is the only thing the implementing agent sees.
 
+**The proposal says what to build. This file says what to hand back.** Every rule
+about behavior is in the proposal, including the ones it took work to settle, and
+nothing here repeats them — where this file looks like it is specifying behavior,
+the proposal wins and the disagreement is a bug in this file. What this file owns
+is the exercise: the deliverables, the standard the results are held to, the
+scenes and datasets to run, and what not to look at.
+
 What it withholds is **implementations**. Seeing how someone else built this tells
 you how to build it, and the point of the exercise is an implementation derived
 from the specification alone.
 
-What it gives you is everything else: what correct means, and the scenes and
-datasets an existing implementation is measured on. Running the same cases is
-what makes the two comparable. Set your own tolerances and design your own checks
-— those are yours, and where you choose differently we learn something.
+The scenes and datasets are the ones an existing implementation is measured on, so
+running the same cases makes the two comparable. Set your own tolerances and design
+your own checks — those are yours, and where you choose differently we learn
+something.
 
 ---
 
 ## What to build
 
 `usdGeospatial` — a codeless OpenUSD schema for coordinate reference systems, plus
-**two independent runtimes** that resolve it, implementing the behavior described
-in the proposal below.
+**two independent runtimes** that resolve it, implementing the behavior the
+proposal describes.
 
-The proposal's runtime section is written without assuming an evaluation
-architecture. Two architectures built from the same paragraphs are what tests
-whether that holds.
-
-1. **A runtime outside any renderer.** The behavior is stated over the composed
-   stage, and an implementation that only works inside a renderer does not satisfy
-   it.
-2. **A Hydra scene index.** Resolution driven through Hydra's own scene-graph and
-   invalidation machinery — not a render delegate calling the first runtime's
-   resolver. Sharing a geodesy engine is expected; sharing the resolution path is
+1. **A runtime outside any renderer.**
+2. **A Hydra scene index**, driving resolution through Hydra's own scene-graph and
+   invalidation machinery. Not a render delegate calling the first runtime's
+   resolver: sharing a geodesy engine is expected, sharing the resolution path is
    not.
 
 Build the first one first, and get the specification-gap list out of it before
 starting the second. If you run out of room, that list is what must survive.
 
-**Say whether the specification led you to either architecture**, or whether you
-built them because this brief asked. The second one is named here because a Hydra
-implementation is what made a comparable schema adoptable, not because the
-proposal calls for it — the proposal deliberately does not.
-
-**They are not each other's authority.** Where they disagree, that is a finding
-about the specification, and closed-form geodesy settles which one is wrong.
-Record what the architectures forced apart — when resolution happens, what is
-cached, what invalidates — because those differences are the point of building
-both.
+Record what the two architectures forced apart — when resolution happens, what is
+cached, what invalidates. Where they disagree, report it; the authority for which
+one is wrong is below.
 
 ## The specification
 
