@@ -102,9 +102,15 @@ Hamburg, around 10.2098, 53.4916. **The asset and its tile imagery sit
 beside this brief, in `railway/`** — use that copy, and do not go looking for where
 it came from. It is there twice: `deutschebahn-rails-usdgeospatial.usda`, already
 converted into the schema you are implementing, and the original beside it in the
-earlier schema. Use the converted one; `railway/README.md` records what the
-conversion decided and why, which is worth reading because several of those
-decisions are ones you would otherwise have to make yourself.
+earlier schema. `railway/README.md` records what the conversion
+decided and why, which is worth reading because several of those decisions are
+ones you would otherwise have to make yourself.
+
+**Decide for yourself whether to trust that conversion.** It was done by hand from
+the original, which is why the original is there. If you disagree with a decision
+in it, or would rather convert the source yourself and compare, do that — and say
+what you found. A disagreement about how this asset should be expressed in the
+schema is a finding about the schema.
 
 The original is authored latitude-first — its root reads
 `(53.4915918, 10.2097897, 49.4831324)` — and the converted copy is swapped to

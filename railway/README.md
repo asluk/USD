@@ -40,19 +40,21 @@ and the scene stays free of it.
 **The binding.** `rel crs:binding` to a `CoordinateReferenceSystem` prim under
 `/CRS`, with `GeospatialCRSBindingAPI` applied.
 
-**Which prims are anchors.** In the original, every curve group and tile carries
-its own absolute geodetic position — they are not offsets from the root. So each
-is an independent anchor, and the root is not one: it carries a binding and **no**
-position, which supplies the stage's target CRS without making it an anchor.
+**Which prims are anchors.** All 1,477 prims that carried a geospatial API — the
+root and every curve group and tile. Each holds its own absolute geodetic
+position in the original, so each becomes an anchor. Descendants that carry their
+own binding and position override the anchor above them and do not accumulate onto
+it, so the root anchor is simply redundant for everything beneath it. This matches
+how the earlier conversion of this asset treated it.
 
-**The target CRS.** WGS 84 geocentric, EPSG:4978, bound to the `defaultPrim`.
-A geographic CRS is not a resolve target — composing a metric offset onto degrees
-is not a linear operation — so the geographic CRS the anchors use would be the
-wrong thing to resolve into.
+**The target CRS is not set by the scene.** The `defaultPrim` is bound to a
+geographic CRS, which is not a resolve target, so a caller has to supply one —
+geocentric or projected. That is deliberate: it is the case the target-selection
+rule leads with, and this asset is a natural place to exercise it.
 
-**The CRS definition.** Plain WGS 84, no realization and no epoch, because the
-source states neither. That ambiguity is the source's and is worth preserving
-rather than inventing a realization it never claimed.
+**The reference orientation is dropped.** The original carries
+`omni:geospatial:wgs84:reference:orientation = (0, 0, 0)` on the root. It is
+identity, and the schema has no equivalent concept, so nothing is lost.
 
 The stage declares `crsResolutionRequired` in `customLayerData`, so a consumer
 without CRS support can tell before traversing.

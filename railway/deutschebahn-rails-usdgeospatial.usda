@@ -27,27 +27,14 @@ def Scope "CRS"
             LENGTHUNIT["metre",1.0]],
     ID["EPSG",4979]]"""
     }
-
-    def CoordinateReferenceSystem "WGS84_ECEF"
-    {
-        uniform token crs:wkt = """GEODCRS["WGS 84",
-    DATUM["World Geodetic System 1984",
-        ELLIPSOID["WGS 84",6378137,298.257223563,
-            LENGTHUNIT["metre",1.0]]],
-    PRIMEMERIDIAN["Greenwich",0,
-        ANGLEUNIT["degree",0.0174532925199433]],
-    CS[Cartesian,3],
-        AXIS["(X)",geocentricX,ORDER[1],LENGTHUNIT["metre",1.0]],
-        AXIS["(Y)",geocentricY,ORDER[2],LENGTHUNIT["metre",1.0]],
-        AXIS["(Z)",geocentricZ,ORDER[3],LENGTHUNIT["metre",1.0]],
-    ID["EPSG",4978]]"""
-    }
 }
 def Xform "RootGeoReference" (
     prepend apiSchemas = ["GeospatialCRSBindingAPI"]
 )
 {
-    rel crs:binding = </CRS/WGS84_ECEF>
+    rel crs:binding = </CRS/WGS84>
+    double3 xformOp:translate = (10.209789719148057, 53.491591843133264, 49.48313242683307)
+    uniform token[] xformOpOrder = ["xformOp:translate"]
 
     def "World"
     {
