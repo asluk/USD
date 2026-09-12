@@ -139,22 +139,21 @@ shown to agree, on the same points, to the stated tolerance. Two paths in one
 implementation drifting apart on real data is a failure mode that small synthetic
 scenes do not catch.
 
-**Take coordinates from the original, and the answer from geodesy.** For the
-railway, read the authored coordinates out of `deutschebahn-rails.usda` — the copy
-nobody in this exercise has modified — compute where those coordinates are by
-closed-form geodesy, and check your resolved result against that. Not against
-`deutschebahn-rails-usdgeospatial.usda`, which is a conversion and could be wrong,
-and not against what your own runtime produced earlier. You control both the
-conversion and the implementation, so a check comparing one to the other can be
-satisfied from either end and demonstrates nothing.
+**Check the railway against its source, not against the USD.** `railway/` carries
+`1kmE4334N3375.geojson`, the data the asset was made from: 1,473 `LineString`
+features, EPSG:4326, longitude-first, one per rail, linked to the USD prims by
+`object_id`. That is the ground truth. Resolve a vertex, compute where its GeoJSON
+coordinate actually is by closed-form geodesy, and compare.
 
-Note what that does and does not establish. It establishes that your
-implementation places an authored coordinate where that coordinate actually is,
-which is the thing being tested. It does not establish that the coordinate matches
-the real railway: this asset was itself produced from earlier source data that is
-no longer available, so the `.usda` is the earliest artifact anyone here has, not a
-survey record. That is fine for the purpose — a coordinate reference system
-implementation is judged on whether it honours the coordinates it is given.
+Two reasons this is the check that means something. You control both the
+conversion and the implementation, so comparing one against the other can be
+satisfied from either end. And the GeoJSON holds a geodetic coordinate for
+**every** vertex, where the USD asset holds one per curve plus local offsets — so
+checking against it exercises the anchor frame, the offsets and their composition
+together, rather than testing anchor placement and assuming the rest.
+
+`railway/README.md` records the correspondence, including the axis-order
+transposition between the two files.
 
 **Go further than this list.** These are the cases one implementation happens to
 cover, not a definition of enough. Look for more data, and deliberately look for
