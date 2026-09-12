@@ -61,40 +61,6 @@ you proceed, mark it, and report it as a question. A list of the places the
 specification did not tell you what to do is one of the most valuable things this
 build produces.
 
-## The design to implement
-
-The proposal describes the behavior. Four things it leaves open, or states in more
-than one place, are settled here. **These are not questions.** Implement them as
-given. What this exercise demonstrates is that the proposal's described behavior is
-achievable under these positions, so an implementation that adopts different ones
-demonstrates nothing.
-
-- **The position carrier.** `double3 xformOp:translate` with
-  `uniform token[] xformOpOrder = ["xformOp:translate"]`. **Do not author
-  `!resetXformStack!`.** The runtime applies that semantic when it resolves the
-  binding; the authored scene carries no opinion about it. Where the proposal's
-  schema section or its worked examples author the reset, that is known and is
-  being corrected there — follow this, not them.
-- **The binding.** A relationship, `rel crs:binding`, to a
-  `CoordinateReferenceSystem` prim, with `GeospatialCRSBindingAPI` applied.
-- **Inheritance.** A binding inherited from an ancestor says which CRS a subtree is
-  in. A binding authored on the prim additionally says that prim's transform is a
-  position — an anchor — and that holds even when it re-binds the same CRS as the
-  ancestor. A descendant that carries its own binding and position overrides the
-  anchor above it rather than accumulating onto it.
-- **Target selection.** The target CRS is the one supplied by the host application
-  or API caller. Where none is supplied, it is the CRS bound to the composed
-  `defaultPrim`. Where neither exists there is no default, and it is an
-  authoring-time error.
-
-**Report what these cost.** Where implementing one of these is awkward, forces a
-workaround, or sits badly against something the proposal says, say so and say
-where. That is a finding about the position, and it is wanted. What is not wanted
-is quietly implementing something else.
-
-**Everything else the proposal leaves open is still yours to decide and report**,
-per the specification section above.
-
 ## What correct means
 
 The proposal states the bar: **independent implementations should agree to within
