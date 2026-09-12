@@ -57,10 +57,16 @@ build produces.
 
 ## What correct means
 
-The proposal states the bar: **independent implementations should agree to within
-1 mm at Earth-surface magnitudes**, and that figure is chosen rather than measured,
-so treat it as the requirement it is. Everything below follows from being able to
-demonstrate that.
+The proposal sets no numerical threshold, and says why: independent runtimes
+cannot be expected to agree exactly, and a single number cannot separate a defect
+from two engines holding different datum operations. What it asks for is that you
+**state the agreement you achieve** — in target-CRS units, at a stated coordinate
+magnitude, and against what you compared. Everything below follows from being able
+to demonstrate that figure, whatever it turns out to be.
+
+**Do not adopt a threshold from anywhere else and hold yourself to it silently.**
+If you set a pass/fail bar in your tests, that bar is yours, and the brief asks
+below why it is fair.
 
 **The authority is closed-form geodesy.** Correctness means agreeing with a
 closed-form computation of where a point actually is, not with your own earlier
